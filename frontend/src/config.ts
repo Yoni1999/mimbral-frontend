@@ -1,0 +1,1 @@
+export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://192.168.0.137:3001";

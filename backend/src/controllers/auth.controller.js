@@ -1,0 +1,381 @@
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { sql, poolPromise } = require("../models/db");
+const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc");
+const timezone = require("dayjs/plugin/timezone");
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const nodemailer = require("nodemailer");
+
+const JWT_SECRET = process.env.JWT_SECRET || "clave_super_secreta";
+
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000);
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+
+
+const registerUser = async (req, res) => {
+  try {
+    const {
+      nombre,
+      email,
+      password,
+      telefono = "",
+      direccion = "",
+    } = req.body;
+
+    if (!nombre || !email || !password) {
+      return res.status(400).json({ error: "Faltan datos obligatorios" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const pool = await poolPromise;
+
+    await pool.request()
+      .input("Nombre", sql.NVarChar, nombre)
+      .input("Email", sql.NVarChar, email)
+      .input("PasswordHash", sql.NVarChar, hashedPassword)
+      .input("Rol", sql.NVarChar, "usuario")
+      .input("Estado", sql.Int, 0)
+      .input("Telefono", sql.NVarChar, telefono)
+      .input("Direccion", sql.NVarChar, direccion)
+      .query(`
+        INSERT INTO USUARIOS (Nombre, Email, Password_Hash, Rol, Estado, Telefono, Direccion)
+        VALUES (@Nombre, @Email, @PasswordHash, @Rol, @Estado, @Telefono, @Direccion)
+      `);
+
+    // Enviar correo de bienvenida
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"Equipo Mimbral" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Registro exitoso - Plataforma de Análisis de Datos Mimbral",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <img src="https://mimbral.com/logo.svg" alt="Logo Mimbral" style="max-height: 60px;" />
+          </div>
+          <h2 style="color: #333;">¡Registro exitoso!</h2>
+          <p style="font-size: 16px; color: #555;">
+            Hola <strong>${nombre}</strong>, gracias por registrarte en la plataforma de análisis de datos de Mimbral.
+          </p>
+          <p style="font-size: 15px; color: #555;">
+            Tu cuenta fue creada con los siguientes datos:
+          </p>
+          <ul style="font-size: 15px; color: #555;">
+            <li><strong>Email:</strong> ${email}</li>
+            <li><strong>Contraseña:</strong> ${password}</li>
+            <li><strong>Teléfono:</strong> ${telefono}</li>
+            <li><strong>Dirección:</strong> ${direccion}</li>
+          </ul>
+          <p style="font-size: 15px; color: #d9534f;">
+            Tu cuenta aún no está activa. Deberás esperar a que un administrador apruebe tu acceso.
+          </p>
+          <p style="font-size: 12px; color: #aaa; margin-top: 30px;">
+            © ${new Date().getFullYear()} Mimbral - Todos los derechos reservados.
+          </p>
+        </div>
+      `,
+      text: `Hola ${nombre}, gracias por registrarte. Tu cuenta aún no está activa. Debes esperar la aprobación del administrador.`,
+    });
+
+    res.json({ message: "Usuario registrado correctamente. Se ha enviado un correo con los detalles." });
+  } catch (error) {
+    console.error("❌ Error en registerUser:", error);
+    res.status(500).json({ error: "Error en el servidor" });
+  }
+};
+
+const crearUsuarioPorAdmin = async (req, res) => {
+  try {
+    const { nombre, email, password, telefono = "", direccion = "", rol = "usuario", estado = 0 } = req.body;
+
+    if (!nombre || !email || !password || !rol) {
+      return res.status(400).json({ message: "Faltan datos obligatorios" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const pool = await poolPromise;
+
+    await pool.request()
+      .input("Nombre", sql.NVarChar, nombre)
+      .input("Email", sql.NVarChar, email)
+      .input("PasswordHash", sql.NVarChar, hashedPassword)
+      .input("Rol", sql.NVarChar, rol)
+      .input("Estado", sql.Int, estado)
+      .input("Telefono", sql.NVarChar, telefono)
+      .input("Direccion", sql.NVarChar, direccion)
+      .query(`
+        INSERT INTO USUARIOS (Nombre, Email, Password_Hash, Rol, Estado, Telefono, Direccion)
+        VALUES (@Nombre, @Email, @PasswordHash, @Rol, @Estado, @Telefono, @Direccion)
+      `);
+
+    res.json({ message: "✅ Usuario creado correctamente por administrador" });
+  } catch (error) {
+    console.error("❌ Error al crear usuario por admin:", error);
+    res.status(500).json({ message: "Error en el servidor" });
+  }
+};
+
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validación básica
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !password) {
+      return res.status(400).json({ error: "Faltan datos" });
+    }
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Error de sintaxis en el correo" });
+    }
+
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input("Email", sql.NVarChar, email)
+      .query("SELECT * FROM USUARIOS WHERE Email = @Email");
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ error: "Correo incorrecto" });
+    }
+
+    const user = result.recordset[0];
+    console.log("🧪 Usuario encontrado:", user);
+
+    if (user.ESTADO === false) {
+      return res.status(403).json({
+        error: "El usuario está inactivo temporalmente. Comunícate con el administrador."
+      });
+    }
+
+    // Verificar contraseña
+    const validPassword = await bcrypt.compare(password, user.PASSWORD_HASH);
+    if (!validPassword) {
+      return res.status(401).json({ error: "Contraseña incorrecta" });
+    }
+
+    // 🎲 Decidir aleatoriamente si se pide OTP (40% de las veces)
+    const pedirOTP = Math.random() < 0.4;
+
+    if (!pedirOTP) {
+      // 🟢 No pedir OTP: generar token y responder directamente
+      const token = jwt.sign(
+        { id: user.ID, email: user.Email, rol: user.ROL },
+        JWT_SECRET,
+        { expiresIn: "4h" }
+      );
+
+      // Guardar en TOKENS_ACTIVOS
+      await pool.request()
+        .input("UsuarioID", sql.Int, user.ID)
+        .input("Token", sql.NVarChar, token)
+        .query(`
+          INSERT INTO TOKENS_ACTIVOS (USUARIO_ID, TOKEN, VALIDO)
+          VALUES (@UsuarioID, @Token, 1)
+        `);
+
+      // Registrar inicio de sesión
+      await pool.request()
+        .input("UsuarioID", sql.Int, user.ID)
+        .input("FechaInicio", sql.DateTime, dayjs().tz("America/Santiago").format("YYYY-MM-DD HH:mm:ss"))
+        .query(`
+          INSERT INTO SESIONES_USUARIOS (UsuarioID, FechaInicio)
+          VALUES (@UsuarioID, GETDATE())
+        `);
+
+      return res.json({ message: "Login exitoso sin OTP", token, rol: user.ROL });
+    }
+
+    // 🔐 Si se decide pedir OTP:
+    const otpCode = generateOTP().toString();
+    const expirationTime = new Date();
+    expirationTime.setMinutes(expirationTime.getMinutes() + 5);
+
+    // Guardar OTP
+    await pool.request()
+      .input("UsuarioID", sql.Int, user.ID)
+      .input("OTP", sql.NVarChar(6), otpCode)
+      .input("ExpiraEn", sql.DateTime, expirationTime)
+      .query(`
+        INSERT INTO OTP_CODES (USUARIO_ID, OTP, EXPIRA_EN) 
+        VALUES (@UsuarioID, @OTP, @ExpiraEn)
+      `);
+
+    // Enviar correo con OTP
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Código de acceso - Equipo Mimbral",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <img src="http://192.168.0.172:3000//images/logos/logo.mimbral.svg" alt="Mimbral Logo" style="max-height: 60px;" />
+          </div>
+          <h2 style="color: #333;">Código de acceso temporal</h2>
+          <p style="font-size: 16px; color: #555;">Estimado usuario, tu código de acceso es:</p>
+          <div style="font-size: 28px; font-weight: bold; color: #0a7cff; margin: 20px 0;">${otpCode}</div>
+          <p style="font-size: 14px; color: #666;">
+            Este código tiene una validez de <strong>5 minutos</strong> desde su emisión y <strong>solo puede ser utilizado una vez</strong>.
+            Si no solicitaste este código, puedes ignorar este correo.
+          </p>
+          <p style="font-size: 12px; color: #aaa; margin-top: 30px;">
+            © ${new Date().getFullYear()} Mimbral mts - Todos los derechos reservados.
+          </p>
+        </div>
+      `,
+      text: `Tu código de acceso es: ${otpCode} (válido por 5 minutos, solo se puede usar una vez).`,
+    });
+
+    // Registrar sesión (sin token aún, se guardará en verifyOTP)
+    await pool.request()
+      .input("UsuarioID", sql.Int, user.ID)
+      .input("FechaInicio", sql.DateTime, dayjs().tz("America/Santiago").format("YYYY-MM-DD HH:mm:ss"))
+      .query(`
+        INSERT INTO SESIONES_USUARIOS (UsuarioID, FechaInicio)
+        VALUES (@UsuarioID, GETDATE())
+      `);
+
+    return res.json({
+      message: "Código enviado al correo electrónico",
+      requiresOtp: true
+    });
+      
+
+  } catch (error) {
+    console.error("❌ Error en loginUser:", error);
+    res.status(500).json({ error: "Error en el servidor" });
+  }
+};
+
+
+const verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ error: "Faltan datos" });
+    }
+
+    const pool = await poolPromise;
+    const now = new Date();
+
+    const result = await pool.request()
+      .input("Email", sql.NVarChar, email)
+      .input("OTP", sql.NVarChar, otp)
+      .input("Now", sql.DateTime, now)
+      .query(`
+        SELECT * FROM OTP_CODES 
+        WHERE USUARIO_ID = (SELECT ID FROM USUARIOS WHERE EMAIL = @Email) 
+          AND OTP = @OTP 
+          AND EXPIRA_EN > @Now 
+          AND USADO = 0
+      `);
+
+    if (result.recordset.length === 0) {
+      return res.status(401).json({ error: "Código incorrecto o expirado" });
+    }
+
+    const userQuery = await pool.request()
+      .input("Email", sql.NVarChar, email)
+      .query("SELECT ID, Email, ROL FROM USUARIOS WHERE EMAIL = @Email");
+
+    const user = userQuery.recordset[0];
+
+    const token = jwt.sign(
+      { id: user.ID, email: user.Email, rol: user.ROL },
+      JWT_SECRET,
+      { expiresIn: "4h" }
+    );
+
+    const expirationTime = new Date();
+    expirationTime.setHours(expirationTime.getHours() + 1);
+    expirationTime.setMinutes(expirationTime.getMinutes() - expirationTime.getTimezoneOffset());
+
+    await pool.request()
+      .input("Email", sql.NVarChar, email)
+      .input("OTP", sql.NVarChar, otp)
+      .input("Token", sql.NVarChar, token)
+      .input("ExpiraEn", sql.DateTime, expirationTime)
+      .query(`
+        UPDATE OTP_CODES 
+        SET USADO = 1, TOKEN = @Token, EXPIRA_EN = @ExpiraEn
+        WHERE USUARIO_ID = (SELECT ID FROM USUARIOS WHERE EMAIL = @Email) 
+          AND OTP = @OTP
+      `);
+
+    // 🆕 Insertar el token en TOKENS_ACTIVOS
+    await pool.request()
+      .input("UsuarioID", sql.Int, user.ID)
+      .input("Token", sql.NVarChar, token)
+      .query(`
+        INSERT INTO TOKENS_ACTIVOS (USUARIO_ID, TOKEN, VALIDO)
+        VALUES (@UsuarioID, @Token, 1)
+      `);
+
+    res.json({ message: "Código correcto", token, rol: user.ROL });
+  } catch (error) {
+    console.error("❌ Error en verifyOTP:", error);
+    res.status(500).json({ error: "Error en el servidor" });
+  }
+};
+const logoutUser = async (req, res) => {
+  try {
+    const token = req.header("Authorization")?.split(" ")[1];
+    if (!token) return res.status(400).json({ error: "Token no proporcionado" });
+
+    const pool = await poolPromise;
+
+    // Invalidar token en la tabla TOKENS_ACTIVOS
+    await pool.request()
+      .input("Token", sql.NVarChar, token)
+      .query("UPDATE TOKENS_ACTIVOS SET VALIDO = 0 WHERE TOKEN = @Token");
+
+    // Obtener el UsuarioID desde el token
+    const userResult = await pool.request()
+      .input("Token", sql.NVarChar, token)
+      .query("SELECT USUARIO_ID FROM TOKENS_ACTIVOS WHERE TOKEN = @Token");
+
+    if (userResult.recordset.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado para este token" });
+    }
+
+    const usuarioId = userResult.recordset[0].USUARIO_ID;
+
+    //  Actualizar la última sesión abierta (FechaFin = ahora)
+    await pool.request()
+      .input("UsuarioID", sql.Int, usuarioId)
+      .input("FechaFin", sql.DateTime, dayjs().tz("America/Santiago").format("YYYY-MM-DD HH:mm:ss"))
+      .query(`
+        UPDATE SESIONES_USUARIOS
+        SET FechaFin = GETDATE()
+        WHERE UsuarioID = @UsuarioID AND FechaFin IS NULL
+      `);
+      
+
+    res.json({ message: "Sesión cerrada correctamente" });
+
+  } catch (error) {
+    console.error("❌ Error al cerrar sesión:", error);
+    res.status(500).json({ error: "Error al cerrar sesión" });
+  }
+};
+
+
+
+module.exports = { registerUser, loginUser, verifyOTP, logoutUser, crearUsuarioPorAdmin };
