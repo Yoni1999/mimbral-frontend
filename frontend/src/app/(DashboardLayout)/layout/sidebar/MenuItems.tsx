@@ -25,12 +25,7 @@ const Menuitems = [
     subheader: "Inventario & Abastecimiento",
     divider: true,
   },
-  {
-    id: uniqueId(),
-    title: "Categorías sin stock",
-    icon: IconReportAnalytics,
-    href: "/utilities/analisis-quiebre",
-  },
+
   {
     id: uniqueId(),
     title: "Ventas",
