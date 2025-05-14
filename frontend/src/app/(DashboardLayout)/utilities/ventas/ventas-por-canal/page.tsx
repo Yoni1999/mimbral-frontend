@@ -40,21 +40,29 @@ const VentasPorCanal = () => {
     }
   }, [router]);
 
-  const [filters, setFilters] = useState<Filters>(() => {
-    if (typeof window !== "undefined") {
-      const storedFilters = localStorage.getItem("filtrosVentasCanal");
-      if (storedFilters) {
-        return JSON.parse(storedFilters);
-      }
+  const [filters, setFilters] = useState<Filters>({
+  canal: canalParam,
+  vendedorEmpresa: "",
+  periodo: "1D",
+  fechaInicio: "",
+  fechaFin: "",
+});
+
+useEffect(() => {
+  const stored = localStorage.getItem("filtrosVentasCanal");
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      setFilters((prev) => ({
+        ...prev,
+        ...parsed,
+        canal: canalParam || parsed.canal || "",
+      }));
+    } catch (e) {
+      console.error("❌ Error al parsear filtros almacenados:", e);
     }
-    return {
-      canal: canalParam,
-      vendedorEmpresa: "",
-      periodo: "1D",
-      fechaInicio: "",
-      fechaFin: "",
-    };
-  });
+  }
+}, [canalParam]);
 
   const [selectedVendedor, setSelectedVendedor] = useState<number | null>(null);
   const [data, setData] = useState({
@@ -128,54 +136,6 @@ const VentasPorCanal = () => {
     localStorage.setItem("filtrosVentasCanal", JSON.stringify(newFilters));
   };
   
-
- if (loading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          width: "100vw",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          backgroundColor: "rgba(255, 255, 255, 0.9)",
-        }}
-      >
-        {/* 🔹 Logo girando */}
-        <Box
-          sx={{
-            animation: "spin 1.5s linear infinite",
-            borderRadius: "50%", 
-            overflow: "hidden",
-            width: "60px", 
-            height: "60px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
-          }}
-        >
-          <Image src="/images/logos/logoitem.jpg" alt="Logo" width={60} height={60} priority />
-        </Box>
-
-        {/* 🔹 Texto de carga */}
-        <Typography variant="h6" sx={{ mt: 2, color: "#000", fontWeight: "bold" }}>
-          Cargando datos...
-        </Typography>
-
-        <style jsx global>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </Box>
-    );
-  }
   return (
     <PageContainer title="Ventas por Canal" description="Resumen de ventas filtradas por canal, período y rango de fechas">
       <HeaderFilters filters={filters} onFilterChange={handleFilterChange}/>
