@@ -10,9 +10,6 @@ import HeaderCategoria, { Filters } from "./components/HeaderSubcategoria";
 import MetricCard from "./components/MetricCard";
 import VentasChart from "./components/VentasChart";
 import dynamic from "next/dynamic";
-const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
-  ssr: false,
-});
 import TopProductosChart from "./components/TopProductosChart";
 import { BACKEND_URL } from "@/config";
 import TopRentableCategoria from "./components/TopRentableCategoria";
@@ -26,6 +23,10 @@ import {
 } from "@tabler/icons-react";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { useSearchParams } from "next/navigation";
+const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
+  ssr: false,
+});
+
 
 const ResumenCategoriasPage: React.FC = () => {
   const [filtros, setFiltros] = useState<Filters>({

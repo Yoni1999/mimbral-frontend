@@ -7,14 +7,20 @@ import Image from 'next/image';
 import { Grid, Paper, CircularProgress, Box, Typography } from "@mui/material";
 import MetricCard from "./components/MetricCard";
 import HeaderFilters, { Filters } from "./components/HeaderFilters";
-import TopProductosChart from "./components/TopProductosChart";
-import VentasPorCategoriaChart from "./components/VentasPorCategoriaChart";
 import dynamic from "next/dynamic";
-import TransaccionesChart from "./components/TransaccionesChart";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 
 const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
+  ssr: false,
+});
+const TopProductosChart = dynamic(() => import("./components/TopProductosChart"), {
+  ssr: false,
+});
+const VentasPorCategoriaChart = dynamic(() => import("./components/VentasPorCategoriaChart"), {
+  ssr: false,
+});
+const TransaccionesChart = dynamic(() => import("./components/TransaccionesChart"), {
   ssr: false,
 });
 

@@ -6,16 +6,11 @@ import {
   Grid,
   Paper,
   CircularProgress,
-  Box,
-  Typography,
 } from "@mui/material";
-import Image from "next/image";
 import VentasChart from "./components/VentasChart";
 import MetricCard from "./components/MetricCard";
 import CategoriasBarChart from "./components/CategoriasBarChart";
-import VentasCanalChart from "./components/VentasCanalChart";
-import TopProductosChart from "./components/TopProductosChart";
-import RentabilidadChart from "./components/RentabilidadChart";
+import dynamic from "next/dynamic";
 import ProgressGauge from "./components/ProgressGauge";
 import SeccionTitulo from "./components/SeccionTitulo";
 import { fetchWithToken } from "@/utils/fetchWithToken";
@@ -29,6 +24,16 @@ import {
 } from "@tabler/icons-react";
 import FotoDelDiaHeader, { Filters } from "./components/FotoDelDiaHeader.tsx";
 import { BACKEND_URL } from "@/config";
+
+const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
+  ssr: false, 
+});
+const TopProductosChart = dynamic(() => import("./components/TopProductosChart"), {
+  ssr: false,
+});
+const RentabilidadChart = dynamic(() => import("./components/RentabilidadChart"), {
+  ssr: false,
+});
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("es-CL", {

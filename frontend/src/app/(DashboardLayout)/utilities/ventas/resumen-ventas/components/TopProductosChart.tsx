@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import Chart from "react-apexcharts";
 import { Card, CardContent, Typography, Box, IconButton, Menu, MenuItem } from "@mui/material";
 import { ApexOptions } from "apexcharts";
-import { MoreVert } from "@mui/icons-material";
 
 // Definir los tipos de datos esperados
 interface Producto {

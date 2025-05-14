@@ -5,7 +5,7 @@ import { Box, Grid } from "@mui/material";
 import HeaderCategoria, { Filters } from "./components/HeaderCategoria";
 import MetricCard from "./components/MetricCard";
 import VentasChart from "./components/VentasChart";
-import VentasCanalChart from "./components/VentasCanalChart";
+import dynamic from "next/dynamic";
 import TopProductosChart from "./components/TopProductosChart";
 import TopRentableCategoria from "./components/TopRentableCategoria";
 import {
@@ -19,6 +19,7 @@ import {
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { useRouter } from "next/navigation"; // ✅ Mantener router para abrir nuevas páginas
 import { BACKEND_URL } from "@/config";
+const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), { ssr: false });
 
 const ResumenCategoriasPage: React.FC = () => {
   const router = useRouter();
@@ -32,8 +33,12 @@ const ResumenCategoriasPage: React.FC = () => {
       fechaInicio: filtros.fechaInicio || "",
       fechaFin: filtros.fechaFin || "",
     }).toString();
-    window.open(`/utilities/analisis-categoria/resumen2nivel?${queryParams}`, "_blank");
+
+    if (typeof window !== "undefined") {
+      window.open(`/utilities/analisis-categoria/resumen2nivel?${queryParams}`, "_blank");
+    }
   };
+
 
   const [filtros, setFiltros] = useState<Filters>({
     temporada: "",

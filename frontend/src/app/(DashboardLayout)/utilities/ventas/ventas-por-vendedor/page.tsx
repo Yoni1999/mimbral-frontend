@@ -4,19 +4,18 @@ import { Box, Grid,} from "@mui/material";
 import HeaderVendedor, { Filters } from "./components/HeaderVendedor";
 import MetricCard from "./components/MetricCard";
 import ProgressGauge from "./components/ProgressGauge";
-import TopVentasComparadoChart from "./components/TopVentasComparadoChart";
-import VentasCanalChart from "./components/VentasCanalChart";
+import dynamic from "next/dynamic";
 import TopProductosChart from "./components/TopProductosChart";
 import TopRentableVendedor from "./components/TopRentableVendedor";
 import {IconCurrencyDollar,IconTrendingUp,IconBox,IconStack2,IconShoppingCart,IconCreditCard,} from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
 import BotonFlotanteMetas from "./components/BotonFlotanteMetas"; // 👈 Importamos el nuevo componente
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 import { useSearchParams } from "next/navigation";
 import { formatVentas, formatUnidades } from "@/utils/format";
 
-
+const TopVentasComparadoChart = dynamic(() => import("./components/TopVentasComparadoChart"), { ssr: false });
+const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), { ssr: false});
 
 const VentasVendedorPage: React.FC = () => {
   const [filtros, setFiltros] = useState<Filters>({
