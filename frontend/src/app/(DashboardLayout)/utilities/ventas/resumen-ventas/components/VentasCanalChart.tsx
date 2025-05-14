@@ -7,6 +7,7 @@ import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCa
 import { ApexOptions } from "apexcharts";
 import { useRouter } from "next/navigation";
 import { BACKEND_URL } from "@/config";
+import { formatVentas } from "@/utils/format"; // ✅ nuevo import
 
 interface Props {
   filters: {
@@ -16,7 +17,6 @@ interface Props {
     fechaFin: string;
   };
 }
-
 
 interface VentasCanalData {
   [key: string]: number;
@@ -46,7 +46,6 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
     }
     return params.toString();
   };
-  
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,11 +53,11 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
         const query = buildQuery();
         const response = await fetchWithToken(`${BACKEND_URL}/api/ventas-canal?${query}`);
         if (!response) return;
-  
+
         const data: VentasCanalData = (await response.json())[0];
         const newLabels = Object.keys(data).map((key) => key.replace(/_/g, " "));
         const newSeries = Object.values(data);
-  
+
         setLabels(newLabels);
         setChartData(newSeries);
       } catch (error) {
@@ -67,10 +66,9 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
         setLoading(false);
       }
     };
-  
+
     fetchData();
-  }, [filters]); 
-  
+  }, [filters]);
 
   const options: ApexOptions = {
     chart: {
@@ -85,12 +83,10 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
       },
     },
     labels: labels,
-    colors: [
-      "#9583ff", "#ff914a", "#f0d45f", "#45914b", "#284270", "#d93a3a",  
-    ],
+    colors: ["#9583ff", "#ff914a", "#f0d45f", "#45914b", "#284270", "#d93a3a"],
     tooltip: {
       y: {
-        formatter: (val: number) => val.toLocaleString("es-CL"),
+        formatter: (val: number) => formatVentas(val), // ✅ nuevo formateador
       },
     },
     responsive: [
@@ -105,7 +101,11 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
   };
 
   return (
-    <DashboardCard title="Ventas por Canal" sx={{ backgroundColor: "#ffffff", height:420 }} elevation={1}>
+    <DashboardCard
+      title="Ventas por Canal"
+      sx={{ backgroundColor: "#ffffff", height: 420 }}
+      elevation={1}
+    >
       {loading ? (
         <Typography variant="body1">Cargando gráfico...</Typography>
       ) : (

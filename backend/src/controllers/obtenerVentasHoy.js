@@ -102,7 +102,7 @@ const obtenerTopProductos = async (req, res) => {
       const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
-      const modoComparacion = req.query.modo || "anio_anterior"; // 'anterior' o 'anio_anterior'
+      const modoComparacion = req.query.modo || "anio_anterior"; 
   
       const query = `
         -- Declaración de parámetros
@@ -153,6 +153,7 @@ const obtenerTopProductos = async (req, res) => {
         WITH TopVentasActual AS (
             SELECT TOP 10
                 C.Name AS Categoria,
+                C.U_Imagen,
                 SUM(I.LineTotal) AS TotalVentas,
                 SUM(I.Quantity * O.AvgPrice) AS CostoTotal,
                 SUM(I.LineTotal - (I.Quantity * O.AvgPrice)) AS MargenAbsoluto,
@@ -179,7 +180,7 @@ const obtenerTopProductos = async (req, res) => {
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR I.SlpCode = @VendedorEmpresaParam)
-            GROUP BY C.Name
+            GROUP BY C.Name, C.U_Imagen
             ORDER BY TotalVentas DESC
         ),
   
@@ -187,6 +188,7 @@ const obtenerTopProductos = async (req, res) => {
         MargenComparacion AS (
             SELECT 
                 C.Name AS Categoria,
+                C.U_Imagen,
                 CAST((SUM(I.LineTotal - (I.Quantity * O.AvgPrice)) * 100.0) / NULLIF(SUM(I.LineTotal), 0) AS DECIMAL(18,2)) AS MargenPorcentaje_Comparacion
             FROM INV1 I
             INNER JOIN OITM O ON I.ItemCode = O.ItemCode
@@ -210,12 +212,13 @@ const obtenerTopProductos = async (req, res) => {
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR I.SlpCode = @VendedorEmpresaParam)
-            GROUP BY C.Name
+            GROUP BY C.Name, C.U_Imagen
         )
   
         SELECT 
             V.Categoria,
             V.TotalVentas,
+            V.U_Imagen,
             V.CostoTotal,
             V.MargenAbsoluto,
             V.MargenPorcentaje,
@@ -247,78 +250,6 @@ const obtenerTopProductos = async (req, res) => {
   
 //RESUMEN DE VENTAS
 
-//Ventas Chart Lineas
-
-const obtenerVentasPorCanalYFecha = async (req, res) => {
-  try {
-    const pool = await poolPromise;
-
-    const periodo = req.query.periodo || "7D";
-
-    const fechaFin = new Date();
-    let fechaInicio;
-
-    switch (periodo) {
-      case "7D":
-        fechaInicio = new Date();
-        fechaInicio.setDate(fechaFin.getDate() - 6);
-        break;
-      case "14D":
-        fechaInicio = new Date();
-        fechaInicio.setDate(fechaFin.getDate() - 13);
-        break;
-      case "1M":
-        fechaInicio = new Date(fechaFin.getFullYear(), fechaFin.getMonth(), 1);
-        break;
-      default:
-        return res.status(400).json({ error: "Parámetro de periodo inválido." });
-    }
-
-    const result = await pool.request()
-      .input("FechaInicio", sql.Date, fechaInicio)
-      .input("FechaFin", sql.Date, fechaFin)
-      .query(`
-        SELECT 
-            OI.DocDate AS Fecha,
-            SUM(CASE 
-                WHEN (I.WhsCode IN ('03', '05') AND OI.SlpCode IN (426, 364, 355)) 
-                  OR (I.WhsCode = '01' AND OI.SlpCode IN (355, 398)) 
-                THEN I.LineTotal ELSE 0 
-            END) AS Meli,
-
-            SUM(CASE WHEN I.WhsCode = '03' AND OI.SlpCode = 371 THEN I.LineTotal ELSE 0 END) AS Falabella,
-            SUM(CASE WHEN I.WhsCode = '07' THEN I.LineTotal ELSE 0 END) AS Balmaceda,
-            SUM(CASE WHEN I.WhsCode = '01' AND OI.SlpCode IN (401, 397) THEN I.LineTotal ELSE 0 END) AS Vitex,
-
-            SUM(CASE 
-                WHEN I.WhsCode = '01' 
-                  AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212) 
-                THEN I.LineTotal ELSE 0 
-            END) AS Chorrillo,
-
-            SUM(CASE 
-                WHEN I.WhsCode = '01' 
-                  AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212) 
-                THEN I.LineTotal ELSE 0 
-            END) AS Empresas
-
-        FROM INV1 I
-        INNER JOIN OINV OI ON I.DocEntry = OI.DocEntry
-        WHERE 
-            OI.DocDate BETWEEN @FechaInicio AND @FechaFin
-            AND OI.CANCELED = 'N'
-        GROUP BY 
-            OI.DocDate
-        ORDER BY 
-            OI.DocDate ASC
-      `);
-
-    res.json(result.recordset);
-  } catch (error) {
-    console.error("❌ Error al obtener ventas por canal y fecha:", error);
-    res.status(500).json({ error: "Error en el servidor." });
-  }
-};
 const obtenerVentasPeriodo = async (req, res) => {
     try {
       const pool = await poolPromise;
@@ -350,7 +281,7 @@ const obtenerVentasPeriodo = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -470,7 +401,7 @@ const obtenerTransaccionesPeriodo = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -584,7 +515,7 @@ const obtenerUnidadesVendidasPeriodo = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -880,7 +811,7 @@ const obtenerProductosDistintosPeriodo = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -975,4 +906,7 @@ const obtenerProductosDistintosPeriodo = async (req, res) => {
 // Exportar funciones
 module.exports = {obtenerTransaccionesPeriodo, obtenerNotascredito, obtenerMargenCategoriasComparado,  
   obtenerTopProductos, obtenerVentasPeriodo, obtenerUnidadesVendidasPeriodo,obtenerProductosDistintosPeriodo,
-  obtenerVentasPorCanalYFecha,  obtenerMargenVentas};
+  obtenerMargenVentas};
+
+
+  

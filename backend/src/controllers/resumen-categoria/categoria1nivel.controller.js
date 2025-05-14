@@ -35,7 +35,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -167,7 +167,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -306,7 +306,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -437,7 +437,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
               WHEN @Periodo = '1D' THEN @FechaFinActual
               WHEN @Periodo = '7D' THEN DATEADD(DAY, -6, @FechaFinActual)
               WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-              WHEN @Periodo = '1M' THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+              WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
               WHEN @Periodo = '3M' THEN DATEADD(MONTH, -3, @FechaFinActual)
               WHEN @Periodo = '6M' THEN DATEADD(MONTH, -6, @FechaFinActual)
               WHEN @Periodo = '1A' THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -579,7 +579,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
             CASE 
               WHEN @Periodo = '7D' THEN DATEADD(DAY, -6, @FechaFinActual)
               WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-              WHEN @Periodo = '1M' THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+              WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
               WHEN @Periodo = '3M' THEN DATEADD(MONTH, -3, @FechaFinActual)
               WHEN @Periodo = '6M' THEN DATEADD(MONTH, -6, @FechaFinActual)
               WHEN @Periodo = '1A' THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -699,7 +699,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
             CASE 
               WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
               WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-              WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+              WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
               WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
               WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
               WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -791,7 +791,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
       const pool = await poolPromise;
   
       const periodo = req.query.periodo || "7D";
-      const primerNivel = req.query.primerNivel || 399;
+      const primerNivel = req.query.primerNivel || null;
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
   

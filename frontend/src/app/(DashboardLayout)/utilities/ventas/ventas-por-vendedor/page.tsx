@@ -17,6 +17,7 @@ import { useSearchParams } from "next/navigation";
 import { formatVentas, formatUnidades } from "@/utils/format";
 
 
+
 const VentasVendedorPage: React.FC = () => {
   const [filtros, setFiltros] = useState<Filters>({
     vendedorEmpresa: "",
@@ -304,29 +305,29 @@ const VentasVendedorPage: React.FC = () => {
             ))}
           </Grid>
         </Grid>
-      </Grid> {/* 🔵 Fin primera fila */}
+      </Grid> 
 
-      {/* 🔵 Segunda fila: Formas de pago + Top Categorías */}
       <Grid container spacing={2} mt={2}>
         <Grid item xs={12} md={5}>
           <VentasCanalChart />
         </Grid>
         <Grid item xs={12} md={7}>
-          <TopProductosChart />
+          <TopProductosChart filtros={filtros} />
         </Grid>
       </Grid>
 
-      {/* 🔵 Tercera fila: Top ventas actuales vs anterior + Top rentables */}
       <Grid container spacing={2} mt={2}>
-        <Grid item xs={12} md={6}>
-          <TopVentasComparadoChart />
+        <Grid item xs={12} md={12}>
+          <TopRentableVendedor filtros={filtros} />
         </Grid>
-        <Grid item xs={12} md={6}>
-          <TopRentableVendedor />
+      </Grid>
+      
+      <Grid container spacing={2} mt={2}>
+        <Grid item xs={12} md={12}>
+          <TopVentasComparadoChart filtros={filtros} />
         </Grid>
       </Grid>
 
-    {/* 🔵 FAB: Botón flotante para ver todas las metas */}
     <BotonFlotanteMetas/>
 
 

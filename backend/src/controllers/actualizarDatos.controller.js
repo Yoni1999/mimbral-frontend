@@ -29,7 +29,7 @@ const actualizarDatos = async (req, res) => {
 
       res.json({ success: true, message: "Datos actualizados correctamente." });
   } catch (error) {
-      console.error("❌ Error al actualizar los datos:", error);
+      console.error(" Error al actualizar los datos:", error);
       res.status(500).json({ success: false, message: "Error en el servidor al actualizar los datos." });
   }
 };
@@ -51,11 +51,9 @@ const getUltimaActualizacion = async (req, res) => {
       if (result.recordset.length > 0) {
         let { UltimaFecha, UltimaHora } = result.recordset[0];
   
-        // 🔥 Convertir la fecha a formato YYYY-MM-DD
         UltimaFecha = new Date(UltimaFecha).toISOString().split("T")[0];
   
-        // 🔥 Convertir DocTime de formato HHMM a HH:MM (sin segundos)
-        const horaStr = UltimaHora.toString().padStart(4, "0"); // Asegurar que tenga 4 dígitos (ej: 920 → "0920")
+        const horaStr = UltimaHora.toString().padStart(4, "0"); 
         const horas = horaStr.substring(0, 2);
         const minutos = horaStr.substring(2, 4);
         const horaFormateada = `${horas}:${minutos}`;

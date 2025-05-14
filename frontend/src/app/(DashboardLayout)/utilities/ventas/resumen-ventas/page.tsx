@@ -12,7 +12,6 @@ import {
 import Image from "next/image";
 import VentasChart from "./components/VentasChart";
 import MetricCard from "./components/MetricCard";
-import VentasBarChart from "./components/VentasBarChart";
 import CategoriasBarChart from "./components/CategoriasBarChart";
 import VentasCanalChart from "./components/VentasCanalChart";
 import TopProductosChart from "./components/TopProductosChart";
@@ -158,7 +157,11 @@ const FotoDelDia = () => {
         fetchData(`top-productos?${query}`, setTopProductos),
         fetchData(`productos-rentabilidad?${query}`, setProductosRentabilidad),
         fetchData(`margen/bruto-periodo?${query}`, () => {}),
-        fetchData(`margen-categorias-comparado?${query}`, setCategoriasData),
+        fetchData(`margen-categorias-comparado?${query}`, (data) => {
+          console.log("📦 Data bruta desde API (categorías):", data); // 👈
+          setCategoriasData(data);
+        }),
+
         fetchData(`unidades-vendidas-periodo?${query}`, setUnidadesVendidas),
       ]);
       setLoading(false);
@@ -168,7 +171,7 @@ const FotoDelDia = () => {
   }, [filtros]);
 
   return (
-    <PageContainer title="Foto del Día" description="Resumen de ventas">
+    <PageContainer title="Resumen Ventas" description="Resumen de las ventas">
       <FotoDelDiaHeader onFilterChange={(f) => setFiltros(f)} />
       <Grid container spacing={2}>
         {/* 🔹 Primera fila */}
@@ -257,7 +260,7 @@ const FotoDelDia = () => {
         </Grid>
 
         <Grid item xs={12} md={7}>
-          <VentasChart />
+          <VentasChart filtros={filtros} />
         </Grid>
 
         {/* 🔹 Segunda fila */}
@@ -275,15 +278,15 @@ const FotoDelDia = () => {
         {/* 🔹 Tercera fila */}
         <Grid item xs={12}>
           <Grid container spacing={2}>
-
-            <Grid item xs={12} md={7}>
+            <Grid item xs={12} md={5}>
               <RentabilidadChart data={productosRentabilidad} />
             </Grid>
-            <Grid item xs={12} md={5}>
-            <CategoriasBarChart data={categoriasData} />
+            <Grid item xs={12} md={7}>
+             <CategoriasBarChart data={categoriasData} />
             </Grid>
           </Grid>
         </Grid>
+     
 
         {/* 🔹 Cuarta fila */}
         <Grid item xs={12}>

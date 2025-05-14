@@ -68,33 +68,56 @@ const registerUser = async (req, res) => {
       to: email,
       subject: "Registro exitoso - Plataforma de Análisis de Datos Mimbral",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <img src="https://mimbral.com/logo.svg" alt="Logo Mimbral" style="max-height: 60px;" />
+        <div style="
+          font-family: 'Segoe UI', Arial, sans-serif;
+          max-width: 520px;
+          margin: 0 auto;
+          padding: 30px;
+          border-radius: 10px;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+          background-color: #ffffff;
+          border: 1px solid #e0e0e0;
+        ">
+          <div style="text-align: center; margin-bottom: 25px;">
+            <img 
+              src="https://res.cloudinary.com/dhzahos7u/image/upload/v1747080896/mimbral_af8zz8.png" 
+              alt="Mimbral Logo" 
+              style="max-height: 60px;" 
+            />
           </div>
-          <h2 style="color: #333;">¡Registro exitoso!</h2>
-          <p style="font-size: 16px; color: #555;">
+
+          <h2 style="color: #1a1a1a; text-align: center; margin-bottom: 16px;">
+            ¡Registro exitoso!
+          </h2>
+
+          <p style="font-size: 16px; color: #444; text-align: center; margin-bottom: 24px;">
             Hola <strong>${nombre}</strong>, gracias por registrarte en la plataforma de análisis de datos de Mimbral.
           </p>
-          <p style="font-size: 15px; color: #555;">
-            Tu cuenta fue creada con los siguientes datos:
+
+          <div style="background-color: #f9f9f9; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="font-size: 15px; color: #333; margin: 0 0 10px;"><strong>Datos de tu cuenta:</strong></p>
+            <ul style="font-size: 14px; color: #555; padding-left: 20px; margin: 0;">
+              <li><strong>Email:</strong> ${email}</li>
+              <li><strong>Contraseña:</strong> ${password}</li>
+              <li><strong>Teléfono:</strong> ${telefono}</li>
+              <li><strong>Dirección:</strong> ${direccion}</li>
+            </ul>
+          </div>
+
+          <p style="font-size: 15px; color: #d9534f; text-align: center;">
+            Tu cuenta aún <strong>no está activa</strong>. Deberás esperar a que un administrador apruebe tu acceso.
           </p>
-          <ul style="font-size: 15px; color: #555;">
-            <li><strong>Email:</strong> ${email}</li>
-            <li><strong>Contraseña:</strong> ${password}</li>
-            <li><strong>Teléfono:</strong> ${telefono}</li>
-            <li><strong>Dirección:</strong> ${direccion}</li>
-          </ul>
-          <p style="font-size: 15px; color: #d9534f;">
-            Tu cuenta aún no está activa. Deberás esperar a que un administrador apruebe tu acceso.
-          </p>
-          <p style="font-size: 12px; color: #aaa; margin-top: 30px;">
+
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+
+          <p style="font-size: 12px; color: #aaa; text-align: center;">
             © ${new Date().getFullYear()} Mimbral - Todos los derechos reservados.
           </p>
         </div>
       `,
       text: `Hola ${nombre}, gracias por registrarte. Tu cuenta aún no está activa. Debes esperar la aprobación del administrador.`,
     });
+
 
     res.json({ message: "Usuario registrado correctamente. Se ha enviado un correo con los detalles." });
   } catch (error) {
@@ -161,7 +184,7 @@ const loginUser = async (req, res) => {
 
     if (user.ESTADO === false) {
       return res.status(403).json({
-        error: "El usuario está inactivo temporalmente. Comunícate con el administrador."
+        error: "El usuario está inactivo temporalmente. Comunícate con área de TI."
       });
     }
 
@@ -175,7 +198,6 @@ const loginUser = async (req, res) => {
     const pedirOTP = Math.random() < 0.4;
 
     if (!pedirOTP) {
-      // 🟢 No pedir OTP: generar token y responder directamente
       const token = jwt.sign(
         { id: user.ID, email: user.Email, rol: user.ROL },
         JWT_SECRET,
@@ -224,24 +246,57 @@ const loginUser = async (req, res) => {
       to: email,
       subject: "Código de acceso - Equipo Mimbral",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+        <div style="
+          font-family: 'Segoe UI', Arial, sans-serif;
+          max-width: 520px;
+          margin: 0 auto;
+          padding: 30px;
+          border-radius: 10px;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+          background-color: #ffffff;
+          border: 1px solid #e0e0e0;
+        ">
           <div style="text-align: center; margin-bottom: 20px;">
-            <img src="http://192.168.0.172:3000//images/logos/logo.mimbral.svg" alt="Mimbral Logo" style="max-height: 60px;" />
+            <img src="https://res.cloudinary.com/dhzahos7u/image/upload/v1747080896/mimbral_af8zz8.png" alt="Mimbral Logo" style="max-height: 60px;" />
           </div>
-          <h2 style="color: #333;">Código de acceso temporal</h2>
-          <p style="font-size: 16px; color: #555;">Estimado usuario, tu código de acceso es:</p>
-          <div style="font-size: 28px; font-weight: bold; color: #0a7cff; margin: 20px 0;">${otpCode}</div>
-          <p style="font-size: 14px; color: #666;">
+
+          <h2 style="color: #1a1a1a; text-align: center; margin-bottom: 10px;">
+            Código de acceso temporal
+          </h2>
+
+          <p style="font-size: 15px; color: #333; text-align: center; margin-bottom: 24px;">
+            Estimado usuario, tu código de acceso es:
+          </p>
+
+          <div style="
+            font-size: 32px;
+            font-weight: 600;
+            color: #0a7cff;
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 12px 24px;
+            background-color: #f3f9ff;
+            border-radius: 8px;
+            display: inline-block;
+          ">
+            ${otpCode}
+          </div>
+
+          <p style="font-size: 14px; color: #555; line-height: 1.6; text-align: center;">
             Este código tiene una validez de <strong>5 minutos</strong> desde su emisión y <strong>solo puede ser utilizado una vez</strong>.
             Si no solicitaste este código, puedes ignorar este correo.
           </p>
-          <p style="font-size: 12px; color: #aaa; margin-top: 30px;">
+
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+
+          <p style="font-size: 12px; color: #aaa; text-align: center;">
             © ${new Date().getFullYear()} Mimbral mts - Todos los derechos reservados.
           </p>
         </div>
       `,
       text: `Tu código de acceso es: ${otpCode} (válido por 5 minutos, solo se puede usar una vez).`,
     });
+
 
     // Registrar sesión (sin token aún, se guardará en verifyOTP)
     await pool.request()

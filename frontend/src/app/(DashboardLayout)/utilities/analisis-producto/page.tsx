@@ -4,16 +4,21 @@ import { Box, Grid,CircularProgress,} from "@mui/material";
 import HeaderProducto, { Filters } from "./components/HeaderProductos";
 import MetricCard from "./components/MetricCard";
 import ProgressGauge from "./components/ProgressGauge";
-import VentasCanalChart from "./components/FormaPago";
-import VentasVendedor from "./components/VentasVendedores";
+import dynamic from "next/dynamic";
 import VentasChart from "./components/VentasChart";
 import {IconCurrencyDollar,IconTrendingUp,IconBox,IconStack2,IconShoppingCart,IconCreditCard,} from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
 import BotonFlotanteMetas from "./components/BotonFlotanteMetas"; // 👈 Importamos el nuevo componente
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 import { useSearchParams } from "next/navigation";
 import { formatVentas, formatUnidades } from "@/utils/format";
+
+const FormaPago = dynamic(() => import("./components/FormaPago"), {
+  ssr: false,
+});
+const VentasVendedores = dynamic(() => import("./components/VentasVendedores"), {
+  ssr: false,
+});
 
 
 
@@ -371,10 +376,10 @@ const fetchVentasTotal = async (currentFiltros: Filters) => {
     
         <Grid container spacing={2} mt={2}>
           <Grid item xs={12} md={6}>
-            <VentasCanalChart />
+            <FormaPago />
           </Grid>
           <Grid item xs={12} md={6}>
-            <VentasVendedor filtros={filtros} />
+            <VentasVendedores filtros={filtros} />
           </Grid>
         </Grid>
     

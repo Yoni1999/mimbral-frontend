@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import {
@@ -12,7 +13,10 @@ import {
   Button,
   Typography,
   Autocomplete,
+  Dialog,
+  IconButton,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 
@@ -30,7 +34,6 @@ interface PrimerNivel {
   codigo: string;
   nombre: string;
   imagen?: string;
-
 }
 
 interface Props {
@@ -51,7 +54,7 @@ const temporadaRangos: Record<string, { inicio: string; fin: string }> = {
 const HeaderCategoria: React.FC<Props> = ({ onFilterChange }) => {
   const [filters, setFilters] = useState<Filters>({
     temporada: "",
-    periodo: "Ultimos 7 días", 
+    periodo: "Ultimos 7 días",
     fechaInicio: "",
     fechaFin: "",
     comparacion: "",
@@ -59,51 +62,34 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange }) => {
   });
 
   const [primerNiveles, setPrimerNiveles] = useState<PrimerNivel[]>([]);
+  const [showNivelModal, setShowNivelModal] = useState(false);
 
   useEffect(() => {
     const fetchPrimerNiveles = async () => {
       try {
         const response = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
-        if (!response) throw new Error("La respuesta es null o undefined");
-        const data = await response.json();
-        console.log("🔎 Datos recibidos desde la API:", data); // <-- AGREGA ESTO
+        const data = await response!.json();
         setPrimerNiveles(data);
+        if (data.length > 0 && !filters.primer_nivel) {
+          setShowNivelModal(true);
+        }
       } catch (error) {
         console.error("Error al cargar niveles:", error);
       }
     };
     fetchPrimerNiveles();
   }, []);
-  useEffect(() => {
-    if (primerNiveles.length > 0 && !filters.primer_nivel) {
-      const primerNivel = primerNiveles[0];
-      const updatedFilters = {
-        ...filters,
-        primer_nivel: primerNivel.codigo,
-      };
-      setFilters(updatedFilters);
-      onFilterChange(updatedFilters); // ✅ También aplicarlo arriba
-    }
-  }, [primerNiveles]);
-  
 
   const obtenerResumenFiltro = () => {
-    if (filters.temporada) {
-      return `Temporada: ${filters.temporada}`;
-    }
-    if (filters.periodo) {
-      return `Período: ${filters.periodo}`;
-    }
-    if (filters.fechaInicio && filters.fechaFin) {
-      return `Rango: ${filters.fechaInicio} al ${filters.fechaFin}`;
-    }
+    if (filters.temporada) return `Temporada: ${filters.temporada}`;
+    if (filters.periodo) return `Período: ${filters.periodo}`;
+    if (filters.fechaInicio && filters.fechaFin) return `Rango: ${filters.fechaInicio} al ${filters.fechaFin}`;
     if (filters.primer_nivel) {
       const nivel = primerNiveles.find((n) => n.codigo === filters.primer_nivel);
       return `Nivel superior: ${nivel?.nombre || filters.primer_nivel}`;
     }
     return "Sin filtros aplicados";
   };
-  
 
   const handleChange = (key: keyof Filters, value: string) => {
     let updated: Filters = { ...filters, [key]: value };
@@ -123,41 +109,21 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange }) => {
     }
 
     if (key === "periodo") {
-      updated = {
-        ...updated,
-        temporada: "",
-        fechaInicio: "",
-        fechaFin: "",
-      };
+      updated = { ...updated, temporada: "", fechaInicio: "", fechaFin: "" };
     }
 
     if (key === "fechaInicio" || key === "fechaFin") {
-      updated = {
-        ...updated,
-        temporada: "",
-        periodo: "",
-        [key]: value,
-      };
+      updated = { ...updated, temporada: "", periodo: "", [key]: value };
     }
 
     if (key === "primer_nivel") {
       const nivel = primerNiveles.find((n) => n.codigo === value);
-      updated = {
-        ...updated,
-        primer_nivel: value,
-        nombre_primer_nivel: nivel?.nombre || "",
-      };
+      updated = { ...updated, primer_nivel: value, nombre_primer_nivel: nivel?.nombre || "" };
     }
-    
 
     setFilters(updated);
 
-    const puedeFiltrar =
-      updated.periodo ||
-      updated.temporada ||
-      (updated.fechaInicio && updated.fechaFin) ||
-      updated.primer_nivel;
-
+    const puedeFiltrar = updated.periodo || updated.temporada || (updated.fechaInicio && updated.fechaFin) || updated.primer_nivel;
     if (puedeFiltrar) onFilterChange(updated);
   };
 
@@ -175,6 +141,71 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange }) => {
   };
 
   return (
+    <>
+    <Dialog open={showNivelModal} fullWidth maxWidth="lg">
+      <Box p={3} textAlign="center" sx={{ position: "relative" }}>
+        {/* Botón de cierre arriba a la derecha */}
+        <IconButton
+          onClick={() => setShowNivelModal(false)}
+          sx={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            color: "#888",
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+
+        <Typography variant="h6" fontWeight={600} mb={3} color="primary">
+          Para analizar el primer nivel, primero debes seleccionar una categoría y luego seguir aplicando los filtros que desees!
+        </Typography>
+
+        <Grid container spacing={3} justifyContent="center">
+          {primerNiveles.map((nivel) => (
+            <Grid item xs={12} sm={6} md={3} key={nivel.codigo}>
+              <Box
+                onClick={() => {
+                  handleChange("primer_nivel", nivel.codigo);
+                  setShowNivelModal(false);
+                }}
+                sx={{
+                  border: "2px solid #ccc",
+                  borderRadius: 3,
+                  p: 1.5,
+                  cursor: "pointer",
+                  transition: "0.3s",
+                  "&:hover": { borderColor: "#213663", boxShadow: 2 },
+                }}
+              >
+                <Box
+                  component="img"
+                  src={nivel.imagen || "https://cdn-icons-png.flaticon.com/512/891/891419.png"}
+                  alt={nivel.nombre}
+                  sx={{
+                    width: 86,
+                    height: 86,
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    mx: "auto",
+                    boxShadow: 2,
+                  }}
+                />
+                <Typography mt={1.5} fontWeight={600} fontSize="0.9rem">
+                  {nivel.nombre}
+                </Typography>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+
+        <Typography variant="body2" color="text.secondary" mt={4}>
+          Esta selección es necesaria para cargar los datos correctamente.
+        </Typography>
+      </Box>
+    </Dialog>
+
+
     <Box
       sx={{
         mb: 2,
@@ -388,6 +419,7 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange }) => {
         </Grid>
       </Grid>
     </Box>
+  </>
   );
 };
 

@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { obtenerProductosDistintosPeriodo, obtenerMargenVentas,obtenerMargenCategoriasComparado, obtenerVentasPorCanalYFecha,  obtenerNotascredito,obtenerTopProductos, obtenerTransaccionesPeriodo, obtenerVentasPeriodo, obtenerUnidadesVendidasPeriodo } = require("../controllers/obtenerVentasHoy");
+const { obtenerProductosDistintosPeriodo, obtenerMargenVentas,obtenerMargenCategoriasComparado, obtenerNotascredito,obtenerTopProductos, obtenerTransaccionesPeriodo, obtenerVentasPeriodo, obtenerUnidadesVendidasPeriodo } = require("../controllers/obtenerVentasHoy");
 
 // Ruta para obtener el total de ventas de hoy
 router.get("/Notascredito", obtenerNotascredito);
@@ -10,9 +10,10 @@ router.get("/ventas-periodo",obtenerVentasPeriodo);
 router.get("/unidades-vendidas-periodo", obtenerUnidadesVendidasPeriodo );
 router.get("/productos-distintos-periodo", obtenerProductosDistintosPeriodo);
 router.get("/margen-categorias-comparado", obtenerMargenCategoriasComparado); 
-router.get("/ventas-canal-fecha", obtenerVentasPorCanalYFecha); 
+
 router.get("/margen-ventas", obtenerMargenVentas);
 
 
 module.exports = router;
+
 

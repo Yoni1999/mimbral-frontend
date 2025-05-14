@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "next start"
   },
   "dependencies": {
     "@coreui/icons": "^3.0.1",
@@ -18,7 +17,7 @@
     "@emotion/server": "11.11.0",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "5.15.15",
-    "@mui/lab": "^6.0.0-beta.28",
+    "@mui/lab": "^5.0.0-alpha.125",
     "@mui/material": "^5.15.15",
     "@mui/system": "^6.4.3",
     "@mui/x-charts": "^7.28.0",

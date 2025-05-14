@@ -1,39 +1,5 @@
 const { sql, poolPromise } = require("../models/db");
-const { getCachedData } = require("../utils/cache");
 
-const obtenerMargenPorAnio = async (req, res) => {
-  try {
-    const pool = await poolPromise; 
-
-    const query = `
-      WITH MargenAnual AS (
-          SELECT 
-              YEAR(T0.DocDate) AS Año,
-              ROUND(
-                  (SUM(T1.LineTotal - (T1.Quantity * T1.StockPrice)) / NULLIF(SUM(T1.LineTotal), 0)) * 100, 
-                  2
-              ) AS Porcentaje_Margen
-          FROM OINV T0
-          INNER JOIN INV1 T1 ON T0.DocEntry = T1.DocEntry
-          WHERE T0.Canceled = 'N'  
-          GROUP BY YEAR(T0.DocDate)
-      )
-      SELECT 
-          m1.Año,
-          m1.Porcentaje_Margen,
-          COALESCE(m1.Porcentaje_Margen - m2.Porcentaje_Margen, NULL) AS Variacion_Respecto_Anterior
-      FROM MargenAnual m1
-      LEFT JOIN MargenAnual m2 ON m1.Año = m2.Año + 1
-      ORDER BY m1.Año DESC;
-    `;
-
-    const result = await pool.request().query(query);
-    res.json(result.recordset);
-  } catch (error) {
-    console.error("❌ Error al obtener margen por año:", error);
-    res.status(500).json({ error: "Error en el servidor." });
-  }
-};
 
 const obtenerMargenBrutoPeriodo = async (req, res) => {
     try {
@@ -66,7 +32,7 @@ const obtenerMargenBrutoPeriodo = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -160,7 +126,7 @@ const obtenerMargenBrutoPorCategoria = async (req, res) => {
   try {
     const pool = await poolPromise;
     const canal = req.query.canal || null;
-    const periodo = req.query.periodo || "1D"; // Por defecto, hoy
+    const periodo = req.query.periodo || "1D"; 
     const fechaInicio = req.query.fechaInicio || null;
     const fechaFin = req.query.fechaFin || null;
 
@@ -172,7 +138,7 @@ const obtenerMargenBrutoPorCategoria = async (req, res) => {
 
       DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
 
-      -- 🔹 Si hay fechas personalizadas, usarlas
+
       IF (@FechaInicioCustom IS NOT NULL AND @FechaFinCustom IS NOT NULL)
       BEGIN
           SET @FechaInicioActual = @FechaInicioCustom;
@@ -180,13 +146,13 @@ const obtenerMargenBrutoPorCategoria = async (req, res) => {
       END
       ELSE
       BEGIN
-          -- 🔹 Caso sin filtro: Definir rango según el período
+
           SET @FechaFinActual = CAST(GETDATE() AS DATE);
           SET @FechaInicioActual =
               CASE 
                   WHEN @Periodo = '7D'  THEN DATEADD(DAY, -7, @FechaFinActual)
                   WHEN @Periodo = '14D' THEN DATEADD(DAY, -14, @FechaFinActual)
-                  WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0) 
+                  WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual) 
                   WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                   WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual) -- ✅ Agregado
                   WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual) -- ✅ Agregado
@@ -197,6 +163,7 @@ const obtenerMargenBrutoPorCategoria = async (req, res) => {
       -- 🔹 Margen Bruto por Categoría en el período seleccionado
       SELECT 
           C.Name AS Categoria,
+          C.U_Imagen,
           ISNULL(SUM(I.LineTotal), 0) AS Ventas,
           ISNULL(SUM(I.Quantity * O.AvgPrice), 0) AS Costo,
           (ISNULL(SUM(I.LineTotal), 0) - ISNULL(SUM(I.Quantity * O.AvgPrice), 0)) AS MargenBruto,
@@ -220,12 +187,12 @@ const obtenerMargenBrutoPorCategoria = async (req, res) => {
                   OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
                   OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
                   OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' 
-                      AND T0.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
+                      AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                   OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' 
-                      AND T0.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                      AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
               )
           )
-      GROUP BY C.Name
+      GROUP BY C.Name, C.U_Imagen
       ORDER BY MargenBruto DESC;
     `;
 
@@ -242,4 +209,4 @@ const obtenerMargenBrutoPorCategoria = async (req, res) => {
     res.status(500).json({ error: "Error en el servidor." });
   }
 };
-module.exports = { obtenerMargenPorAnio, obtenerMargenBrutoPeriodo, obtenerMargenBrutoPorCategoria };
+module.exports = { obtenerMargenBrutoPeriodo, obtenerMargenBrutoPorCategoria };

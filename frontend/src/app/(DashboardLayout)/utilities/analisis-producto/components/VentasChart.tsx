@@ -76,7 +76,7 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
     };
   
     // Solo ejecutar si hay filtros válidos
-    if (itemCode && (periodo || (fechaInicio && fechaFin))) {
+    if (itemCode ) {
       fetchData();
     }
   }, [canal, itemCode, periodo, fechaInicio, fechaFin]);

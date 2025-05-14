@@ -24,6 +24,7 @@ import {
 import CustomTextField from "@/app/(DashboardLayout)/components/forms/theme-elements/CustomTextField";
 import OtpVerification from "../login/otpVerification";
 import { BACKEND_URL } from "@/config";
+import { fetchSafe } from "@/utils/fetchSafe";
 
 interface loginType {
   title?: string;
@@ -56,22 +57,16 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     setShowPassword((prev) => !prev);
   };
 
-  const handleLogin = async () => {
+    const handleLogin = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
+      const data = await fetchSafe("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error desconocido");
-      }
 
       if (rememberMe) {
         localStorage.setItem("rememberedEmail", email);
@@ -94,8 +89,9 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
 
         window.location.href = "/inicio";
       }
+
     } catch (err: any) {
-      setMensajeTexto(err.message);
+      setMensajeTexto(err.message || "Error de conexión");
       setMensajeTipo("error");
       setMensajeVisible(true);
     } finally {

@@ -42,13 +42,13 @@ const RegisterPage = () => {
         elevation={9}
         sx={{
           width: "100%",
-          maxWidth: "480px",
+          maxWidth: "580px",
           minHeight: "600px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          padding: 4,
+          padding: 2,
           backgroundColor: "rgba(255, 255, 255, 0.85)",
           backdropFilter: "blur(5px)",
           borderRadius: 2,
@@ -57,8 +57,8 @@ const RegisterPage = () => {
         <Box display="flex" alignItems="center" justifyContent="center" mb={2}>
           <LogoMimbral />
         </Box>
-        <Typography variant="subtitle1" textAlign="center" color="textSecondary" mb={1}>
-          Regístrate para explorar datos
+        <Typography variant="subtitle1" textAlign="center" color="textSecondary" mb={2}>
+          Regístrate para obtener acceso
         </Typography>
         <AuthRegister />
       </Card>

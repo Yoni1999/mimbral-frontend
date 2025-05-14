@@ -9,10 +9,14 @@ import MetricCard from "./components/MetricCard";
 import HeaderFilters, { Filters } from "./components/HeaderFilters";
 import TopProductosChart from "./components/TopProductosChart";
 import VentasPorCategoriaChart from "./components/VentasPorCategoriaChart";
-import VentasCanalChart from "./components/VentasCanalChart";
+import dynamic from "next/dynamic";
 import TransaccionesChart from "./components/TransaccionesChart";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
+
+const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
+  ssr: false,
+});
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(value);

@@ -1,68 +1,89 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Legend,
+  LineChart, Line, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
 import {
   Paper,
   Box,
-  MenuItem,
-  Select,
-  FormControl,
-  Stack,
   Typography,
 } from "@mui/material";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
+import { formatVentas } from "@/utils/format"; // ✅ Tu función de formato
 
-type FiltroTiempo = "1M" | "7D" | "14D";
+export interface Filters {
+  periodo: string;
+  fechaInicio: string;
+  fechaFin: string;
+  temporada: string;
+}
 
-const opcionesComparacion: { value: FiltroTiempo; label: string }[] = [
-  { value: "1M", label: "Mes Actual" },
-  { value: "7D", label: "Últimos 7 días" },
-  { value: "14D", label: "Últimos 14 días" },
-];
+interface Props {
+  filtros: Filters;
+}
 
-const VentasChart = () => {
-  const [filtroTiempo, setFiltroTiempo] = useState<FiltroTiempo>("1M");
+const VentasChart: React.FC<Props> = ({ filtros }) => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const formatValue = (value: number) => `$${(value / 1_000_000).toFixed(1)}M`;
+  const getPeriodoParam = () => {
+    switch (filtros.periodo) {
+      case "Hoy": return "1D";
+      case "Ultimos 7 días": return "7D";
+      case "Ultimos 14 días": return "14D";
+      case "Ultimo mes": return "1M";
+      case "3 meses": return "3M";
+      case "6 meses": return "6M";
+      default: return "1D";
+    }
+  };
+
+  const buildQuery = () => {
+    const params = new URLSearchParams();
+    if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
+    if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
+    if (filtros.periodo) params.append("periodo", getPeriodoParam());
+    if (filtros.temporada) params.append("temporada", filtros.temporada);
+    return params.toString();
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetchWithToken(
-          `${BACKEND_URL}/api/ventas-canal-fecha?periodo=${filtroTiempo}`
-        );
-
-        if (!response) throw new Error("Error al cargar datos del servidor");
+        const response = await fetchWithToken(`${BACKEND_URL}/api/primer-nivel/ventas-fecha-primer-nivel?${buildQuery()}`);
+        if (!response) throw new Error("No se pudo cargar el gráfico de ventas");
         const raw = await response.json();
 
-        const procesado = raw.map((item: any) => {
-          const fechaISO = item.Fecha; // ejemplo: "2025-04-07T00:00:00.000Z"
+        interface ProcesadoItem {
+          date: string;
+          chorrillo: number;
+          meli: number;
+          falabella: number;
+          empresas: number;
+          vitex: number;
+          balmaceda: number;
+          orden: number;
+        }
+
+        const procesado: ProcesadoItem[] = raw.map((item: any) => {
+          const fechaISO = item.Fecha;
           return {
-            date: fechaISO.slice(0, 10), // YYYY-MM-DD, sin desfase de zona horaria
+            date: fechaISO.slice(0, 10),
             chorrillo: item.Chorrillo || 0,
             meli: item.Meli || 0,
             falabella: item.Falabella || 0,
             empresas: item.Empresas || 0,
             vitex: item.Vitex || 0,
             balmaceda: item.Balmaceda || 0,
-            orden: new Date(fechaISO).getTime(), // ordenar por fecha real
+            orden: new Date(fechaISO).getTime(),
           };
         });
 
-        procesado.sort((a:any, b:any) => a.orden - b.orden);
+        procesado.sort((a: ProcesadoItem, b: ProcesadoItem) => a.orden - b.orden);
         setData(procesado);
       } catch (error) {
         console.error("❌ Error al cargar ventas por canal:", error);
@@ -71,8 +92,10 @@ const VentasChart = () => {
       }
     };
 
-    fetchData();
-  }, [filtroTiempo]);
+    if (filtros.periodo || (filtros.fechaInicio && filtros.fechaFin)) {
+      fetchData();
+    }
+  }, [filtros]);
 
   return (
     <Paper
@@ -86,28 +109,10 @@ const VentasChart = () => {
         gap: 2,
       }}
     >
-  
-      {/* 🔹 Título y Selector de Período */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, color: "#333" }}>
-          Ventas ($)
-        </Typography>
-        <FormControl sx={{ minWidth: 160 }}>
-          <Select
-            value={filtroTiempo}
-            onChange={(e) => setFiltroTiempo(e.target.value as FiltroTiempo)}
-            size="small"
-          >
-            {opcionesComparacion.map((opcion) => (
-              <MenuItem key={opcion.value} value={opcion.value}>
-                {opcion.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Stack>
+      <Typography variant="h6" sx={{ fontWeight: 600, color: "#333" }}>
+        Ventas por Canal
+      </Typography>
 
-      {/* 🔹 Gráfico */}
       {loading ? (
         <Typography align="center">Cargando datos...</Typography>
       ) : (
@@ -117,32 +122,11 @@ const VentasChart = () => {
             <XAxis
               dataKey="date"
               tick={{ fontSize: 12, fill: "#666" }}
-              tickFormatter={(dateStr: string) => {
-                const [y, m, d] = dateStr.split("-");
-                return `${d}/${m}`;
-              }}
+              tickFormatter={(d) => d.split("-").reverse().join("/")}
             />
-            <YAxis tick={{ fontSize: 12, fill: "#666" }} tickFormatter={formatValue} />
-            <Tooltip
-              formatter={formatValue}
-              labelFormatter={(label: string) => {
-                const dias = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
-                const meses = [
-                  "ene", "feb", "mar", "abr", "may", "jun",
-                  "jul", "ago", "sep", "oct", "nov", "dic"
-                ];
-
-                const [y, m, d] = label.split("-");
-                const date = new Date(`${label}T12:00:00Z`); // Usamos 12:00 UTC para evitar desfase
-                const dia = dias[date.getUTCDay()];
-                const mes = meses[parseInt(m, 10) - 1];
-
-                return `${dia}, ${parseInt(d, 10)} ${mes}`;
-              }}
-            />
-
+            <YAxis tick={{ fontSize: 12, fill: "#666" }} tickFormatter={formatVentas} />
+            <Tooltip formatter={formatVentas} />
             <Legend verticalAlign="top" height={36} />
-
             {[
               { key: "chorrillo", color: "#284270", name: "Chorrillo" },
               { key: "meli", color: "#d93a3a", name: "Mercado Libre" },

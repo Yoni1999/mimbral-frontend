@@ -230,7 +230,7 @@ const obtenerMargenVentasPorCategoria = async (req, res) => {
                   WHEN @Periodo = '1A' THEN DATEADD(YEAR, -1, @FechaFinActual)
                   ELSE @FechaFinActual
               END;
-      END;
+      END;   
 
       DECLARE @Dias INT = DATEDIFF(DAY, @FechaInicioActual, @FechaFinActual) + 1;
       SET @FechaFinAnterior = DATEADD(DAY, -1, @FechaInicioActual);

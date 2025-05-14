@@ -50,7 +50,7 @@ export default function LoginPage() {
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          padding: 4,
+          padding: 3,
           backgroundColor: "rgba(255, 255, 255, 0.85)",
           backdropFilter: "blur(5px)",
           borderRadius: 2,

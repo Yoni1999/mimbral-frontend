@@ -86,7 +86,7 @@ const obtenerVentasProductoComparado = async (req, res) => {
                         OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
                             AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                         OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
-                            AND T1.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                            AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
@@ -110,7 +110,7 @@ const obtenerVentasProductoComparado = async (req, res) => {
                         OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
                             AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                         OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
-                            AND T1.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                            AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
@@ -232,7 +232,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                         OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
                             AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                         OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
-                            AND T1.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                            AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
@@ -258,7 +258,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                         OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
                             AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                         OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
-                            AND T1.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                            AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
@@ -379,7 +379,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                         OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
                             AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                         OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
-                            AND T1.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                            AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
@@ -404,7 +404,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                         OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
                             AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                         OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
-                            AND T1.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                            AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
@@ -523,7 +523,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                         OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
                             AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                         OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
-                            AND T1.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                            AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
@@ -547,7 +547,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                         OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
                             AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                         OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
-                            AND T1.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                            AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
@@ -666,7 +666,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                         OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
                             AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                         OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
-                            AND T1.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                            AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
@@ -690,7 +690,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                         OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
                             AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                         OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
-                            AND T1.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                            AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
@@ -807,7 +807,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                         OR (@CanalParam = 'Balmaceda' AND T1.WhsCode = '07')
                         OR (@CanalParam = 'Vitex' AND T1.WhsCode = '01' AND T0.SlpCode IN (401,397))
                         OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' AND T1.SlpCode NOT IN (401,397,355,398,227,250,205,138,209,228,226,137,212))
-                        OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' AND T1.SlpCode IN (227,250,205,138,209,228,226,137,212))
+                        OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
@@ -829,7 +829,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                         OR (@CanalParam = 'Balmaceda' AND T1.WhsCode = '07')
                         OR (@CanalParam = 'Vitex' AND T1.WhsCode = '01' AND T0.SlpCode IN (401,397))
                         OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' AND T1.SlpCode NOT IN (401,397,355,398,227,250,205,138,209,228,226,137,212))
-                        OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' AND T1.SlpCode IN (227,250,205,138,209,228,226,137,212))
+                        OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
@@ -953,7 +953,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                 OR (@CanalParam = 'Balmaceda' AND T1.WhsCode = '07')
                 OR (@CanalParam = 'Vitex' AND T1.WhsCode = '01' AND T0.SlpCode IN (401, 397))
                 OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
-                OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' AND T1.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
             )
             )
             AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
@@ -975,7 +975,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                 OR (@CanalParam = 'Balmaceda' AND T1.WhsCode = '07')
                 OR (@CanalParam = 'Vitex' AND T1.WhsCode = '01' AND T0.SlpCode IN (401, 397))
                 OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
-                OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' AND T1.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
             )
             )
             AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
@@ -1085,6 +1085,7 @@ const obtenerVentasPorCategoriaComparado = async (req, res) => {
             SELECT 
                 C.U_Imagen,
                 C.Name AS Categoria,
+                C.code,
                 SUM(I.LineTotal) AS Ventas_Actual,
                 CAST(SUM(I.Quantity) AS INT) AS Unidades_Actual
             FROM INV1 I
@@ -1102,16 +1103,17 @@ const obtenerVentasPorCategoriaComparado = async (req, res) => {
                         OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
                         OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
                         OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
-                        OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                        OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' AND I.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR I.SlpCode = @VendedorEmpresaParam)
-            GROUP BY C.Name, C.U_Imagen
+            GROUP BY C.Name, C.U_Imagen, c.code
         ),
         VentasAnterior AS (
             SELECT 
                 C.U_Imagen,
                 C.Name AS Categoria,
+                C.code,
                 SUM(I.LineTotal) AS Ventas_Anterior,
                 CAST(SUM(I.Quantity) AS INT) AS Unidades_Anterior
             FROM INV1 I
@@ -1129,16 +1131,17 @@ const obtenerVentasPorCategoriaComparado = async (req, res) => {
                         OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
                         OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND I.SlpCode IN (401, 397))
                         OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
-                        OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                        OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' AND I.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR I.SlpCode = @VendedorEmpresaParam)
-            GROUP BY C.Name, C.U_Imagen
+            GROUP BY C.Name, C.U_Imagen, C.code
         )
   
         SELECT 
             VA.U_Imagen,
             VA.Categoria,
+            VA.code,
             VA.Ventas_Actual,
             VAnt.Ventas_Anterior,
             VA.Unidades_Actual,
@@ -1244,7 +1247,7 @@ const obtenerVentasPorCategoriaComparado = async (req, res) => {
                     OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
                     OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
                     OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
-                    OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                    OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' AND I.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                 )
             )
             AND (@VendedorParam IS NULL OR I.SlpCode = @VendedorParam)
@@ -1351,7 +1354,7 @@ const obtenerVentasPorCategoriaComparado = async (req, res) => {
                     OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
                     OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
                     OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
-                    OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                    OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' AND I.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                 )
                 AND (@VendedorParam IS NULL OR I.SlpCode = @VendedorParam)
             GROUP BY I.ItemCode, O.ItemName, O.U_Imagen
@@ -1373,7 +1376,7 @@ const obtenerVentasPorCategoriaComparado = async (req, res) => {
                     OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
                     OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
                     OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
-                    OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                    OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' AND I.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
                 )
                 AND (@VendedorParam IS NULL OR I.SlpCode = @VendedorParam)
             GROUP BY I.ItemCode

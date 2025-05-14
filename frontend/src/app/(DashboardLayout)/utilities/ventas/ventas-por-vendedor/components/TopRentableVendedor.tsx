@@ -1,22 +1,96 @@
 "use client";
 
-import React from "react";
-import { Box, Typography } from "@mui/material";
-import { BarChart } from "@mui/x-charts/BarChart"; // Usamos MUI Charts
+import React, { useEffect, useState } from "react";
+import { Box, Typography, Avatar } from "@mui/material";
+import { BarChart } from "@mui/x-charts/BarChart";
+import { fetchWithToken } from "@/utils/fetchWithToken";
+import { BACKEND_URL } from "@/config";
+import { formatVentas } from "@/utils/format";
 
-// 🔹 Datos estáticos de productos
-const dataProductos = [
-  { producto: "Producto A", margen: 12000 },
-  { producto: "Producto B", margen: 9500 },
-  { producto: "Producto C", margen: 8000 },
-  { producto: "Producto D", margen: 6000 },
-  { producto: "Producto E", margen: 5000 },
-  { producto: "Producto F", margen: 3500 },
-  { producto: "Producto G", margen: 2500 },
-  { producto: "Producto H", margen: 2000 },
-];
 
-const TopRentableVendedor: React.FC = () => {
+interface ProductoRentable {
+  nombre: string;
+  margen: number;
+  imagen: string;
+}
+
+interface Filters {
+  vendedorEmpresa: string;
+  temporada: string;
+  periodo: string;
+  fechaInicio: string;
+  fechaFin: string;
+  modoComparacion: string;
+  canal: string;
+}
+
+interface Props {
+  filtros: Filters;
+}
+
+const TopRentableVendedor: React.FC<Props> = ({ filtros }) => {
+  const [data, setData] = useState<ProductoRentable[]>([]);
+
+  const getPeriodoParam = (periodo: string) => {
+    switch (periodo) {
+      case "1D": return "1d";
+      case "7D": return "7d";
+      case "14D": return "14d";
+      case "1M": return "1m";
+      case "3M": return "3m";
+      case "6M": return "6m";
+      default: return "1d";
+    }
+  };
+
+  useEffect(() => {
+    const buildQuery = () => {
+      const params = new URLSearchParams();
+
+      if (filtros.periodo) {
+        params.append("periodo", getPeriodoParam(filtros.periodo));
+      } else {
+        if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
+        if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
+      }
+
+      if (filtros.modoComparacion) {
+        params.append("modoComparacion", filtros.modoComparacion);
+      }
+
+      if (filtros.vendedorEmpresa) {
+        params.append("vendedorEmpresa", filtros.vendedorEmpresa);
+      }
+
+      if (filtros.canal) {
+        params.append("canal", filtros.canal);
+      }
+
+      return params.toString();
+    };
+
+    const fetchData = async () => {
+      try {
+        const url = `${BACKEND_URL}/api/pv/toprentables?${buildQuery()}`;
+        const res = await fetchWithToken(url);
+        const json = await res!.json();
+
+        const mapped: ProductoRentable[] = json.map((item: any) => ({
+          nombre: item.Nombre_Producto,
+          margen: item.Margen_Absoluto,
+          imagen: item.Imagen,
+        }));
+
+        setData(mapped);
+      } catch (error) {
+        console.error("❌ Error al obtener productos rentables:", error);
+        setData([]);
+      }
+    };
+
+    fetchData();
+  }, [filtros]);
+
   return (
     <Box
       sx={{
@@ -27,38 +101,42 @@ const TopRentableVendedor: React.FC = () => {
         height: "100%",
       }}
     >
-      <Typography
-        variant="h6"
-        fontWeight={600}
-        mb={2}
-        sx={{ color: "primary", fontSize: "1.1rem" }}
-      >
+      <Typography variant="h6" fontWeight={600} mb={2} color="primary">
         Top 10 Productos Más Rentables
       </Typography>
 
-      <BarChart
-        yAxis={[ 
+      {data.length > 0 ? (
+        <BarChart
+          yAxis={[
             {
-            scaleType: "band",
-            data: dataProductos.map((item) => item.producto),
+              scaleType: "band",
+              data: data.map((item) =>
+                item.nombre.length > 50 ? item.nombre.slice(0, 50) + "…" : item.nombre
+              ),
             },
-        ]}
-        xAxis={[ // <-- eje X es automático (continuo)
+          ]}
+          xAxis={[
             {
-            label: "Margen ($)", // opcional
+              label: "Margen ($)",
+              valueFormatter: (value) => formatVentas(value),
             },
-        ]}
-        series={[
+          ]}
+          series={[
             {
-            data: dataProductos.map((item) => item.margen),
-            label: "Margen ($)",
+              data: data.map((item) => item.margen),
+              label: "Margen Absoluto",
+              valueFormatter: (value) => (value != null ? formatVentas(value) : "-"),
             },
-        ]}
-        height={320}
-        layout="horizontal"
-        margin={{ top: 40, bottom: 40, left: 120, right: 15 }}
+          ]}
+          height={360}
+          layout="horizontal"
+          margin={{ top: 60, bottom: 30, left: 350, right: 30 }}
         />
-
+      ) : (
+        <Typography variant="body2" color="text.secondary">
+          No hay datos disponibles para los filtros seleccionados.
+        </Typography>
+      )}
     </Box>
   );
 };
