@@ -6,6 +6,7 @@ import {
   Grid,
   Paper,
   CircularProgress,
+  Box,
 } from "@mui/material";
 import VentasChart from "./components/VentasChart";
 import MetricCard from "./components/MetricCard";
@@ -180,150 +181,152 @@ const FotoDelDia = () => {
     <>
     <NivelNavigation/>
     <PageContainer title="Resumen Ventas" description="Resumen de las ventas">
-      <FotoDelDiaHeader onFilterChange={(f) => setFiltros(f)} />
-      <Grid container spacing={2}>
-        {/* 🔹 Primera fila */}
-        <Grid item xs={12} md={5}>
-          <Grid container spacing={2}>
-            {[
-              {
-                title: "Ventas",
-                value: formatMillions(ventasHoy.TotalVentasPeriodo),
-                subtitle: `Periodo Anterior: ${formatMillions(
-                  ventasHoy.PromedioVentasPeriodo
-                )}`,
-                percentageChange: ventasHoy.PorcentajeCambio,
-                isLoading: !ventasHoy.TotalVentasPeriodo,
-                icon: <IconCurrencyDollar />,
-              },
-              {
-                title: "Margen Ventas",
-                value: `${margenBrutoHoy.MargenPorcentajePeriodo}%`,
-                subtitle: `Variación: ${margenBrutoHoy.VariacionMargen}%`,
-                percentageChange: margenBrutoHoy.VariacionMargen,
-                isLoading: !margenBrutoHoy.MargenPorcentajePeriodo,
-                icon: <IconTrendingUp />,
-              },
-              {
-                title: "Cantidad de Ventas",
-                value: transaccionHoy.CantidadTransaccionesHoy,
-                subtitle: `Periodo Anterior: ${transaccionHoy.CantidadTransaccionesAyer}`,
-                percentageChange: transaccionHoy.PorcentajeCambio,
-                isLoading: !transaccionHoy.CantidadTransaccionesHoy,
-                icon: <IconShoppingCart />,
-              },
-              {
-                title: "Notas de Crédito",
-                value: Notascredito.CantidadNotasCreditoPeriodo,
-                subtitle: `Periodo Anterior: ${Notascredito.CantidadNotasCreditoAnterior}`,
-                percentageChange: Notascredito.PorcentajeCambioNotasCredito,
-                isLoading: Notascredito.CantidadNotasCreditoPeriodo === undefined,
-                icon: <IconCreditCard />,
-              },
-              {
-                title: "Ítems Vendidos",
-                value: productosDistintos.ProductosPeriodoActual,
-                subtitle: `Periodo Anterior: ${productosDistintos.ProductosPeriodoAnterior}`,
-                percentageChange: productosDistintos.PorcentajeCambio,
-                isLoading: !productosDistintos.ProductosPeriodoActual,
-                icon: <IconStack2 />,
-              },
-              {
-                title: "Unidades Vendidas",
-                value: unidadesVendidas.CantidadVendida,
-                subtitle: `Periodo Anterior: ${unidadesVendidas.CantidadVendidaAnterior}`,
-                percentageChange: unidadesVendidas.PorcentajeCambio,
-                isLoading: !unidadesVendidas.CantidadVendida,
-                icon: <IconBox />,
-              },
-            ].map((card, index) => (
-              <Grid item xs={12} sm={6} md={6} key={index}>
-                {card.isLoading ? (
-                  <Paper
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      height: 120,
-                      borderRadius: 2,
-                      boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
-                      backgroundColor: "#f5f5f5",
-                    }}
-                  >
-                    <CircularProgress />
-                  </Paper>
-                ) : (
-                  <MetricCard
-                    title={card.title}
-                    value={card.value}
-                    subtitle={card.subtitle}
-                    percentageChange={card.percentageChange}
-                    icon={card.icon}
-                    elevation={1} // Elevación personalizada
-                  />
-                )}
+      <Box sx={{ p: 1}}>
+        <FotoDelDiaHeader onFilterChange={(f) => setFiltros(f)} />
+        <Grid container spacing={2}>
+          {/* Primera fila */}
+          <Grid item xs={12} md={5}>
+            <Grid container spacing={2}>
+              {[
+                {
+                  title: "Ventas",
+                  value: formatMillions(ventasHoy.TotalVentasPeriodo),
+                  subtitle: `Periodo Anterior: ${formatMillions(
+                    ventasHoy.PromedioVentasPeriodo
+                  )}`,
+                  percentageChange: ventasHoy.PorcentajeCambio,
+                  isLoading: !ventasHoy.TotalVentasPeriodo,
+                  icon: <IconCurrencyDollar />,
+                },
+                {
+                  title: "Margen Ventas",
+                  value: `${margenBrutoHoy.MargenPorcentajePeriodo}%`,
+                  subtitle: `Variación: ${margenBrutoHoy.VariacionMargen}%`,
+                  percentageChange: margenBrutoHoy.VariacionMargen,
+                  isLoading: !margenBrutoHoy.MargenPorcentajePeriodo,
+                  icon: <IconTrendingUp />,
+                },
+                {
+                  title: "Cantidad de Ventas",
+                  value: transaccionHoy.CantidadTransaccionesHoy,
+                  subtitle: `Periodo Anterior: ${transaccionHoy.CantidadTransaccionesAyer}`,
+                  percentageChange: transaccionHoy.PorcentajeCambio,
+                  isLoading: !transaccionHoy.CantidadTransaccionesHoy,
+                  icon: <IconShoppingCart />,
+                },
+                {
+                  title: "Notas de Crédito",
+                  value: Notascredito.CantidadNotasCreditoPeriodo,
+                  subtitle: `Periodo Anterior: ${Notascredito.CantidadNotasCreditoAnterior}`,
+                  percentageChange: Notascredito.PorcentajeCambioNotasCredito,
+                  isLoading: Notascredito.CantidadNotasCreditoPeriodo === undefined,
+                  icon: <IconCreditCard />,
+                },
+                {
+                  title: "Ítems Vendidos",
+                  value: productosDistintos.ProductosPeriodoActual,
+                  subtitle: `Periodo Anterior: ${productosDistintos.ProductosPeriodoAnterior}`,
+                  percentageChange: productosDistintos.PorcentajeCambio,
+                  isLoading: !productosDistintos.ProductosPeriodoActual,
+                  icon: <IconStack2 />,
+                },
+                {
+                  title: "Unidades Vendidas",
+                  value: unidadesVendidas.CantidadVendida,
+                  subtitle: `Periodo Anterior: ${unidadesVendidas.CantidadVendidaAnterior}`,
+                  percentageChange: unidadesVendidas.PorcentajeCambio,
+                  isLoading: !unidadesVendidas.CantidadVendida,
+                  icon: <IconBox />,
+                },
+              ].map((card, index) => (
+                <Grid item xs={12} sm={6} md={6} key={index}>
+                  {card.isLoading ? (
+                    <Paper
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: 120,
+                        borderRadius: 2,
+                        boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
+                        backgroundColor: "#f5f5f5",
+                      }}
+                    >
+                      <CircularProgress />
+                    </Paper>
+                  ) : (
+                    <MetricCard
+                      title={card.title}
+                      value={card.value}
+                      subtitle={card.subtitle}
+                      percentageChange={card.percentageChange}
+                      icon={card.icon}
+                      elevation={1} // Elevación personalizada
+                    />
+                  )}
+                </Grid>
+              ))}
+            </Grid>
+          </Grid>
+
+          <Grid item xs={12} md={7}>
+            <VentasChart filtros={filtros} />
+          </Grid>
+
+          {/* 🔹 Segunda fila */}
+          <Grid item xs={12}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={5}>
+                <VentasCanalChart filters={filtros} />
               </Grid>
-            ))}
+              <Grid item xs={12} md={7}>
+                <TopProductosChart data={topProductos} />
+              </Grid>
+            </Grid>
           </Grid>
-        </Grid>
 
-        <Grid item xs={12} md={7}>
-          <VentasChart filtros={filtros} />
-        </Grid>
+          {/* 🔹 Tercera fila */}
+          <Grid item xs={12}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={5}>
+                <RentabilidadChart data={productosRentabilidad} />
+              </Grid>
+              <Grid item xs={12} md={7}>
+              <CategoriasBarChart data={categoriasData} />
+              </Grid>
+            </Grid>
+          </Grid>
+      
 
-        {/* 🔹 Segunda fila */}
-        <Grid item xs={12}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={5}>
-              <VentasCanalChart filters={filtros} />
+          {/* 🔹 Cuarta fila */}
+          <Grid item xs={12}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={12}>
+                <SeccionTitulo title= "Metas por Canal" />
+              </Grid>
+            </Grid>      
+          </Grid>
+          {/* 🔹 Quinta Fila */}
+          <Grid item xs={12}>
+            <Grid container spacing={2}>
+            <Grid item xs={12} md={3}>
+              <ProgressGauge value={720} total={1000} title="Empresas" />
             </Grid>
-            <Grid item xs={12} md={7}>
-              <TopProductosChart data={topProductos} />
+            <Grid item xs={12} md={3}>
+              <ProgressGauge value={550} total={1000} title="Chorrillo" />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <ProgressGauge value={300} total={1000} title="Meli" />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <ProgressGauge value={820} total={1000} title="Balmaceda" />
+            </Grid>
             </Grid>
           </Grid>
         </Grid>
-
-        {/* 🔹 Tercera fila */}
-        <Grid item xs={12}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={5}>
-              <RentabilidadChart data={productosRentabilidad} />
-            </Grid>
-            <Grid item xs={12} md={7}>
-             <CategoriasBarChart data={categoriasData} />
-            </Grid>
-          </Grid>
-        </Grid>
-     
-
-        {/* 🔹 Cuarta fila */}
-        <Grid item xs={12}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={12}>
-              <SeccionTitulo title= "Metas por Canal" />
-            </Grid>
-          </Grid>      
-        </Grid>
-        {/* 🔹 Quinta Fila */}
-        <Grid item xs={12}>
-          <Grid container spacing={2}>
-          <Grid item xs={12} md={3}>
-            <ProgressGauge value={720} total={1000} title="Empresas" />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <ProgressGauge value={550} total={1000} title="Chorrillo" />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <ProgressGauge value={300} total={1000} title="Meli" />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <ProgressGauge value={820} total={1000} title="Balmaceda" />
-          </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
+      </Box>
     </PageContainer>
-  </> 
+    </>
   );
 };
 

@@ -2,7 +2,6 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const os = require("os");
-const localtunnel = require("localtunnel"); // ← ✅ usamos LocalTunnel
 const authMiddleware = require("./src/middleware/authMiddleware");
 
 // ✅ Rutas
@@ -91,20 +90,4 @@ app.listen(PORT, HOST, async () => {
   console.log(`Local:     http://localhost:${PORT}`);
   console.log(`Red local: http://${localIP}:${PORT}`);
 
-  // 🌍 Iniciar túnel LocalTunnel con subdominio personalizado
-  try {
-    const tunnel = await localtunnel({ port: PORT }); // ✅ Esto genera una URL aleatoria
-
-    console.log(`🌍 Túnel público abierto: ${tunnel.url}`);
-    console.log(`📦 Ejemplo: ${tunnel.url}/api/auth/login`);
-
-    // Cierre limpio
-    process.on("SIGINT", async () => {
-      await tunnel.close();
-      console.log("🔒 Túnel cerrado. Servidor detenido.");
-      process.exit();
-    });
-  } catch (error) {
-    console.error("❌ Error al iniciar LocalTunnel:", error.message);
-  }
 });
