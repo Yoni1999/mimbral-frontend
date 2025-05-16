@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Grid } from "@mui/material";
 import HeaderCategoria, { Filters } from "./components/HeaderCategoria";
+import NivelNavigation from "../components/NivelNavigation";
 import MetricCard from "./components/MetricCard";
 import VentasChart from "./components/VentasChart";
 import dynamic from "next/dynamic";
@@ -20,6 +21,8 @@ import { fetchWithToken } from "@/utils/fetchWithToken";
 import { useRouter } from "next/navigation"; // ✅ Mantener router para abrir nuevas páginas
 import { BACKEND_URL } from "@/config";
 const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), { ssr: false });
+
+
 
 const ResumenCategoriasPage: React.FC = () => {
   const router = useRouter();
@@ -104,7 +107,7 @@ const ResumenCategoriasPage: React.FC = () => {
     if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
     if (filtros.periodo) params.append("periodo", getPeriodoParam());
     if (filtros.temporada) params.append("temporada", filtros.temporada);
-    if (filtros.primer_nivel) params.append("primerNivel", filtros.primer_nivel);
+    if (filtros.primer_nivel && filtros.primer_nivel.trim() !== "") { params.append("primerNivel", filtros.primer_nivel);}
     return params.toString();
   };
 
@@ -219,7 +222,9 @@ const ResumenCategoriasPage: React.FC = () => {
   }, [filtros]);
 
   return (
-    <Box sx={{ p: 3 }}>
+   <>
+    <NivelNavigation/>
+    <Box sx={{ p: 1}}>
       <HeaderCategoria onFilterChange={setFiltros} />
 
       <Grid container spacing={2}>
@@ -305,6 +310,7 @@ const ResumenCategoriasPage: React.FC = () => {
         </Grid>
       </Grid>
     </Box>
+  </> 
   );
 };
 

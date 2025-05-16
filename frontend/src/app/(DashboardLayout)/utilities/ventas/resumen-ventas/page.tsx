@@ -22,6 +22,7 @@ import {
   IconStack2,
   IconBox,
 } from "@tabler/icons-react";
+import NivelNavigation from "../components/NivelNavigation";
 import FotoDelDiaHeader, { Filters } from "./components/FotoDelDiaHeader.tsx";
 import { BACKEND_URL } from "@/config";
 
@@ -176,6 +177,8 @@ const FotoDelDia = () => {
   }, [filtros]);
 
   return (
+    <>
+    <NivelNavigation/>
     <PageContainer title="Resumen Ventas" description="Resumen de las ventas">
       <FotoDelDiaHeader onFilterChange={(f) => setFiltros(f)} />
       <Grid container spacing={2}>
@@ -320,6 +323,7 @@ const FotoDelDia = () => {
         </Grid>
       </Grid>
     </PageContainer>
+  </> 
   );
 };
 

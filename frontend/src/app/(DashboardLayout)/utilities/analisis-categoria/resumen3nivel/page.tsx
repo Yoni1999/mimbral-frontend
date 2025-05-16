@@ -6,6 +6,7 @@ import {
   Grid,
   CircularProgress,
 } from "@mui/material";
+import NivelNavigation from "../components/NivelNavigation";
 import HeaderCategoria, { Filters } from "./components/HeaderSubcategoria";
 import MetricCard from "./components/MetricCard";
 import VentasChart from "./components/VentasChart";
@@ -254,7 +255,9 @@ const ResumenCategoriasPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <>
+    <NivelNavigation/>
+    <Box sx={{ p: 1 }}>
       <HeaderCategoria
         onFilterChange={setFiltros}
         initialFilters={filtros}
@@ -340,6 +343,7 @@ const ResumenCategoriasPage: React.FC = () => {
         </Grid>
       </Grid>
     </Box>
+  </>
   );
 };
 

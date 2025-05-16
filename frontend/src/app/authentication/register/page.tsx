@@ -20,22 +20,21 @@ const RegisterPage = () => {
         position: "relative",
       }}
     >
-      {/* 🔹 Header Superior */}
-      <Box
-        sx={{
-          position: "absolute",
-          top: 20,
-          right: 20,  // Asegura que esté en la esquina derecha
-          width: "auto",  // El ancho será automáticamente ajustado
-          padding: "16px",
-          textAlign: "left",
-          color: "white",
-          borderRadius: 3,
-          zIndex: 10,
-        }}
-      >
-        <Header />
-      </Box>
+    {/* 🔹 Header Responsivo */}
+    <Box
+      sx={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        padding: { xs: 2, sm: 3 },
+        display: "flex",
+        justifyContent: { xs: "center", sm: "flex-end" },
+        zIndex: 10,
+      }}
+    >
+      <Header />
+    </Box>
 
       {/* 🔹 Card de Registro */}
       <Card

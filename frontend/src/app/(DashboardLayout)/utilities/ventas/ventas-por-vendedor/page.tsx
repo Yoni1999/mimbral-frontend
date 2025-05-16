@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Box, Grid,} from "@mui/material";
+import NivelNavigation from "../components/NivelNavigation";
 import HeaderVendedor, { Filters } from "./components/HeaderVendedor";
 import MetricCard from "./components/MetricCard";
 import ProgressGauge from "./components/ProgressGauge";
@@ -262,6 +263,8 @@ const VentasVendedorPage: React.FC = () => {
   fetchNotasCreditoTotal(currentFiltros);
 };
   return (
+    <>
+    <NivelNavigation/>
     <Box sx={{ p: 3 }}>
       <HeaderVendedor
         filtros={filtros}
@@ -331,6 +334,7 @@ const VentasVendedorPage: React.FC = () => {
 
 
     </Box>
+  </>
   );
 };
 

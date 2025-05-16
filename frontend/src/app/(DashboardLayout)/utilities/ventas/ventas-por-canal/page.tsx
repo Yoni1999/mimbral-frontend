@@ -6,6 +6,7 @@ import PageContainer from "@/app/(DashboardLayout)/components/container/PageCont
 import Image from 'next/image';
 import { Grid, Paper, CircularProgress, Box, Typography } from "@mui/material";
 import MetricCard from "./components/MetricCard";
+import NivelNavigation from "../components/NivelNavigation";
 import HeaderFilters, { Filters } from "./components/HeaderFilters";
 import dynamic from "next/dynamic";
 import { fetchWithToken } from "@/utils/fetchWithToken";
@@ -137,6 +138,8 @@ useEffect(() => {
   };
   
   return (
+    <>
+    <NivelNavigation/>
     <PageContainer title="Ventas por Canal" description="Resumen de ventas filtradas por canal, período y rango de fechas">
       <HeaderFilters filters={filters} onFilterChange={handleFilterChange}/>
 
@@ -247,6 +250,7 @@ useEffect(() => {
         </Grid>
       </Grid>
     </PageContainer>
+  </>
   );
 };
 

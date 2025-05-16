@@ -21,23 +21,22 @@ export default function LoginPage() {
       }}
     >
       {/* 🔹 Header Posicionado en la Parte Superior de la Página */}
+      {/* 🔹 Header Responsivo Posicionado en la Parte Superior */}
       <Box
         sx={{
-          position: "absolute",
-          top: 20,
-          right: 1,
-          transform: "translateX(-50%)",
           width: "100%",
-          maxWidth: "500px",
-          padding: "16px",
-          textAlign: "left",
-          color: "white",
-          borderRadius: 3,
-          zIndex: 10, // 🔹 Para asegurarnos de que esté sobre la imagen de fondo
+          position: "absolute",
+          top: 0,
+          left: 0,
+          padding: { xs: 2, sm: 3 },
+          display: "flex",
+          justifyContent: { xs: "center", sm: "flex-end" },
+          zIndex: 10,
         }}
       >
         <Header />
       </Box>
+
 
       {/* 🔹 Formulario de Login */}
       <Card
