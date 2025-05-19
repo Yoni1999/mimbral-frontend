@@ -23,6 +23,7 @@ import {
   IconBox,
 } from "@tabler/icons-react";
 import { fetchWithToken } from "@/utils/fetchWithToken";
+import { formatVentas, formatUnidades } from "@/utils/format";
 import { useSearchParams } from "next/navigation";
 const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
   ssr: false,
@@ -269,8 +270,8 @@ const ResumenCategoriasPage: React.FC = () => {
             {[
               {
                 title: "Ventas",
-                value: `$${(ventasPeriodo.TotalVentasPeriodo / 1000000).toFixed(2)}M`,
-                subtitle: `Anterior: $${(ventasPeriodo.TotalVentasAnterior / 1000000).toFixed(2)}M`,
+                value: formatVentas(ventasPeriodo.TotalVentasPeriodo),
+                subtitle: `Anterior: ${formatVentas(ventasPeriodo.TotalVentasAnterior)}`,
                 percentageChange: ventasPeriodo.PorcentajeCambio,
                 icon: <IconCurrencyDollar />,
               },
@@ -283,29 +284,29 @@ const ResumenCategoriasPage: React.FC = () => {
               },
               {
                 title: "Cantidad de Ventas",
-                value: transaccionesPeriodo.CantidadTransaccionesPeriodo,
-                subtitle: `Anterior: ${transaccionesPeriodo.CantidadTransaccionesAnterior}`,
+                value: formatUnidades(transaccionesPeriodo.CantidadTransaccionesPeriodo),
+                subtitle: `Anterior: ${formatUnidades(transaccionesPeriodo.CantidadTransaccionesAnterior)}`,
                 percentageChange: transaccionesPeriodo.PorcentajeCambio,
                 icon: <IconShoppingCart />,
               },
               {
                 title: "Notas de Crédito",
-                value: notasCredito.CantidadNotasCreditoPeriodo,
-                subtitle: `Anterior: ${notasCredito.CantidadNotasCreditoAnterior}`,
+                value: formatUnidades(notasCredito.CantidadNotasCreditoPeriodo),
+                subtitle: `Anterior: ${formatUnidades(notasCredito.CantidadNotasCreditoAnterior)}`,
                 percentageChange: notasCredito.PorcentajeCambioNotasCredito,
                 icon: <IconCreditCard />,
               },
               {
                 title: "Ítems Vendidos",
-                value: productosDistintos.ProductosPeriodoActual,
-                subtitle: `Anterior: ${productosDistintos.ProductosPeriodoAnterior}`,
+                value: formatUnidades(productosDistintos.ProductosPeriodoActual),
+                subtitle: `Anterior: ${formatUnidades(productosDistintos.ProductosPeriodoAnterior)}`,
                 percentageChange: productosDistintos.PorcentajeCambio,
                 icon: <IconStack2 />,
               },
               {
                 title: "Unidades Vendidas",
-                value: unidadesVendidas.CantidadVendida,
-                subtitle: `Anterior: ${unidadesVendidas.CantidadVendidaAnterior}`,
+                value: formatUnidades(unidadesVendidas.CantidadVendida),
+                subtitle: `Anterior: ${formatUnidades(unidadesVendidas.CantidadVendidaAnterior)}`,
                 percentageChange: unidadesVendidas.PorcentajeCambio,
                 icon: <IconBox />,
               },

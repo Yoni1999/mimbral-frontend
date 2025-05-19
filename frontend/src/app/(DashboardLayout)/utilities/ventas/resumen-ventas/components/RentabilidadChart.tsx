@@ -104,7 +104,7 @@ const RentabilidadChart: React.FC<Props> = ({ data }) => {
             Top 10 Productos con Mejor Rentabilidad
           </Typography>
         </Box>
-        <Chart options={options} series={series} type="bar" height={430} />
+        <Chart options={options} series={series} type="bar" height={445} />
       </CardContent>
     </Card>
   );

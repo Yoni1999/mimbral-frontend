@@ -8,7 +8,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
       const canal = req.query.canal || null;
       const vendedorEmpresa = req.query.vendedorEmpresa || null;
       const primerNivel = req.query.primerNivel || null;
-      const periodo = req.query.periodo || "7D";
+      const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
   
@@ -140,7 +140,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
       const canal = req.query.canal || null;
       const vendedorEmpresa = req.query.vendedorEmpresa || null;
       const primerNivel = req.query.primerNivel || null;
-      const periodo = req.query.periodo || "7D";
+      const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
   
@@ -279,7 +279,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
       const canal = req.query.canal || null;
       const vendedorEmpresa = req.query.vendedorEmpresa || null;
       const primerNivel = req.query.primerNivel || null;
-      const periodo = req.query.periodo || "7D";
+      const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
   
@@ -409,7 +409,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
       const canal = req.query.canal || null;
       const vendedorEmpresa = req.query.vendedorEmpresa || null;
       const primerNivel = req.query.primerNivel || null;
-      const periodo = req.query.periodo || "7D";
+      const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
   
@@ -552,7 +552,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
       const canal = req.query.canal || null;
       const vendedorEmpresa = req.query.vendedorEmpresa || null;
       const primerNivel = req.query.primerNivel || null;
-      const periodo = req.query.periodo || "7D";
+      const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
   
@@ -672,7 +672,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
       const canal = req.query.canal || null;
       const vendedorEmpresa = req.query.vendedorEmpresa || null;
       const primerNivel = req.query.primerNivel || null;
-      const periodo = req.query.periodo || "7D";
+      const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
   
@@ -790,7 +790,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
     try {
       const pool = await poolPromise;
   
-      const periodo = req.query.periodo || "7D";
+      const periodo = req.query.periodo || "1D";
       const primerNivel = req.query.primerNivel || null;
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
@@ -891,7 +891,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
       const pool = await poolPromise;
   
       const primerNivel = req.query.primerNivel || null;
-      const periodo = req.query.periodo || "7D";
+      const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
   
@@ -985,7 +985,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
       const pool = await poolPromise;
   
       const primerNivel = req.query.primerNivel || null;
-      const periodo = req.query.periodo || "7D";
+      const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
   
@@ -1059,7 +1059,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
       const canal = req.query.canal || null;
       const vendedor = req.query.vendedorEmpresa || null;
       const primerNivel = req.query.primerNivel || null;
-      const periodo = req.query.periodo || "7D";
+      const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
   

@@ -14,9 +14,9 @@ import TablaMetas from "./components/TableMetas";
 
 export default function MetasPage() {
   const [filters, setFilters] = useState<MetaFilters>({
-    periodo: "Ultimos 7 días",
+    periodo: "Periodo Actual",
     categoria: "",
-    canal: "",
+    canal: "Empresas",
   });
 
   const [showMensaje, setShowMensaje] = useState(true);

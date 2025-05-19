@@ -91,10 +91,7 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
         setLoading(false);
       }
     };
-
-    if (filtros.periodo || (filtros.fechaInicio && filtros.fechaFin)) {
       fetchData();
-    }
   }, [filtros]);
 
   return (
@@ -116,7 +113,7 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
       {loading ? (
         <Typography align="center">Cargando datos...</Typography>
       ) : (
-        <ResponsiveContainer width="100%" height={330}>
+        <ResponsiveContainer width="100%" height={355}>
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
             <XAxis

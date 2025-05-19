@@ -1,11 +1,41 @@
 {
-  "name": "modernize-next-free",
+  "name": "mimbralanalitica",
+  "author": "Equipo Mimbral",
+  "main": "electron.js",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-pack": "for /f %p in ('tasklist ^| findstr electron.exe') do taskkill /f /im %p & npm run build && electron-builder"
+  },
+  "build": {
+    "productName": "mimbralanalitica",
+    "extends": null,
+    "win": {
+      "signAndEditExecutable": false,
+      "verifyUpdateCodeSignature": false
+    },
+    "asar": true,
+    "asarUnpack": [
+      "next.config.js"
+    ],
+    "files": [
+      "electron.js",
+      ".out/**/*",
+      "preload.js",
+      "next.config.js",
+      ".next/**/*",
+      "public/**/*"
+    ],
+    "extraMetadata": {
+      "main": "electron.js"
+    },
+    "directories": {
+      "buildResources": "assets"
+    }
   },
   "dependencies": {
     "@coreui/icons": "^3.0.1",
@@ -33,6 +63,7 @@
     "chart.js": "^4.4.8",
     "date-fns": "^2.29.3",
     "dayjs": "^1.11.13",
+    "electron-is-dev": "^3.0.1",
     "eslint": "8.46.0",
     "eslint-config-next": "13.4.12",
     "framer-motion": "^12.5.0",
@@ -59,6 +90,7 @@
   "devDependencies": {
     "@types/js-cookie": "^3.0.6",
     "@types/lodash": "4.14.196",
-    "@types/react-router-dom": "^5.3.3"
+    "@types/react-router-dom": "^5.3.3",
+    "electron": "^36.2.1"
   }
 }

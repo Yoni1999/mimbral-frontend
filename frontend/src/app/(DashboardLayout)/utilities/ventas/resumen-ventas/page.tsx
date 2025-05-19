@@ -26,6 +26,7 @@ import {
 import NivelNavigation from "../components/NivelNavigation";
 import FotoDelDiaHeader, { Filters } from "./components/FotoDelDiaHeader.tsx";
 import { BACKEND_URL } from "@/config";
+import { formatVentas, formatUnidades } from "@/utils/format";
 
 const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
   ssr: false, 
@@ -190,8 +191,8 @@ const FotoDelDia = () => {
               {[
                 {
                   title: "Ventas",
-                  value: formatMillions(ventasHoy.TotalVentasPeriodo),
-                  subtitle: `Periodo Anterior: ${formatMillions(
+                  value: formatVentas(ventasHoy.TotalVentasPeriodo),
+                  subtitle: `Periodo Anterior: ${formatVentas(
                     ventasHoy.PromedioVentasPeriodo
                   )}`,
                   percentageChange: ventasHoy.PorcentajeCambio,
@@ -208,32 +209,32 @@ const FotoDelDia = () => {
                 },
                 {
                   title: "Cantidad de Ventas",
-                  value: transaccionHoy.CantidadTransaccionesHoy,
-                  subtitle: `Periodo Anterior: ${transaccionHoy.CantidadTransaccionesAyer}`,
+                  value: formatUnidades(transaccionHoy.CantidadTransaccionesHoy),
+                  subtitle: `Periodo Anterior: ${formatUnidades(transaccionHoy.CantidadTransaccionesAyer)}`,
                   percentageChange: transaccionHoy.PorcentajeCambio,
                   isLoading: !transaccionHoy.CantidadTransaccionesHoy,
                   icon: <IconShoppingCart />,
                 },
                 {
                   title: "Notas de Crédito",
-                  value: Notascredito.CantidadNotasCreditoPeriodo,
-                  subtitle: `Periodo Anterior: ${Notascredito.CantidadNotasCreditoAnterior}`,
+                  value: formatUnidades(Notascredito.CantidadNotasCreditoPeriodo),
+                  subtitle: `Periodo Anterior: ${formatUnidades(Notascredito.CantidadNotasCreditoAnterior)}`,
                   percentageChange: Notascredito.PorcentajeCambioNotasCredito,
                   isLoading: Notascredito.CantidadNotasCreditoPeriodo === undefined,
                   icon: <IconCreditCard />,
                 },
                 {
                   title: "Ítems Vendidos",
-                  value: productosDistintos.ProductosPeriodoActual,
-                  subtitle: `Periodo Anterior: ${productosDistintos.ProductosPeriodoAnterior}`,
+                  value: formatUnidades(productosDistintos.ProductosPeriodoActual),
+                  subtitle: `Periodo Anterior: ${formatUnidades(productosDistintos.ProductosPeriodoAnterior)}`,
                   percentageChange: productosDistintos.PorcentajeCambio,
                   isLoading: !productosDistintos.ProductosPeriodoActual,
                   icon: <IconStack2 />,
                 },
                 {
                   title: "Unidades Vendidas",
-                  value: unidadesVendidas.CantidadVendida,
-                  subtitle: `Periodo Anterior: ${unidadesVendidas.CantidadVendidaAnterior}`,
+                  value: formatUnidades(unidadesVendidas.CantidadVendida),
+                  subtitle: `Periodo Anterior: ${formatUnidades(unidadesVendidas.CantidadVendidaAnterior)}`,
                   percentageChange: unidadesVendidas.PorcentajeCambio,
                   isLoading: !unidadesVendidas.CantidadVendida,
                   icon: <IconBox />,
