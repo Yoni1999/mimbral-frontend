@@ -2,8 +2,11 @@
 import { Box, Grid, Typography } from "@mui/material";
 import NivelNavigation from "./components/NivelNavigation";
 import MetricCard from "./components/MetricCard"; 
-import DonutAsignacionMetas from './components/DonutAsignacionMetas';
+import dynamic from 'next/dynamic';
 import { IconTargetArrow, IconUserCheck, IconUserX, IconListNumbers } from "@tabler/icons-react";
+const DonutAsignacionMetas = dynamic(() => import('./components/DonutAsignacionMetas'), {
+  ssr: false,
+});
 
 const PanelMetasPage = () => {
   return (
