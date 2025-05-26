@@ -134,7 +134,7 @@ const HeaderProducto: React.FC<Props> = ({ onFilterChange }) => {
       }
   
       const data: Producto[] = await response.json();
-      setSkuOptions(data); // Ya viene filtrado desde el backend
+      setSkuOptions(data); 
     } catch (error) {
       console.error("❌ Error cargando SKUs:", error);
       setSkuOptions([]);

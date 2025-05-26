@@ -9,7 +9,9 @@ export const formatVentas = (valor: number): string => {
     }
   };
   
-export const formatUnidades = (valor: number): string => {
-    return valor.toLocaleString("es-CL");
-  };
+export const formatUnidades = (valor: number | null | undefined): string => {
+  if (typeof valor !== 'number') return '0'; // o podrías retornar un string vacío ''
+  return valor.toLocaleString("es-CL");
+};
+
   

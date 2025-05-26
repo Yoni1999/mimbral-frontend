@@ -24,7 +24,7 @@ const MetasSidebar = () => {
       sx={{
         width: isHovered ? 220 : 64,
         transition: "width 0.3s",
-        backgroundColor: "#f5f5f5",
+        backgroundColor: "#ffffff",
         height: "100%",
         overflowX: "hidden",
         borderRight: "1px solid #ddd",

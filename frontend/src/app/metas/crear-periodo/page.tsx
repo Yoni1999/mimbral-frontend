@@ -2,18 +2,27 @@
 'use client';
 import React from 'react';
 import PeriodosTable from './components/PeriodosTable';
-import AddIcon from '@mui/icons-material/Add';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { Box, Tooltip, Typography } from '@mui/material';
 
 const CrearPeriodoPage = () => {
   return (
     <div className="relative p-8">
-      <h1 className="text-2xl font-bold mb-6">Crear y Administrar Periodos</h1>
-      <PeriodosTable />
+      <Box display="flex" alignItems="center" gap={1} mb={0}>
+        <Typography variant="h5" fontWeight="bold">
+          Administra tus Periodos
+        </Typography>
+        <Tooltip
+          title="Para crear un nuevo período solo debes escribir el nombre, definir el rango de fechas y presionar 'Agregar período'"
+          arrow
+        >
+          <InfoOutlinedIcon sx={{ color: 'primary', cursor: 'pointer' }} />
+        </Tooltip>
+      </Box>
 
-      
+      <PeriodosTable />
     </div>
   );
 };
 
 export default CrearPeriodoPage;
-// Compare this snippet from frontend/src/app/metas/crear-periodo/components/PeriodosTable.tsx:

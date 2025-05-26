@@ -6,7 +6,7 @@ import MetasSidebar from "./components/MetasSidebar";
 
 export default function MetasLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Box display="flex" height="100vh">
+    <Box display="flex" height="100vh" sx={{ bgcolor: '#f5f5f5', minHeight: '100vh' }}>
       {/* 🔹 Sidebar parte desde arriba */}
       <MetasSidebar />
 

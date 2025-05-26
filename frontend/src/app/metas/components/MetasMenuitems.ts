@@ -5,7 +5,7 @@ import GroupAddIcon from "@mui/icons-material/GroupAdd";
 const MetasMenuitems = [
   {
     id: "crear-periodo",
-    title: "Crear Período",
+    title: "Crear/Ver Período",
     href: "/metas/crear-periodo",
     icon: DateRangeIcon,
   },
@@ -14,12 +14,6 @@ const MetasMenuitems = [
     title: "Crear Meta",
     href: "/metas/crear-meta",
     icon: PlaylistAddIcon,
-  },
-  {
-    id: "asignar-meta",
-    title: "Asignar a Vendedor",
-    href: "/metas/asignar-meta",
-    icon: GroupAddIcon,
   },
 ];
 

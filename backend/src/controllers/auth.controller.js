@@ -194,8 +194,8 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ error: "Contraseña incorrecta" });
     }
 
-    // 🎲 Decidir aleatoriamente si se pide OTP (40% de las veces)
-    const pedirOTP = Math.random() < 0.4;
+    // Decidir aleatoriamente si se pide OTP (10% de las veces)
+    const pedirOTP = Math.random() < 0.1;
 
     if (!pedirOTP) {
       const token = jwt.sign(
