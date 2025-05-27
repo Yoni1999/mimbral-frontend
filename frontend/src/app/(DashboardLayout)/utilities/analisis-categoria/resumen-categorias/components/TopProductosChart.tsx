@@ -182,12 +182,15 @@ const TopProductosChart: React.FC<Props> = ({ filters, onCategorySelect, nombreP
         elevation={0}
         sx={{
           borderRadius: 2,
-          height: 460,
-          background: "#fff",
           border: "1px solid #e0e0e0",
-          p: 2,
+          transition: "0.3s",
+          "&:hover": {
+            transform: "translateY(-3px)",
+            boxShadow: 3,
+          },
         }}
       >
+
         <CardContent>
           <Box
             display="flex"

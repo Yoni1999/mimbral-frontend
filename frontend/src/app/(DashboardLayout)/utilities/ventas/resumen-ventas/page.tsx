@@ -182,7 +182,7 @@ const FotoDelDia = () => {
     <>
     <NivelNavigation/>
     <PageContainer title="Resumen Ventas" description="Resumen de las ventas">
-      <Box sx={{ p: 1}}>
+      <Box sx={{ p: 0}}>
         <FotoDelDiaHeader onFilterChange={(f) => setFiltros(f)} />
         <Grid container spacing={2}>
           {/* Primera fila */}

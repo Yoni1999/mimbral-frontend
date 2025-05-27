@@ -130,46 +130,80 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
   return (
     <>
       <DashboardCard
-        sx={{ height: 460, border: "1px solid #e0e0e0", }}
+        elevation={0}
+        sx={{
+          borderRadius: 2,
+          border: "1px solid #e0e0e0",
+          transition: "0.3s",
+          "&:hover": {
+            transform: "translateY(-3px)",
+            boxShadow: 3,
+          },
+          height: 460,
+        }}
         title={
-          <Typography
-            variant="h6"
+          <Box
             sx={{
-              fontWeight: 500,
-              fontSize: "1rem",
+              display: "flex",
+              alignItems: "center",
               pl: 2,
-              py: 1,
-              backgroundColor: "#ffffff",
-              borderLeft: "5px solid #d93a3a",
-              borderRadius: 1,
-              color: "primary.main",
-              display: "inline-block",
-              width: "fit-content"
+              borderLeft: "4px solid #d93a3a",
             }}
           >
-            Ventas por Canal
-          </Typography>
+  
+          </Box>
         }
       >
-        <Box>
-          {loading ? (
-            <Typography variant="body1">Cargando gráfico...</Typography>
-          ) : (
-            <>
-              <Chart options={options} series={chartData} type="donut" width="100%" height={400} />
-              <Box mt={2} textAlign="right">
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => setOpenModal(true)}
-                  startIcon={<FullscreenIcon />}
-                >
-                  Expandir
-                </Button>
-              </Box>
-            </>
-          )}
-        </Box>
+      <Box>
+        {loading ? (
+          <Typography variant="body1">Cargando gráfico...</Typography>
+        ) : (
+          <Box>
+            {/* Header con botón a la derecha */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontWeight: 700,
+                  color: "primary.main",
+                  textTransform: "uppercase",
+                  fontSize: "0.85rem",
+                  pl: 2,
+                  borderLeft: "4px solid #d93a3a",
+                }}
+              >
+                Ventas por Canal
+              </Typography>
+
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setOpenModal(true)}
+                startIcon={<FullscreenIcon />}
+              >
+                Expandir
+              </Button>
+            </Box>
+
+            {/* Gráfico */}
+            <Chart
+              options={options}
+              series={chartData}
+              type="donut"
+              width="100%"
+              height={300}
+            />
+          </Box>
+        )}
+      </Box>
+
       </DashboardCard>
 
       <Dialog
@@ -186,7 +220,7 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
               <CloseIcon />
             </IconButton>
           </Box>
-          <Chart options={options} series={chartData} type="donut" width="100%" height={500} />
+          <Chart options={options} series={chartData} type="donut" width="100%" height={400} />
         </DialogContent>
       </Dialog>
     </>
@@ -194,3 +228,4 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
 };
 
 export default VentasCanalChart;
+

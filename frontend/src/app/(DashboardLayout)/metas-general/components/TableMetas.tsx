@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Table,
@@ -12,99 +12,136 @@ import {
   Typography,
   Avatar,
   Paper,
+  Button,
+  Checkbox,
 } from "@mui/material";
 
-// Datos estáticos de ejemplo con nuevas columnas
-const datosMetas = [
-  {
-    imagen: "/images/categorias/electrodomesticos_cocina.png",
-    sku: "SKU-001",
-    descripcion: "Parrilla Eléctrica Portátil 1500W",
-    meta: 100,
-    vendidas: 78,
-    cumplimiento: "78%",
-    tickets: 65,
-    rotacion: "Alta",
-    precioVenta: 39990,
-    diasSinStock: 3,
-    precioCompra: 28990,
-  },
-  {
-    imagen: "/images/categorias/cocina.png",
-    sku: "SKU-002",
-    descripcion: "Olla Acero Inoxidable 24cm",
-    meta: 150,
-    vendidas: 72,
-    cumplimiento: "48%",
-    tickets: 50,
-    rotacion: "Media",
-    precioVenta: 18990,
-    diasSinStock: 0,
-    precioCompra: 12500,
-  },
-  {
-    imagen: "/images/categorias/cajas_de_seguridad.png",
-    sku: "SKU-003",
-    descripcion: "Cámara Seguridad Wi-Fi 1080p",
-    meta: 80,
-    vendidas: 76,
-    cumplimiento: "95%",
-    tickets: 70,
-    rotacion: "Alta",
-    precioVenta: 49990,
-    diasSinStock: 1,
-    precioCompra: 34990,
-  },
-  // ... Agrega más productos según necesites
-];
+// Interfaz para tipar cada fila
+export interface MetaRow {
+  IMAGEN_PRODUCTO: string;
+  SKU: string;
+  NOMBRE_PRODUCTO: string;
+  META_CANTIDAD: number;
+  TOTAL_VENDIDO: number;
+  TOTAL_VENDIDO_NETO: number;
+  CANTIDAD_DEVUELTA: number;
+  CUMPLIMIENTO_PORCENTAJE: number;
+  PRECIO_PROMEDIO_VENTA: number;
+  PRECIO_COMPRA: number;
+  MARGEN_PORCENTAJE: number;
+  PROMEDIO_DIARIO: number;
+  TICKETS_TOTALES: number;
+}
 
-const TablaMetas = () => {
+// Props esperadas
+interface TablaMetasProps {
+  data: MetaRow[];
+}
+
+const TablaMetas: React.FC<TablaMetasProps> = ({ data }) => {
+  const [seleccionados, setSeleccionados] = useState<number[]>([]);
+
+  const toggleSeleccion = (index: number) => {
+    setSeleccionados((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+    );
+  };
+
+  const toggleTodos = () => {
+    if (seleccionados.length === data.length) {
+      setSeleccionados([]);
+    } else {
+      setSeleccionados(data.map((_, index) => index));
+    }
+  };
+
   return (
-    <Box sx={{ mt: 4 }}>
-      <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-        METAS POR PRODUCTO
-      </Typography>
-
-      <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 2 }}>
-        <Table>
-          <TableHead sx={{ backgroundColor: "#f8f9fa" }}>
+    <Box sx={{ mt: 2, width: "100%" }}>
+      <TableContainer
+        component={Paper}
+        sx={{
+          borderRadius: 2,
+          border: "1px solid #e0e0e0",
+          boxShadow: "none",
+        }}
+      >
+        <Table size="small">
+          <TableHead sx={{ backgroundColor: "#f9f9f9" }}>
             <TableRow>
-              <TableCell><strong>Imagen</strong></TableCell>
-              <TableCell><strong>SKU</strong></TableCell>
-              <TableCell><strong>Descripción</strong></TableCell>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  size="small"
+                  checked={seleccionados.length === data.length}
+                  indeterminate={seleccionados.length > 0 && seleccionados.length < data.length}
+                  onChange={toggleTodos}
+                />
+              </TableCell>
+              <TableCell><strong>Producto</strong></TableCell>
+              <TableCell align="center"><strong>SKU</strong></TableCell>
               <TableCell align="center"><strong>Meta</strong></TableCell>
               <TableCell align="center"><strong>Vendidas</strong></TableCell>
-              <TableCell align="center"><strong>Cumplimiento</strong></TableCell>
-              <TableCell align="center"><strong>Tickets</strong></TableCell>
-              <TableCell align="center"><strong>Rotación</strong></TableCell>
+              <TableCell align="center"><strong>% Cumplimiento</strong></TableCell>
               <TableCell align="center"><strong>Precio Venta</strong></TableCell>
-              <TableCell align="center"><strong>Días sin stock</strong></TableCell>
               <TableCell align="center"><strong>Precio Compra</strong></TableCell>
+              <TableCell align="center"><strong>Margen %</strong></TableCell>
+              <TableCell align="center"><strong>Prom. Diario</strong></TableCell>
+              <TableCell align="center"><strong>Tickets</strong></TableCell>
+              <TableCell align="center"><strong>Acción</strong></TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
-            {datosMetas.map((fila, index) => (
+            {data.map((row, index) => (
               <TableRow key={index} hover>
-                <TableCell>
-                  <Avatar
-                    src={fila.imagen}
-                    variant="rounded"
-                    sx={{ width: 48, height: 48 }}
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    size="small"
+                    checked={seleccionados.includes(index)}
+                    onChange={() => toggleSeleccion(index)}
                   />
                 </TableCell>
-                <TableCell>{fila.sku}</TableCell>
-                <TableCell>{fila.descripcion}</TableCell>
-                <TableCell align="center">{fila.meta}</TableCell>
-                <TableCell align="center">{fila.vendidas}</TableCell>
-                <TableCell align="center">{fila.cumplimiento}</TableCell>
-                <TableCell align="center">{fila.tickets}</TableCell>
-                <TableCell align="center">{fila.rotacion}</TableCell>
-                <TableCell align="center">
-                  ${fila.precioVenta.toLocaleString()}
+
+                <TableCell>
+                  <Box display="flex" alignItems="center" gap={1.2}>
+                    <Avatar
+                      src={row.IMAGEN_PRODUCTO}
+                      alt={row.NOMBRE_PRODUCTO}
+                      variant="rounded"
+                      sx={{ width: 48, height: 48 }}
+                    />
+                    <Typography fontSize="0.875rem" fontWeight={500}>
+                      {row.NOMBRE_PRODUCTO}
+                    </Typography>
+                  </Box>
                 </TableCell>
-                <TableCell align="center">{fila.diasSinStock}</TableCell>
+
+                <TableCell align="center">{row.SKU}</TableCell>
+                <TableCell align="center">{row.META_CANTIDAD}</TableCell>
+                <TableCell align="center">{row.TOTAL_VENDIDO_NETO}</TableCell>
+                <TableCell align="center">{row.CUMPLIMIENTO_PORCENTAJE.toFixed(1)}%</TableCell>
+                <TableCell align="center">${row.PRECIO_PROMEDIO_VENTA.toLocaleString()}</TableCell>
+                <TableCell align="center">${row.PRECIO_COMPRA.toLocaleString()}</TableCell>
+                <TableCell align="center">{row.MARGEN_PORCENTAJE.toFixed(1)}%</TableCell>
+                <TableCell align="center">{row.PROMEDIO_DIARIO.toFixed(1)}</TableCell>
+                <TableCell align="center">{row.TICKETS_TOTALES}</TableCell>
+
                 <TableCell align="center">
-                  ${fila.precioCompra.toLocaleString()}
+                  <Button
+                    variant="contained"
+                    size="small"
+                    sx={{
+                      backgroundColor: "#6c63ff",
+                      textTransform: "none",
+                      fontWeight: 600,
+                      fontSize: "0.75rem",
+                      px: 2,
+                      "&:hover": {
+                        backgroundColor: "#5a52d4",
+                      },
+                    }}
+                  >
+                    SEGUIR
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

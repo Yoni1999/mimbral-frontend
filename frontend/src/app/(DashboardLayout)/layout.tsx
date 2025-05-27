@@ -47,11 +47,13 @@ export default function RootLayout({ children }: Props) {
         {/* Contenido */}
         <Container
           disableGutters
+          maxWidth={false} // 
           sx={{
             paddingTop: "20px",
-            maxWidth: "none", // ✅ sin límite
+            px: { xs: 2, md: 4, xl: 6 }, 
           }}
         >
+
           <Box sx={{ minHeight: "calc(100vh - 170px)" }}>
             {children}
           </Box>

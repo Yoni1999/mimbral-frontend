@@ -160,18 +160,17 @@ const HeaderSubcategoria: React.FC<Props> = ({ onFilterChange, initialFilters })
   };
 
   return (
-    <Box
-      sx={{
-        mb: 2,
-        px: 2,
-        py: 2,
-        backgroundColor: "rgba(255, 255, 255, 0.5)",
-        borderRadius: 2,
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-        backdropFilter: "blur(6px)",
-        border: "1px solid rgba(255, 255, 255, 0.3)",
-      }}
-    >
+      <Box
+        sx={{
+          mb: 2,
+          px: 2,
+          py: 2,
+          backgroundColor: "transparent", // O "#fff" si prefieres blanco
+          borderRadius: 2,
+          border: "1px solid #e0e0e0",
+          boxShadow: "none", // Opcional: quita sombra
+        }}
+      >
       <Grid container alignItems="center" justifyContent="space-between">
         <Grid item xs={12} md={2}>
           <Box

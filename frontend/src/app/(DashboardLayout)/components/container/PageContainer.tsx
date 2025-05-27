@@ -12,12 +12,12 @@ const PageContainer = ({ title, description, children }: Props) => (
     <div
       style={{
         width: "100%",
-        maxWidth: "clamp(320px, 95%, 1600px)", // mínimo 320px, ideal 95% del viewport, máximo 1600px
+        maxWidth: "100%", 
         margin: "0 auto",
         padding: "0 20px",
         overflowX: "hidden",
         boxSizing: "border-box",
-        backgroundColor: "#FEFEFE"
+        backgroundColor: "#FEFEFE",
       }}
     >
       <Helmet>
@@ -28,6 +28,7 @@ const PageContainer = ({ title, description, children }: Props) => (
     </div>
   </HelmetProvider>
 );
+
 
 
 

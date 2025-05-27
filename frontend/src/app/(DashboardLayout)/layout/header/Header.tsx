@@ -56,14 +56,23 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
       >
         <Toolbar sx={{ display: "flex", justifyContent: "space-between", borderRadius: "18px" }}>
           {/* Botón de menú en móviles */}
-          <IconButton
+          {/*<IconButton
             color="inherit"
             aria-label="menu"
             onClick={toggleMobileSidebar}
             sx={{ display: { lg: "none", xs: "inline" } }}
           >
             <IconMenu width="40" height="30" />
+          </IconButton> */}
+          <IconButton
+            color="inherit"
+            aria-label="menu"
+            onClick={toggleMobileSidebar}
+            sx={{ display: "inline-flex" }} // Se muestra siempre
+          >
+            <IconMenu width="40" height="30" />
           </IconButton>
+
 
           {/* Título central */}
           <Box flexGrow={1} display="flex" justifyContent="center">

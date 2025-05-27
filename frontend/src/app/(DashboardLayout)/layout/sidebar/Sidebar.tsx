@@ -14,9 +14,10 @@ const MSidebar = ({
   onSidebarClose,
   isSidebarOpen,
 }: ItemType) => {
-  const lgUp = useMediaQuery((theme: any) => theme.breakpoints.up("lg"));
+  const lgUp = false; // Forzar modo móvil en todas las pantallas
+  //const lgUp = useMediaQuery((theme: any) => theme.breakpoints.up("lg"));
 
-  const sidebarWidth = "270px";
+  const sidebarWidth = "260px";
 
   // Custom CSS for short scrollbar
   const scrollbarStyles = {

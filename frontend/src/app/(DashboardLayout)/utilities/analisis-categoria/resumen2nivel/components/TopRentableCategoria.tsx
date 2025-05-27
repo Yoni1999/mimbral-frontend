@@ -187,7 +187,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
   const nombreCategoria = categorias.find((c) => c.codigo === filters.categoria)?.nombre || "";
 
   return (
-    <Card sx={{ borderRadius: 2, boxShadow: 0, p: 1, border: "1px solid #e0e0e0" }}>
+    <Card sx={{ backgroundColor: "transparent", boxShadow: "none", border: "none", p: 1 }}>
       <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
         <Typography
           variant="h6"

@@ -156,9 +156,28 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
             </Typography>
           </Box>
         </Grid>
-
+        {/*Canales de venta  */}
+        
         <Grid item xs={12} md={10}>
           <Grid container spacing={1.5} justifyContent="flex-end">
+            <Grid item xs={6} sm={3} md={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel sx={{ fontSize: "0.75rem" }}>Canal</InputLabel>
+                <Select
+                  value={filters.temporada}
+                  onChange={(e) => handleChange("temporada", e.target.value)}
+                  label="Temporada"
+                  sx={{ fontSize: "0.75rem", height: 36 }}
+                >
+                  {Object.keys(temporadaRangos).map((s) => (
+                    <MenuItem key={s} value={s} sx={{ fontSize: "0.75rem" }}>
+                      {s}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
             {/* Temporada */}
             <Grid item xs={6} sm={3} md={2}>
               <FormControl fullWidth size="small">

@@ -148,17 +148,22 @@ const VentasChart: React.FC<Props> = ({ filters }) => {
       <Box
         sx={{
           width: "100%",
-          p: 3,
-          background: "#ffffff",
+          p: 2,
           borderRadius: 2,
           border: "1px solid #e0e0e0",
-          boxShadow: 3,
+          transition: "0.3s",
+          "&:hover": {
+            transform: "translateY(-3px)",
+            boxShadow: 3,
+          },
           display: "flex",
           flexDirection: "column",
           gap: 2,
           position: "relative",
+          backgroundColor: "transparent", // o "#fff" si prefieres blanco fijo
         }}
       >
+
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
         <Typography
           variant="h6"
@@ -190,7 +195,7 @@ const VentasChart: React.FC<Props> = ({ filters }) => {
         {loading ? (
           <Typography align="center">Cargando datos...</Typography>
         ) : (
-          ChartComponent(330)
+          ChartComponent(345)
         )}
       </Box>
 

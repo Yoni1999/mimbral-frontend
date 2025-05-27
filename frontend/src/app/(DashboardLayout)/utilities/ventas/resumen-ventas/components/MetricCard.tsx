@@ -7,8 +7,15 @@ const MetricCard = ({
   subtitle,
   percentageChange,
   icon,
-  elevation = 2, // ✅ Elevación por defecto
-}: any) => {
+  elevation = 0, // Elevación por defecto
+}: {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  percentageChange?: number;
+  icon?: React.ReactNode;
+  elevation?: number;
+}) => {
   const isNegative = percentageChange !== undefined && percentageChange < 0;
 
   return (
@@ -81,7 +88,6 @@ const MetricCard = ({
           )}
         </Box>
 
-        {/* 🔹 Subtítulo estilizado */}
         {subtitle && (
           <Typography
             variant="body2"

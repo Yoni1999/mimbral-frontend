@@ -128,34 +128,47 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
 
   return (
     <>
-<DashboardCard
-  sx={{ height: 460, border: "1px solid #e0e0e0", }}
-  title={
-    <Typography
-      variant="h6"
-      sx={{
-        fontWeight: 500,
-        fontSize: "1rem",
-        pl: 2,
-        py: 1,
-        backgroundColor: "#ffffff",
-        borderLeft: "5px solid #d93a3a",
-        borderRadius: 1,
-        color: "primary.main",
-        display: "inline-block",
-        width: "fit-content"
-      }}
-    >
-      Ventas por Canal
-    </Typography>
-  }
->
+      <DashboardCard
+        elevation={0}
+        sx={{
+          borderRadius: 2,
+          border: "1px solid #e0e0e0",
+          transition: "0.3s",
+          "&:hover": {
+            transform: "translateY(-3px)",
+            boxShadow: 3,
+          },
+          height: 435,
+        }}
+        title={
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              pl: 2,
+              borderLeft: "4px solid #d93a3a",
+            }}
+          >
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 700,
+                color: "primary.main",
+                textTransform: "uppercase",
+                fontSize: "0.85rem",
+              }}
+            >
+              Ventas por Canal
+            </Typography>
+          </Box>
+        }
+      >
   <Box>
     {loading ? (
       <Typography variant="body1">Cargando gráfico...</Typography>
     ) : (
       <>
-        <Chart options={options} series={chartData} type="donut" width="100%" height={400} />
+        <Chart options={options} series={chartData} type="donut" width="100%" height={300} />
         <Box mt={2} textAlign="right">
           <Button
             variant="outlined"

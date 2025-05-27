@@ -167,7 +167,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
   const productosVisibles = sortedProductos.slice(0, visibleCount);
 
   return (
-    <Card sx={{ borderRadius: 2, boxShadow: 1, p: 1, border: "1px solid #e0e0e0", }}>
+    <Card sx={{ backgroundColor: "transparent", boxShadow: "none", border: "none", p: 1 }}>
       <Typography
         variant="h6"
         sx={{
@@ -187,7 +187,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
         Productos Vendidos del primer nivel
       </Typography>
 
-      <Box mb={2} display="flex" justifyContent="space-between" alignItems="center">
+      <Box mb={3} display="flex" justifyContent="space-between" alignItems="center">
         <TextField
           size="small"
           placeholder="Buscar producto..."
@@ -210,7 +210,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
       <TableContainer
         component={Paper}
         sx={{
-          minHeight: 500,  // Fija una altura mínima
+          minHeight: 500, 
           overflowY: "auto",
         }}
       >

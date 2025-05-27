@@ -1,17 +1,34 @@
 import { Card, CardContent, Typography, Box } from "@mui/material";
 import { IconArrowUpRight, IconArrowDownRight } from "@tabler/icons-react";
 
-const MetricCard = ({ title, value, subtitle, percentageChange, icon }: any) => {
+const MetricCard = ({
+  title,
+  value,
+  subtitle,
+  percentageChange,
+  icon,
+  elevation = 0, // Elevación por defecto
+}: {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  percentageChange?: number;
+  icon?: React.ReactNode;
+  elevation?: number;
+}) => {
   const isNegative = percentageChange !== undefined && percentageChange < 0;
 
   return (
     <Card
+      elevation={elevation}
       sx={{
-        borderRadius: 3,
-        boxShadow: 2,
+        borderRadius: 2,
         border: "1px solid #e0e0e0",
         transition: "0.3s",
-        "&:hover": { transform: "translateY(-3px)", boxShadow: 4 },
+        "&:hover": {
+          transform: "translateY(-3px)",
+          boxShadow: elevation < 1 ? elevation + 2 : elevation,
+        },
       }}
     >
       <CardContent>
@@ -28,7 +45,7 @@ const MetricCard = ({ title, value, subtitle, percentageChange, icon }: any) => 
               justifyContent: "center",
               color: "primary.main",
               fontSize: 18,
-              flexShrink: 0
+              flexShrink: 0,
             }}
           >
             {icon}
@@ -81,7 +98,7 @@ const MetricCard = ({ title, value, subtitle, percentageChange, icon }: any) => 
               fontWeight: 400,
               mt: 1.5,
               pl: 0.5,
-              fontSize: "0.85rem"
+              fontSize: "0.85rem",
             }}
           >
             {subtitle}

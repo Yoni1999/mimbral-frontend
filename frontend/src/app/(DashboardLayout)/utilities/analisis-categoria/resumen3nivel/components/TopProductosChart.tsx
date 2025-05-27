@@ -163,14 +163,20 @@ const TopProductosChart: React.FC<Props> = ({ filters }) => {
   return (
     <>
       <Card
-        elevation={1}
+        elevation={0}
         sx={{
-          borderRadius: 1,
-          background: "#fff",
+          minHeight: 460,
+          borderRadius: 2,
           border: "1px solid #e0e0e0",
-          p: 2,
+          transition: "0.3s",
+          "&:hover": {
+            transform: "translateY(-3px)",
+            boxShadow: 3,
+          },
         }}
       >
+
+
         <CardContent>
           <Box
             display="flex"
@@ -232,7 +238,7 @@ const TopProductosChart: React.FC<Props> = ({ filters }) => {
               <CloseIcon />
             </IconButton>
           </Box>
-          <TablaProductos height={500} />
+          <TablaProductos height={460} />
         </DialogContent>
       </Dialog>
     </>

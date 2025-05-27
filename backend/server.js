@@ -20,6 +20,7 @@ const adminRoutes = require("./src/routes/admin.routes");
 const sugerenciasRoutes = require("./src/routes/sugerencias.routes");
 const periodosRoutes = require("./src/routes/metas/periodos.routes");
 const metasRoutes = require("./src/routes/metas/metas.routes");
+const filtrosmetasRoutes = require("./src/routes/metas/filtrosmetas.routes");
 const resumenCategoriaRoutes = require("./src/routes/resumen-categoria/resumenCategoria.routes");
 const categoria3nivelRoutes = require("./src/routes/resumen-categoria/categoria3nivel.routes");
 const categoria1nivelRoutes = require("./src/routes/resumen-categoria/categoria1nivel.routes");
@@ -61,6 +62,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/sugerencias", sugerenciasRoutes);
 app.use('/api/periodos', periodosRoutes);
 app.use('/api/metas', metasRoutes);
+app.use("/api/metas", filtrosmetasRoutes)
 app.use("/api/resumen-categoria", resumenCategoriaRoutes);
 app.use("/api/tercer-nivel", categoria3nivelRoutes);
 app.use("/api/primer-nivel", categoria1nivelRoutes);
