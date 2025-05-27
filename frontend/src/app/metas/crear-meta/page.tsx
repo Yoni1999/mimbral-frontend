@@ -15,7 +15,7 @@ const CrearMetaPage = () => {
   const [openForm, setOpenForm] = useState(false);
 
   return (
-    <Box p={4} position="relative" sx={{ bgcolor: '#f5f5f5', minHeight: '100vh' }}>
+    <Box p={4} position="relative" sx={{ bgcolor: '#FEFEFE', minHeight: '100vh' }}>
       <Box display="flex" alignItems="center" gap={1} mb={2}>
         <Typography variant="h5" color="primary" fontWeight="bold">
           Crea / asigna Metas y Periodos

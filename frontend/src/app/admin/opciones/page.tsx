@@ -71,7 +71,7 @@ const OpcionesAdminPage = () => {
   if (!isAuthorized) return null;
 
   return (
-    <Box p={4} position="relative" sx={{backgroundColor: "#f0f0f0", minHeight: "100vh"}} >
+    <Box p={4} position="relative" sx={{backgroundColor: "#FEFEFE", minHeight: "100vh"}} >
       <Typography variant="h4" fontWeight="bold" mb={2}>
         Opciones de Administrador
       </Typography>

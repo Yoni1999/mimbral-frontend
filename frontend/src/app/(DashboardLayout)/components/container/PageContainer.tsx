@@ -17,7 +17,7 @@ const PageContainer = ({ title, description, children }: Props) => (
         padding: "0 20px",
         overflowX: "hidden",
         boxSizing: "border-box",
-        backgroundColor: "#f0f0f0"
+        backgroundColor: "#FEFEFE"
       }}
     >
       <Helmet>

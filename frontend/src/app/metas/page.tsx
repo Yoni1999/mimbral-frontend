@@ -10,7 +10,7 @@ const DonutAsignacionMetas = dynamic(() => import('./components/DonutAsignacionM
 
 const PanelMetasPage = () => {
   return (
-    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', px: 5, pt: 0 }}>
+    <Box sx={{ bgcolor: '#FEFEFE', minHeight: '100vh', px: 5, pt: 0 }}>
       {/* Navegación superior */}
       <Box display="flex" flexDirection="column" gap={1} mb={2}>
         <NivelNavigation />

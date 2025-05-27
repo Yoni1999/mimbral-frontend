@@ -16,7 +16,7 @@ const PageWrapper = styled("div")(() => ({
   flexGrow: 1,
   flexDirection: "column",
   zIndex: 1,
-  backgroundColor: "#f0f0f0",
+  backgroundColor: "#FEFEFE",
 }));
 
 interface Props {

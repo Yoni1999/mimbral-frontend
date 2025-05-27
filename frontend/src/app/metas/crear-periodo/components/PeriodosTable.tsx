@@ -103,7 +103,7 @@ const PeriodosTable = () => {
         </Button>
       </Box>
 
-      <Paper elevation={1} sx={{backgroundColor: '#f5f5f5',p: 0, borderRadius: 1,}}>
+      <Paper elevation={1} sx={{backgroundColor: '#FEFEFE',p: 0, borderRadius: 1,}}>
         <Typography variant="subtitle1" className="mb-2 font-semibold">Periodos creados</Typography>
         <Table>
           <TableHead>

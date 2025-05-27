@@ -81,7 +81,7 @@ const AdminBreadcrumb = () => {
       py={1.5}
       px={3}
       sx={{
-        backgroundColor: "#f0f0f0",
+        backgroundColor: "#FEFEFE",
       }}
     >
       <Breadcrumbs

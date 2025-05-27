@@ -15,7 +15,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <AdminSidebar />
         <Box flex={1}>
           <AdminBreadcrumb />
-          <Box p={3} sx={{ backgroundColor: "#f0f0f0", minHeight: "100vh" }}>
+          <Box p={3} sx={{ backgroundColor: "#FEFEFE", minHeight: "100vh" }}>
             {children}
           </Box>
         </Box>
