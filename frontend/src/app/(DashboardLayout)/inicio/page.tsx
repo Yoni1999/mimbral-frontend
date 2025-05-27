@@ -65,19 +65,19 @@ const Dashboard = () => {
             <MetricCard
               title="Análisis Por Producto"
               value="200K"
-              description="Análisis de inventario disponible"
+              description="Análisa ventas por SKU"
               icon={<IconBox size={32} className="text-purple-600" />}
-              onClick={() => router.push("/utilities/ventas/inventario")}
+              onClick={() => router.push("/utilities/analisis-producto")}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
             <MetricCard
-              title="Análisis De Metas"
+              title="Monitorea las Metas"
               value="250K"
-              description="Análisis de ventas por categoría"
+              description="Monitorea metas comeciales"
               icon={<IconCategory size={32} className="text-orange-600" />}
               onClick={() =>
-                router.push("/utilities/ventas/ventas-por-categoria")
+                router.push("/metas-general")
               }
             />
           </Grid>
