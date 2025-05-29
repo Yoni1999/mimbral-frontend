@@ -26,6 +26,7 @@ const categoria3nivelRoutes = require("./src/routes/resumen-categoria/categoria3
 const categoria1nivelRoutes = require("./src/routes/resumen-categoria/categoria1nivel.routes");
 const productosvendedorRoutes = require("./src/routes/productosvendedor/productosvendedor.routes");
 const obtenervendedorescanalRoutes = require("./src/routes/productosvendedor/obtenervendedorescanal.routes");
+const obtenerProductosDetenidos = require("./src/routes/informes/productosdetenidos.routes");
 
 const app = express();
 app.use(cors({
@@ -68,6 +69,7 @@ app.use("/api/tercer-nivel", categoria3nivelRoutes);
 app.use("/api/primer-nivel", categoria1nivelRoutes);
 app.use("/api/pv", productosvendedorRoutes);
 app.use("/api/oc", obtenervendedorescanalRoutes);
+app.use("/api", obtenerProductosDetenidos);
 
 // Obtener IP local
 function getLocalIP() {

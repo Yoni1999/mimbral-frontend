@@ -199,7 +199,7 @@ const loginUser = async (req, res) => {
 
     if (!pedirOTP) {
       const token = jwt.sign(
-        { id: user.ID, email: user.Email, rol: user.ROL },
+        { id: user.ID, email: user.Email, rol: user.ROL, nombre: user.NOMBRE },
         JWT_SECRET,
         { expiresIn: "4h" }
       );
@@ -348,12 +348,12 @@ const verifyOTP = async (req, res) => {
 
     const userQuery = await pool.request()
       .input("Email", sql.NVarChar, email)
-      .query("SELECT ID, Email, ROL FROM USUARIOS WHERE EMAIL = @Email");
+      .query("SELECT ID, Email, ROL, NOMBRE FROM USUARIOS WHERE EMAIL = @Email");
 
     const user = userQuery.recordset[0];
 
     const token = jwt.sign(
-      { id: user.ID, email: user.Email, rol: user.ROL },
+      { id: user.ID, email: user.Email, rol: user.ROL, nombre: user.NOMBRE },
       JWT_SECRET,
       { expiresIn: "4h" }
     );
@@ -430,7 +430,42 @@ const logoutUser = async (req, res) => {
     res.status(500).json({ error: "Error al cerrar sesión" });
   }
 };
+const obtenerUsuarioDesdeToken = async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "Token no proporcionado" });
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const usuarioId = decoded.id;
+
+    const pool = await poolPromise;
+
+    // Puedes cambiar esta consulta si tu tabla es 'VENDEDORES' en lugar de 'USUARIOS'
+    const result = await pool.request()
+      .input("ID", sql.Int, usuarioId)
+      .query(`
+        SELECT ID, NOMBRE, EMAIL, ROL FROM USUARIOS WHERE ID = @ID
+      `);
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const usuario = result.recordset[0];
+
+    res.json({
+      id: usuario.ID,
+      nombre: usuario.NOMBRE,
+      email: usuario.EMAIL,
+      rol: usuario.ROL
+    });
+
+  } catch (err) {
+    console.error("❌ Error al verificar token:", err.message);
+    res.status(401).json({ error: "Token inválido o expirado" });
+  }
+};
 
 
 
-module.exports = { registerUser, loginUser, verifyOTP, logoutUser, crearUsuarioPorAdmin };
+module.exports = { registerUser, loginUser, verifyOTP, logoutUser, crearUsuarioPorAdmin,obtenerUsuarioDesdeToken };

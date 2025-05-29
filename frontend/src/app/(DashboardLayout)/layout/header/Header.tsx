@@ -26,6 +26,15 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
   const [ultimaHora, setUltimaHora] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const refreshButtonRef = useRef<HTMLButtonElement | null>(null);
+  interface Usuario {
+  id: number;
+  nombre: string;
+  email: string;
+  rol: string;
+}
+
+const [usuario, setUsuario] = useState<Usuario | null>(null);
+
 
   const handleRefreshClick = async () => {
     try {
@@ -40,6 +49,22 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
       console.error("❌ Error al obtener la última actualización:", error);
     }
   };
+  useEffect(() => {
+  const obtenerUsuario = async () => {
+    try {
+      const response = await fetchWithToken(`${BACKEND_URL}/api/auth/usuario`);
+      if (!response) throw new Error("Error al obtener el usuario");
+
+      const data = await response.json();
+      setUsuario(data);
+    } catch (err) {
+      console.error("❌ Error al obtener datos del usuario:", err);
+    }
+  };
+
+  obtenerUsuario();
+}, []);
+
 
   const handlePopoverClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
@@ -118,17 +143,33 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
 
             {/* Perfil */}
             <Box display="flex" alignItems="center">
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: 500,
-                  mr: 1,
-                  color: "text.primary",
-                  display: { xs: "none", md: "block" },
-                }}
-              >
-                Hola, <strong>Jonathan</strong>!
-              </Typography>
+              {usuario && (
+                <Box
+                  sx={{
+                    mr: 1,
+                    display: { xs: "none", md: "flex" },
+                    flexDirection: "column",
+                    alignItems: "flex-end",
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: "text.primary" }}>
+                    Hola, <strong>{usuario.nombre.trim()}</strong>!
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 400,
+                      color: "primary.main",
+                      fontStyle: "italic",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    Rol:{usuario.rol}
+                  </Typography>
+                </Box>
+              )}
+
+
               <Profile />
             </Box>
 
