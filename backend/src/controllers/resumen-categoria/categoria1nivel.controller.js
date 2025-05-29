@@ -947,13 +947,13 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
   
             SUM(CASE 
                 WHEN I.WhsCode = '01' 
-                 AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212) 
+                 AND I.SlpCode NOT IN (401, 397, 225, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212) 
                 THEN I.LineTotal ELSE 0 
             END) AS Chorrillo,
   
             SUM(CASE 
                 WHEN I.WhsCode = '01' 
-                 AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212) 
+                 AND I.SlpCode IN (227, 250, 225,205, 138, 209, 228, 226, 137, 212) 
                 THEN I.LineTotal ELSE 0 
             END) AS Empresas
   

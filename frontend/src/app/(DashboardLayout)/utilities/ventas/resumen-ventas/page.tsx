@@ -27,6 +27,7 @@ import NivelNavigation from "../components/NivelNavigation";
 import FotoDelDiaHeader, { Filters } from "./components/FotoDelDiaHeader.tsx";
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades } from "@/utils/format";
+import ProductosEstancadosTable from "./components/ProductosEstancadosTable";
 
 const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
   ssr: false, 
@@ -50,11 +51,13 @@ const formatMillions = (value: number) =>
 const FotoDelDia = () => {
   const [loading, setLoading] = useState(true);
   const [filtros, setFiltros] = useState<Omit<Filters, "vendedor">>({
+    canal: "", // <-- necesario ahora
     temporada: "",
     periodo: "",
     fechaInicio: "",
     fechaFin: "",
   });
+
 
   const [ventasHoy, setVentasHoy] = useState({
     TotalVentasPeriodo: 0,
@@ -130,6 +133,7 @@ const FotoDelDia = () => {
 
     const buildQuery = () => {
       const params = new URLSearchParams();
+      if (filtros.canal) params.append("canal", filtros.canal);
       if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
       if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
       if (filtros.periodo) params.append("periodo", getPeriodoParam());
@@ -296,6 +300,13 @@ const FotoDelDia = () => {
               <CategoriasBarChart data={categoriasData} />
               </Grid>
             </Grid>
+          </Grid>
+         <Grid item xs={12}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={12}>
+                <ProductosEstancadosTable />
+              </Grid>
+            </Grid>      
           </Grid>
       
 

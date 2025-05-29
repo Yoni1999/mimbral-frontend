@@ -67,6 +67,7 @@
     "electron-is-dev": "^3.0.1",
     "eslint": "8.46.0",
     "eslint-config-next": "13.4.12",
+    "file-saver": "^2.0.5",
     "framer-motion": "^12.5.0",
     "igniteui-react-charts": "^18.7.7",
     "igniteui-react-core": "^18.7.7",

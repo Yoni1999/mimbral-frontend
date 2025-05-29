@@ -345,6 +345,131 @@ const eliminarMeta = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Error interno al eliminar la meta.' });
   }
 };
+const getMetasPorMonto = async (req, res) => {
+  try {
+    const { idPeriodo, idCanal } = req.query;
+
+    if (!idPeriodo || !idCanal) {
+      return res.status(400).json({ error: "Faltan parámetros: idPeriodo o idCanal" });
+    }
+
+    const pool = await poolPromise;
+
+    const result = await pool.request()
+      .input("ID_PERIODO", sql.Int, idPeriodo)
+      .input("ID_CANAL", sql.Int, idCanal)
+      .query(`
+        DECLARE @FECHA_INICIO DATE = (SELECT FECHA_INICIO FROM PERIODOS_METAS WHERE ID_PERIODO = @ID_PERIODO);
+        DECLARE @FECHA_FIN DATE = (SELECT FECHA_FIN FROM PERIODOS_METAS WHERE ID_PERIODO = @ID_PERIODO);
+
+        WITH VENTAS_CANAL AS (
+          SELECT SUM(i.LineTotal) AS MONTO_VENTAS
+          FROM INV1 i
+          INNER JOIN OINV o ON o.DocEntry = i.DocEntry AND o.CANCELED = 'N'
+          INNER JOIN VENDEDORES v ON v.ID_VENDEDOR = i.SlpCode AND v.ID_CANAL = @ID_CANAL
+          WHERE o.DocDate BETWEEN @FECHA_INICIO AND @FECHA_FIN
+        ),
+        DEVOLUCIONES_CANAL AS (
+          SELECT SUM(r.LineTotal) AS MONTO_DEVUELTO
+          FROM RIN1 r
+          INNER JOIN ORIN n ON n.DocEntry = r.DocEntry AND n.CANCELED = 'N'
+          INNER JOIN OINM inm ON inm.BASE_REF = n.DocNum AND inm.ItemCode = r.ItemCode
+          INNER JOIN VENDEDORES v ON v.ID_VENDEDOR = inm.SlpCode AND v.ID_CANAL = @ID_CANAL
+          WHERE inm.DocDate BETWEEN @FECHA_INICIO AND @FECHA_FIN
+        )
+        SELECT 
+          mp.ID_META,
+          mp.MONTO_META,
+          ISNULL(vc.MONTO_VENTAS, 0) AS MONTO_TOTAL,
+          ISNULL(dc.MONTO_DEVUELTO, 0) AS MONTO_DEVUELTO,
+          ISNULL(vc.MONTO_VENTAS, 0) - ISNULL(dc.MONTO_DEVUELTO, 0) AS MONTO_VENDIDO,
+          CONVERT(DATE, mp.FECHA_REGISTRO) AS FECHA_REGISTRO
+        FROM METAS_PRODUCTO_CANAL mp
+        CROSS APPLY VENTAS_CANAL vc
+        CROSS APPLY DEVOLUCIONES_CANAL dc
+        WHERE 
+          mp.ID_PERIODO = @ID_PERIODO
+          AND mp.ID_CANAL = @ID_CANAL
+          AND mp.TIPO_META = 'monto'
+        ORDER BY MONTO_VENDIDO DESC;
+      `);
+
+    const data = result.recordset.map(row => ({
+      ID_META: row.ID_META,
+      MONTO_META: row.MONTO_META,
+      MONTO_VENDIDO: row.MONTO_VENDIDO,
+      FECHA_REGISTRO: row.FECHA_REGISTRO,
+    }));
+
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Error en getMetasPorMonto:", error);
+    return res.status(500).json({ error: "Error interno del servidor" });
+  }
+};
+const cargarMetasMasivas = async (req, res) => {
+  try {
+    const { id_canal, id_periodo, tipo_meta, metas } = req.body;
+
+    if (!id_canal || !id_periodo || tipo_meta !== 'cantidad' || !Array.isArray(metas)) {
+      return res.status(400).json({ error: 'Parámetros inválidos' });
+    }
+
+    const pool = await poolPromise;
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+
+    for (const meta of metas) {
+      const { sku, cantidad } = meta;
+
+      if (!sku || typeof cantidad !== 'number') {
+        await transaction.rollback();
+        return res.status(400).json({ error: 'Datos de meta inválidos' });
+      }
+
+      // Crear un nuevo request en cada iteración
+      const request = new sql.Request(transaction);
+
+      const checkResult = await request
+        .input('ID_CANAL', sql.Int, id_canal)
+        .input('ID_PERIODO', sql.Int, id_periodo)
+        .input('SKU', sql.VarChar, sku)
+        .query(`
+          SELECT ID_META
+          FROM METAS_PRODUCTO_CANAL
+          WHERE ID_CANAL = @ID_CANAL AND ID_PERIODO = @ID_PERIODO AND SKU = @SKU
+        `);
+
+      if (checkResult.recordset.length > 0) {
+        await request
+          .input('NUEVA_CANTIDAD', sql.Int, cantidad)
+          .query(`
+            UPDATE METAS_PRODUCTO_CANAL
+            SET META_CANTIDAD = @NUEVA_CANTIDAD
+            WHERE ID_CANAL = @ID_CANAL AND ID_PERIODO = @ID_PERIODO AND SKU = @SKU
+          `);
+      } else {
+        await request
+          .input('TIPO_META', sql.VarChar, 'cantidad')
+          .input('META_CANTIDAD', sql.Int, cantidad)
+          .query(`
+            INSERT INTO METAS_PRODUCTO_CANAL (ID_CANAL, ID_PERIODO, TIPO_META, SKU, META_CANTIDAD)
+            VALUES (@ID_CANAL, @ID_PERIODO, @TIPO_META, @SKU, @META_CANTIDAD)
+          `);
+      }
+    }
+
+
+    await transaction.commit();
+    return res.status(200).json({ message: '✅ Metas registradas o actualizadas correctamente' });
+  } catch (error) {
+    console.error('❌ Error en carga masiva de metas:', error);
+    return res.status(500).json({ error: 'Error interno al procesar las metas' });
+  }
+};
+
+
 module.exports = {
-  obtenerMetasPorCanal, insertarMeta, asignarMetasAVendedores, obtenerVendedoresmeta, obtenerTotalesAsignados, editarMeta, eliminarMeta 
+  obtenerMetasPorCanal, insertarMeta, asignarMetasAVendedores, obtenerVendedoresmeta, obtenerTotalesAsignados, 
+  editarMeta, eliminarMeta, getMetasPorMonto, cargarMetasMasivas 
 };

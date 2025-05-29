@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 
 export interface Filters {
+  canal: string;
   temporada: string;
   periodo: string;
   fechaInicio: string;
@@ -35,9 +36,19 @@ const temporadaRangos: Record<string, { inicio: string; fin: string }> = {
   "Invierno 2025": { inicio: "2025-06-21", fin: "2025-09-22" },
   "Primavera 2025": { inicio: "2025-09-23", fin: "2025-12-21" },
 };
+const canalSlpMap: Record<string, number> = {
+  Empresas: 1,
+  Chorrillo: 2,
+  Balmaceda: 3,
+  Vitex: 4,
+  Meli: 5,
+  Falabella: 6,
+};
+
 
 const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
   const [filters, setFilters] = useState<Filters>({
+    canal:"",
     temporada: "",
     periodo: "",
     fechaInicio: "",
@@ -65,6 +76,7 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
           fechaInicio: fechas.inicio,
           fechaFin: fechas.fin,
           comparacion: filters.comparacion || "",
+          canal: filters.canal, // <-- agregar para no perder el canal
         };
       }
     }
@@ -101,8 +113,10 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
     if (puedeFiltrar) onFilterChange(updated);
   };
 
+
   const handleClear = () => {
     const cleared: Filters = {
+      canal:"",
       temporada: "",
       periodo: "",
       fechaInicio: "",
@@ -157,24 +171,25 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
           </Box>
         </Grid>
         {/*Canales de venta  */}
-        
+
         <Grid item xs={12} md={10}>
           <Grid container spacing={1.5} justifyContent="flex-end">
             <Grid item xs={6} sm={3} md={2}>
               <FormControl fullWidth size="small">
                 <InputLabel sx={{ fontSize: "0.75rem" }}>Canal</InputLabel>
-                <Select
-                  value={filters.temporada}
-                  onChange={(e) => handleChange("temporada", e.target.value)}
-                  label="Temporada"
-                  sx={{ fontSize: "0.75rem", height: 36 }}
-                >
-                  {Object.keys(temporadaRangos).map((s) => (
-                    <MenuItem key={s} value={s} sx={{ fontSize: "0.75rem" }}>
-                      {s}
-                    </MenuItem>
-                  ))}
-                </Select>
+                  <Select
+                    value={filters.canal}
+                    onChange={(e) => handleChange("canal", e.target.value)}
+                    label="Canal"
+                    sx={{ fontSize: "0.75rem", height: 36 }}
+                  >
+                    {Object.keys(canalSlpMap).map((canal) => (
+                      <MenuItem key={canal} value={canal} sx={{ fontSize: "0.75rem" }}>
+                        {canal.replace('Meli', ' Mercado Libre')} {/* Opcional: muestra 'Mercado Libre' en lugar de 'Mercado_Libre' */}
+                      </MenuItem>
+                    ))}
+                  </Select>
+
               </FormControl>
             </Grid>
 

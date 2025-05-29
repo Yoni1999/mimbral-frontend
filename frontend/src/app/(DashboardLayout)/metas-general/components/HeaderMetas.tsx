@@ -17,11 +17,9 @@ import {
   Avatar,
   ListItemIcon,
   ListItemText,
-  Tooltip,
 } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import CloseIcon from "@mui/icons-material/Close";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 
@@ -59,7 +57,7 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
   const [openDrawer, setOpenDrawer] = useState(false);
   const [filters, setFilters] = useState<MetaFilters>(
     initialFilters || {
-      periodo: "Marzo-Abril 2025",
+      periodo: "",
       categoria: "",
       canal: "",
       marca: "",
@@ -79,11 +77,34 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
     const fetchPeriodos = async () => {
       const res = await fetchWithToken(`${BACKEND_URL}/api/periodos`);
       const data = await res!.json();
+
+      const hoy = new Date();
+      const periodoActual = data.find((p: any) => {
+        const inicio = new Date(p.FECHA_INICIO);
+        const fin = new Date(p.FECHA_FIN);
+        return hoy >= inicio && hoy <= fin;
+      });
+
       setPeriodos(data.map((p: any) => ({
         id: p.ID_PERIODO,
-        nombre: p.NOMBRE
+        nombre: p.NOMBRE,
+        inicio: p.FECHA_INICIO,
+        fin: p.FECHA_FIN
       })));
+
+      setFilters((prev) => ({
+        ...prev,
+        periodo: periodoActual ? periodoActual.ID_PERIODO.toString() : "",
+        canal: "Empresas"
+      }));
+
+      onFilterChange({
+        ...filters,
+        periodo: periodoActual ? periodoActual.ID_PERIODO.toString() : "",
+        canal: "Empresas"
+      });
     };
+
     fetchPeriodos();
   }, []);
 
@@ -107,11 +128,7 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
 
       const res = await fetchWithToken(`${BACKEND_URL}/api/metas/vendedores?id_canal=${idCanal}`);
       const data = await res!.json();
-      setVendedores(data.map((v: any) => ({
-        id: v.id,
-        nombre: v.NOMBRE
-      })));
-
+      setVendedores(data.map((v: any) => ({ id: v.id, nombre: v.NOMBRE })));
     };
 
     if (filters.canal) fetchVendedores();
@@ -148,13 +165,34 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
       updated.vendedor = "";
     }
 
-
-
     setFilters(updated);
   };
 
+  const handleChipDelete = (key: keyof MetaFilters) => {
+    const updated = { ...filters, [key]: "" };
+
+    if (key === "categoria") {
+      updated.subcategoria = "";
+      updated.subsubcategoria = "";
+      setCategorias([]);
+      setSubcategorias([]);
+    }
+
+    if (key === "subcategoria") {
+      updated.subsubcategoria = "";
+      setSubcategorias([]);
+    }
+
+    if (key === "canal") {
+      updated.vendedor = "";
+      setVendedores([]);
+    }
+
+    setFilters(updated);
+    onFilterChange(updated);
+  };
+
   const handleApply = () => {
-    
     onFilterChange(filters);
     setOpenDrawer(false);
   };
@@ -175,30 +213,72 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
 
   return (
     <Box mb={2}>
-      <Box display="flex" alignItems="center" gap={1}>
-        <Button
-          variant="outlined"
-          startIcon={<FilterListIcon />}
-          onClick={() => setOpenDrawer(true)}
-        >
-          Filtros
-        </Button>
-        <Tooltip title="Exportar próximamente">
-          <IconButton>
-            <FileDownloadIcon />
-          </IconButton>
-        </Tooltip>
+
+
+    <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+      {/* Chips alineados a la izquierda */}
+      <Box display="flex" gap={1} flexWrap="wrap">
+        {filters.periodo && (
+          <Chip
+            label={`Período: ${
+              periodos.find((p) => p.id.toString() === filters.periodo)?.nombre || filters.periodo
+            }`}
+            onDelete={() => handleChipDelete("periodo")}
+          />
+        )}
+        {filters.categoria && (
+          <Chip
+            label={`Primer Nivel: ${
+              primerNiveles.find((cat) => cat.codigo === filters.categoria)?.nombre || filters.categoria
+            }`}
+            onDelete={() => handleChipDelete("categoria")}
+          />
+        )}
+        {filters.subcategoria && (
+          <Chip
+            label={`Categoría: ${
+              categorias.find((cat) => cat.codigo === filters.subcategoria)?.nombre || filters.subcategoria
+            }`}
+            onDelete={() => handleChipDelete("subcategoria")}
+          />
+        )}
+        {filters.subsubcategoria && (
+          <Chip
+            label={`Subcategoría: ${
+              subcategorias.find((cat) => cat.codigo === filters.subsubcategoria)?.nombre || filters.subsubcategoria
+            }`}
+            onDelete={() => handleChipDelete("subsubcategoria")}
+          />
+        )}
+        {filters.canal && (
+          <Chip label={`Canal: ${filters.canal}`} onDelete={() => handleChipDelete("canal")} />
+        )}
+        {filters.marca && (
+          <Chip label={`Marca: ${filters.marca}`} onDelete={() => handleChipDelete("marca")} />
+        )}
+        {filters.vendedor && (
+          <Chip
+            label={`Vendedor: ${
+              vendedores.find((v) => v.id.toString() === filters.vendedor)?.nombre || filters.vendedor
+            }`}
+            onDelete={() => handleChipDelete("vendedor")}
+          />
+        )}
       </Box>
 
-      <Box mt={1} display="flex" gap={1} flexWrap="wrap">
-        {filters.periodo && <Chip label={`Período: ${filters.periodo}`} />}
-        {filters.categoria && <Chip label={`Primer Nivel: ${filters.categoria}`} />}
-        {filters.subcategoria && <Chip label={`Categoría: ${filters.subcategoria}`} />}
-        {filters.subsubcategoria && <Chip label={`Subcategoría: ${filters.subsubcategoria}`} />}
-        {filters.canal && <Chip label={`Canal: ${filters.canal}`} />}
-        {filters.marca && <Chip label={`Marca: ${filters.marca}`} />}
-        {filters.vendedor && <Chip label={`Vendedor: ${filters.vendedor}`} />}
-      </Box>
+      {/* Botón alineado a la derecha */}
+      <Button
+        variant="outlined"
+        color="primary"
+        startIcon={<FilterListIcon />}
+        onClick={() => setOpenDrawer(true)}
+        sx={{ whiteSpace: "nowrap" }}
+      >
+        Filtros
+      </Button>
+    </Box>
+
+
 
       <Drawer anchor="right" open={openDrawer} onClose={() => setOpenDrawer(false)}>
         <Box sx={{ width: 360, p: 3 }}>
@@ -215,17 +295,16 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
             <Grid item xs={12}>
               <FormControl fullWidth size="small">
                 <InputLabel>Período</InputLabel>
-                  <Select
-                    value={filters.periodo}
-                    onChange={(e) => handleChange("periodo", e.target.value)}
-                  >
-                    {periodos.map((p) => (
-                      <MenuItem key={p.id} value={p.id.toString()}>
-                        {p.nombre}
-                      </MenuItem>
-                    ))}
-                  </Select>
-
+                <Select
+                  value={filters.periodo}
+                  onChange={(e) => handleChange("periodo", e.target.value)}
+                >
+                  {periodos.map((p) => (
+                    <MenuItem key={p.id} value={p.id.toString()}>
+                      {p.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
               </FormControl>
             </Grid>
 
@@ -235,7 +314,6 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
                 <Select
                   value={filters.categoria}
                   onChange={(e) => handleChange("categoria", e.target.value)}
-                  label="Primer Nivel"
                   renderValue={(selected) => {
                     const selectedCat = primerNiveles.find((cat) => cat.codigo === selected);
                     return (
@@ -337,8 +415,6 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
                     </MenuItem>
                   ))}
                 </Select>
-
-
               </FormControl>
             </Grid>
 

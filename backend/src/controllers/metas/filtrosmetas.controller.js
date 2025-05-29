@@ -9,6 +9,7 @@ const obtenerMetasPorCanal = async (req, res) => {
     primerNivel = null,
     categoria = null,
     subcategoria = null,
+    tipoMeta = null,
   } = req.query;
 
   try {
@@ -21,6 +22,7 @@ const obtenerMetasPorCanal = async (req, res) => {
       .input('PRIMER_NIVEL', sql.NVarChar(50), primerNivel)
       .input('CATEGORIA', sql.NVarChar(50), categoria)
       .input('SUBCATEGORIA', sql.NVarChar(50), subcategoria)
+      .input('TIPO_META', sql.NVarChar(50), tipoMeta)
       .query(`
         DECLARE @DIAS_TRANSCURRIDOS INT = DATEDIFF(DAY, 
             (SELECT FECHA_INICIO FROM PERIODOS_METAS WHERE ID_PERIODO = @ID_PERIODO),
@@ -112,7 +114,7 @@ const obtenerMetasPorCanal = async (req, res) => {
         WHERE 
           mp.ID_PERIODO = @ID_PERIODO
           AND mp.ID_CANAL = @ID_CANAL
-          AND mp.TIPO_META = 'cantidad'
+          AND (@TIPO_META IS NULL OR mp.TIPO_META = @TIPO_META)
           AND (@PRIMER_NIVEL IS NULL OR itm.U_PRIMER_NIVEL = @PRIMER_NIVEL)
           AND (@CATEGORIA IS NULL OR itm.U_CATEGORIA = @CATEGORIA)
           AND (@SUBCATEGORIA IS NULL OR itm.U_SUBCATEGORIA = @SUBCATEGORIA)

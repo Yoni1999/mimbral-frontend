@@ -33,7 +33,9 @@ export default function MetasPage() {
     canal: "",
   });
 
+  const [tipoMeta, setTipoMeta] = useState<"sku" | "monto">("sku");
   const [metasData, setMetasData] = useState<any[]>([]);
+  const [metasMontoData, setMetasMontoData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showMensaje, setShowMensaje] = useState(true);
 
@@ -61,14 +63,23 @@ export default function MetasPage() {
       if (filters.subcategoria) queryParams.append("categoria", filters.subcategoria);
       if (filters.subsubcategoria) queryParams.append("subcategoria", filters.subsubcategoria);
 
-      const fullURL = `${BACKEND_URL}/api/metas/views?${queryParams.toString()}`;
+      const endpoint = tipoMeta === "sku" ? "views" : "monto";
+      const fullURL = `${BACKEND_URL}/api/metas/${endpoint}?${queryParams.toString()}`;
+
       console.log("🔍 Query final enviado a la API:", fullURL);
 
       setLoading(true);
       try {
         const res = await fetchWithToken(fullURL);
-        const data = await res?.json();
-        setMetasData(Array.isArray(data) ? data : []);
+        const data = await res!.json();
+
+        if (tipoMeta === "sku") {
+          setMetasData(data);
+          setMetasMontoData([]); // limpia en caso de cambio
+        } else {
+          setMetasMontoData(data);
+          setMetasData([]); // limpia en caso de cambio
+        }
       } catch (err) {
         console.error("❌ Error al obtener metas:", err);
       } finally {
@@ -77,7 +88,7 @@ export default function MetasPage() {
     };
 
     fetchMetas();
-  }, [filters]);
+  }, [filters, tipoMeta]);
 
   return (
     <PageContainer title="Metas" description="Sección de Metas">
@@ -93,12 +104,13 @@ export default function MetasPage() {
             <Box display="flex" justifyContent="center" mt={4}>
               <CircularProgress />
             </Box>
-          ) : metasData.length === 0 ? (
-            <Typography align="center" mt={3} fontStyle="italic">
-              No se encontraron metas para los filtros seleccionados.
-            </Typography>
           ) : (
-            <TablaMetas data={metasData} />
+            <TablaMetas
+              data={metasData}
+              dataMonto={metasMontoData}
+              tipoMeta={tipoMeta}
+              setTipoMeta={setTipoMeta}
+            />
           )}
         </Box>
       </Box>
@@ -130,8 +142,7 @@ export default function MetasPage() {
             fontSize: "0.9rem",
           }}
         >
-          🚧 Aún estamos trabajando para que puedas ver las metas completas en
-          esta sección. ¡Vuelve pronto!
+          🚧 Aún estamos trabajando para que puedas ver las metas completas en esta sección. ¡Vuelve pronto!
         </Alert>
       </Snackbar>
     </PageContainer>
