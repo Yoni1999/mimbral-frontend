@@ -137,12 +137,12 @@ export default function MetasPage() {
           sx={{
             display: "flex",
             alignItems: "center",
-            p: 2,
-            borderRadius: 2,
+            p: 1.5,
+            borderRadius: 3,
             fontSize: "0.9rem",
           }}
         >
-          🚧 Aún estamos trabajando para que puedas ver las metas completas en esta sección. ¡Vuelve pronto!
+          🚧 Aún estamos trabajando para que puedas ver las metas completas en esta sección. ¡Pero ya puedes ver las metas completas de Venta Empresas!
         </Alert>
       </Snackbar>
     </PageContainer>

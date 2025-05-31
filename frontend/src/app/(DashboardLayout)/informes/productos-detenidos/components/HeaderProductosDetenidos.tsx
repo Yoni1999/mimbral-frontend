@@ -44,6 +44,8 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange }) => {
     { value: "1M", label: "Último mes" },
     { value: "3M", label: "Últimos 3 meses" },
     { value: "6M", label: "Últimos 6 meses" },
+    { value: "1Y", label: "último año"},
+    { value: "2Y", label: "Últimos 2 años"},
     { value: "RANGO", label: "Rango personalizado" },
   ];
 
