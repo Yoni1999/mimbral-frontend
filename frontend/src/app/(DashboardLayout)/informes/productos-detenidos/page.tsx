@@ -19,18 +19,24 @@ interface FiltroProductos {
   primerNivel?: string;
   categoria?: string;
   subcategoria?: string;
+  proveedor?: string;
 }
 
 interface ProductoEstancado {
   SKU: string;
   Producto: string;
-  PrimerNivel: string;
+  PrimerNivel: string | null;
+  Categoria: string | null;
+  Subcategoria: string | null;
   UltimaVenta: string | null;
+  UltimaFechaCompra: string | null;
   DiasSinVenta: number;
   Stock: number;
+  Imagen: string | null;
+  CostoPromedioUlt3Compras: number;
   MargenPorcentaje: number;
-  Imagen: string;
 }
+
 
 const ProductosDetenidosPage = () => {
   const [filters, setFilters] = useState<FiltroProductos>({});
@@ -58,8 +64,9 @@ const ProductosDetenidosPage = () => {
       const res = await fetchWithToken(`${BACKEND_URL}/api/productos-detenidos?${params}`);
       const data = await res!.json();
 
-      setProductos(data.data);
-      setTotal(data.total);
+      setProductos(Array.isArray(data.data) ? data.data : []);
+      setTotal(typeof data.total === "number" ? data.total : 0);
+
     } catch (error) {
       console.error("Error al cargar productos detenidos:", error);
     } finally {
@@ -86,7 +93,7 @@ const ProductosDetenidosPage = () => {
     <Box p={4}>
       <Typography variant="h4" fontWeight="bold" gutterBottom display="flex" alignItems="center">
         <TrendingDown sx={{ mr: 1 }} />
-        Informe de Productos Detenidos
+        Informe de Productos Detenidos Activos para compras
       </Typography>
 
       <Typography variant="body1" color="text.secondary" gutterBottom>

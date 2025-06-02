@@ -109,7 +109,7 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
       {loading ? (
         <Typography variant="body1">Cargando gráfico...</Typography>
       ) : (
-        <Chart options={options} series={chartData} type="donut" width="100%" />
+        <Chart options={options} series={chartData} type="donut" width="100%" height={300} />
       )}
     </DashboardCard>
   );

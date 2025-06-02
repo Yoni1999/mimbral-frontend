@@ -28,6 +28,7 @@ import FotoDelDiaHeader, { Filters } from "./components/FotoDelDiaHeader.tsx";
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades } from "@/utils/format";
 import ProductosEstancadosTable from "./components/ProductosEstancadosTable";
+import ProductosVendidos from "./components/ProductosVendidos";
 
 const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
   ssr: false, 
@@ -304,7 +305,14 @@ const FotoDelDia = () => {
          <Grid item xs={12}>
             <Grid container spacing={2}>
               <Grid item xs={12} md={12}>
-                <ProductosEstancadosTable />
+                < ProductosVendidos />
+              </Grid>
+            </Grid>      
+          </Grid>
+          <Grid item xs={12}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={12}>
+                <ProductosEstancadosTable  />
               </Grid>
             </Grid>      
           </Grid>

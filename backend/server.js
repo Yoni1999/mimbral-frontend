@@ -12,7 +12,6 @@ const margenRoutes = require("./src/routes/margen.routes");
 const categoriasRoutes = require("./src/routes/categorias.routes");
 const ventasHoyRoutes = require("./src/routes/ventashoy.routes");
 const actualizarDatosRoutes = require("./src/routes/actualizarDatos.routes");
-const proveedoresRoutes = require("./src/routes/proveedores.routes");
 const vendedoresRoutes = require("./src/routes/vendedores.routes");
 const canalVendedorRoutes = require("./src/routes/canalVendedor.routes");
 const usuariosAdminRoutes = require("./src/routes/usuarios.routes");
@@ -27,6 +26,7 @@ const categoria1nivelRoutes = require("./src/routes/resumen-categoria/categoria1
 const productosvendedorRoutes = require("./src/routes/productosvendedor/productosvendedor.routes");
 const obtenervendedorescanalRoutes = require("./src/routes/productosvendedor/obtenervendedorescanal.routes");
 const obtenerProductosDetenidos = require("./src/routes/informes/productosdetenidos.routes");
+const obtenerproveedoresRoutes = require("./src/routes/informes/filtrosdetenidos.routes")
 
 const app = express();
 app.use(cors({
@@ -55,7 +55,6 @@ app.use("/api/margen", margenRoutes);
 app.use("/api/categorias", categoriasRoutes);
 app.use("/api", ventasHoyRoutes);
 app.use("/api", actualizarDatosRoutes);
-app.use("/api/proveedores", proveedoresRoutes);
 app.use("/api", vendedoresRoutes);
 app.use("/api", canalVendedorRoutes);
 app.use("/api/admin/usuarios", usuariosAdminRoutes);
@@ -70,6 +69,7 @@ app.use("/api/primer-nivel", categoria1nivelRoutes);
 app.use("/api/pv", productosvendedorRoutes);
 app.use("/api/oc", obtenervendedorescanalRoutes);
 app.use("/api", obtenerProductosDetenidos);
+app.use("/api/",obtenerproveedoresRoutes);
 
 // Obtener IP local
 function getLocalIP() {

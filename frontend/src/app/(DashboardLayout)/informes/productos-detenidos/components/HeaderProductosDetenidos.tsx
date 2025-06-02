@@ -1,16 +1,19 @@
+// HeaderProductosDrawer.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Box, Drawer, IconButton, Typography, Divider,
   FormControl, InputLabel, Select, MenuItem, Button,
-  Grid, Chip, Avatar, TextField, ListItemIcon, ListItemText
+  Grid, Chip, Avatar, TextField, ListItemIcon, ListItemText,
+  CircularProgress // You've already imported this, good!
 } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import CloseIcon from "@mui/icons-material/Close";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 
+// --- INTERFACES (Moved out from within the component for clarity) ---
 interface FiltroProductos {
   periodo: string;
   fechaInicio?: string;
@@ -18,6 +21,7 @@ interface FiltroProductos {
   primerNivel?: string;
   categoria?: string;
   subcategoria?: string;
+  proveedor?: string; // This will hold the CardCode of the selected supplier
 }
 
 interface Categoria {
@@ -26,17 +30,34 @@ interface Categoria {
   imagen?: string;
 }
 
-interface Props {
-  onFilterChange: (filters: FiltroProductos) => void;
+interface Proveedor {
+  CardCode: string;
+  CardName: string;
 }
 
-const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange }) => {
+interface Props {
+  onFilterChange: (filters: FiltroProductos) => void;
+  // It's good practice to pass currentFilters down for initial state sync
+  currentFilters?: FiltroProductos;
+}
+
+const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters }) => {
   const [openDrawer, setOpenDrawer] = useState(false);
-  const [filters, setFilters] = useState<FiltroProductos>({ periodo: "7D" });
+  // Initialize filters with currentFilters if provided, otherwise default to "7D"
+  const [filters, setFilters] = useState<FiltroProductos>(currentFilters || { periodo: "7D" });
 
   const [primerNiveles, setPrimerNiveles] = useState<Categoria[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [subcategorias, setSubcategorias] = useState<Categoria[]>([]);
+  
+  // State for all fetched suppliers
+  const [allProveedores, setAllProveedores] = useState<Proveedor[]>([]);
+  // State for the text in the supplier search input
+  const [proveedorSearchInput, setProveedorSearchInput] = useState("");
+  // State to manage loading indicator for suppliers
+  const [loadingProveedores, setLoadingProveedores] = useState(false);
+  // State to control visibility of supplier suggestion list
+  const [showProveedorSuggestions, setShowProveedorSuggestions] = useState(false);
 
   const periodos = [
     { value: "7D", label: "Últimos 7 días" },
@@ -44,19 +65,64 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange }) => {
     { value: "1M", label: "Último mes" },
     { value: "3M", label: "Últimos 3 meses" },
     { value: "6M", label: "Últimos 6 meses" },
-    { value: "1Y", label: "último año"},
-    { value: "2Y", label: "Últimos 2 años"},
+    { value: "1Y", label: "último año" },
+    { value: "2Y", label: "Últimos 2 años" },
     { value: "RANGO", label: "Rango personalizado" },
   ];
 
+  // Sync internal state with external filters when currentFilters changes
+  useEffect(() => {
+    setFilters(currentFilters || { periodo: "7D" });
+    // Also update the supplier search input if a supplier is already selected
+    if (currentFilters?.proveedor) {
+      const selectedProv = allProveedores.find(p => p.CardCode === currentFilters.proveedor);
+      if (selectedProv) {
+        setProveedorSearchInput(selectedProv.CardName);
+      } else {
+        // If the selected supplier is not in allProveedores yet, fetch it or set input to code
+        setProveedorSearchInput(currentFilters.proveedor); // Fallback to code
+      }
+    } else {
+      setProveedorSearchInput("");
+    }
+  }, [currentFilters, allProveedores]); // Added allProveedores to dependencies
+
+  // Fetch Primer Nivel Categories on component mount
   useEffect(() => {
     const fetchPrimerNivel = async () => {
-      const res = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
-      const data = await res!.json();
-      setPrimerNiveles(data);
+      try {
+        const res = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
+        const data = await res!.json();
+        setPrimerNiveles(data);
+      } catch (error) {
+        console.error("Error fetching primer nivel categories:", error);
+      }
     };
     fetchPrimerNivel();
   }, []);
+
+  // Fetch all suppliers only once or when the drawer opens for the first time
+  const fetchAllProveedores = useCallback(async () => {
+    if (allProveedores.length === 0 && openDrawer) { // Only fetch if not already fetched and drawer is open
+      setLoadingProveedores(true);
+      try {
+        const res = await fetchWithToken(`${BACKEND_URL}/api/obtenerproveedores`);
+        const data = await res!.json();
+        setAllProveedores(data);
+      } catch (error) {
+        console.error("Error fetching suppliers:", error);
+      } finally {
+        setLoadingProveedores(false);
+      }
+    }
+  }, [allProveedores.length, openDrawer]);
+
+  useEffect(() => {
+    if (openDrawer) {
+      fetchAllProveedores();
+    }
+  }, [openDrawer, fetchAllProveedores]);
+
 
   const handleChange = async (key: keyof FiltroProductos, value: string) => {
     const updated = { ...filters, [key]: value };
@@ -64,43 +130,71 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange }) => {
     if (key === "primerNivel") {
       updated.categoria = "";
       updated.subcategoria = "";
-      const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getcat?primerNivel=${value}`);
-      const data = await res!.json();
-      setCategorias(data.map((cat: any) => ({
-        codigo: cat.codigo_categoria,
-        nombre: cat.nombre_categoria,
-        imagen: cat.IMAGEN,
-      })));
-      setSubcategorias([]);
+      try {
+        const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getcat?primerNivel=${value}`);
+        const data = await res!.json();
+        setCategorias(data.map((cat: any) => ({
+          codigo: cat.codigo_categoria,
+          nombre: cat.nombre_categoria,
+          imagen: cat.IMAGEN,
+        })));
+        setSubcategorias([]);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
     }
 
     if (key === "categoria") {
       updated.subcategoria = "";
-      const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getsub?categoria=${value}`);
-      const data = await res!.json();
-      setSubcategorias(data.map((sub: any) => ({
-        codigo: sub.codigo_subcategoria,
-        nombre: sub.nombre_subcategoria,
-        imagen: sub.IMAGEN,
-      })));
+      try {
+        const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getsub?categoria=${value}`);
+        const data = await res!.json();
+        setSubcategorias(data.map((sub: any) => ({
+          codigo: sub.codigo_subcategoria,
+          nombre: sub.nombre_subcategoria,
+          imagen: sub.IMAGEN,
+        })));
+      } catch (error) {
+        console.error("Error fetching subcategories:", error);
+      }
     }
 
     setFilters(updated);
   };
 
+  const handleProveedorSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setProveedorSearchInput(value);
+    setShowProveedorSuggestions(true); // Show suggestions when user types
+    // If the input is cleared, clear the selected supplier filter
+    if (value === "") {
+      setFilters(prev => ({ ...prev, proveedor: undefined }));
+    }
+  };
+
+  const handleProveedorSelect = (proveedor: Proveedor) => {
+    setFilters((prev) => ({ ...prev, proveedor: proveedor.CardCode }));
+    setProveedorSearchInput(proveedor.CardName); // Display name in the input
+    setShowProveedorSuggestions(false); // Hide suggestions after selection
+  };
+
   const handleChipDelete = (key: keyof FiltroProductos) => {
-    const updated = { ...filters, [key]: "" };
+    const updated: FiltroProductos = { ...filters, [key]: undefined }; // Use undefined for optional fields
 
     if (key === "primerNivel") {
-      updated.categoria = "";
-      updated.subcategoria = "";
+      updated.categoria = undefined;
+      updated.subcategoria = undefined;
       setCategorias([]);
       setSubcategorias([]);
     }
 
     if (key === "categoria") {
-      updated.subcategoria = "";
+      updated.subcategoria = undefined;
       setSubcategorias([]);
+    }
+    
+    if (key === "proveedor") {
+        setProveedorSearchInput(""); // Clear the search input if supplier chip is deleted
     }
 
     setFilters(updated);
@@ -113,18 +207,34 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange }) => {
   };
 
   const handleClear = () => {
-    const cleared: FiltroProductos = { periodo: "7D" };
+    const cleared: FiltroProductos = { periodo: "7D" }; // Reset to default period
     setFilters(cleared);
+    setProveedorSearchInput(""); // Clear supplier search input
+    setCategorias([]); // Clear dependent dropdowns
+    setSubcategorias([]); // Clear dependent dropdowns
     onFilterChange(cleared);
+    setOpenDrawer(false); // Close the drawer after clearing
   };
+
+  // Filter suppliers based on search input
+  const filteredProveedores = allProveedores.filter(p =>
+    p.CardCode.toLowerCase().includes(proveedorSearchInput.toLowerCase()) ||
+    p.CardName.toLowerCase().includes(proveedorSearchInput.toLowerCase())
+  );
 
   return (
     <Box mb={2}>
-      {/* Chips + Botón */}
+      {/* Chips + Button */}
       <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
         <Box display="flex" gap={1} flexWrap="wrap">
           {filters.periodo && (
             <Chip label={`Período: ${periodos.find(p => p.value === filters.periodo)?.label}`} onDelete={() => handleChipDelete("periodo")} />
+          )}
+          {filters.proveedor && (
+            <Chip 
+              label={`Proveedor: ${allProveedores.find(p => p.CardCode === filters.proveedor)?.CardName || filters.proveedor}`} 
+              onDelete={() => handleChipDelete("proveedor")} 
+            />
           )}
           {filters.primerNivel && (
             <Chip label={`Primer Nivel: ${primerNiveles.find(p => p.codigo === filters.primerNivel)?.nombre}`} onDelete={() => handleChipDelete("primerNivel")} />
@@ -135,14 +245,35 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange }) => {
           {filters.subcategoria && (
             <Chip label={`Subcategoría: ${subcategorias.find(p => p.codigo === filters.subcategoria)?.nombre}`} onDelete={() => handleChipDelete("subcategoria")} />
           )}
+          {filters.periodo === "RANGO" && filters.fechaInicio && filters.fechaFin && (
+              <Chip label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`} onDelete={() => {
+                  const updated = { ...filters, fechaInicio: undefined, fechaFin: undefined };
+                  setFilters(updated);
+                  onFilterChange(updated);
+              }} />
+          )}
         </Box>
         <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setOpenDrawer(true)}>
           Filtros
         </Button>
       </Box>
 
-      {/* Drawer lateral */}
-      <Drawer anchor="right" open={openDrawer} onClose={() => setOpenDrawer(false)}>
+      {/* Side Drawer */}
+      <Drawer
+        anchor="right"
+        open={openDrawer}
+        onClose={() => setOpenDrawer(false)}
+        PaperProps={{
+          sx: {
+            width: 380,
+            borderTopLeftRadius: 12,
+            borderBottomLeftRadius: 12,
+            boxShadow: 6,
+            p: 3,
+            backgroundColor: "#fafafa",
+          },
+        }}
+      >
         <Box sx={{ width: 360, p: 3 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6">Filtros de búsqueda</Typography>
@@ -154,7 +285,7 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange }) => {
           <Divider sx={{ my: 2 }} />
 
           <Grid container spacing={2}>
-            {/* Periodo */}
+            {/* Period */}
             <Grid item xs={12}>
               <FormControl fullWidth size="small">
                 <InputLabel>Período</InputLabel>
@@ -169,7 +300,7 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange }) => {
               </FormControl>
             </Grid>
 
-            {/* Fechas si es personalizado */}
+            {/* Dates if custom range */}
             {filters.periodo === "RANGO" && (
               <>
                 <Grid item xs={12}>
@@ -196,6 +327,52 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange }) => {
                 </Grid>
               </>
             )}
+
+            {/* Proveedor Search */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Buscar proveedor"
+                size="small"
+                value={proveedorSearchInput} // Bind to proveedorSearchInput
+                onChange={handleProveedorSearchInputChange}
+                onFocus={() => setShowProveedorSuggestions(true)} // Show suggestions on focus
+                onBlur={() => setTimeout(() => setShowProveedorSuggestions(false), 100)} // Hide after slight delay to allow click
+              />
+              {loadingProveedores && (
+                <Box display="flex" justifyContent="center" my={2}>
+                  <CircularProgress size={24} />
+                </Box>
+              )}
+              {showProveedorSuggestions && filteredProveedores.length > 0 && (
+                <Box mt={1} maxHeight={200} overflow="auto" borderRadius={1} border="1px solid #ddd">
+                  {filteredProveedores.map((prov) => (
+                    <Box
+                      key={prov.CardCode}
+                      p={1}
+                      sx={{
+                        cursor: 'pointer',
+                        backgroundColor: filters.proveedor === prov.CardCode ? '#e3f2fd' : 'transparent',
+                        '&:hover': { backgroundColor: '#f5f5f5' },
+                      }}
+                      onClick={() => handleProveedorSelect(prov)} // Use the dedicated handler
+                    >
+                      <Typography variant="body2" fontWeight={500}>
+                        {prov.CardName}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {prov.CardCode}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+              {showProveedorSuggestions && !loadingProveedores && filteredProveedores.length === 0 && proveedorSearchInput.length > 0 && (
+                <Box mt={1} p={1} borderRadius={1} border="1px solid #ddd" textAlign="center">
+                  <Typography variant="body2" color="text.secondary">No se encontraron proveedores.</Typography>
+                </Box>
+              )}
+            </Grid>
 
             {/* Primer Nivel */}
             <Grid item xs={12}>
@@ -224,7 +401,7 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange }) => {
               </FormControl>
             </Grid>
 
-            {/* Categoría */}
+            {/* Category */}
             {filters.primerNivel && (
               <Grid item xs={12}>
                 <FormControl fullWidth size="small">
@@ -253,7 +430,7 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange }) => {
               </Grid>
             )}
 
-            {/* Subcategoría */}
+            {/* Subcategory */}
             {filters.categoria && (
               <Grid item xs={12}>
                 <FormControl fullWidth size="small">
@@ -282,7 +459,7 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange }) => {
               </Grid>
             )}
 
-            {/* Botones */}
+            {/* Buttons */}
             <Grid item xs={12} display="flex" justifyContent="space-between">
               <Button variant="outlined" onClick={handleClear}>Limpiar</Button>
               <Button variant="contained" onClick={handleApply}>Aplicar</Button>

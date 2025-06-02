@@ -1,8 +1,8 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Paper, Typography, Box, Button
+  TableRow, Paper, Typography, Box, Button, TableSortLabel
 } from '@mui/material';
 import { CheckCircle, Error, Warning, Cancel } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
@@ -19,11 +19,13 @@ type ProductoEstancado = {
   accion: string;
 };
 
+type Order = 'asc' | 'desc';
+type OrderBy = 'diasSinVenta' | 'stock' | 'margen';
+
 const data: ProductoEstancado[] = [
-  // Los 5 productos principales que se mostrarán aquí...
   {
     imagen: '🔧',
-    producto: 'Producto F',
+    producto: 'Producto prueba 1',
     categoria: 'Herramientas',
     ultimaVenta: '01/01/2024',
     diasSinVenta: 145,
@@ -34,7 +36,7 @@ const data: ProductoEstancado[] = [
   },
   {
     imagen: '🧱',
-    producto: 'Producto G',
+    producto: 'Producto prueba 2',
     categoria: 'Adhesivos',
     ultimaVenta: '15/01/2024',
     diasSinVenta: 131,
@@ -45,7 +47,7 @@ const data: ProductoEstancado[] = [
   },
   {
     imagen: '🪜',
-    producto: 'Producto H',
+    producto: 'Producto prueba 3',
     categoria: 'Escaleras',
     ultimaVenta: '03/02/2024',
     diasSinVenta: 112,
@@ -56,7 +58,7 @@ const data: ProductoEstancado[] = [
   },
   {
     imagen: '🛠️',
-    producto: 'Producto I',
+    producto: 'Producto prueba 4',
     categoria: 'Fijaciones',
     ultimaVenta: '20/02/2024',
     diasSinVenta: 95,
@@ -67,7 +69,7 @@ const data: ProductoEstancado[] = [
   },
   {
     imagen: '🧯',
-    producto: 'Producto J',
+    producto: 'Producto prueba 5',
     categoria: 'Seguridad',
     ultimaVenta: '28/02/2024',
     diasSinVenta: 87,
@@ -89,11 +91,27 @@ const renderAlertaIcon = (nivel: string) => {
 
 const ProductosEstancadosTable = () => {
   const router = useRouter();
+  const [order, setOrder] = useState<Order>('desc');
+  const [orderBy, setOrderBy] = useState<OrderBy>('diasSinVenta');
+
+  const handleSort = (campo: OrderBy) => {
+    const isAsc = orderBy === campo && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(campo);
+  };
+
+  const sortedData = [...data].sort((a, b) => {
+    const valA = a[orderBy];
+    const valB = b[orderBy];
+    if (valA < valB) return order === 'asc' ? -1 : 1;
+    if (valA > valB) return order === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   return (
     <Box mt={3}>
       <Typography variant="h6" gutterBottom fontWeight={600}>
-        Productos Estancados
+         Resumen Productos Estancados
       </Typography>
       <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
         <Table>
@@ -103,15 +121,43 @@ const ProductosEstancadosTable = () => {
               <TableCell>Producto</TableCell>
               <TableCell>Categoría</TableCell>
               <TableCell>Última venta</TableCell>
-              <TableCell>Días sin venta</TableCell>
-              <TableCell>Stock</TableCell>
-              <TableCell>% Margen</TableCell>
+
+              <TableCell sortDirection={orderBy === 'diasSinVenta' ? order : false}>
+                <TableSortLabel
+                  active={orderBy === 'diasSinVenta'}
+                  direction={orderBy === 'diasSinVenta' ? order : 'asc'}
+                  onClick={() => handleSort('diasSinVenta')}
+                >
+                  Días sin venta
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell sortDirection={orderBy === 'stock' ? order : false}>
+                <TableSortLabel
+                  active={orderBy === 'stock'}
+                  direction={orderBy === 'stock' ? order : 'asc'}
+                  onClick={() => handleSort('stock')}
+                >
+                  Stock
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell sortDirection={orderBy === 'margen' ? order : false}>
+                <TableSortLabel
+                  active={orderBy === 'margen'}
+                  direction={orderBy === 'margen' ? order : 'asc'}
+                  onClick={() => handleSort('margen')}
+                >
+                  % Margen
+                </TableSortLabel>
+              </TableCell>
+
               <TableCell>Alerta</TableCell>
               <TableCell>Acción Sugerida</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {data.map((row, idx) => (
+            {sortedData.map((row, idx) => (
               <TableRow key={idx}>
                 <TableCell>{row.imagen}</TableCell>
                 <TableCell>{row.producto}</TableCell>
