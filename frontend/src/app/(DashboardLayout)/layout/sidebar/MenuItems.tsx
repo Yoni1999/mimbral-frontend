@@ -81,9 +81,9 @@ const Menuitems = [
       },
       {
         id: uniqueId(),
-        title: "Quiebre de Stock",
+        title: "Ventas de Productos",
         icon: IconChevronRight,
-        href: "/informes/productos-quiebre-stock",
+        href: "/informes/ventas-productos",
       },
       {
         id: uniqueId(),
@@ -93,15 +93,9 @@ const Menuitems = [
       },
       {
         id: uniqueId(),
-        title: "Tiempo de Entrega",
+        title: "Tiempo de Entrega Proveedores",
         icon: IconChevronRight,
         href: "/informes/tiempo-entrega-proveedores",
-      },
-      {
-        id: uniqueId(),
-        title: "Alta Rotación",
-        icon: IconChevronRight,
-        href: "/informes/productos-alta-rotacion",
       },
     ],
   },

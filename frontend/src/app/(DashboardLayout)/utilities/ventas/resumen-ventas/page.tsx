@@ -100,6 +100,23 @@ const FotoDelDia = () => {
   const [topProductos, setTopProductos] = useState<any[]>([]);
   const [productosRentabilidad, setProductosRentabilidad] = useState<any[]>([]);
   const [categoriasData, setCategoriasData] = useState<any[]>([]);
+  const [detalleVentas, setDetalleVentas] = useState<any[]>([]);
+
+  const detalleTransformado = detalleVentas.map((item) => ({
+    imagen: item.Imagen,
+    sku: item.Codigo_Producto,
+    nombre: item.Nombre_Producto,
+    primerNivel: item.PrimerNivel,
+    categoria: item.Categoria,
+    cantidadVendida: item.Cantidad_Vendida,
+    margenPorcentaje: item.Margen_Porcentaje,
+    stock: item.Stock_Disponible,
+    margenBruto: item.Margen_Absoluto,
+    precioPromedio: item.Precio_Promedio_Venta,
+    totalVentas: item.Total_Ventas,
+  }));
+
+
 
   const fetchData = async (
     endpoint: string,
@@ -176,12 +193,14 @@ const FotoDelDia = () => {
         }),
 
         fetchData(`unidades-vendidas-periodo?${query}`, setUnidadesVendidas),
+        fetchData(`obtener-detalle-ventas?${query}`, setDetalleVentas),
       ]);
       setLoading(false);
     };
 
     fetchPrimaryData().then(fetchSecondaryData);
   }, [filtros]);
+
 
   return (
     <>
@@ -305,7 +324,7 @@ const FotoDelDia = () => {
          <Grid item xs={12}>
             <Grid container spacing={2}>
               <Grid item xs={12} md={12}>
-                < ProductosVendidos />
+                <ProductosVendidos data={detalleTransformado} />
               </Grid>
             </Grid>      
           </Grid>

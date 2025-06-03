@@ -330,7 +330,97 @@ const getStockDisponible = async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
+const getStockdetenido = async (req, res) => {
+  try {
+    const pool = await poolPromise;
+
+    const {
+      proveedor = null,
+      primerNivel = null,
+      categoria = null,
+      subcategoria = null,
+    } = req.query;
+
+    const result = await pool.request()
+      .input('Proveedor', sql.NVarChar(50), proveedor)
+      .input('PrimerNivel', sql.NVarChar(100), primerNivel)
+      .input('Categoria', sql.NVarChar(100), categoria)
+      .input('Subcategoria', sql.NVarChar(100), subcategoria)
+      .query(`
+        ;WITH ProductosProveedor AS (
+          SELECT DISTINCT POR1.ItemCode
+          FROM POR1
+          INNER JOIN OPOR ON OPOR.DocEntry = POR1.DocEntry
+          WHERE @Proveedor IS NULL OR OPOR.CardCode = @Proveedor
+        ),
+        UltimaVenta AS (
+          SELECT 
+              INV1.ItemCode,
+              MAX(OINV.DocDate) AS FechaUltimaVenta
+          FROM INV1
+          INNER JOIN OINV ON OINV.DocEntry = INV1.DocEntry
+          GROUP BY INV1.ItemCode
+        ),
+        UltimaCompra AS (
+          SELECT 
+              POR1.ItemCode,
+              MAX(OPOR.DocDate) AS FechaUltimaCompra
+          FROM POR1
+          INNER JOIN OPOR ON OPOR.DocEntry = POR1.DocEntry
+          GROUP BY POR1.ItemCode
+        ),
+        StockPorItem AS (
+          SELECT ItemCode, SUM(OnHand) AS StockDisponible
+          FROM OITW
+          WHERE WhsCode <> '02'
+          GROUP BY ItemCode
+        ),
+        MargenVenta AS (
+          SELECT ItemCode, MAX(Price) AS PrecioMaxVenta
+          FROM INV1
+          GROUP BY ItemCode
+        )
+
+        SELECT 
+            OITM.ItemCode, 
+            OITM.ItemName, 
+            OITM.U_Imagen,
+            PN.Name AS NombrePrimerNivel,
+            CAT.Name AS NombreCategoria,
+            SUBC.Name AS NombreSubcategoria,
+            S.StockDisponible,
+            OITM.AvgPrice AS CostoPromedio,
+            ISNULL((MV.PrecioMaxVenta - OITM.AvgPrice) / NULLIF(MV.PrecioMaxVenta, 0) * 100, 0) AS PorcentajeMargen,
+            UV.FechaUltimaVenta,
+            DATEDIFF(DAY, UV.FechaUltimaVenta, GETDATE()) AS DiasSinVentas,
+            UC.FechaUltimaCompra
+        FROM OITM
+        LEFT JOIN StockPorItem S ON OITM.ItemCode = S.ItemCode
+        LEFT JOIN [@PRIMER_NIVEL] PN ON PN.Code = OITM.U_Primer_Nivel
+        LEFT JOIN [@CATEGORIA] CAT ON CAT.Code = OITM.U_Categoria
+        LEFT JOIN [@SUBCATEGORIA] SUBC ON SUBC.Code = OITM.U_Subcategoria
+        LEFT JOIN ProductosProveedor PP ON OITM.ItemCode = PP.ItemCode
+        LEFT JOIN UltimaVenta UV ON OITM.ItemCode = UV.ItemCode
+        LEFT JOIN UltimaCompra UC ON OITM.ItemCode = UC.ItemCode
+        LEFT JOIN MargenVenta MV ON OITM.ItemCode = MV.ItemCode
+        WHERE 
+            OITM.SellItem = 'Y'
+            AND OITM.PrchseItem = 'N'
+            AND S.StockDisponible > 0
+            AND (@Proveedor IS NULL OR OITM.ItemCode IN (SELECT ItemCode FROM ProductosProveedor))
+            AND (@PrimerNivel IS NULL OR OITM.U_Primer_Nivel = @PrimerNivel)
+            AND (@Categoria IS NULL OR OITM.U_Categoria = @Categoria)
+            AND (@Subcategoria IS NULL OR OITM.U_Subcategoria = @Subcategoria)
+      `);
+
+    res.status(200).json({ data: result.recordset });
+  } catch (err) {
+    console.error('Error al obtener stock disponible:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
 
 module.exports = {
-  obtenerProductosDetenidos, getStockDisponible
+  obtenerProductosDetenidos, getStockDisponible, getStockdetenido
 };

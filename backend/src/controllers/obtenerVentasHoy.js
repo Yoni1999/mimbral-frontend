@@ -899,14 +899,120 @@ const obtenerProductosDistintosPeriodo = async (req, res) => {
     }
   };
   
-  
+const obtenerTopProductosDetallado = async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const canal = req.query.canal || null;
+    const vendedor = req.query.vendedor || null;
+    const periodo = req.query.periodo || null;
+    const fechaInicio = req.query.fechaInicio || null;
+    const fechaFin = req.query.fechaFin || null;
 
+    const query = `
+      DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
+      DECLARE @VendedorParam INT = @VendedorParamInput;
+      DECLARE @Periodo VARCHAR(10) = @PeriodoParam;
+      DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
+      DECLARE @FechaFinCustom DATE = @FechaFinInput;
+
+      DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
+      IF (@FechaInicioCustom IS NOT NULL AND @FechaFinCustom IS NOT NULL)
+      BEGIN
+          SET @FechaInicioActual = @FechaInicioCustom;
+          SET @FechaFinActual = @FechaFinCustom;
+      END
+      ELSE
+      BEGIN
+          SET @FechaFinActual = CAST(GETDATE() AS DATE);
+          SET @FechaInicioActual =
+              CASE 
+                  WHEN @Periodo = '1D'  THEN @FechaFinActual
+                  WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
+                  WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
+                  WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
+                  WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
+                  WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
+                  ELSE @FechaFinActual
+              END;
+      END;
+
+      SELECT TOP 50
+          I.ItemCode AS Codigo_Producto,
+          O.ItemName AS Nombre_Producto,
+          O.U_Imagen AS Imagen,
+          PN.Name AS PrimerNivel,
+          CAT.Name AS Categoria,
+          SUM(I.Quantity) AS Cantidad_Vendida,
+          SUM(I.LineTotal) AS Total_Ventas,
+          AVG(I.PriceAfVAT) AS Precio_Promedio_Venta,
+          SUM(I.Quantity * O.AvgPrice) AS Costo_Total,
+          SUM(I.LineTotal - (I.Quantity * O.AvgPrice)) AS Margen_Absoluto,
+          CAST(
+              (SUM(I.LineTotal - (I.Quantity * O.AvgPrice)) * 100.0) / NULLIF(SUM(I.LineTotal), 0)
+              AS DECIMAL(18, 2)
+          ) AS Margen_Porcentaje,
+          (
+            SELECT SUM(W.OnHand)
+            FROM OITW W
+            WHERE W.ItemCode = I.ItemCode
+              AND (
+                @CanalParam IS NULL AND W.WhsCode NOT IN ('02', '12')
+                OR @CanalParam = 'Meli' AND W.WhsCode IN ('03', '05')
+                OR @CanalParam = 'Falabella' AND W.WhsCode = '03'
+                OR @CanalParam = 'Balmaceda' AND W.WhsCode = '07'
+                OR @CanalParam IN ('Vitex', 'Chorrillo', 'Empresas') AND W.WhsCode = '01'
+              )
+          ) AS Stock_Disponible
+      FROM INV1 I
+      INNER JOIN OITM O ON I.ItemCode = O.ItemCode
+      INNER JOIN OINV T0 ON I.DocEntry = T0.DocEntry
+      LEFT JOIN [@PRIMER_NIVEL] PN ON PN.Code = O.U_Primer_Nivel
+      LEFT JOIN [@CATEGORIA] CAT ON CAT.Code = O.U_Categoria
+      WHERE 
+          T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
+          AND T0.CANCELED = 'N'
+          AND O.AvgPrice > 0
+          AND (
+              @CanalParam IS NULL
+              OR (
+                  (@CanalParam = 'Meli' AND ((I.WhsCode IN ('03', '05') AND T0.SlpCode IN (426, 364, 355))
+                      OR (I.WhsCode = '01' AND T0.SlpCode IN (355, 398)) ))
+                  OR (@CanalParam = 'Falabella' AND I.WhsCode = '03' AND T0.SlpCode = 371)
+                  OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
+                  OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
+                  OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' 
+                      AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
+                  OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' 
+                      AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+              )
+          )
+          AND (@VendedorParam IS NULL OR T0.SlpCode = @VendedorParam)
+      GROUP BY 
+          I.ItemCode, O.ItemName, O.U_Imagen, O.U_Primer_Nivel, O.U_Categoria,
+          PN.Name, CAT.Name
+      ORDER BY Cantidad_Vendida DESC;
+    `;
+
+    const request = pool.request();
+    request.input("CanalParamInput", sql.VarChar, canal);
+    request.input("VendedorParamInput", sql.Int, vendedor);
+    request.input("PeriodoParam", sql.VarChar, periodo);
+    request.input("FechaInicioInput", sql.Date, fechaInicio);
+    request.input("FechaFinInput", sql.Date, fechaFin);
+
+    const result = await request.query(query);
+    res.json(result.recordset);
+  } catch (error) {
+    console.error("❌ Error al obtener productos detallados:", error);
+    res.status(500).json({ error: "Error en el servidor." });
+  }
+};
 
 
 // Exportar funciones
 module.exports = {obtenerTransaccionesPeriodo, obtenerNotascredito, obtenerMargenCategoriasComparado,  
   obtenerTopProductos, obtenerVentasPeriodo, obtenerUnidadesVendidasPeriodo,obtenerProductosDistintosPeriodo,
-  obtenerMargenVentas};
+  obtenerMargenVentas, obtenerTopProductosDetallado};
 
 
   

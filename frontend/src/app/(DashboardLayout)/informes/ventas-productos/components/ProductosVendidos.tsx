@@ -185,7 +185,7 @@ const ProductosVendidos = ({ data }: Props) => {
     <Box mt={3}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
         <Typography variant="h6" fontWeight={600}>
-          Top 50 Productos más Vendidos ({filteredData.length})
+          Productos Vendidos ({filteredData.length})
         </Typography>
         <Button variant="outlined" onClick={exportToExcel}>
           Exportar a Excel
@@ -214,14 +214,6 @@ const ProductosVendidos = ({ data }: Props) => {
         {TablaContenido()}
       </TableContainer>
 
-      <Box mt={3} display="flex" justifyContent="center">
-        <Button
-          onClick={() => router.push('/informes/ventas-productos')}
-          sx={{ mt: 2, textTransform: "none", fontWeight: 500 }}
-        >
-          Ver más productos
-        </Button>
-      </Box>
     </Box>
   );
 };
