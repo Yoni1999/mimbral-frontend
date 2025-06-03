@@ -116,11 +116,6 @@ const ProductosDetenidosPage = () => {
     fetchProductos(newFilters, 1);
   };
 
-  const handleFilterChangeInactivos = (newFilters: FiltroProductos) => {
-    setFilters(newFilters);
-    fetchStockInactivos(newFilters);
-  };
-
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
     fetchProductos(filters, value);
@@ -187,7 +182,7 @@ const ProductosDetenidosPage = () => {
               Productos que tienen stock disponible, pero están desactivados para compras y no tienen ventas recientes.
             </Typography>
 
-            <HeaderProductosDetenidos onFilterChange={handleFilterChangeInactivos} />
+            <HeaderProductosDetenidos onFilterChange={handleFilterChange} />
             <Divider sx={{ my: 3 }} />
 
             <Typography variant="subtitle2" mb={2}>
