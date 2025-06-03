@@ -114,6 +114,7 @@ const ProductosDetenidosPage = () => {
     setFilters(newFilters);
     setPage(1);
     fetchProductos(newFilters, 1);
+    fetchStockInactivos(newFilters);
   };
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
@@ -124,15 +125,14 @@ const ProductosDetenidosPage = () => {
   useEffect(() => {
     fetchProductos(filters, 1);
     fetchStockInactivos(filters);
-  }, []);
+  }, [filters]);
 
   return (
     <Box p={0}>
       <CustomTabs
         tabLabels={["Activos para compras", "Inactivos para compra con stock", "Resumen"]}
         tabContents={[
-          // TAB 1: PRODUCTOS ACTIVOS DETENIDOS
-          <>
+          <React.Fragment key="tab-activos">
             <Typography variant="h4" fontWeight="bold" gutterBottom display="flex" alignItems="center">
               <TrendingDown sx={{ mr: 1 }} />
               Informe de Productos Detenidos Activos para compras
@@ -171,10 +171,9 @@ const ProductosDetenidosPage = () => {
                 />
               </Box>
             )}
-          </>,
+          </React.Fragment>,
 
-          // TAB 2: PRODUCTOS INACTIVOS CON STOCK
-          <>
+          <React.Fragment key="tab-inactivos">
             <Typography variant="h5" fontWeight="bold" gutterBottom>
               Inactivos para compra con stock
             </Typography>
@@ -197,10 +196,9 @@ const ProductosDetenidosPage = () => {
             ) : (
               <ProductosEstancadosTable data={stockInactivos} />
             )}
-          </>,
+          </React.Fragment>,
 
-          // TAB 3: RESUMEN GENERAL
-          <Box mt={4}>
+          <Box key="tab-resumen" mt={4}>
             <Typography variant="h6" gutterBottom>📄 Resumen general (en desarrollo)</Typography>
             <Typography variant="body2" color="text.secondary">
               Vista general consolidada de los productos detenidos por categoría o proveedor.
