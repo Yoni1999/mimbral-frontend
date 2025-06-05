@@ -18,13 +18,17 @@ import HeaderVentasProductosDrawer from "./components/HeaderVentasProductosDrawe
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 
-const limit = 20;
+const limit = 100; // <-- Cambiado a 100
 
 interface FiltrosVentas {
   canal?: string;
   periodo: string;
   fechaInicio?: string;
   fechaFin?: string;
+  proveedor?: string;
+  primerNivel?: string;
+  categoria?: string;
+  subcategoria?: string;
 }
 
 const InformeVentaPage = () => {
@@ -50,7 +54,7 @@ const InformeVentaPage = () => {
       params.append("offset", offset.toString());
       params.append("limit", limit.toString());
 
-      const res = await fetchWithToken(`${BACKEND_URL}/api/productos-vendidos?${params}`);
+      const res = await fetchWithToken(`${BACKEND_URL}/api/obtener-productos-detallado?${params}`);
       const data = await res!.json();
 
       setProductos(Array.isArray(data.data) ? data.data : []);
@@ -63,6 +67,7 @@ const InformeVentaPage = () => {
   };
 
   const handleFilterChange = (newFilters: FiltrosVentas) => {
+    console.log("Filtros aplicados:", newFilters);
     setFilters(newFilters);
     setPage(1);
     fetchProductos(newFilters, 1);
@@ -131,9 +136,10 @@ const InformeVentaPage = () => {
         open={showMensaje}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         autoHideDuration={null}
+        sx={{ maxWidth: "400px" }}
       >
         <Alert
-          severity="info"
+          severity="warning"
           variant="filled"
           action={
             <IconButton
@@ -145,9 +151,15 @@ const InformeVentaPage = () => {
               <CloseIcon fontSize="inherit" />
             </IconButton>
           }
-          sx={{ borderRadius: 2 }}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            p: 1.5,
+            borderRadius: 3,
+            fontSize: "0.9rem",
+          }}
         >
-          ℹ️ Este informe se actualiza a diario con la información de ventas más reciente.
+           Este informe se actualiza a diario con la información de ventas más reciente, si necesitas información más actualizada pide al usuario ADMIN que actualice la información.
         </Alert>
       </Snackbar>
     </Box>

@@ -41,9 +41,12 @@ interface Props {
 }
 
 const canales = [
-  { value: "TODOS", label: "Todos los canales" },
-  { value: "ECOM", label: "E-commerce" },
-  { value: "TIENDA", label: "Tienda física" },
+  { value: "Chorrillo", label: "Sucrusal Chorrillo" },
+  { value: "Meli", label: "Mercado Libre" },
+  { value: "Vitex", label: "Vtex" },
+  { value: "Empresas", label: "Ventas Empresas" },
+  { value: "Balmaceda", label: "Sucursal Balmaceda" },
+  { value: "Falabella", label: "Falabella" },
 ];
 
 const periodos = [

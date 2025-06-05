@@ -1008,11 +1008,183 @@ const obtenerTopProductosDetallado = async (req, res) => {
   }
 };
 
+const obtenerProductosDetallado = async (req, res) => {
+  try {
+    const pool = await poolPromise;
 
-// Exportar funciones
+    const {
+      canal = null,
+      vendedor = null,
+      periodo = null,
+      fechaInicio = null,
+      fechaFin = null,
+      proveedor = null,
+      primerNivel = null,
+      categoria = null,
+      subcategoria = null,
+      limit = 100,
+      offset = 0,
+    } = req.query;
+
+    const request = pool.request();
+    request.input("CanalParamInput", sql.VarChar, canal);
+    request.input("VendedorParamInput", sql.Int, vendedor);
+    request.input("PeriodoParam", sql.VarChar, periodo);
+    request.input("FechaInicioInput", sql.Date, fechaInicio);
+    request.input("FechaFinInput", sql.Date, fechaFin);
+    request.input("Proveedor", sql.VarChar, proveedor);
+    request.input("PrimerNivel", sql.VarChar, primerNivel);
+    request.input("Categoria", sql.VarChar, categoria);
+    request.input("Subcategoria", sql.VarChar, subcategoria);
+    request.input("Limit", sql.Int, limit);
+    request.input("Offset", sql.Int, offset);
+
+    const query = `
+      DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
+      DECLARE @VendedorParam INT = @VendedorParamInput;
+      DECLARE @Periodo VARCHAR(10) = @PeriodoParam;
+      DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
+      DECLARE @FechaFinCustom DATE = @FechaFinInput;
+      DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
+
+      IF (@FechaInicioCustom IS NOT NULL AND @FechaFinCustom IS NOT NULL)
+      BEGIN
+          SET @FechaInicioActual = @FechaInicioCustom;
+          SET @FechaFinActual = @FechaFinCustom;
+      END
+      ELSE
+      BEGIN
+          SET @FechaFinActual = CAST(GETDATE() AS DATE);
+          SET @FechaInicioActual =
+              CASE 
+                  WHEN @Periodo = '1D'  THEN @FechaFinActual
+                  WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
+                  WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
+                  WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
+                  WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
+                  WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
+                  ELSE @FechaFinActual
+              END;
+      END;
+
+      ;WITH ProductosProveedor AS (
+        SELECT DISTINCT POR1.ItemCode
+        FROM POR1
+        INNER JOIN OPOR ON OPOR.DocEntry = POR1.DocEntry
+        WHERE @Proveedor IS NULL OR OPOR.CardCode = @Proveedor
+      )
+      SELECT
+          I.ItemCode AS sku,
+          O.ItemName AS nombre,
+          O.U_Imagen AS imagen,
+          PN.Name AS primerNivel,
+          CAT.Name AS categoria,
+          SUM(I.Quantity) AS cantidadVendida,
+          SUM(I.LineTotal) AS totalVentas,
+          AVG(I.PriceAfVAT) AS precioPromedio,
+          SUM(I.Quantity * O.AvgPrice) AS costoTotal,
+          SUM(I.LineTotal - (I.Quantity * O.AvgPrice)) AS margenBruto,
+          CAST(
+              (SUM(I.LineTotal - (I.Quantity * O.AvgPrice)) * 100.0) / NULLIF(SUM(I.LineTotal), 0)
+              AS DECIMAL(18, 2)
+          ) AS margenPorcentaje,
+          (
+            SELECT SUM(W.OnHand)
+            FROM OITW W
+            WHERE W.ItemCode = I.ItemCode
+              AND (
+                @CanalParam IS NULL AND W.WhsCode NOT IN ('02', '12')
+                OR @CanalParam = 'Meli' AND W.WhsCode IN ('03', '05')
+                OR @CanalParam = 'Falabella' AND W.WhsCode = '03'
+                OR @CanalParam = 'Balmaceda' AND W.WhsCode = '07'
+                OR @CanalParam IN ('Vitex', 'Chorrillo', 'Empresas') AND W.WhsCode = '01'
+              )
+          ) AS stock
+      FROM INV1 I
+      INNER JOIN OITM O ON I.ItemCode = O.ItemCode
+      INNER JOIN OINV T0 ON I.DocEntry = T0.DocEntry
+      LEFT JOIN [@PRIMER_NIVEL] PN ON PN.Code = O.U_Primer_Nivel
+      LEFT JOIN [@CATEGORIA] CAT ON CAT.Code = O.U_Categoria
+      WHERE 
+          T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
+          AND T0.CANCELED = 'N'
+          AND O.AvgPrice > 0
+          AND (@Proveedor IS NULL OR I.ItemCode IN (SELECT ItemCode FROM ProductosProveedor))
+          AND (@PrimerNivel IS NULL OR O.U_Primer_Nivel = @PrimerNivel)
+          AND (@Categoria IS NULL OR O.U_Categoria = @Categoria)
+          AND (@Subcategoria IS NULL OR O.U_Subcategoria = @Subcategoria)
+          AND (
+              @CanalParam IS NULL
+              OR (
+                  (@CanalParam = 'Meli' AND ((I.WhsCode IN ('03', '05') AND T0.SlpCode IN (426, 364, 355))
+                      OR (I.WhsCode = '01' AND T0.SlpCode IN (355, 398)) ))
+                  OR (@CanalParam = 'Falabella' AND I.WhsCode = '03' AND T0.SlpCode = 371)
+                  OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
+                  OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
+                  OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' 
+                      AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
+                  OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' 
+                      AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+              )
+          )
+          AND (@VendedorParam IS NULL OR T0.SlpCode = @VendedorParam)
+      GROUP BY 
+          I.ItemCode, O.ItemName, O.U_Imagen, O.U_Primer_Nivel, O.U_Categoria,
+          PN.Name, CAT.Name
+      ORDER BY cantidadVendida DESC
+      OFFSET @Offset ROWS
+      FETCH NEXT @Limit ROWS ONLY;
+
+      ;WITH ProductosProveedor AS (
+        SELECT DISTINCT POR1.ItemCode
+        FROM POR1
+        INNER JOIN OPOR ON OPOR.DocEntry = POR1.DocEntry
+        WHERE @Proveedor IS NULL OR OPOR.CardCode = @Proveedor
+      )
+      SELECT COUNT(DISTINCT I.ItemCode) AS Total
+      FROM INV1 I
+      INNER JOIN OITM O ON I.ItemCode = O.ItemCode
+      INNER JOIN OINV T0 ON I.DocEntry = T0.DocEntry
+      WHERE 
+          T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
+          AND T0.CANCELED = 'N'
+          AND O.AvgPrice > 0
+          AND (@Proveedor IS NULL OR I.ItemCode IN (SELECT ItemCode FROM ProductosProveedor))
+          AND (@PrimerNivel IS NULL OR O.U_Primer_Nivel = @PrimerNivel)
+          AND (@Categoria IS NULL OR O.U_Categoria = @Categoria)
+          AND (@Subcategoria IS NULL OR O.U_Subcategoria = @Subcategoria)
+          AND (
+              @CanalParam IS NULL
+              OR (
+                  (@CanalParam = 'Meli' AND ((I.WhsCode IN ('03', '05') AND T0.SlpCode IN (426, 364, 355))
+                      OR (I.WhsCode = '01' AND T0.SlpCode IN (355, 398)) ))
+                  OR (@CanalParam = 'Falabella' AND I.WhsCode = '03' AND T0.SlpCode = 371)
+                  OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
+                  OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
+                  OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' 
+                      AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
+                  OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' 
+                      AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+              )
+          )
+          AND (@VendedorParam IS NULL OR T0.SlpCode = @VendedorParam);
+    `;
+
+    const result = await request.query(query);
+
+    res.json({
+      data: result.recordsets[0],
+      total: result.recordsets[1]?.[0]?.Total || 0,
+    });
+  } catch (error) {
+    console.error("❌ Error al obtener productos detallados:", error);
+    res.status(500).json({ error: "Error en el servidor." });
+  }
+};
+
 module.exports = {obtenerTransaccionesPeriodo, obtenerNotascredito, obtenerMargenCategoriasComparado,  
   obtenerTopProductos, obtenerVentasPeriodo, obtenerUnidadesVendidasPeriodo,obtenerProductosDistintosPeriodo,
-  obtenerMargenVentas, obtenerTopProductosDetallado};
+  obtenerMargenVentas, obtenerTopProductosDetallado,obtenerProductosDetallado};
 
 
   

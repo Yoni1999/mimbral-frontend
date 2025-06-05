@@ -63,6 +63,12 @@ const Menuitems = [
     icon: IconReportAnalytics,
     href: "/utilities/analisis-producto",
   },
+    {
+    id: uniqueId(),
+    title: "Análisis por Producto 1.1",
+    icon: IconReportAnalytics,
+    href: "/utilities/analisis-producto1.1",
+  },
   {
     navlabel: true,
     subheader: "Reportes & Metas",

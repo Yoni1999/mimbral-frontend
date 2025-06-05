@@ -130,7 +130,7 @@ const ProductosDetenidosPage = () => {
   return (
     <Box p={0}>
       <CustomTabs
-        tabLabels={["Activos para compras", "Inactivos para compra con stock", "Resumen"]}
+        tabLabels={["Activos para compras", "Inactivos para compra con stock"]}
         tabContents={[
           <React.Fragment key="tab-activos">
             <Typography variant="h4" fontWeight="bold" gutterBottom display="flex" alignItems="center">
@@ -197,13 +197,6 @@ const ProductosDetenidosPage = () => {
               <ProductosEstancadosTable data={stockInactivos} />
             )}
           </React.Fragment>,
-
-          <Box key="tab-resumen" mt={4}>
-            <Typography variant="h6" gutterBottom>📄 Resumen general (en desarrollo)</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Vista general consolidada de los productos detenidos por categoría o proveedor.
-            </Typography>
-          </Box>
         ]}
       />
 
@@ -234,7 +227,7 @@ const ProductosDetenidosPage = () => {
             fontSize: "0.9rem",
           }}
         >
-          🚧 Aún estamos trabajando para que puedas ver los productos detenidos en esta sección. ¡Estará listo con fecha límite del!
+           Este informe de productos detenidos se actualiza a diario, ¡si necesitas información más reciente pide al usuario ADMIN que actualice la información! 
         </Alert>
       </Snackbar>
     </Box>

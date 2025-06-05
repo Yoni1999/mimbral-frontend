@@ -6,7 +6,6 @@ import {
 } from '@mui/material';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { useRouter } from 'next/navigation';
 
 type ProductoVendido = {
   imagen: string;
@@ -39,7 +38,6 @@ const ProductosVendidos = ({ data }: Props) => {
   const [busqueda, setBusqueda] = useState('');
   const [order, setOrder] = useState<Order>('desc');
   const [orderBy, setOrderBy] = useState<OrderBy>('cantidadVendida');
-  const router = useRouter();
 
   const handleSort = (campo: OrderBy) => {
     const isAsc = orderBy === campo && order === 'asc';
@@ -82,110 +80,11 @@ const ProductosVendidos = ({ data }: Props) => {
     saveAs(blob, 'productos_vendidos.xlsx');
   };
 
-  const TablaContenido = () => (
-    <Table stickyHeader>
-      <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-        <TableRow>
-          <TableCell>Imagen</TableCell>
-          <TableCell>Producto (SKU)</TableCell>
-          <TableCell>Primer Nivel</TableCell>
-          <TableCell>Categoría</TableCell>
-          <TableCell sortDirection={orderBy === 'cantidadVendida' ? order : false}>
-            <TableSortLabel
-              active={orderBy === 'cantidadVendida'}
-              direction={orderBy === 'cantidadVendida' ? order : 'asc'}
-              onClick={() => handleSort('cantidadVendida')}
-            >
-              Cant. Vendida
-            </TableSortLabel>
-          </TableCell>
-          <TableCell sortDirection={orderBy === 'totalVentas' ? order : false}>
-            <TableSortLabel
-              active={orderBy === 'totalVentas'}
-              direction={orderBy === 'totalVentas' ? order : 'asc'}
-              onClick={() => handleSort('totalVentas')}
-            >
-              Total Ventas
-            </TableSortLabel>
-          </TableCell>
-          <TableCell sortDirection={orderBy === 'margenPorcentaje' ? order : false}>
-            <TableSortLabel
-              active={orderBy === 'margenPorcentaje'}
-              direction={orderBy === 'margenPorcentaje' ? order : 'asc'}
-              onClick={() => handleSort('margenPorcentaje')}
-            >
-              % Margen
-            </TableSortLabel>
-          </TableCell>
-          <TableCell sortDirection={orderBy === 'stock' ? order : false}>
-            <TableSortLabel
-              active={orderBy === 'stock'}
-              direction={orderBy === 'stock' ? order : 'asc'}
-              onClick={() => handleSort('stock')}
-            >
-              Stock
-            </TableSortLabel>
-          </TableCell>
-          <TableCell sortDirection={orderBy === 'margenBruto' ? order : false}>
-            <TableSortLabel
-              active={orderBy === 'margenBruto'}
-              direction={orderBy === 'margenBruto' ? order : 'asc'}
-              onClick={() => handleSort('margenBruto')}
-            >
-              Margen Bruto
-            </TableSortLabel>
-          </TableCell>
-          <TableCell sortDirection={orderBy === 'precioPromedio' ? order : false}>
-            <TableSortLabel
-              active={orderBy === 'precioPromedio'}
-              direction={orderBy === 'precioPromedio' ? order : 'asc'}
-              onClick={() => handleSort('precioPromedio')}
-            >
-              Precio Prom. Venta
-            </TableSortLabel>
-          </TableCell>
-        </TableRow>
-      </TableHead>
-
-      <TableBody>
-        {sortedData.map((row, idx) => (
-          <TableRow key={idx}>
-            <TableCell>
-              <img
-                src={
-                  typeof row.imagen === 'string' && row.imagen.startsWith('http')
-                    ? row.imagen
-                    : 'https://res.cloudinary.com/dhzahos7u/image/upload/v1748960388/producto_sin_imagen_vqaps4.jpg'
-                }
-                alt={row.nombre}
-                width={50}
-                height={50}
-                style={{ objectFit: 'cover', borderRadius: 4 }}
-              />
-            </TableCell>
-            <TableCell>
-              <Typography fontWeight={600}>{row.nombre}</Typography>
-              <Typography variant="caption" color="textSecondary">{row.sku}</Typography>
-            </TableCell>
-            <TableCell>{row.primerNivel}</TableCell>
-            <TableCell>{row.categoria}</TableCell>
-            <TableCell>{row.cantidadVendida}</TableCell>
-            <TableCell>${row.totalVentas.toLocaleString('es-CL')}</TableCell>
-            <TableCell>{`${row.margenPorcentaje}%`}</TableCell>
-            <TableCell>{row.stock}</TableCell>
-            <TableCell>${row.margenBruto.toLocaleString('es-CL')}</TableCell>
-            <TableCell>${row.precioPromedio.toLocaleString('es-CL')}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
-
   return (
     <Box mt={3}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
         <Typography variant="h6" fontWeight={600}>
-          Productos Vendidos ({filteredData.length})
+          Productos Vendidos 
         </Typography>
         <Button variant="outlined" onClick={exportToExcel}>
           Exportar a Excel
@@ -207,13 +106,106 @@ const ProductosVendidos = ({ data }: Props) => {
         component={Paper}
         sx={{
           borderRadius: 2,
-          maxHeight: 530,
-          overflowY: 'auto',
         }}
       >
-        {TablaContenido()}
-      </TableContainer>
 
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell>Imagen</TableCell>
+              <TableCell>Producto (SKU)</TableCell>
+              <TableCell>Primer Nivel</TableCell>
+              <TableCell>Categoría</TableCell>
+              <TableCell sortDirection={orderBy === 'cantidadVendida' ? order : false}>
+                <TableSortLabel
+                  active={orderBy === 'cantidadVendida'}
+                  direction={orderBy === 'cantidadVendida' ? order : 'asc'}
+                  onClick={() => handleSort('cantidadVendida')}
+                >
+                  Cant. Vendida
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sortDirection={orderBy === 'totalVentas' ? order : false}>
+                <TableSortLabel
+                  active={orderBy === 'totalVentas'}
+                  direction={orderBy === 'totalVentas' ? order : 'asc'}
+                  onClick={() => handleSort('totalVentas')}
+                >
+                  Total Ventas
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sortDirection={orderBy === 'margenPorcentaje' ? order : false}>
+                <TableSortLabel
+                  active={orderBy === 'margenPorcentaje'}
+                  direction={orderBy === 'margenPorcentaje' ? order : 'asc'}
+                  onClick={() => handleSort('margenPorcentaje')}
+                >
+                  % Margen
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sortDirection={orderBy === 'stock' ? order : false}>
+                <TableSortLabel
+                  active={orderBy === 'stock'}
+                  direction={orderBy === 'stock' ? order : 'asc'}
+                  onClick={() => handleSort('stock')}
+                >
+                  Stock
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sortDirection={orderBy === 'margenBruto' ? order : false}>
+                <TableSortLabel
+                  active={orderBy === 'margenBruto'}
+                  direction={orderBy === 'margenBruto' ? order : 'asc'}
+                  onClick={() => handleSort('margenBruto')}
+                >
+                  Margen Bruto
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sortDirection={orderBy === 'precioPromedio' ? order : false}>
+                <TableSortLabel
+                  active={orderBy === 'precioPromedio'}
+                  direction={orderBy === 'precioPromedio' ? order : 'asc'}
+                  onClick={() => handleSort('precioPromedio')}
+                >
+                  Precio Prom. Venta
+                </TableSortLabel>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {sortedData.map((row, idx) => (
+              <TableRow key={idx}>
+                <TableCell>
+                  <img
+                    src={
+                      typeof row.imagen === 'string' && row.imagen.startsWith('http')
+                        ? row.imagen
+                        : 'https://res.cloudinary.com/dhzahos7u/image/upload/v1748960388/producto_sin_imagen_vqaps4.jpg'
+                    }
+                    alt={row.nombre}
+                    width={50}
+                    height={50}
+                    style={{ objectFit: 'cover', borderRadius: 4 }}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Typography fontWeight={600}>{row.nombre}</Typography>
+                  <Typography variant="caption" color="textSecondary">{row.sku}</Typography>
+                </TableCell>
+                <TableCell>{row.primerNivel}</TableCell>
+                <TableCell>{row.categoria}</TableCell>
+                <TableCell>{row.cantidadVendida}</TableCell>
+                <TableCell>${row.totalVentas.toLocaleString('es-CL')}</TableCell>
+                <TableCell>{row.margenPorcentaje?.toFixed(2)}%</TableCell>
+                <TableCell>{row.stock}</TableCell>
+                <TableCell>${row.margenBruto.toLocaleString('es-CL')}</TableCell>
+                <TableCell>${row.precioPromedio.toLocaleString('es-CL')}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 };
