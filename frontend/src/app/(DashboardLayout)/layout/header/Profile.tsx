@@ -64,6 +64,7 @@ const Profile = () => {
 
     localStorage.removeItem("token");
     localStorage.removeItem("rol");
+    sessionStorage.clear();
     setIsLoggingOut(false);
     setOpenDialog(false);
     router.push("/authentication/login");

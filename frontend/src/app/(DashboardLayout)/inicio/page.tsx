@@ -30,15 +30,17 @@ const Dashboard = () => {
   useEffect(() => {
     setIsClient(true);
 
-    const token = localStorage.getItem("token");
+    // Verifica el token para redirección
+    const token = sessionStorage.getItem("token") || localStorage.getItem("token");
     if (!token) {
       router.push("/authentication/login");
     }
 
-    const modalMostrado = localStorage.getItem("modalMostrado");
+    // Solo muestra el modal si no se ha mostrado en esta sesión
+    const modalMostrado = sessionStorage.getItem("modalMostrado");
     if (!modalMostrado) {
       setOpenModal(true);
-      localStorage.setItem("modalMostrado", "true");
+      sessionStorage.setItem("modalMostrado", "true");
     }
   }, [router]);
 
@@ -106,7 +108,6 @@ const Dashboard = () => {
           </Typography>
         </DialogContent>
       </Dialog>
-
 
       {/* Tarjetas del Dashboard */}
       <Box sx={{ p: 4, textAlign: "center" }}>
