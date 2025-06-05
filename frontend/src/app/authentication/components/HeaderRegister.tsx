@@ -1,67 +1,83 @@
 "use client";
-import { Box, Typography, Stack } from "@mui/material";
+import { Box, Typography, Stack, useMediaQuery, useTheme } from "@mui/material";
 import Link from "next/link";
 import LogoMimbral from "@/app/(DashboardLayout)/layout/shared/logo/LogoMimbral";
 import React from "react";
 
 const HeaderRegister = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   return (
     <Box
       sx={{
         width: "100%",
+        position: "relative",
         backgroundColor: "rgba(255, 255, 255, 0.95)",
         backdropFilter: "blur(10px)",
         borderRadius: "12px",
         boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
-        px: 4,
+        px: 3,
         py: 2,
-        position: "relative", // Necesario para posicionar el centro
         display: "flex",
-        justifyContent: "space-between",
+        flexDirection: isMobile ? "column" : "row",
         alignItems: "center",
+        justifyContent: isMobile ? "center" : "space-between",
+        gap: isMobile ? 1.5 : 0,
+        textAlign: "center",
         mb: 4,
       }}
     >
-      {/* Logo a la izquierda */}
-      <Stack direction="row" alignItems="center" spacing={2}>
-        <LogoMimbral width={110} height={80} />
-      </Stack>
+      {/* 🔹 Logo a la izquierda */}
+      <Box sx={{ zIndex: 2 }}>
+        <LogoMimbral width={100} height={70} />
+      </Box>
 
-      {/* Texto centrado */}
+      {/* 🔹 Título centrado absolutamente */}
       <Box
         sx={{
-          position: "absolute",
-          left: "50%",
-          transform: "translateX(-50%)",
+          position: isMobile ? "relative" : "absolute",
+          left: isMobile ? "auto" : "50%",
+          transform: isMobile ? "none" : "translateX(-50%)",
+          zIndex: 1,
         }}
       >
         <Typography
           variant="h6"
           fontWeight={600}
           color="primary.main"
-          textAlign="center"
         >
           Registro de Usuarios
         </Typography>
       </Box>
 
-      {/* Enlace login a la derecha */}
-      <Typography variant="body2" color="text.secondary">
-        ¿Ya tienes una cuenta?{" "}
-        <Box
-          component={Link}
-          href="/authentication/login"
-          sx={{
-            color: "primary.main",
-            fontWeight: "bold",
-            textDecoration: "none",
-            ml: 0.5,
-            "&:hover": { textDecoration: "underline" },
-          }}
+      {/* 🔹 Enlace login a la derecha */}
+      <Box
+        sx={{
+          zIndex: 2,
+          mt: isMobile ? 1 : 0,
+        }}
+      >
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          textAlign={isMobile ? "center" : "right"}
         >
-          Inicia sesión aquí
-        </Box>
-      </Typography>
+          ¿Ya tienes una cuenta?{" "}
+          <Box
+            component={Link}
+            href="/authentication/login"
+            sx={{
+              color: "primary.main",
+              fontWeight: "bold",
+              textDecoration: "none",
+              "&:hover": { textDecoration: "underline" },
+            }}
+          >
+            Inicia sesión aquí
+          </Box>
+        </Typography>
+      </Box>
     </Box>
   );
 };
