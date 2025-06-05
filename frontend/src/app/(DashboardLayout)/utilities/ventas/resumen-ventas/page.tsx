@@ -305,7 +305,7 @@ const FotoDelDia = () => {
                 <VentasCanalChart filters={filtros} />
               </Grid>
               <Grid item xs={12} md={7}>
-                <TopProductosChart data={topProductos} />
+                <CategoriasBarChart data={categoriasData} />
               </Grid>
             </Grid>
           </Grid>
@@ -317,7 +317,7 @@ const FotoDelDia = () => {
                 <RentabilidadChart data={productosRentabilidad} />
               </Grid>
               <Grid item xs={12} md={7}>
-              <CategoriasBarChart data={categoriasData} />
+               <TopProductosChart />
               </Grid>
             </Grid>
           </Grid>

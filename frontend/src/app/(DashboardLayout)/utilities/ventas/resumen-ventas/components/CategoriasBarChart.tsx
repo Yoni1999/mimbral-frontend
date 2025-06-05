@@ -34,7 +34,7 @@ interface Props {
 type OrderBy = "MargenAbsoluto" | "TotalVentas" | "MargenPorcentaje";
 type Order = "asc" | "desc";
 
-const CategoriasTableChart: React.FC<Props> = ({ data, height = 400 }) => {
+const CategoriasTableChart: React.FC<Props> = ({ data, height = 300 }) => {
   const [orderBy, setOrderBy] = useState<OrderBy>("MargenAbsoluto");
   const [order, setOrder] = useState<Order>("desc");
 
