@@ -44,7 +44,7 @@ interface Props {
 const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters }) => {
   const [openDrawer, setOpenDrawer] = useState(false);
   // Initialize filters with currentFilters if provided, otherwise default to "7D"
-  const [filters, setFilters] = useState<FiltroProductos>(currentFilters || { periodo: "7D" });
+  const [filters, setFilters] = useState<FiltroProductos>(currentFilters || { periodo: "1M" });
 
   const [primerNiveles, setPrimerNiveles] = useState<Categoria[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -72,7 +72,7 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
 
   // Sync internal state with external filters when currentFilters changes
   useEffect(() => {
-    setFilters(currentFilters || { periodo: "7D" });
+    setFilters(currentFilters || { periodo: "1M" });
     // Also update the supplier search input if a supplier is already selected
     if (currentFilters?.proveedor) {
       const selectedProv = allProveedores.find(p => p.CardCode === currentFilters.proveedor);
@@ -207,7 +207,7 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
   };
 
   const handleClear = () => {
-    const cleared: FiltroProductos = { periodo: "7D" }; // Reset to default period
+    const cleared: FiltroProductos = { periodo: "1M" }; // Reset to default period
     setFilters(cleared);
     setProveedorSearchInput(""); // Clear supplier search input
     setCategorias([]); // Clear dependent dropdowns

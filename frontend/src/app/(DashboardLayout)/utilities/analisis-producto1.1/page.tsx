@@ -102,11 +102,11 @@ const AnalisisProductoPage = () => {
           <Typography variant="body2" color="text.secondary" mb={1}>Canal: Todos</Typography>
 
           <Box display="flex" gap={1.5} flexWrap="wrap">
-            <MetricCard icon={<FolderIcon color="primary" />} label="Stock" value="65 UI" variation="-24,44%" variationColor="error" />
+            <MetricCard icon={<FolderIcon color="primary" />} label="Stock" value="65 U" variation="-24,44%" variationColor="error" />
             <MetricCard icon={<HourglassEmptyIcon color="success" />} label="Días Inventario" value="65" variation="S Unrt" variationColor="success" />
-            <MetricCard icon={<InventoryIcon color="warning" />} label="Unidades" value="Unitas" variation="20,08% plt" variationColor="error" />
-            <MetricCard icon={<LocalShippingIcon color="warning" />} label="Stock en tránsito" value="N/A" variation="N/A" variationColor="warning" />
-            <MetricCard icon={<CheckCircleIcon color="success" />} label="Vaielo" value="72%" variation="No es necesario" variationColor="success" />
+            <MetricCard icon={<InventoryIcon color="warning" />} label="Unidades Con Fallas" value="30" variation="20,08% del stock" variationColor="error" />
+            <MetricCard icon={<LocalShippingIcon color="warning" />} label="Stock en tránsito" value="4000" variationColor="warning" />
+            <MetricCard icon={<CheckCircleIcon color="success" />} label="Valor" value="$2.850" variation="5% mayor que la ultima orden " variationColor="success" />
           </Box>
         </Box>
       </Box>

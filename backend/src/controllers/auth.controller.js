@@ -32,7 +32,14 @@ const registerUser = async (req, res) => {
       password,
       telefono = "",
       direccion = "",
+      ip_registro,
+      ciudad = "",
+      region = "",
+      pais = "",
+      latitud = null,
+      longitud = null,
     } = req.body;
+
 
     if (!nombre || !email || !password) {
       return res.status(400).json({ error: "Faltan datos obligatorios" });
@@ -49,10 +56,18 @@ const registerUser = async (req, res) => {
       .input("Estado", sql.Int, 0)
       .input("Telefono", sql.NVarChar, telefono)
       .input("Direccion", sql.NVarChar, direccion)
+      .input("IPRegistro", sql.NVarChar, ip_registro || "") 
+      .input("Ciudad", sql.NVarChar, ciudad)
+      .input("Region", sql.NVarChar, region)
+      .input("Pais", sql.NVarChar, pais)
+      .input("Latitud", sql.Float, latitud)
+      .input("Longitud", sql.Float, longitud)
+
       .query(`
-        INSERT INTO USUARIOS (Nombre, Email, Password_Hash, Rol, Estado, Telefono, Direccion)
-        VALUES (@Nombre, @Email, @PasswordHash, @Rol, @Estado, @Telefono, @Direccion)
+        INSERT INTO USUARIOS (Nombre, Email, Password_Hash, Rol, Estado, Telefono, Direccion, IP_Registro, Ciudad, Region, Pais, Latitud, Longitud)
+        VALUES (@Nombre, @Email, @PasswordHash, @Rol, @Estado, @Telefono, @Direccion, @IPRegistro, @Ciudad, @Region, @Pais, @Latitud, @Longitud)
       `);
+
 
     // Enviar correo de bienvenida
     const transporter = nodemailer.createTransport({

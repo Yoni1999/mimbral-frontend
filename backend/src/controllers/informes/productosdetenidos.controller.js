@@ -6,7 +6,7 @@ const obtenerProductosDetenidos = async (req, res) => {
     const pool = await poolPromise;
 
     // Obtener parámetros de la query string
-    const periodo = req.query.periodo || '7D';
+    const periodo = req.query.periodo || '1M';
     const proveedor = req.query.proveedor || null;
     const primerNivel = req.query.primerNivel || null;
     const categoria = req.query.categoria || null;

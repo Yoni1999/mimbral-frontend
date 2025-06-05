@@ -50,6 +50,7 @@ const canales = [
 ];
 
 const periodos = [
+  { value: "1D", label: "Hoy" },
   { value: "7D", label: "Últimos 7 días" },
   { value: "14D", label: "Últimos 14 días" },
   { value: "1M", label: "Último mes" },

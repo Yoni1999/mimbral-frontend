@@ -32,7 +32,7 @@ interface FiltrosVentas {
 }
 
 const InformeVentaPage = () => {
-  const [filters, setFilters] = useState<FiltrosVentas>({ periodo: "7D" });
+  const [filters, setFilters] = useState<FiltrosVentas>({ periodo: "1D", canal: "Vitex" });
   const [productos, setProductos] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
