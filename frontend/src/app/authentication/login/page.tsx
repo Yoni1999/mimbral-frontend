@@ -69,7 +69,7 @@ export default function LoginPage() {
           color="text.secondary"
           mb={3}
         >
-          Para análisis de datos
+          Iniciar Sesión
         </Typography>
 
         <AuthLogin />
