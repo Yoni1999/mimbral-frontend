@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { obtenerProductosDistintosPeriodo, obtenerMargenVentas,obtenerMargenCategoriasComparado, obtenerNotascredito,obtenerTopProductos,
-    obtenerTransaccionesPeriodo, obtenerVentasPeriodo, obtenerUnidadesVendidasPeriodo,obtenerTopProductosDetallado, obtenerProductosDetallado } = require("../controllers/obtenerVentasHoy");
+    obtenerTransaccionesPeriodo, obtenerVentasPeriodo, obtenerUnidadesVendidasPeriodo,obtenerTopProductosDetallado, obtenerProductosDetallado,
+     obtenerTopVendedores, obtenerTopProductosEstancados } = require("../controllers/obtenerVentasHoy");
 
 // Ruta para obtener el total de ventas de hoy
 router.get("/Notascredito", obtenerNotascredito);
@@ -15,6 +16,8 @@ router.get("/margen-categorias-comparado", obtenerMargenCategoriasComparado);
 router.get("/margen-ventas", obtenerMargenVentas);
 router.get("/obtener-detalle-ventas", obtenerTopProductosDetallado);
 router.get("/obtener-productos-detallado", obtenerProductosDetallado);
+router.get("/top-vendedores", obtenerTopVendedores);
+router.get("/top-productos-estancados", obtenerTopProductosEstancados);
 
 
 module.exports = router;

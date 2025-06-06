@@ -14,7 +14,10 @@ import { BACKEND_URL } from "@/config";
 interface Props {
   open: boolean;
   onClose: () => void;
+  onApply: (filters: Filters) => void; 
 }
+
+
 
 type Producto = {
   itemcode: string;
@@ -43,7 +46,7 @@ const temporadaRangos: Record<string, { inicio: string; fin: string }> = {
   "Primavera 2025": { inicio: "2025-09-23", fin: "2025-12-21" },
 };
 
-const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose }) => {
+const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
   const [filters, setFilters] = useState<Filters>({
     itemCode: "",
     temporada: "",
@@ -268,9 +271,16 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose }) => {
           <Grid item xs={6}>
             <Button fullWidth variant="outlined" onClick={handleClear} startIcon={<DeleteOutlineIcon />}>Limpiar</Button>
           </Grid>
-          <Grid item xs={6}>
-            <Button fullWidth variant="contained" onClick={onClose}>Aplicar</Button>
-          </Grid>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={() => {
+              onApply(filters); // ⬅️ ENVÍA LOS FILTROS AL PADRE
+              onClose();        // ⬅️ CIERRA EL DRAWER
+            }}
+          >
+            Aplicar
+          </Button>
         </Grid>
       </Grid>
     </Drawer>

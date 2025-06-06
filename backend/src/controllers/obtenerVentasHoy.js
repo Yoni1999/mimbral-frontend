@@ -1182,9 +1182,240 @@ const obtenerProductosDetallado = async (req, res) => {
   }
 };
 
+const obtenerTopVendedores = async (req, res) => {
+  try {
+    const pool = await poolPromise;
+
+    const canal = req.query.canal || null;
+    const periodo = req.query.periodo || null;
+    const fechaInicio = req.query.fechaInicio || null;
+    const fechaFin = req.query.fechaFin || null;
+
+    const query = `
+      DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
+      DECLARE @Periodo VARCHAR(10) = @PeriodoInput;
+      DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
+      DECLARE @FechaFinCustom DATE = @FechaFinInput;
+
+      DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
+
+      IF (@FechaInicioCustom IS NOT NULL AND @FechaFinCustom IS NOT NULL)
+      BEGIN
+          SET @FechaInicioActual = @FechaInicioCustom;
+          SET @FechaFinActual = @FechaFinCustom;
+      END
+      ELSE
+      BEGIN
+          SET @FechaFinActual = CAST(GETDATE() AS DATE);
+          SET @FechaInicioActual =
+              CASE 
+                  WHEN @Periodo = '7D' THEN DATEADD(DAY, -6, @FechaFinActual)
+                  WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
+                  WHEN @Periodo = '1M' THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                  WHEN @Periodo = '3M' THEN DATEADD(MONTH, -3, @FechaFinActual)
+                  WHEN @Periodo = '6M' THEN DATEADD(MONTH, -6, @FechaFinActual)
+                  WHEN @Periodo = '1A' THEN DATEADD(YEAR, -1, @FechaFinActual)
+                  ELSE @FechaFinActual
+              END;
+      END
+
+      SELECT TOP 10
+          V.SlpCode,
+          V.SlpName AS Nombre,
+          SUM(T1.LineTotal) AS TotalVentas,
+          SUM(T1.Quantity) AS UnidadesVendidas,
+          COUNT(DISTINCT T1.ItemCode) AS Items,
+          CAST(SUM(T1.LineTotal - T1.StockPrice * T1.Quantity) AS DECIMAL(18,2)) AS MargenBruto,
+          CAST(
+              CASE 
+                  WHEN SUM(T1.LineTotal) = 0 THEN 0
+                  ELSE SUM(T1.LineTotal - T1.StockPrice * T1.Quantity) * 100.0 / SUM(T1.LineTotal)
+              END AS DECIMAL(5,2)
+          ) AS MargenPorcentaje
+      FROM OINV T0
+      INNER JOIN INV1 T1 ON T0.DocEntry = T1.DocEntry
+      INNER JOIN OSLP V ON T1.SlpCode = V.SlpCode
+      WHERE
+          T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
+          AND T0.CANCELED = 'N'
+          AND (
+              @CanalParam IS NULL OR (
+                  (@CanalParam = 'Meli' AND ((T1.WhsCode IN ('03', '05') AND T1.SlpCode IN (426, 364, 355))
+                      OR (T1.WhsCode = '01' AND T1.SlpCode IN (355, 398)) ))
+                  OR (@CanalParam = 'Falabella' AND T1.WhsCode = '03' AND T1.SlpCode = 371)
+                  OR (@CanalParam = 'Balmaceda' AND T1.WhsCode = '07')
+                  OR (@CanalParam = 'Vitex' AND T1.WhsCode = '01' AND T1.SlpCode IN (401, 397))
+                  OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
+                      AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
+                  OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
+                      AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
+              )
+          )
+      GROUP BY V.SlpCode, V.SlpName
+      ORDER BY MargenBruto DESC;
+    `;
+
+    const request = pool.request();
+    request.input("CanalParamInput", sql.VarChar, canal);
+    request.input("PeriodoInput", sql.VarChar, periodo);
+    request.input("FechaInicioInput", sql.Date, fechaInicio);
+    request.input("FechaFinInput", sql.Date, fechaFin);
+
+    const result = await request.query(query);
+    res.json(result.recordset || []);
+  } catch (error) {
+    console.error("❌ Error al obtener top vendedores:", error);
+    res.status(500).json({ error: "Error interno del servidor." });
+  }
+};
+const obtenerTopProductosEstancados = async (req, res) => {
+  try {
+    const pool = await poolPromise;
+
+    const periodo = req.query.periodo || '1M';
+    const proveedor = req.query.proveedor || null;
+    const primerNivel = req.query.primerNivel || null;
+    const categoria = req.query.categoria || null;
+    const subcategoria = req.query.subcategoria || null;
+    const fechaInicioInput = req.query.fechaInicio || null;
+    const fechaFinInput = req.query.fechaFin || null;
+
+    const query = `
+      DECLARE @Periodo NVARCHAR(10) = @PeriodoParam;
+      DECLARE @Proveedor NVARCHAR(50) = @ProveedorParam;
+      DECLARE @PrimerNivel NVARCHAR(100) = @PrimerNivelParam;
+      DECLARE @Categoria NVARCHAR(100) = @CategoriaParam;
+      DECLARE @Subcategoria NVARCHAR(100) = @SubcategoriaParam;
+      DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
+      DECLARE @FechaFinCustom DATE = @FechaFinInput;
+      DECLARE @FechaInicio DATE, @FechaFin DATE;
+
+      IF @Periodo <> 'RANGO'
+      BEGIN
+        SET @FechaFin = GETDATE();
+        SET @FechaInicio =
+          CASE UPPER(@Periodo)
+            WHEN '7D' THEN DATEADD(DAY, -7, @FechaFin)
+            WHEN '14D' THEN DATEADD(DAY, -14, @FechaFin)
+            WHEN '1M' THEN DATEADD(MONTH, -1, @FechaFin)
+            WHEN '3M' THEN DATEADD(MONTH, -3, @FechaFin)
+            WHEN '6M' THEN DATEADD(MONTH, -6, @FechaFin)
+            WHEN '1Y' THEN DATEADD(YEAR, -1, @FechaFin)
+            WHEN '2Y' THEN DATEADD(YEAR, -2, @FechaFin)
+            ELSE DATEADD(DAY, -7, @FechaFin)
+          END;
+      END
+      ELSE
+      BEGIN
+        SET @FechaInicio = @FechaInicioCustom;
+        SET @FechaFin = @FechaFinCustom;
+      END
+
+      ;WITH ProductosDelProveedor AS (
+        SELECT DISTINCT POR1.ItemCode
+        FROM POR1
+        INNER JOIN OPOR ON OPOR.DocEntry = POR1.DocEntry
+        WHERE @Proveedor IS NULL OR OPOR.CardCode = @Proveedor
+      ),
+      Costo3Compras AS (
+        SELECT P.ItemCode, AVG(P.PriceBefDi) AS CostoPromedio
+        FROM (
+          SELECT POR1.ItemCode, POR1.PriceBefDi,
+            ROW_NUMBER() OVER (PARTITION BY POR1.ItemCode ORDER BY OPOR.DocDate DESC, POR1.LineNum DESC) AS rn
+          FROM POR1
+          INNER JOIN OPOR ON POR1.DocEntry = OPOR.DocEntry
+          WHERE POR1.ItemCode IS NOT NULL
+            AND (@Proveedor IS NULL OR OPOR.CardCode = @Proveedor)
+        ) AS P
+        WHERE P.rn <= 3
+        GROUP BY P.ItemCode
+      ),
+      UltimaVenta AS (
+        SELECT INV1.ItemCode, MAX(OINV.DocDate) AS UltimaFechaVenta
+        FROM OINV
+        INNER JOIN INV1 ON OINV.DocEntry = INV1.DocEntry
+        GROUP BY INV1.ItemCode
+      ),
+      UltimaCompra AS (
+        SELECT POR1.ItemCode, MAX(OPOR.DocDate) AS UltimaFechaCompra
+        FROM POR1
+        INNER JOIN OPOR ON POR1.DocEntry = OPOR.DocEntry
+        WHERE POR1.ItemCode IS NOT NULL
+        GROUP BY POR1.ItemCode
+      ),
+      StockPorProducto AS (
+        SELECT ItemCode, SUM(OnHand) AS Stock
+        FROM OITW
+        WHERE WhsCode IN ('01', '03', '05', '07', '12', '13')
+        GROUP BY ItemCode
+      )
+
+      SELECT TOP 10
+        OITM.ItemCode AS SKU,
+        OITM.ItemName AS Producto,
+        PN.Name AS PrimerNivel,
+        CAT.Name AS Categoria,
+        SUBC.Name AS Subcategoria,
+        UV.UltimaFechaVenta AS UltimaVenta,
+        DATEDIFF(DAY, UV.UltimaFechaVenta, GETDATE()) AS DiasSinVenta,
+        UC.UltimaFechaCompra,
+        ISNULL(SP.Stock, 0) AS Stock,
+        OITM.U_Imagen AS Imagen,
+        ISNULL(C3.CostoPromedio, 0) AS CostoPromedioUlt3Compras,
+        CAST(
+          CASE
+            WHEN SUM(ISNULL(INV1.LineTotal, 0)) = 0 THEN 0
+            ELSE ((SUM(ISNULL(INV1.LineTotal, 0)) - SUM(ISNULL(C3.CostoPromedio * INV1.Quantity, 0))) * 100.0)
+                 / NULLIF(SUM(ISNULL(INV1.LineTotal, 0)), 0)
+          END AS DECIMAL(10,2)
+        ) AS MargenPorcentaje
+      FROM OITM
+      LEFT JOIN INV1 ON INV1.ItemCode = OITM.ItemCode
+      LEFT JOIN OINV ON OINV.DocEntry = INV1.DocEntry AND OINV.DocDate BETWEEN @FechaInicio AND @FechaFin
+      LEFT JOIN UltimaVenta UV ON UV.ItemCode = OITM.ItemCode
+      LEFT JOIN UltimaCompra UC ON UC.ItemCode = OITM.ItemCode
+      LEFT JOIN Costo3Compras C3 ON C3.ItemCode = OITM.ItemCode
+      LEFT JOIN StockPorProducto SP ON SP.ItemCode = OITM.ItemCode
+      LEFT JOIN [@PRIMER_NIVEL] PN ON PN.Code = OITM.U_Primer_Nivel
+      LEFT JOIN [@CATEGORIA] CAT ON CAT.Code = OITM.U_Categoria
+      LEFT JOIN [@SUBCATEGORIA] SUBC ON SUBC.Code = OITM.U_Subcategoria
+      WHERE
+        OITM.PrchseItem = 'Y'
+        AND (@Proveedor IS NULL OR OITM.ItemCode IN (SELECT ItemCode FROM ProductosDelProveedor))
+        AND (@PrimerNivel IS NULL OR OITM.U_Primer_Nivel = @PrimerNivel)
+        AND (@Categoria IS NULL OR OITM.U_Categoria = @Categoria)
+        AND (@Subcategoria IS NULL OR OITM.U_Subcategoria = @Subcategoria)
+      GROUP BY
+        OITM.ItemCode, OITM.ItemName, OITM.U_Primer_Nivel, OITM.U_Categoria, OITM.U_Subcategoria,
+        OITM.U_Imagen, UV.UltimaFechaVenta, UC.UltimaFechaCompra,
+        PN.Name, CAT.Name, SUBC.Name, C3.CostoPromedio, SP.Stock
+      HAVING
+        (UV.UltimaFechaVenta IS NULL OR UV.UltimaFechaVenta < @FechaInicio)
+        AND ISNULL(SP.Stock, 0) > 0
+      ORDER BY ISNULL(SP.Stock, 0) DESC, DiasSinVenta DESC;
+
+    `;
+
+    const request = pool.request();
+    request.input('PeriodoParam', sql.NVarChar(10), periodo);
+    request.input('ProveedorParam', sql.NVarChar(50), proveedor);
+    request.input('PrimerNivelParam', sql.NVarChar(100), primerNivel);
+    request.input('CategoriaParam', sql.NVarChar(100), categoria);
+    request.input('SubcategoriaParam', sql.NVarChar(100), subcategoria);
+    request.input('FechaInicioInput', sql.Date, fechaInicioInput);
+    request.input('FechaFinInput', sql.Date, fechaFinInput);
+
+    const result = await request.query(query);
+    res.status(200).json(result.recordset);
+
+  } catch (error) {
+    console.error('Error al obtener top productos estancados:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
 module.exports = {obtenerTransaccionesPeriodo, obtenerNotascredito, obtenerMargenCategoriasComparado,  
   obtenerTopProductos, obtenerVentasPeriodo, obtenerUnidadesVendidasPeriodo,obtenerProductosDistintosPeriodo,
-  obtenerMargenVentas, obtenerTopProductosDetallado,obtenerProductosDetallado};
+  obtenerMargenVentas, obtenerTopProductosDetallado,obtenerProductosDetallado, obtenerTopVendedores, obtenerTopProductosEstancados};
 
 
   

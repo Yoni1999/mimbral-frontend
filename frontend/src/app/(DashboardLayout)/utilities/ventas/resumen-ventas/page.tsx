@@ -97,10 +97,12 @@ const FotoDelDia = () => {
     Canal_Venta: 0,
     Total_Ventas: 0,
   });
-  const [topProductos, setTopProductos] = useState<any[]>([]);
+  const [topVendedores, setTopVendedores] = useState<any[]>([]);
   const [productosRentabilidad, setProductosRentabilidad] = useState<any[]>([]);
   const [categoriasData, setCategoriasData] = useState<any[]>([]);
   const [detalleVentas, setDetalleVentas] = useState<any[]>([]);
+  const [productosEstancados, setProductosEstancados] = useState<any[]>([]);
+
 
   const detalleTransformado = detalleVentas.map((item) => ({
     imagen: item.Imagen,
@@ -184,7 +186,7 @@ const FotoDelDia = () => {
     const fetchSecondaryData = async () => {
       await Promise.all([
         fetchData(`ventas-canal?${query}`, setVentascanal),
-        fetchData(`top-productos?${query}`, setTopProductos),
+        fetchData(`top-vendedores?${query}`, setTopVendedores),
         fetchData(`productos-rentabilidad?${query}`, setProductosRentabilidad),
         fetchData(`margen/bruto-periodo?${query}`, () => {}),
         fetchData(`margen-categorias-comparado?${query}`, (data) => {
@@ -194,6 +196,8 @@ const FotoDelDia = () => {
 
         fetchData(`unidades-vendidas-periodo?${query}`, setUnidadesVendidas),
         fetchData(`obtener-detalle-ventas?${query}`, setDetalleVentas),
+        fetchData(`top-productos-estancados?${query}`, setProductosEstancados),
+
       ]);
       setLoading(false);
     };
@@ -317,7 +321,7 @@ const FotoDelDia = () => {
                 <RentabilidadChart data={productosRentabilidad} />
               </Grid>
               <Grid item xs={12} md={7}>
-               <TopProductosChart />
+               <TopProductosChart data={topVendedores} />
               </Grid>
             </Grid>
           </Grid>
@@ -331,7 +335,7 @@ const FotoDelDia = () => {
           <Grid item xs={12}>
             <Grid container spacing={2}>
               <Grid item xs={12} md={12}>
-                <ProductosEstancadosTable  />
+                <ProductosEstancadosTable data={productosEstancados} />
               </Grid>
             </Grid>      
           </Grid>
@@ -340,11 +344,15 @@ const FotoDelDia = () => {
           {/* 🔹 Cuarta fila */}
           <Grid item xs={12}>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={12}>
-                <SeccionTitulo title= "Metas por Canal" />
-              </Grid>
+            <Grid item xs={12}>
+              <SeccionTitulo
+                title="Metas por Canal"
+                infoRight="Se está mostrando el período actual de las metas"
+              />
+            </Grid>
             </Grid>      
           </Grid>
+          
           {/* 🔹 Quinta Fila */}
           <Grid item xs={12}>
             <Grid container spacing={2}>

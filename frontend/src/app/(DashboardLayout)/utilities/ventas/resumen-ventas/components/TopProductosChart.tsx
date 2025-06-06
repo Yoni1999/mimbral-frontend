@@ -28,90 +28,11 @@ interface Vendedor {
 type Order = "asc" | "desc";
 type OrderBy = "UnidadesVendidas" | "Items" | "MargenBruto" | "MargenPorcentaje";
 
-const data: Vendedor[] = [
-  {
-    Nombre: "Juan Pérez",
-    Imagen: "/avatars/juan.png",
-    UnidadesVendidas: 620,
-    Items: 150,
-    MargenBruto: 2540000,
-    MargenPorcentaje: 28.5,
-  },
-  {
-    Nombre: "María Gómez",
-    Imagen: "/avatars/maria.png",
-    UnidadesVendidas: 580,
-    Items: 135,
-    MargenBruto: 2130000,
-    MargenPorcentaje: 25.1,
-  },
-  {
-    Nombre: "David López",
-    Imagen: "/avatars/david.png",
-    UnidadesVendidas: 565,
-    Items: 145,
-    MargenBruto: 2210000,
-    MargenPorcentaje: 26.2,
-  },
-  {
-    Nombre: "Ana Martínez",
-    Imagen: "/avatars/ana.png",
-    UnidadesVendidas: 530,
-    Items: 130,
-    MargenBruto: 1980000,
-    MargenPorcentaje: 28.9,
-  },
-  {
-    Nombre: "Carlos Sánchez",
-    Imagen: "/avatars/carlos.png",
-    UnidadesVendidas: 510,
-    Items: 125,
-    MargenBruto: 1870000,
-    MargenPorcentaje: 24.5,
-  },
-  {
-    Nombre: "Laura Torres",
-    Imagen: "/avatars/laura.png",
-    UnidadesVendidas: 495,
-    Items: 120,
-    MargenBruto: 1650000,
-    MargenPorcentaje: 23.2,
-  },
-  {
-    Nombre: "Pedro Ruiz",
-    Imagen: "/avatars/pedro.png",
-    UnidadesVendidas: 475,
-    Items: 116,
-    MargenBruto: 1590000,
-    MargenPorcentaje: 24.7,
-  },
-  {
-    Nombre: "Sandra Fernández",
-    Imagen: "/avatars/sandra.png",
-    UnidadesVendidas: 460,
-    Items: 114,
-    MargenBruto: 1480000,
-    MargenPorcentaje: 25.1,
-  },
-  {
-    Nombre: "Javier Morales",
-    Imagen: "/avatars/javier.png",
-    UnidadesVendidas: 450,
-    Items: 110,
-    MargenBruto: 1430000,
-    MargenPorcentaje: 22.8,
-  },
-  {
-    Nombre: "Patricia Castro",
-    Imagen: "/avatars/patricia.png",
-    UnidadesVendidas: 440,
-    Items: 108,
-    MargenBruto: 1320000,
-    MargenPorcentaje: 21.5,
-  },
-];
+interface Props {
+  data: Vendedor[];
+}
 
-const TopVendedoresChart: React.FC = () => {
+const TopVendedoresChart: React.FC<Props> = ({ data }) => {
   const [order, setOrder] = useState<Order>("desc");
   const [orderBy, setOrderBy] = useState<OrderBy>("MargenBruto");
 

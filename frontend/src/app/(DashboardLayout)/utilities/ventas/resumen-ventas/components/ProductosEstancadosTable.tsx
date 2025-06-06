@@ -2,97 +2,39 @@
 import React, { useState } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Paper, Typography, Box, Button, TableSortLabel
+  TableRow, Paper, Typography, Box, Button, TableSortLabel, Avatar, Stack
 } from '@mui/material';
 import { CheckCircle, Error, Warning, Cancel } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 
 type ProductoEstancado = {
-  imagen: string;
-  producto: string;
-  categoria: string;
-  ultimaVenta: string;
-  diasSinVenta: number;
-  stock: number;
-  margen: number;
-  alerta: 'rojo' | 'naranja' | 'verde';
-  accion: string;
+  SKU: string;
+  Producto: string;
+  Categoria: string;
+  UltimaVenta: string | null;
+  DiasSinVenta: number;
+  Stock: number;
+  Imagen: string | null;
+  MargenPorcentaje: number;
+};
+
+type Props = {
+  data: ProductoEstancado[];
 };
 
 type Order = 'asc' | 'desc';
-type OrderBy = 'diasSinVenta' | 'stock' | 'margen';
+type OrderBy = 'DiasSinVenta' | 'Stock' | 'MargenPorcentaje';
 
-const data: ProductoEstancado[] = [
-  {
-    imagen: '🔧',
-    producto: 'Producto prueba 1',
-    categoria: 'Herramientas',
-    ultimaVenta: '01/01/2024',
-    diasSinVenta: 145,
-    stock: 80,
-    margen: 12.5,
-    alerta: 'naranja',
-    accion: 'Revisión precio',
-  },
-  {
-    imagen: '🧱',
-    producto: 'Producto prueba 2',
-    categoria: 'Adhesivos',
-    ultimaVenta: '15/01/2024',
-    diasSinVenta: 131,
-    stock: 150,
-    margen: 8.1,
-    alerta: 'rojo',
-    accion: 'Posible liquidación',
-  },
-  {
-    imagen: '🪜',
-    producto: 'Producto prueba 3',
-    categoria: 'Escaleras',
-    ultimaVenta: '03/02/2024',
-    diasSinVenta: 112,
-    stock: 30,
-    margen: 25.0,
-    alerta: 'naranja',
-    accion: 'Producto nicho, evaluar',
-  },
-  {
-    imagen: '🛠️',
-    producto: 'Producto prueba 4',
-    categoria: 'Fijaciones',
-    ultimaVenta: '20/02/2024',
-    diasSinVenta: 95,
-    stock: 0,
-    margen: 14.2,
-    alerta: 'verde',
-    accion: 'Sin stock',
-  },
-  {
-    imagen: '🧯',
-    producto: 'Producto prueba 5',
-    categoria: 'Seguridad',
-    ultimaVenta: '28/02/2024',
-    diasSinVenta: 87,
-    stock: 200,
-    margen: 2.3,
-    alerta: 'rojo',
-    accion: 'Desactivar por baja rotación',
-  },
-];
-
-const renderAlertaIcon = (nivel: string) => {
-  switch (nivel) {
-    case 'rojo': return <Cancel sx={{ color: '#e53935' }} />;
-    case 'naranja': return <Warning sx={{ color: '#ff9800' }} />;
-    case 'verde': return <CheckCircle sx={{ color: '#43a047' }} />;
-    default: return <Error sx={{ color: '#757575' }} />;
-  }
+const renderAlertaIcon = (diasSinVenta: number, margen: number): JSX.Element => {
+  if (margen < 5 || diasSinVenta > 180) return <Cancel sx={{ color: '#e53935' }} />;
+  if (diasSinVenta > 90 || margen < 15) return <Warning sx={{ color: '#ff9800' }} />;
+  return <CheckCircle sx={{ color: '#43a047' }} />;
 };
 
-const ProductosEstancadosTable = () => {
+const ProductosEstancadosTable: React.FC<Props> = ({ data }) => {
   const router = useRouter();
   const [order, setOrder] = useState<Order>('desc');
-  const [orderBy, setOrderBy] = useState<OrderBy>('diasSinVenta');
+  const [orderBy, setOrderBy] = useState<OrderBy>('DiasSinVenta');
 
   const handleSort = (campo: OrderBy) => {
     const isAsc = orderBy === campo && order === 'asc';
@@ -101,8 +43,8 @@ const ProductosEstancadosTable = () => {
   };
 
   const sortedData = [...data].sort((a, b) => {
-    const valA = a[orderBy];
-    const valB = b[orderBy];
+    const valA = a[orderBy] ?? 0;
+    const valB = b[orderBy] ?? 0;
     if (valA < valB) return order === 'asc' ? -1 : 1;
     if (valA > valB) return order === 'asc' ? 1 : -1;
     return 0;
@@ -111,7 +53,7 @@ const ProductosEstancadosTable = () => {
   return (
     <Box mt={3}>
       <Typography variant="h6" gutterBottom fontWeight={600}>
-         Resumen Productos Estancados
+        Resumen Productos Estancados
       </Typography>
       <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
         <Table>
@@ -122,31 +64,31 @@ const ProductosEstancadosTable = () => {
               <TableCell>Categoría</TableCell>
               <TableCell>Última venta</TableCell>
 
-              <TableCell sortDirection={orderBy === 'diasSinVenta' ? order : false}>
+              <TableCell sortDirection={orderBy === 'DiasSinVenta' ? order : false}>
                 <TableSortLabel
-                  active={orderBy === 'diasSinVenta'}
-                  direction={orderBy === 'diasSinVenta' ? order : 'asc'}
-                  onClick={() => handleSort('diasSinVenta')}
+                  active={orderBy === 'DiasSinVenta'}
+                  direction={orderBy === 'DiasSinVenta' ? order : 'asc'}
+                  onClick={() => handleSort('DiasSinVenta')}
                 >
                   Días sin venta
                 </TableSortLabel>
               </TableCell>
 
-              <TableCell sortDirection={orderBy === 'stock' ? order : false}>
+              <TableCell sortDirection={orderBy === 'Stock' ? order : false}>
                 <TableSortLabel
-                  active={orderBy === 'stock'}
-                  direction={orderBy === 'stock' ? order : 'asc'}
-                  onClick={() => handleSort('stock')}
+                  active={orderBy === 'Stock'}
+                  direction={orderBy === 'Stock' ? order : 'asc'}
+                  onClick={() => handleSort('Stock')}
                 >
                   Stock
                 </TableSortLabel>
               </TableCell>
 
-              <TableCell sortDirection={orderBy === 'margen' ? order : false}>
+              <TableCell sortDirection={orderBy === 'MargenPorcentaje' ? order : false}>
                 <TableSortLabel
-                  active={orderBy === 'margen'}
-                  direction={orderBy === 'margen' ? order : 'asc'}
-                  onClick={() => handleSort('margen')}
+                  active={orderBy === 'MargenPorcentaje'}
+                  direction={orderBy === 'MargenPorcentaje' ? order : 'asc'}
+                  onClick={() => handleSort('MargenPorcentaje')}
                 >
                   % Margen
                 </TableSortLabel>
@@ -156,18 +98,32 @@ const ProductosEstancadosTable = () => {
               <TableCell>Acción Sugerida</TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
             {sortedData.map((row, idx) => (
               <TableRow key={idx}>
-                <TableCell>{row.imagen}</TableCell>
-                <TableCell>{row.producto}</TableCell>
-                <TableCell>{row.categoria}</TableCell>
-                <TableCell>{row.ultimaVenta}</TableCell>
-                <TableCell>{`${row.diasSinVenta} días`}</TableCell>
-                <TableCell>{row.stock}</TableCell>
-                <TableCell>{`${row.margen}%`}</TableCell>
-                <TableCell>{renderAlertaIcon(row.alerta)}</TableCell>
-                <TableCell>{row.accion}</TableCell>
+                <TableCell>
+                  <Avatar
+                    src={row.Imagen || undefined}
+                    alt={row.Producto}
+                    sx={{ width: 32, height: 32 }}
+                  />
+                </TableCell>
+                <TableCell>{row.Producto}</TableCell>
+                <TableCell>{row.Categoria || '-'}</TableCell>
+                <TableCell>{row.UltimaVenta ? new Date(row.UltimaVenta).toLocaleDateString() : '-'}</TableCell>
+                <TableCell>{row.DiasSinVenta} días</TableCell>
+                <TableCell>{row.Stock}</TableCell>
+                <TableCell>{row.MargenPorcentaje?.toFixed(1).replace('.', ',')}%</TableCell>
+                <TableCell>{renderAlertaIcon(row.DiasSinVenta, row.MargenPorcentaje)}</TableCell>
+                <TableCell>
+                  {
+                    row.Stock === 0 ? 'Sin stock'
+                    : row.MargenPorcentaje < 5 ? 'Posible liquidación'
+                    : row.MargenPorcentaje < 15 ? 'Revisar precio'
+                    : 'Producto nicho'
+                  }
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
