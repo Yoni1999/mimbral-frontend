@@ -128,7 +128,7 @@ const AnalisisProductoPage = () => {
             <MetricCard icon={<HourglassEmptyIcon color="success" />} label="Días Inventario" value="65" variation="S Unrt" variationColor="success" />
             <MetricCard icon={<InventoryIcon color="warning" />} label="Unidades Vendidas" value="30" variation="20,08% + que el periodo anterior" variationColor="error" />
             <MetricCard icon={<LocalShippingIcon color="warning" />} label="Stock en tránsito" value="4000" variationColor="warning" />
-            <MetricCard icon={<CheckCircleIcon color="success" />} label="Valor" value="$2.850" variation="5% mayor que la ultima orden " variationColor="success" />
+            <MetricCard icon={<CheckCircleIcon color="success" />} label="Último $ Compra" value="$2.850" variation="5% mayor que la ultima orden " variationColor="success" />
           </Box>
         </Box>
       </Box>
