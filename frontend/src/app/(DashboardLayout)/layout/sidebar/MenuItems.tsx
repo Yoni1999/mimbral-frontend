@@ -57,15 +57,16 @@ const Menuitems = [
     icon: IconReportAnalytics,
     href: "/utilities/analisis-categoria/resumen-categorias",
   },
-  {
+/*  {
     id: uniqueId(),
     title: "Análisis por Producto",
     icon: IconReportAnalytics,
     href: "/utilities/analisis-producto",
   },
-    {
+  */
+  {
     id: uniqueId(),
-    title: "Análisis por Producto 1.1",
+    title: "Análisis por Producto ",
     icon: IconReportAnalytics,
     href: "/utilities/analisis-producto1.1",
   },

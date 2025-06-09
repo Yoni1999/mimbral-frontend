@@ -14,10 +14,8 @@ import { BACKEND_URL } from "@/config";
 interface Props {
   open: boolean;
   onClose: () => void;
-  onApply: (filters: Filters) => void; 
+  onApply: (filters: Filters, producto?: Producto | null) => void; // ✅ acepta también el producto seleccionado
 }
-
-
 
 type Producto = {
   itemcode: string;
@@ -56,7 +54,7 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
     canal: "",
     modoComparacion: "",
   });
-
+  
   const [skuOptions, setSkuOptions] = useState<Producto[]>([]);
   const [loadingSku, setLoadingSku] = useState(false);
   const [selectedProducto, setSelectedProducto] = useState<Producto | null>(null);
@@ -275,12 +273,13 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
             fullWidth
             variant="contained"
             onClick={() => {
-              onApply(filters); // ⬅️ ENVÍA LOS FILTROS AL PADRE
-              onClose();        // ⬅️ CIERRA EL DRAWER
+              onApply(filters, selectedProducto); 
+              onClose();
             }}
           >
             Aplicar
           </Button>
+
         </Grid>
       </Grid>
     </Drawer>
