@@ -10,8 +10,15 @@ export const formatVentas = (valor: number): string => {
   };
   
 export const formatUnidades = (valor: number | null | undefined): string => {
-  if (typeof valor !== 'number') return '0'; // o podrías retornar un string vacío ''
-  return valor.toLocaleString("es-CL");
+  if (typeof valor !== 'number') return '0';
+  return Math.round(valor).toLocaleString("es-CL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+};
+
+export const calcularVariacion = (actual: number, anterior: number): string => {
+  if (!anterior || anterior === 0) return "0%";
+  const variacion = ((actual - anterior) / anterior) * 100;
+  const simbolo = variacion > 0 ? "+" : "";
+  return `${simbolo}${variacion.toFixed(1)}%`;
 };
 
   
