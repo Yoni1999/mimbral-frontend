@@ -63,7 +63,7 @@ const Menuitems = [
     icon: IconReportAnalytics,
     href: "/utilities/analisis-producto",
   },
-  */
+*/
   {
     id: uniqueId(),
     title: "Análisis por Producto ",
