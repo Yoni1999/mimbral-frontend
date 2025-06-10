@@ -89,8 +89,9 @@ function getLocalIP() {
 const PORT = process.env.PORT || 3001;
 const HOST = "0.0.0.0";
 const localIP = getLocalIP();
-
-// Iniciar servidor y túnel
+//Jobs automático
+require("./src/cron/cronJobs");
+// Iniciar servidor 
 app.listen(PORT, HOST, async () => {
   console.log(`Servidor corriendo en:`);
   console.log(`Local:     http://localhost:${PORT}`);

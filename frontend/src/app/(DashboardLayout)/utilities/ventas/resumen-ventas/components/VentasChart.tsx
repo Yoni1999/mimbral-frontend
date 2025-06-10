@@ -113,7 +113,7 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
       {loading ? (
         <Typography align="center">Cargando datos...</Typography>
       ) : (
-        <ResponsiveContainer width="100%" height={355}>
+        <ResponsiveContainer width="100%" height={335}>
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
             <XAxis

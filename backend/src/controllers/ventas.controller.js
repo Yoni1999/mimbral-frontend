@@ -154,9 +154,9 @@ const getMayorRentabilidad = async (req, res) => {
                   OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
                   OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
                   OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01'
-                      AND T0.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
+                      AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                   OR (@CanalParam = 'Empresas' AND I.WhsCode = '01'
-                      AND T0.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                      AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
               )
           )
           AND (@VendedorParam IS NULL OR T0.SlpCode = @VendedorParam)
@@ -178,5 +178,97 @@ const getMayorRentabilidad = async (req, res) => {
     res.status(500).json({ error: "Error en el servidor." });
   }
 };
+const getMenorRentabilidad = async (req, res) => {
+  try {
+    const pool = await poolPromise;
 
-module.exports = { getVentascanal, getMayorRentabilidad};
+    const canal = req.query.canal || null;
+    const vendedor = req.query.vendedor || null;
+    const periodo = req.query.periodo || "1D";
+    const fechaInicio = req.query.fechaInicio || null;
+    const fechaFin = req.query.fechaFin || null;
+
+    const query = `
+      DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
+      DECLARE @VendedorParam INT = @VendedorParamInput;
+      DECLARE @Periodo VARCHAR(10) = @PeriodoParam;
+      DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
+      DECLARE @FechaFinCustom DATE = @FechaFinInput;
+
+      DECLARE @FechaInicio DATE, @FechaFin DATE;
+      IF (@FechaInicioCustom IS NOT NULL AND @FechaFinCustom IS NOT NULL)
+      BEGIN
+          SET @FechaInicio = @FechaInicioCustom;
+          SET @FechaFin = @FechaFinCustom;
+      END
+      ELSE
+      BEGIN
+          SET @FechaFin = CAST(GETDATE() AS DATE);
+          SET @FechaInicio = 
+              CASE 
+                  WHEN @Periodo = '1D' THEN @FechaFin
+                  WHEN @Periodo = '7D' THEN DATEADD(DAY, -6, @FechaFin)
+                  WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFin)
+                  WHEN @Periodo = '1M' THEN DATEADD(MONTH, -1, @FechaFin)
+                  WHEN @Periodo = '3M' THEN DATEADD(MONTH, -3, @FechaFin)
+                  WHEN @Periodo = '6M' THEN DATEADD(MONTH, -6, @FechaFin)
+                  WHEN @Periodo = '1A' THEN DATEADD(YEAR, -1, @FechaFin)
+                  ELSE @FechaFin
+              END;
+      END;
+
+      SELECT TOP 10
+          I.ItemCode AS Codigo_Producto,
+          O.ItemName AS Nombre_Producto,
+          SUM(I.Quantity) AS Cantidad_Vendida,
+          AVG(I.Price) AS Precio_Venta_Promedio,
+          AVG(O.AvgPrice) AS Costo_Promedio,
+          SUM((I.Price - O.AvgPrice) * I.Quantity) AS Rentabilidad_Total,
+          CASE 
+              WHEN AVG(I.Price) = 0 THEN 0
+              ELSE ((AVG(I.Price) - AVG(O.AvgPrice)) / NULLIF(AVG(I.Price), 0)) * 100
+          END AS Margen_Porcentaje
+      FROM INV1 I
+      INNER JOIN OITM O ON I.ItemCode = O.ItemCode
+      INNER JOIN OINV T0 ON I.DocEntry = T0.DocEntry
+      WHERE 
+          T0.DocDate BETWEEN @FechaInicio AND @FechaFin
+          AND T0.CANCELED = 'N'
+          AND I.ItemCode <> '701001008'
+          AND O.AvgPrice > 0
+          AND (
+              @CanalParam IS NULL
+              OR (
+                  (@CanalParam = 'Meli' AND ((I.WhsCode IN ('03', '05') AND T0.SlpCode IN (426, 364, 355))
+                      OR (I.WhsCode = '01' AND T0.SlpCode IN (355, 398)) ))
+                  OR (@CanalParam = 'Falabella' AND I.WhsCode = '03' AND T0.SlpCode = 371)
+                  OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
+                  OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
+                  OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01'
+                      AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
+                  OR (@CanalParam = 'Empresas' AND I.WhsCode = '01'
+                      AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+              )
+          )
+          AND (@VendedorParam IS NULL OR T0.SlpCode = @VendedorParam)
+      GROUP BY I.ItemCode, O.ItemName
+      ORDER BY Rentabilidad_Total ASC;
+    `;
+
+    const request = pool.request();
+    request.input("CanalParamInput", canal);
+    request.input("VendedorParamInput", vendedor);
+    request.input("PeriodoParam", periodo);
+    request.input("FechaInicioInput", fechaInicio);
+    request.input("FechaFinInput", fechaFin);
+
+    const result = await request.query(query);
+    res.json(result.recordset);
+  } catch (error) {
+    console.error("❌ Error al obtener los productos con menor rentabilidad:", error);
+    res.status(500).json({ error: "Error en el servidor." });
+  }
+};
+
+
+module.exports = { getVentascanal, getMayorRentabilidad, getMenorRentabilidad};

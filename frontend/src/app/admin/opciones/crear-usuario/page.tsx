@@ -2,12 +2,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Box,
   Typography,
   Paper,
   Divider,
   Avatar,
   useTheme,
+  Container,
+  Stack,
 } from "@mui/material";
 import CrearUsuarioForm from "../components/CrearUsuarioForm";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
@@ -29,45 +30,34 @@ const CrearUsuarioPage = () => {
   if (!isAuthorized) return null;
 
   return (
-    <Box
-      sx={{
-        p: 4,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-start",
-        minHeight: "100vh",
-        backgroundColor: theme.palette.background.default,
-      }}
-    >
+    <Container maxWidth="md" sx={{ py: 6 }}>
       <Paper
-        elevation={4}
+        elevation={1}
         sx={{
-          width: "100%",
-          maxWidth: 600,
           p: 4,
-          borderRadius: 3,
-          boxShadow: theme.shadows[4],
+          borderRadius: 4,
+          backgroundColor: theme.palette.background.paper,
         }}
       >
-        <Box display="flex" alignItems="center" gap={2} mb={2}>
+        <Stack direction="row" alignItems="center" spacing={2} mb={2}>
           <Avatar sx={{ bgcolor: "primary.main" }}>
             <PersonAddAlt1Icon />
           </Avatar>
-          <Box>
+          <div>
             <Typography variant="h5" fontWeight="bold">
               Crear nuevo usuario
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Completa los campos para registrar un nuevo usuario en el sistema.
             </Typography>
-          </Box>
-        </Box>
+          </div>
+        </Stack>
 
-        <Divider sx={{ my: 2 }} />
+        <Divider sx={{ my: 3 }} />
 
         <CrearUsuarioForm />
       </Paper>
-    </Box>
+    </Container>
   );
 };
 

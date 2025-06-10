@@ -1222,6 +1222,7 @@ const obtenerTopVendedores = async (req, res) => {
       SELECT TOP 10
           V.SlpCode,
           V.SlpName AS Nombre,
+          V.U_Imagen AS Imagen,
           SUM(T1.LineTotal) AS TotalVentas,
           SUM(T1.Quantity) AS UnidadesVendidas,
           COUNT(DISTINCT T1.ItemCode) AS Items,
@@ -1246,12 +1247,12 @@ const obtenerTopVendedores = async (req, res) => {
                   OR (@CanalParam = 'Balmaceda' AND T1.WhsCode = '07')
                   OR (@CanalParam = 'Vitex' AND T1.WhsCode = '01' AND T1.SlpCode IN (401, 397))
                   OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
-                      AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
+                      AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212,225))
                   OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
                       AND T1.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
               )
           )
-      GROUP BY V.SlpCode, V.SlpName
+      GROUP BY V.SlpCode, V.SlpName, V.U_Imagen
       ORDER BY MargenBruto DESC;
     `;
 

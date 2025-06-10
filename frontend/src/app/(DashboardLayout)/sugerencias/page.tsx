@@ -141,7 +141,7 @@ const Page = () => {
         <AddIcon />
       </Fab>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Enviar nueva sugerencia</DialogTitle>
         <DialogContent>
           <form onSubmit={handleSubmit}>

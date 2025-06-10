@@ -10,7 +10,7 @@ interface Props {
   departamento: string;
   mensaje: string;
   estado: "pendiente" | "leida" | "completado";
-  fecha?: string; // ← opcional
+  fecha?: string; 
 }
 
 const SugerenciaCard = ({ departamento, mensaje, estado, fecha }: Props) => {

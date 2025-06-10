@@ -15,6 +15,7 @@ import {
   Stack,
   TableSortLabel,
 } from "@mui/material";
+import { formatVentas } from "@/utils/format";
 
 interface Vendedor {
   Nombre: string;
@@ -23,10 +24,12 @@ interface Vendedor {
   Items: number;
   MargenBruto: number;
   MargenPorcentaje: number;
+  TotalVentas?: number;
+  
 }
 
 type Order = "asc" | "desc";
-type OrderBy = "UnidadesVendidas" | "Items" | "MargenBruto" | "MargenPorcentaje";
+type OrderBy = "UnidadesVendidas" | "Items" | "MargenBruto" | "MargenPorcentaje" | "TotalVentas";
 
 interface Props {
   data: Vendedor[];
@@ -47,8 +50,8 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
 
   const sortedData = useMemo(() => {
     return [...data].sort((a, b) => {
-      const valA = a[orderBy];
-      const valB = b[orderBy];
+      const valA = a[orderBy] ?? 0;
+      const valB = b[orderBy] ?? 0;
       return order === "asc" ? valA - valB : valB - valA;
     });
   }, [data, order, orderBy]);
@@ -60,7 +63,7 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
           Top 10 Vendedores
         </Typography>
 
-        <Box sx={{ maxHeight: 415, overflowY: "auto" }}>
+        <Box sx={{ maxHeight: 307.5, overflowY: "auto" }}>
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
@@ -75,6 +78,17 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
                     Unidades
                   </TableSortLabel>
                 </TableCell>
+
+                <TableCell align="right" sortDirection={orderBy === "TotalVentas" ? order : false}>
+                  <TableSortLabel
+                    active={orderBy === "TotalVentas"}
+                    direction={order}
+                    onClick={() => handleSort("TotalVentas")}
+                  >
+                    Total Ventas
+                  </TableSortLabel>
+                </TableCell>
+
 
                 <TableCell align="right" sortDirection={orderBy === "Items" ? order : false}>
                   <TableSortLabel
@@ -119,11 +133,19 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
                       </Typography>
                     </Stack>
                   </TableCell>
+
                   <TableCell align="right">{vendedor.UnidadesVendidas}</TableCell>
-                  <TableCell align="right">{vendedor.Items}</TableCell>
+
                   <TableCell align="right">
-                    ${vendedor.MargenBruto.toLocaleString("es-CL")}
+                    {vendedor.TotalVentas ? formatVentas(vendedor.TotalVentas) : "-"}
                   </TableCell>
+
+                  <TableCell align="right">{vendedor.Items}</TableCell>
+
+                  <TableCell align="right">
+                    {formatVentas(vendedor.MargenBruto)}
+                  </TableCell>
+
                   <TableCell align="right">
                     {vendedor.MargenPorcentaje.toFixed(1).replace(".", ",")}
                   </TableCell>

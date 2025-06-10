@@ -114,7 +114,7 @@ const Profile = () => {
           <>
             <MenuItem
               component="a"
-              href="/admin/opciones"
+              href="/admin"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -124,7 +124,7 @@ const Profile = () => {
               <ListItemText>Opciones Admin</ListItemText>
             </MenuItem>
 
-            <MenuItem component="a" href="/metas">
+            <MenuItem component="a" href="/metas/crear-meta">
               <ListItemIcon>
                 <IconListCheck width={20} />
               </ListItemIcon>

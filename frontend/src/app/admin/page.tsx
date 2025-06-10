@@ -10,11 +10,14 @@ import {
   Divider,
   CircularProgress,
 } from "@mui/material";
+
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
-import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt"; // ⬅️ NUEVO ÍCONO
-import { fetchWithToken } from "@/utils/fetchWithToken"; // ✅ Importa la utilidad
-import { BACKEND_URL } from "@/config"; // ✅ Importa la URL del backend
+import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
+import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
+
+import { fetchWithToken } from "@/utils/fetchWithToken";
+import { BACKEND_URL } from "@/config";
 
 const AdminPage = () => {
   const router = useRouter();
@@ -35,8 +38,7 @@ const AdminPage = () => {
   const fetchUltimaActualizacion = async () => {
     try {
       const response = await fetchWithToken(`${BACKEND_URL}/api/ultima-actualizacion`);
-      if (!response) return; // 🔐 Ya redirigido si token inválido
-
+      if (!response) return;
       const data = await response.json();
       setUltimaFecha(data.ultimaFecha);
       setUltimaHora(data.ultimaHora);
@@ -48,14 +50,11 @@ const AdminPage = () => {
   const handleActualizarDatos = async () => {
     setLoading(true);
     try {
-      // Aquí puedes agregar la lógica para actualizar los datos en el backend
       const response = await fetchWithToken(`${BACKEND_URL}/api/actualizar-datos`, {
         method: "POST",
       });
-
-      if (!response) return; // 🔐 Ya redirigido si token inválido
-
-      await fetchUltimaActualizacion(); // Obtén la última actualización después de actualizar
+      if (!response) return;
+      await fetchUltimaActualizacion();
     } catch (error) {
       console.error("❌ Error al actualizar los datos:", error);
     } finally {
@@ -64,7 +63,7 @@ const AdminPage = () => {
   };
 
   useEffect(() => {
-    fetchUltimaActualizacion(); 
+    fetchUltimaActualizacion();
   }, []);
 
   if (!isAuthorized) return null;
@@ -82,6 +81,33 @@ const AdminPage = () => {
       <Divider sx={{ mb: 4 }} />
 
       <Grid container spacing={3}>
+        {/* Dashboard Usuarios */}
+        <Grid item xs={12} md={3}>
+          <Paper
+            elevation={12}
+            sx={{
+              p: 3,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: 2,
+            }}
+          >
+            <DashboardCustomizeIcon color="error" fontSize="large" />
+            <Typography variant="h6">Dashboard Usuarios</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Visualiza el comportamiento, métricas y estadísticas de los usuarios.
+            </Typography>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => router.push("/admin/opciones")}
+            >
+              Ir al Dashboard
+            </Button>
+          </Paper>
+        </Grid>
+
         {/* Usuarios */}
         <Grid item xs={12} md={3}>
           <Paper
@@ -103,12 +129,12 @@ const AdminPage = () => {
               variant="contained"
               onClick={() => router.push("/admin/opciones/usuarios")}
             >
-              Administrar usuarios
+              Administrar Usuarios
             </Button>
           </Paper>
         </Grid>
 
-        {/* Crear nuevo usuario */}
+        {/* Crear usuario */}
         <Grid item xs={12} md={3}>
           <Paper
             elevation={12}
@@ -130,7 +156,7 @@ const AdminPage = () => {
               color="success"
               onClick={() => router.push("/admin/opciones/crear-usuario")}
             >
-              Crear usuario
+              Crear Usuario
             </Button>
           </Paper>
         </Grid>
@@ -150,7 +176,7 @@ const AdminPage = () => {
             <SystemUpdateAltIcon color="warning" fontSize="large" />
             <Typography variant="h6">Actualizar Base de Datos</Typography>
             {ultimaFecha && ultimaHora && (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 Última actualización: El {ultimaFecha} a las {ultimaHora}
               </Typography>
             )}
@@ -160,7 +186,7 @@ const AdminPage = () => {
               onClick={handleActualizarDatos}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : "Actualizar ahora"}
+              {loading ? <CircularProgress size={24} color="inherit" /> : "Actualizar Ahora"}
             </Button>
           </Paper>
         </Grid>
@@ -187,7 +213,7 @@ const AdminPage = () => {
               color="info"
               onClick={() => router.push("/admin/opciones/sugerencias")}
             >
-              Ver sugerencias
+              Ver Sugerencias
             </Button>
           </Paper>
         </Grid>

@@ -40,7 +40,6 @@ const registerUser = async (req, res) => {
       longitud = null,
     } = req.body;
 
-
     if (!nombre || !email || !password) {
       return res.status(400).json({ error: "Faltan datos obligatorios" });
     }
@@ -48,28 +47,27 @@ const registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const pool = await poolPromise;
 
+    // Insertar nuevo usuario
     await pool.request()
       .input("Nombre", sql.NVarChar, nombre)
       .input("Email", sql.NVarChar, email)
       .input("PasswordHash", sql.NVarChar, hashedPassword)
       .input("Rol", sql.NVarChar, "usuario")
-      .input("Estado", sql.Int, 0)
+      .input("Estado", sql.Int, 0) // pendiente
       .input("Telefono", sql.NVarChar, telefono)
       .input("Direccion", sql.NVarChar, direccion)
-      .input("IPRegistro", sql.NVarChar, ip_registro || "") 
+      .input("IPRegistro", sql.NVarChar, ip_registro || "")
       .input("Ciudad", sql.NVarChar, ciudad)
       .input("Region", sql.NVarChar, region)
       .input("Pais", sql.NVarChar, pais)
       .input("Latitud", sql.Float, latitud)
       .input("Longitud", sql.Float, longitud)
-
       .query(`
         INSERT INTO USUARIOS (Nombre, Email, Password_Hash, Rol, Estado, Telefono, Direccion, IP_Registro, Ciudad, Region, Pais, Latitud, Longitud)
         VALUES (@Nombre, @Email, @PasswordHash, @Rol, @Estado, @Telefono, @Direccion, @IPRegistro, @Ciudad, @Region, @Pais, @Latitud, @Longitud)
       `);
 
-
-    // Enviar correo de bienvenida
+    // Configurar transporte de correo
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -78,37 +76,20 @@ const registerUser = async (req, res) => {
       },
     });
 
+    // Enviar correo al usuario
     await transporter.sendMail({
       from: `"Equipo Mimbral" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Registro exitoso - Plataforma de Análisis de Datos Mimbral",
       html: `
-        <div style="
-          font-family: 'Segoe UI', Arial, sans-serif;
-          max-width: 520px;
-          margin: 0 auto;
-          padding: 30px;
-          border-radius: 10px;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-          background-color: #ffffff;
-          border: 1px solid #e0e0e0;
-        ">
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 30px; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); background-color: #ffffff; border: 1px solid #e0e0e0;">
           <div style="text-align: center; margin-bottom: 25px;">
-            <img 
-              src="https://res.cloudinary.com/dhzahos7u/image/upload/v1747080896/mimbral_af8zz8.png" 
-              alt="Mimbral Logo" 
-              style="max-height: 60px;" 
-            />
+            <img src="https://res.cloudinary.com/dhzahos7u/image/upload/v1747080896/mimbral_af8zz8.png" alt="Mimbral Logo" style="max-height: 60px;" />
           </div>
-
-          <h2 style="color: #1a1a1a; text-align: center; margin-bottom: 16px;">
-            ¡Registro exitoso!
-          </h2>
-
+          <h2 style="color: #1a1a1a; text-align: center; margin-bottom: 16px;">¡Registro exitoso!</h2>
           <p style="font-size: 16px; color: #444; text-align: center; margin-bottom: 24px;">
             Hola <strong>${nombre}</strong>, gracias por registrarte en la plataforma de análisis de datos de Mimbral.
           </p>
-
           <div style="background-color: #f9f9f9; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px;">
             <p style="font-size: 15px; color: #333; margin: 0 0 10px;"><strong>Datos de tu cuenta:</strong></p>
             <ul style="font-size: 14px; color: #555; padding-left: 20px; margin: 0;">
@@ -118,13 +99,10 @@ const registerUser = async (req, res) => {
               <li><strong>Dirección:</strong> ${direccion}</li>
             </ul>
           </div>
-
           <p style="font-size: 15px; color: #d9534f; text-align: center;">
-            Tu cuenta aún <strong>no está activa</strong>. Deberás esperar a que un administrador apruebe tu acceso.
+            Tu cuenta aún <strong>no está activa</strong>. Deberás esperar a que un administrador apruebe tu acceso, te llegará un correo cuando allá sido aprobada.
           </p>
-
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
-
           <p style="font-size: 12px; color: #aaa; text-align: center;">
             © ${new Date().getFullYear()} Mimbral - Todos los derechos reservados.
           </p>
@@ -133,8 +111,75 @@ const registerUser = async (req, res) => {
       text: `Hola ${nombre}, gracias por registrarte. Tu cuenta aún no está activa. Debes esperar la aprobación del administrador.`,
     });
 
+    // 🔔 Notificar a administradores
+    const result = await pool.request().query(`
+      SELECT Email, Nombre FROM USUARIOS WHERE Rol = 'admin' AND Estado = 1
+    `);
 
+    const adminEmails = result.recordset.map(row => row.Email);
+
+    if (adminEmails.length > 0) {
+      const adminHtml = `
+        <div style="max-width: 600px; margin: 0 auto; padding: 30px; font-family: 'Segoe UI', Arial, sans-serif; background-color: #ffffff; border-radius: 10px; border: 1px solid #e6e6e6; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://res.cloudinary.com/dhzahos7u/image/upload/v1747080896/mimbral_af8zz8.png" alt="Logo Mimbral" style="height: 50px;" />
+          </div>
+
+          <h2 style="color: #333333; font-size: 22px; margin-bottom: 12px; text-align: center;">🔔 Nuevo usuario pendiente de autorización</h2>
+
+          <p style="color: #555555; font-size: 15px; text-align: center; margin-bottom: 25px;">
+            Un nuevo usuario se ha registrado en la plataforma de análisis de datos y requiere tu aprobación.
+          </p>
+
+          <table style="width: 100%; font-size: 14px; color: #333; margin-bottom: 20px;">
+            <tbody>
+              <tr>
+                <td style="padding: 6px 0;"><strong>👤 Nombre:</strong></td>
+                <td>${nombre}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0;"><strong>📧 Email:</strong></td>
+                <td>${email}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0;"><strong>📞 Teléfono:</strong></td>
+                <td>${telefono || "-"}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0;"><strong>📍 Departamento:</strong></td>
+                <td>${direccion || "-"}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="https://mimbral-frontend.vercel.app/authentication/login"
+              style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">
+              Ir al panel de administración
+            </a>
+          </div>
+
+          <p style="margin-top: 40px; text-align: center; color: #999999; font-size: 12px;">
+            © ${new Date().getFullYear()} Mimbral - Todos los derechos reservados.
+          </p>
+        </div>
+      `;
+
+
+      await transporter.sendMail({
+        from: `"Administrador Análisis de datos Mimbral" <${process.env.EMAIL_USER}>`,
+        to: adminEmails.join(","),
+        subject: "Nuevo usuario pendiente de autorización",
+        html: adminHtml,
+        text: `Nuevo usuario registrado: ${nombre} (${email}). Ingresa al panel de administración para autorizar el acceso.`
+      });
+
+      console.log(`📧 Notificación enviada a administradores: ${adminEmails.join(", ")}`);
+    }
+
+    //  Respuesta final al frontend
     res.json({ message: "Usuario registrado correctamente. Se ha enviado un correo con los detalles." });
+
   } catch (error) {
     console.error("❌ Error en registerUser:", error);
     res.status(500).json({ error: "Error en el servidor" });
@@ -165,7 +210,41 @@ const crearUsuarioPorAdmin = async (req, res) => {
         VALUES (@Nombre, @Email, @PasswordHash, @Rol, @Estado, @Telefono, @Direccion)
       `);
 
-    res.json({ message: "✅ Usuario creado correctamente por administrador" });
+    // Enviar correo al usuario creado
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const htmlMensaje = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #fff; border: 1px solid #ddd; border-radius: 8px;">
+        <h2>Se te ha dado acceso a la plataforma de análisis de datos de Mimbral</h2>
+        <p>Un administrador ha creado tu cuenta con los siguientes datos:</p>
+        <ul>
+          <li><strong>Nombre:</strong> ${nombre}</li>
+          <li><strong>Correo:</strong> ${email}</li>
+          <li><strong>Teléfono:</strong> ${telefono || "No registrado"}</li>
+          <li><strong>Contraseña:</strong> ${password}</li>
+        </ul>
+        <p>Puedes ingresar desde el siguiente enlace:</p>
+        <a href="https://mimbral-frontend.vercel.app/authentication/login" style="display: inline-block; background-color: #28a745; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none;">Ir al login</a>
+
+        <p style="margin-top: 20px; font-size: 12px; color: #999;">Te recomendamos cambiar tu contraseña una vez dentro del sistema.</p>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: `"Administrador Mimbral" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Tu cuenta ha sido creada",
+      html: htmlMensaje,
+      text: `Hola ${nombre}, tu cuenta ha sido creada. Accede con el correo ${email} y contraseña: ${password}. Ingresa en https://mimbral-frontend.vercel.app/authentication/login`,
+    });
+
+    res.json({ message: " Usuario creado correctamente por administrador y correo enviado" });
   } catch (error) {
     console.error("❌ Error al crear usuario por admin:", error);
     res.status(500).json({ message: "Error en el servidor" });

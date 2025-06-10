@@ -1,36 +1,13 @@
 const { poolPromise } = require("../models/db");
+const { ejecutarProcedimientos } = require("../services/actualizar.service");
 
-// ✅ Controlador para actualizar los datos
 const actualizarDatos = async (req, res) => {
   try {
-      const pool = await poolPromise;
-
-      const procedimientos = [
-          "ACTUALIZAR_FAMILIA_SUBFAMILIA",
-          "ACTUALIZAR_CATEGORIA_SUBCATEGORIA",
-          "ACTUALIZAR_OITM_ITM1",
-          "ACTUALIZAR_OSLP",
-          "ACTUALIZAR_OITW",
-          "ACTUALIZAR_OPOR_POR1",
-          "ACTUALIZAR_OPDN_PDN1",
-          "ACTUALIZAR_OINV_INV1",
-          "ACTUALIZAR_OPCH_PCH1",
-          "ACTUALIZAR_OINM",
-          "Actualizar_OCRD",
-          "Actualizar_ODLN_DLN1",
-          "Actualizar_OBNK",
-          "Actualizar_ORIN_RIN1",
-          "ActualizarDatosTransacciones"
-      ];
-
-      for (const proc of procedimientos) {
-          await pool.request().query(`EXEC ${proc}`);
-      }
-
-      res.json({ success: true, message: "Datos actualizados correctamente." });
+    await ejecutarProcedimientos();
+    res.json({ success: true, message: "Datos actualizados correctamente." });
   } catch (error) {
-      console.error(" Error al actualizar los datos:", error);
-      res.status(500).json({ success: false, message: "Error en el servidor al actualizar los datos." });
+    console.error(" Error al actualizar los datos:", error);
+    res.status(500).json({ success: false, message: "Error en el servidor al actualizar los datos." });
   }
 };
 

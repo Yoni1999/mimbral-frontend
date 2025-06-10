@@ -40,7 +40,6 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"login" | "otp">("login");
 
-  // Mensajes tipo banner
   const [mensajeVisible, setMensajeVisible] = useState(false);
   const [mensajeTexto, setMensajeTexto] = useState("");
   const [mensajeTipo, setMensajeTipo] = useState<AlertColor>("info");
@@ -57,7 +56,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     setShowPassword((prev) => !prev);
   };
 
-    const handleLogin = async () => {
+  const handleLogin = async () => {
     setLoading(true);
     try {
       const data = await fetchSafe("/api/auth/login", {
@@ -80,7 +79,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         setMensajeVisible(true);
         setStep("otp");
       } else if (data.token) {
-        setMensajeTexto("Login Correcto ");
+        setMensajeTexto("Login Correcto");
         setMensajeTipo("success");
         setMensajeVisible(true);
 
@@ -89,7 +88,6 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
 
         window.location.href = "/inicio";
       }
-
     } catch (err: any) {
       setMensajeTexto(err.message || "Error de conexión");
       setMensajeTipo("error");
@@ -112,45 +110,6 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       )}
 
       {subtext}
-
-      {/* Mensaje tipo alerta */}
-      {mensajeVisible && (
-        <Box
-          sx={{
-            position: "fixed",
-            top: 16,
-            right: 16,
-            zIndex: 1400, // superior a dialogs
-            width: "auto",
-            maxWidth: 400,
-          }}
-        >
-          <Alert
-            severity={mensajeTipo}
-            variant="filled"
-            action={
-              <IconButton
-                aria-label="close"
-                color="inherit"
-                size="small"
-                onClick={() => setMensajeVisible(false)}
-              >
-                <CloseIcon fontSize="inherit" />
-              </IconButton>
-            }
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              p: 0.9,
-              borderRadius: 5,
-              fontSize: "0.7rem",
-            }}
-          >
-            {mensajeTexto}
-          </Alert>
-        </Box>
-      )}
-
 
       <Stack>
         {/* Correo */}
@@ -220,8 +179,31 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         </Stack>
       </Stack>
 
+      {/* Mensaje justo encima del botón */}
+      {mensajeVisible && (
+        <Box mt={2}>
+          <Alert
+            severity={mensajeTipo}
+            variant="outlined"
+            action={
+              <IconButton
+                aria-label="close"
+                color="inherit"
+                size="small"
+                onClick={() => setMensajeVisible(false)}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            }
+            sx={{ fontSize: "0.85rem", borderRadius: 2 }}
+          >
+            {mensajeTexto}
+          </Alert>
+        </Box>
+      )}
+
       {/* Botón de Iniciar */}
-      <Box>
+      <Box mt={2}>
         <Button
           color="primary"
           variant="contained"

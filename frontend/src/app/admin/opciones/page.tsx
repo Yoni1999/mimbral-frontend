@@ -73,7 +73,7 @@ const OpcionesAdminPage = () => {
   return (
     <Box p={4} position="relative" sx={{backgroundColor: "#FEFEFE", minHeight: "100vh"}} >
       <Typography variant="h4" fontWeight="bold" mb={2}>
-        Opciones de Administrador
+        Dashboard de Administración
       </Typography>
 
       <Typography variant="subtitle1" mb={4}>
