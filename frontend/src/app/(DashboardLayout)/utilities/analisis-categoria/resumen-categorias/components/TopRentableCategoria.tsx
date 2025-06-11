@@ -49,7 +49,6 @@ interface Props {
 const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
   const [data, setData] = useState<Producto[]>([]);
   const [search, setSearch] = useState("");
-  const [visibleCount, setVisibleCount] = useState(10);
   const [sortField, setSortField] = useState<"Margen_Absoluto" | "Cantidad_Vendida" | "Margen_Unitario" | "">("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
@@ -140,9 +139,6 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
     }
   }, [filters]);
 
-  useEffect(() => {
-    setVisibleCount(10);
-  }, [search]);
 
   const handleSort = (field: typeof sortField) => {
     if (sortField === field) {
@@ -164,7 +160,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
     return sortDirection === "asc" ? valA - valB : valB - valA;
   });
 
-  const productosVisibles = sortedProductos.slice(0, visibleCount);
+  const productosVisibles = sortedProductos;
 
   return (
     <Card sx={{ backgroundColor: "transparent", boxShadow: "none", border: "none", p: 1 }}>
@@ -210,7 +206,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
       <TableContainer
         component={Paper}
         sx={{
-          minHeight: 500, 
+          maxHeight: 600, 
           overflowY: "auto",
         }}
       >
@@ -299,13 +295,6 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
         </Table>
       </TableContainer>
 
-      {visibleCount < productosFiltrados.length && (
-        <Box mt={2} textAlign="center">
-          <Button variant="outlined" onClick={() => setVisibleCount((prev) => prev + 10)}>
-            Ver más
-          </Button>
-        </Box>
-      )}
     </Card>
   );
 };

@@ -57,7 +57,6 @@ interface Props {
 const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
   const [data, setData] = useState<Producto[]>([]);
   const [search, setSearch] = useState("");
-  const [visibleCount, setVisibleCount] = useState(10);
   const [loading, setLoading] = useState(false);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [sortField, setSortField] = useState<"Margen_Absoluto" | "Cantidad_Vendida" | "Margen_Unitario" | "">("");
@@ -158,10 +157,6 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
     fetchData();
   }, [filters]);
 
-  useEffect(() => {
-    setVisibleCount(10);
-  }, [search]);
-
   const handleSort = (field: typeof sortField) => {
     if (sortField === field) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -182,7 +177,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
     return sortDirection === "asc" ? valA - valB : valB - valA;
   });
 
-  const productosVisibles = sortedProductos.slice(0, visibleCount);
+  const productosVisibles = sortedProductos;
 
   const nombreCategoria = categorias.find((c) => c.codigo === filters.categoria)?.nombre || "";
 
@@ -253,7 +248,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
         <TableContainer
             component={Paper}
             sx={{
-              minHeight: 500,  // Fija una altura mínima
+              maxHeight: 600,  // Fija una altura max
               overflowY: "auto",
             }}
           >
@@ -336,33 +331,6 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
         </TableContainer>
       )}
 
-      {visibleCount < productosFiltrados.length && (
-        <Box mt={3} textAlign="center">
-          <Button
-            variant="outlined"
-            onClick={() => setVisibleCount((prev) => prev + 10)}
-            sx={{
-              borderRadius: 2,
-              px: 3,
-              py: 1,
-              fontWeight: 600,
-              textTransform: "none",
-              borderColor: "#1976d2",
-              color: "#1976d2",
-              transition: "all 0.3s",
-              "&:hover": {
-                backgroundColor: "#1976d2",
-                color: "#fff",
-                borderColor: "#1976d2",
-                boxShadow: "0 3px 6px rgba(0, 0, 0, 0.15)",
-              },
-            }}
-          >
-            Ver Más
-          </Button>
-        </Box>
-
-      )}
     </Card>
   );
 };

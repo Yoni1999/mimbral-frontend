@@ -82,7 +82,6 @@ interface Props {
 const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
   const [data, setData] = useState<Producto[]>([]);
   const [search, setSearch] = useState("");
-  const [visibleCount, setVisibleCount] = useState(10);
   const [loading, setLoading] = useState(false);
   const [subcategorias, setSubcategorias] = useState<Subcategoria[]>([]);
   const [sortField, setSortField] = useState<"Margen_Absoluto" | "Cantidad_Vendida" | "Margen_Unitario" | "">("");
@@ -156,9 +155,6 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
 
   const nombreSubcategoria = subcategorias.find(s => s.codigo === filters.subcategoria)?.nombre || "";
 
-  useEffect(() => {
-    setVisibleCount(10);
-  }, [search]);
 
   const handleSort = (field: typeof sortField) => {
     if (sortField === field) {
@@ -180,7 +176,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
       : b[sortField] - a[sortField];
   });
 
-  const productosVisibles = sortedProductos.slice(0, visibleCount);
+  const productosVisibles = sortedProductos;
 
   return (
     <Card sx={{ backgroundColor: "transparent", boxShadow: "none", border: "none", p: 1 }}>
@@ -318,28 +314,11 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
           </Table>
         </TableContainer>
       )}
-
-      {visibleCount < productosFiltrados.length && (
-        <Box mt={3} textAlign="center">
-          <Button
-            variant="outlined"
-            onClick={() => setVisibleCount((prev) => prev + 10)}
-            sx={{
-              borderRadius: 2,
-              px: 3,
-              py: 1,
-              fontWeight: 600,
-              textTransform: "none",
-              borderColor: "#1976d2",
-              color: "#1976d2",
-              "&:hover": {
-                backgroundColor: "#1976d2",
-                color: "#fff",
-              },
-            }}
-          >
-            Ver Más
-          </Button>
+      {productosVisibles.length === 0 && !loading && (
+        <Box display="flex" justifyContent="center" py={4}>
+          <Typography variant="body2" color="text.secondary">
+            No se encontraron productos rentables para los filtros seleccionados.
+          </Typography>
         </Box>
       )}
     </Card>

@@ -2,12 +2,21 @@
 import {
   IconLayoutDashboard,
   IconReportAnalytics,
-  IconChevronRight,
-  IconId,
+  IconChartBar,
+  IconChartDonut,
+  IconChartPie,
+  IconChartLine,
+  IconBoxSeam,
+  IconPackages,
+  IconHierarchy3,
+  IconTruckDelivery,
+  IconClipboardCheck,
+  IconTargetArrow,
   IconMessage2,
+  IconChevronRight,
 } from "@tabler/icons-react";
-import { uniqueId } from "lodash";
 
+import { uniqueId } from "lodash";
 const Menuitems = [
   {
     navlabel: true,
@@ -20,33 +29,33 @@ const Menuitems = [
     icon: IconLayoutDashboard,
     href: "/inicio",
   },
+
   {
     navlabel: true,
-    subheader: "Inventario & Abastecimiento",
+    subheader: "Analisa tus Ventas",
     divider: true,
   },
-
   {
     id: uniqueId(),
     title: "Ventas",
-    icon: IconReportAnalytics,
+    icon: IconChartBar,
     subMenu: [
       {
         id: uniqueId(),
         title: "Resumen Ventas",
-        icon: IconChevronRight,
+        icon: IconChartLine,
         href: "/utilities/ventas/resumen-ventas",
       },
       {
         id: uniqueId(),
         title: "Ventas por Canal",
-        icon: IconChevronRight,
+        icon: IconChartDonut,
         href: "/utilities/ventas/ventas-por-canal",
       },
       {
         id: uniqueId(),
         title: "Ventas por Vendedor",
-        icon: IconChevronRight,
+        icon: IconChartPie,
         href: "/utilities/ventas/ventas-por-vendedor",
       },
     ],
@@ -54,54 +63,60 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: "Análisis por Categoría",
-    icon: IconReportAnalytics,
+    icon: IconHierarchy3,
     href: "/utilities/analisis-categoria/resumen-categorias",
   },
-/*  {
+  {
     id: uniqueId(),
     title: "Análisis por Producto",
-    icon: IconReportAnalytics,
-    href: "/utilities/analisis-producto",
-  },
-*/
-  {
-    id: uniqueId(),
-    title: "Análisis por Producto ",
-    icon: IconReportAnalytics,
+    icon: IconBoxSeam,
     href: "/utilities/analisis-producto1.1",
   },
+
   {
     navlabel: true,
-    subheader: "Reportes & Metas",
+    subheader: "Inventario & Abastecimiento",
+    divider: true,
+  },
+  {
+    id: uniqueId(),
+    title: "Supply Chain",
+    icon: IconTruckDelivery,
+    href: "/utilities/analisis-producto1.1",
+  },
+
+  {
+    navlabel: true,
+    subheader: "Informes & Metas",
     divider: true,
   },
   {
     id: uniqueId(),
     title: "Informes",
-    icon: IconReportAnalytics,
+    icon: IconClipboardCheck,
     subMenu: [
       {
         id: uniqueId(),
         title: "Productos Detenidos",
-        icon: IconChevronRight,
+        icon: IconBoxSeam,
         href: "/informes/productos-detenidos",
       },
       {
         id: uniqueId(),
         title: "Ventas de Productos",
-        icon: IconChevronRight,
+        icon: IconChartBar,
         href: "/informes/ventas-productos",
       },
       {
         id: uniqueId(),
         title: "Ventas Alta Rotación",
-        icon: IconChevronRight,
+        icon: IconChartLine,
         href: "/informes/ventas-productos-alta-rotacion",
       },
       {
         id: uniqueId(),
         title: "Tiempo de Entrega Proveedores",
-        icon: IconChevronRight,
+        icon: IconTruckDelivery,
         href: "/informes/tiempo-entrega-proveedores",
       },
     ],
@@ -109,9 +124,10 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: "Metas",
-    icon: IconReportAnalytics,
+    icon: IconTargetArrow,
     href: "/metas-general",
   },
+
   {
     navlabel: true,
     subheader: "Feedback",
@@ -124,5 +140,6 @@ const Menuitems = [
     href: "/sugerencias",
   },
 ];
+
 
 export default Menuitems;

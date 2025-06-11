@@ -147,7 +147,7 @@ const Dashboard = () => {
               value="200K"
               description="Análisa ventas por SKU"
               icon={<IconBox size={32} className="text-purple-600" />}
-              onClick={() => router.push("/utilities/analisis-producto")}
+              onClick={() => router.push("/utilities/analisis-producto1.1")}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4}>

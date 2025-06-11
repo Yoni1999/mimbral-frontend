@@ -32,6 +32,7 @@ interface Producto {
   Nombre_SubCategoria: string;
   Cantidad_Vendida: number;
   Total_Ventas: number;
+  NumTransacciones: number;
   Imagen_URL: string;
 }
 
@@ -43,8 +44,36 @@ const TopProductosChart: React.FC<Props> = ({ filters }) => {
   const [data, setData] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(false);
   const [openModal, setOpenModal] = useState(false);
+  const [sortField, setSortField] = useState<"Cantidad_Vendida" | "Total_Ventas" | "Nombre_SubCategoria" | "NumTransacciones" | "">("");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  // ✅ Función utilitaria para mapear el período
+
+  const handleSort = (field: typeof sortField) => {
+  if (sortField === field) {
+    setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+  } else {
+    setSortField(field);
+    setSortDirection("desc");
+  }
+};
+
+const sortedData = [...data].sort((a, b) => {
+  if (!sortField) return 0;
+
+  const valA = a[sortField];
+  const valB = b[sortField];
+
+  if (typeof valA === "string" && typeof valB === "string") {
+    return sortDirection === "asc"
+      ? valA.localeCompare(valB)
+      : valB.localeCompare(valA);
+  }
+
+  return sortDirection === "asc"
+    ? (valA as number) - (valB as number)
+    : (valB as number) - (valA as number);
+});
+
   const mapPeriodo = (nombre: string): string => {
     const mapa: Record<string, string> = {
       "Hoy": "1d",
@@ -130,19 +159,50 @@ const TopProductosChart: React.FC<Props> = ({ filters }) => {
       }}
     >
       <Table stickyHeader size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell sx={{ fontWeight: "bold" }}>Subcategoría</TableCell>
-            <TableCell align="right" sx={{ fontWeight: "bold" }}>
-              Cantidad Vendida
-            </TableCell>
-            <TableCell align="right" sx={{ fontWeight: "bold" }}>
-              Total Ventas
-            </TableCell>
-          </TableRow>
-        </TableHead>
+      <TableHead>
+        <TableRow>
+          <TableCell
+            onClick={() => handleSort("Nombre_SubCategoria")}
+            sx={{ fontWeight: "bold", cursor: "pointer" }}
+          >
+            Subcategoría{" "}
+            {sortField === "Nombre_SubCategoria" &&
+              (sortDirection === "asc" ? "▲" : "▼")}
+          </TableCell>
+
+          <TableCell
+            align="right"
+            onClick={() => handleSort("NumTransacciones")}
+            sx={{ fontWeight: "bold", cursor: "pointer" }}
+          >
+            Transacciones{" "}
+            {sortField === "NumTransacciones" &&
+              (sortDirection === "asc" ? "▲" : "▼")}
+          </TableCell>
+
+          <TableCell
+            align="right"
+            onClick={() => handleSort("Cantidad_Vendida")}
+            sx={{ fontWeight: "bold", cursor: "pointer" }}
+          >
+            Cantidad Vendida{" "}
+            {sortField === "Cantidad_Vendida" &&
+              (sortDirection === "asc" ? "▲" : "▼")}
+          </TableCell>
+
+          <TableCell
+            align="right"
+            onClick={() => handleSort("Total_Ventas")}
+            sx={{ fontWeight: "bold", cursor: "pointer" }}
+          >
+            Total Ventas{" "}
+            {sortField === "Total_Ventas" && (sortDirection === "asc" ? "▲" : "▼")}
+          </TableCell>
+        </TableRow>
+      </TableHead>
+
         <TableBody>
-          {data.map((row, index) => (
+          {sortedData.map((row, index) => (
             <TableRow
               key={index}
               hover
@@ -169,6 +229,9 @@ const TopProductosChart: React.FC<Props> = ({ filters }) => {
                     {row.Nombre_SubCategoria}
                   </Typography>
                 </Box>
+              </TableCell>
+              <TableCell align="right">
+                {row.NumTransacciones.toLocaleString("es-CL")}
               </TableCell>
               <TableCell align="right">
                 {row.Cantidad_Vendida.toLocaleString("es-CL")}
