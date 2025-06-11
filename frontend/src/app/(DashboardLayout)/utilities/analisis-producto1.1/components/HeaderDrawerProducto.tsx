@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Box, Drawer, Typography, IconButton, Divider, Grid, Avatar,
   FormControl, InputLabel, Select, MenuItem, TextField, Button, CircularProgress
@@ -14,8 +14,7 @@ import { BACKEND_URL } from "@/config";
 interface Props {
   open: boolean;
   onClose: () => void;
-  onApply: (filters: Filters, producto?: Producto | null) => void;
-  defaultFilters: Filters; // ✅ Nuevo prop para filtros iniciales
+  onApply: (filters: Filters, producto?: Producto | null) => void; // ✅ acepta también el producto seleccionado
 }
 
 type Producto = {
@@ -45,38 +44,21 @@ const temporadaRangos: Record<string, { inicio: string; fin: string }> = {
   "Primavera 2025": { inicio: "2025-09-23", fin: "2025-12-21" },
 };
 
-const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply, defaultFilters }) => {
-  const [filters, setFilters] = useState<Filters>(defaultFilters);
+const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
+  const [filters, setFilters] = useState<Filters>({
+    itemCode: "",
+    temporada: "",
+    periodo: "",
+    fechaInicio: "",
+    fechaFin: "",
+    canal: "",
+    modoComparacion: "",
+  });
+  
   const [skuOptions, setSkuOptions] = useState<Producto[]>([]);
   const [loadingSku, setLoadingSku] = useState(false);
   const [selectedProducto, setSelectedProducto] = useState<Producto | null>(null);
   const [inputValue, setInputValue] = useState("");
-
-  // Sincronizar filtros iniciales si cambian
-  useEffect(() => {
-    setFilters(defaultFilters);
-  }, [defaultFilters]);
-
-  // Precargar producto si viene desde la URL
-  useEffect(() => {
-    const fetchProducto = async () => {
-      try {
-        if (defaultFilters.itemCode && !selectedProducto) {
-          const res = await fetchWithToken(`${BACKEND_URL}/api/pv/SKU?query=${defaultFilters.itemCode}`);
-          if (!res) throw new Error("No se pudo obtener el producto");
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            setSelectedProducto(data[0]);
-            setInputValue(`${data[0].itemcode} - ${data[0].itemname}`);
-          }
-        }
-      } catch (err) {
-        console.error("❌ Error precargando producto:", err);
-      }
-    };
-
-    fetchProducto();
-  }, [defaultFilters, selectedProducto]);
 
   const handleChange = (key: keyof Filters, value: string) => {
     let updated = { ...filters, [key]: value };
@@ -199,7 +181,6 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply, default
             )}
           />
         </Grid>
-
         <Grid item>
           <FormControl fullWidth size="small">
             <InputLabel>Temporada</InputLabel>
@@ -214,7 +195,6 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply, default
             </Select>
           </FormControl>
         </Grid>
-
         <Grid item>
           <FormControl fullWidth size="small">
             <InputLabel>Período</InputLabel>
@@ -232,7 +212,6 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply, default
             </Select>
           </FormControl>
         </Grid>
-
         <Grid item>
           <FormControl fullWidth size="small">
             <InputLabel>Canal</InputLabel>
@@ -251,7 +230,6 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply, default
             </Select>
           </FormControl>
         </Grid>
-
         <Grid item>
           <TextField
             fullWidth
@@ -263,7 +241,6 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply, default
             onChange={(e) => handleChange("fechaInicio", e.target.value)}
           />
         </Grid>
-
         <Grid item>
           <TextField
             fullWidth
@@ -275,7 +252,6 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply, default
             onChange={(e) => handleChange("fechaFin", e.target.value)}
           />
         </Grid>
-
         <Grid item>
           <FormControl fullWidth size="small">
             <InputLabel>Comparar con</InputLabel>
@@ -289,25 +265,21 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply, default
             </Select>
           </FormControl>
         </Grid>
-
         <Grid item container spacing={2}>
           <Grid item xs={6}>
-            <Button fullWidth variant="outlined" onClick={handleClear} startIcon={<DeleteOutlineIcon />}>
-              Limpiar
-            </Button>
+            <Button fullWidth variant="outlined" onClick={handleClear} startIcon={<DeleteOutlineIcon />}>Limpiar</Button>
           </Grid>
-          <Grid item xs={6}>
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={() => {
-                onApply(filters, selectedProducto);
-                onClose();
-              }}
-            >
-              Aplicar
-            </Button>
-          </Grid>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={() => {
+              onApply(filters, selectedProducto); 
+              onClose();
+            }}
+          >
+            Aplicar
+          </Button>
+
         </Grid>
       </Grid>
     </Drawer>

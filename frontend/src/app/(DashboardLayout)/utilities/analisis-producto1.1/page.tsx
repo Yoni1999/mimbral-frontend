@@ -735,15 +735,13 @@ useEffect(() => {
       <HeaderDrawerProducto
         open={openDrawer}
         onClose={() => setOpenDrawer(false)}
-        defaultFilters={filtros} // ✅ <- Filtro inicial obligatorio
         onApply={(filtros, producto) => {
-          setFiltros(filtros);
-          if (producto) {
-            setProductoSeleccionado(producto);
-          }
+            setFiltros(filtros);
+            if (producto) {
+            setProductoSeleccionado(producto); // guarda itemname y U_Imagen
+            }
         }}
       />
-
       <HistorialOrdenesCompraModal
         open={modalOrdenesOpen}
         onClose={() => setModalOrdenesOpen(false)}
