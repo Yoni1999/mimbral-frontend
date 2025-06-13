@@ -5,6 +5,7 @@ import {
   Box,
   Typography,
   Divider,
+  Grid,
   Button as MuiButton,
   Paper,
   Stack
@@ -16,13 +17,17 @@ import {
   MonetizationOn as MonetizationOnIcon, TrendingUp as TrendingUpIcon,
   CreditCard as CreditCardIcon, PeopleAlt as PeopleAltIcon,
   WarningAmber as WarningAmberIcon, History as HistoryIcon,
-  Warehouse as WarehouseIcon, Store as StoreIcon
+  Warehouse as WarehouseIcon, Store as ErrorIcon,
+  ReportProblem as ReportProblemIcon
 } from "@mui/icons-material";
 import HeaderDrawerProducto from "./components/HeaderDrawerProducto";
 import HistorialVentasModal from "./components/HistorialVentasModal";
 import HistorialOrdenesCompraModal from "./components/HistorialOrdenesCompraModal.tsx";
 import MetricCard from "./components/MetricCard";
+import VentasCanalChart from "./components/VentasCanalChart";
 import VentasChart from "./components/VentasChart";
+import TopVendedoresChart from "./components/TopVendedoresChart";
+import ModalProveedor from './components/ModalProveedor'; 
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades, calcularVariacion  } from "@/utils/format";
@@ -56,7 +61,16 @@ type ResumenProducto = {
     FechaUltimaOC: string;
     CostoAnterior: number;
     FechaOCAnterior: string;
+    MonedaUltima: string;
+    MonedaAnterior: string;
+    TipoCambioAnterior: number;
+    TipoCambioUltima: number;
   };
+  ultimaVenta: {
+    ItemCode: string;
+    FechaUltimaVenta: string; 
+    HoraUltimaVenta: number;  
+  } | null;
 };
 
 
@@ -69,7 +83,16 @@ const AnalisisProductoPage = () => {
   const [ventasMensuales, setVentasMensuales] = useState([]);
   const [modalOrdenesOpen, setModalOrdenesOpen] = useState(false);
   const [ordenesCompra, setOrdenesCompra] = useState([]);
+  const [modalProveedorOpen, setModalProveedorOpen] = useState(false);
+  const [proveedorInfo, setProveedorInfo] = useState<
+  { Proveedor_Codigo: string; Proveedor_Nombre: string; Promedio_Dias_Entrega: number }[]
+>([]);
+
   const [stockPorAlmacen, setStockPorAlmacen] = useState<null | Record<string, number>>(null);
+
+  const handleOpenProveedorModal = () => {
+  setModalProveedorOpen(true);
+};
 
 
   const [margenTotal, setMargenTotal] = useState({
@@ -106,8 +129,72 @@ const [detalleStock, setDetalleStock] = useState<{
   notasVenta: number;
   unidadesConFallas: number;
 } | null>(null);
+const [vendedores, setVendedores] = useState<any[]>([]);
+
+const parseFechaHoraLocal = (fechaISO: string, horaSAP: number): string => {
+  try {
+    // Separar componentes de la fecha
+    const [year, month, day] = fechaISO.split("T")[0].split("-");
+
+    // Convertir hora SAP (ej: 941 → 09:41)
+    const horaStr = horaSAP.toString().padStart(4, "0");
+    const horas = horaStr.slice(0, 2);
+    const minutos = horaStr.slice(2, 4);
+
+    // Crear objeto Date manualmente
+    const fecha = new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(horas),
+      Number(minutos)
+    );
+
+    // Formatear en formato local CL
+    return fecha.toLocaleString("es-CL", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch (error) {
+    console.error("❌ Error formateando fecha/hora:", error);
+    return "Fecha inválida";
+  }
+};
 
 
+const getDiasDesdeVenta = (fecha: string): number => {
+  const hoy = new Date();
+  const fechaVenta = new Date(fecha);
+  const diff = hoy.getTime() - fechaVenta.getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+};
+
+const dias = resumenProducto && resumenProducto.ultimaVenta
+  ? getDiasDesdeVenta(resumenProducto.ultimaVenta.FechaUltimaVenta)
+  : null;
+
+let Icono = null;
+let color = "default";
+let textoEstado = "Sin registros";
+
+if (dias !== null) {
+  if (dias <= 7) {
+    Icono = <CheckCircleIcon color="success" />;
+    color = "success";
+    textoEstado = "Venta reciente";
+  } else if (dias <= 20) {
+    Icono = <WarningAmberIcon color="warning" />;
+    color = "warning";
+    textoEstado = `Sin venta hace ${dias} días`;
+  } else {
+    Icono = <ReportProblemIcon color="error" />;
+    color = "error";
+    textoEstado = `Más de ${dias} días sin vender`;
+  }
+}
   const [filtros, setFiltros] = useState<{
     itemCode: string;
     temporada: string;
@@ -119,14 +206,14 @@ const [detalleStock, setDetalleStock] = useState<{
   }>({
     itemCode: "",
     temporada: "",
-    periodo: "1M",
+    periodo: "",
     fechaInicio: "",
     fechaFin: "",
     canal: "Todos",
     modoComparacion: "",
   });
 
-  const buildQueryFromFiltros = (f: typeof filtros): string => {
+const buildQueryFromFiltros = (f: typeof filtros): string => {
   const params = new URLSearchParams({
     itemCode: f.itemCode || '',
     temporada: f.temporada || '',
@@ -136,8 +223,21 @@ const [detalleStock, setDetalleStock] = useState<{
     canal: f.canal || '',
     modoComparacion: f.modoComparacion || '',
   });
-
   return params.toString();
+};
+
+const handleCanalSeleccionado = (canalSeleccionado: string) => {
+  setFiltros((prev) => ({
+    ...prev,
+    canal: canalSeleccionado,
+  }));
+};
+
+
+const calcularPromedioGlobal = () => {
+  if (proveedorInfo.length === 0) return null;
+  const total = proveedorInfo.reduce((acc, p) => acc + p.Promedio_Dias_Entrega, 0);
+  return (total / proveedorInfo.length).toFixed(1);
 };
 useEffect(() => {
   const fetchUnidadesVendidas = async () => {
@@ -388,11 +488,81 @@ useEffect(() => {
   }
 }, [filtros.itemCode]);
 
+useEffect(() => {
+  const fetchProveedores = async () => {
+    try {
+      const response = await fetchWithToken(`${BACKEND_URL}/api/tiempo-entrega-proveedores?itemCode=${filtros.itemCode}`);
+      if (!response) throw new Error("Error al obtener proveedores");
+      const data = await response.json();
+
+      if (Array.isArray(data)) {
+        setProveedorInfo(
+          data.map((prov: any) => ({
+            Proveedor_Codigo: prov.Proveedor_Codigo,
+            Proveedor_Nombre: prov.Proveedor_Nombre,
+            Promedio_Dias_Entrega: prov.Promedio_Dias_Entrega,
+            Total_Ordenes_Validas: prov.Total_Ordenes_Validas ?? 0
+          }))
+        );
+      } else {
+        setProveedorInfo([]);
+      }
+    } catch (error) {
+      console.error("❌ Error al obtener proveedores:", error);
+    }
+  };
+
+  if (filtros.itemCode) {
+    fetchProveedores();
+  }
+}, [filtros.itemCode]);
+
+
+
+
+
   const handleOpenDrawer = () => setOpenDrawer(true);
   const handleCloseDrawer = () => setOpenDrawer(false);
+ 
+  const obtenerDescripcionPeriodo = () => {
+    if (filtros.periodo) {
+      switch (filtros.periodo) {
+        case "1D": return "Hoy";
+        case "7D": return "Últimos 7 días";
+        case "14D": return "Últimos 14 días";
+        case "1M": return "Últimos 30 días";
+        case "3M": return "Últimos 3 meses";
+        case "6M": return "Últimos 6 meses";
+        default: return filtros.periodo;
+      }
+    }
+
+    if (filtros.fechaInicio && filtros.fechaFin) {
+      const formatter = new Intl.DateTimeFormat("es-CL", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        timeZone: "America/Santiago"
+      });
+      const inicio = formatter.format(new Date(`${filtros.fechaInicio}T00:00:00`));
+      const fin = formatter.format(new Date(`${filtros.fechaFin}T00:00:00`));
+      return `Del ${inicio} al ${fin}`;
+    }
+
+    if (filtros.temporada) {
+      return `Temporada: ${filtros.temporada}`;
+    }
+
+    return "Sin período definido";
+  };
 
   return (
-    <Box p={1}>
+    <Box p={0}>
+      <Box display="flex" justifyContent="flex-end" mb={1}>
+        <Typography variant="subtitle2" color="text.secondary">
+          Estás viendo el período: <strong>{obtenerDescripcionPeriodo()}</strong>
+        </Typography>
+      </Box>
       {/* Header */}
       <Box
         display="flex"
@@ -478,25 +648,47 @@ useEffect(() => {
             value={`${formatUnidades(resumenProducto?.stockTransito ?? 0)} ud`}
             variationColor="warning"
             />
-
             <MetricCard
-            icon={<CheckCircleIcon color="success" />}
-            label="Último $ Compra"
-            value={`$${resumenProducto?.costos?.UltimoCosto?.toLocaleString("es-CL") ?? 0}`}
-            variation={
+              icon={<CheckCircleIcon color="success" />}
+              label="Último $ Compra"
+              value={
+                resumenProducto?.costos?.UltimoCosto !== undefined
+                  ? `$${(
+                      resumenProducto.costos.MonedaUltima === "USD"
+                        ? resumenProducto.costos.UltimoCosto * resumenProducto.costos.TipoCambioUltima
+                        : resumenProducto.costos.UltimoCosto
+                    ).toLocaleString("es-CL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CLP`
+                  : "0"
+              }
+              variation={
                 resumenProducto?.costos?.CostoAnterior
-                ? `Anterior: $${resumenProducto.costos.CostoAnterior.toLocaleString("es-CL")}, 
-                    (${calcularVariacion(resumenProducto.costos.UltimoCosto, resumenProducto.costos.CostoAnterior)})`
-                : "Sin orden anterior"
-            }
-            variationColor={
+                  ? `$${(
+                      resumenProducto.costos.MonedaAnterior === "USD"
+                        ? resumenProducto.costos.CostoAnterior * resumenProducto.costos.TipoCambioAnterior
+                        : resumenProducto.costos.CostoAnterior
+                    ).toLocaleString("es-CL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CLP, 
+                      (${calcularVariacion(
+                        resumenProducto.costos.MonedaUltima === "USD"
+                          ? resumenProducto.costos.UltimoCosto * resumenProducto.costos.TipoCambioUltima
+                          : resumenProducto.costos.UltimoCosto,
+                        resumenProducto.costos.MonedaAnterior === "USD"
+                          ? resumenProducto.costos.CostoAnterior * resumenProducto.costos.TipoCambioAnterior
+                          : resumenProducto.costos.CostoAnterior
+                      )})`
+                  : "Sin orden anterior"
+              }
+              variationColor={
                 resumenProducto?.costos &&
-                resumenProducto.costos.UltimoCosto > resumenProducto.costos.CostoAnterior
-                ? "error"
-                : "success"
-            }
+                (resumenProducto.costos.MonedaUltima === "USD"
+                  ? resumenProducto.costos.UltimoCosto * resumenProducto.costos.TipoCambioUltima
+                  : resumenProducto.costos.UltimoCosto) >
+                  (resumenProducto.costos.MonedaAnterior === "USD"
+                    ? resumenProducto.costos.CostoAnterior * resumenProducto.costos.TipoCambioAnterior
+                    : resumenProducto.costos.CostoAnterior)
+                  ? "error"
+                  : "success"
+              }
             />
-
           </Box>
         </Box>
       </Box>
@@ -605,80 +797,94 @@ useEffect(() => {
 
         {/* Columna intermedia */}
         <Box flex={1.2}>
-  <Paper
-    elevation={3}
-    sx={{
-      p: 3,
-      borderRadius: 4,
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'row',
-      gap: 4,
-      bgcolor: 'background.paper',
-    }}
-  >
-    {/* Columna izquierda: Detalle de stock */}
-    <Box flex={1}>
-      <Typography variant="h6" fontWeight={600} gutterBottom>
-        📦 Detalle de Stock
-      </Typography>
+        <Paper
+          elevation={3}
+          sx={{
+            p: 3,
+            borderRadius: 4,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 4,
+            bgcolor: 'background.paper',
+          }}
+        >
+          {/* Columna izquierda: Detalle de stock */}
+          <Box flex={1}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              📦 Detalle de Stock
+            </Typography>
 
-      <Stack spacing={1.2}>
-        <Typography variant="body2" color="text.secondary">
-        <b>Unidades Disponibles:</b> {formatUnidades(resumenProducto?.stockTotal?.StockTotal)}
-        </Typography>
+            <Stack spacing={1.2}>
+              <Typography variant="body2" color="text.secondary">
+              <b>Unidades Disponibles:</b> {formatUnidades(resumenProducto?.stockTotal?.StockTotal)}
+              </Typography>
 
-        <Typography variant="body2" color="text.secondary">
-          <b>Valor Total Inventario:</b> ${formatVentas(detalleStock?.detalleInventario?.ValorInventario ?? 0)}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          <b>Notas de Venta:</b> {formatUnidades(detalleStock?.notasVenta)} unidades
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          <b>Stock Disponible Total:</b> {detalleStock?.detalleInventario?.TotalUnidades?.toLocaleString("es-CL") ?? "0"} unidades
-        </Typography>
-        <Typography variant="body2" color="error">
-          <b>Unidades Con Fallas:</b> {formatUnidades(detalleStock?.unidadesConFallas)}
-        </Typography>
-      </Stack>
-    </Box>
+              <Typography variant="body2" color="text.secondary">
+                <b>Valor Total Inventario:</b> ${formatVentas(detalleStock?.detalleInventario?.ValorInventario ?? 0)}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                <b>Notas de Venta:</b> {formatUnidades(detalleStock?.notasVenta)} unidades
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                <b>Stock Disponible Total:</b> {detalleStock?.detalleInventario?.TotalUnidades?.toLocaleString("es-CL") ?? "0"} unidades
+              </Typography>
+              <Typography variant="body2" color="error">
+                <b>Unidades Con Fallas:</b> {formatUnidades(detalleStock?.unidadesConFallas)}
+              </Typography>
+            </Stack>
+          </Box>
 
-    {/* Separador */}
-    <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
+          {/* Separador */}
+          <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
 
-    {/* Columna derecha: Stock por almacén */}
-    <Box flex={1}>
-      <Typography variant="h6" fontWeight={600} gutterBottom>
-        🏬 Stock por Almacén
-      </Typography>
+          {/* Columna derecha: Stock por almacén */}
+          <Box flex={1}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              🏬 Stock por Almacén
+            </Typography>
 
-        <Stack spacing={1.2}>
-            {['01', '02', '03', '05', '07', '12', '13'].map(code => {
-            const key = `Almacen_${code}`;
-            const cantidad = stockPorAlmacen?.[key] ?? 0;
-            return (
-                <Typography
-                key={code}
-                variant="body2"
-                color={cantidad > 0 ? 'text.primary' : 'text.disabled'}
-                >
-                Almacén {code}: {cantidad.toLocaleString('es-CL')} unidades
-                </Typography>
-            );
-            })}
-        </Stack>
-    </Box>
-  </Paper>
-</Box>
+              <Stack spacing={1.2}>
+                  {['01', '02', '03', '05', '07', '12', '13'].map(code => {
+                  const key = `Almacen_${code}`;
+                  const cantidad = stockPorAlmacen?.[key] ?? 0;
+                  return (
+                      <Typography
+                      key={code}
+                      variant="body2"
+                      color={cantidad > 0 ? 'text.primary' : 'text.disabled'}
+                      >
+                      Almacén {code}: {cantidad.toLocaleString('es-CL')} unidades
+                      </Typography>
+                  );
+                  })}
+              </Stack>
+          </Box>
+        </Paper>
+      </Box>
 
 
         {/* Columna derecha */}
         <Box flex={1} display="flex" flexDirection="column" gap={2}>
-          <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
-            <WarningAmberIcon color="warning" />
-            <Typography fontWeight={700}>Alertas actuales del producto</Typography>
-            <Typography color="text.secondary">SIN ALERTAS</Typography>
-          </Paper>
+        <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+          {Icono}
+          <Typography fontWeight={700}>Última venta</Typography>
+          <Typography>
+            Última venta: {resumenProducto?.ultimaVenta?.FechaUltimaVenta
+              ? parseFechaHoraLocal(
+                  resumenProducto.ultimaVenta.FechaUltimaVenta,
+                  resumenProducto.ultimaVenta.HoraUltimaVenta 
+                )
+              : "Sin ventas registradas"}
+          </Typography>
+
+          <Typography color={`${color}.main`} fontWeight={500}>
+            {textoEstado}
+          </Typography>
+        </Paper>
+
+
+
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
             <HistoryIcon color="action" />
             <Typography fontWeight={700}>Histórico por rotación</Typography>
@@ -719,18 +925,54 @@ useEffect(() => {
           </Paper>
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
             <Typography fontWeight={700}>Tiempos Logísticos</Typography>
-            <Typography color="text.secondary">Lead time promedio: 4 días</Typography>
+            <Typography color="text.secondary">
+              Lead time promedio: {calcularPromedioGlobal() ?? 'Sin datos'} días
+            </Typography>
+            <MuiButton
+              fullWidth
+              variant="outlined"
+              sx={{ mt: 1 }}
+              onClick={handleOpenProveedorModal}
+            >
+              Ver Detalle Por Proveedor
+            </MuiButton>
           </Paper>
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
-            <Typography fontWeight={700}>Acciones</Typography>
+            <Typography fontWeight={700}>Historico Ordenes de Compras Últimos 12 Meses</Typography>
             <MuiButton fullWidth variant="outlined" sx={{ mt: 1 }} onClick={handleOpenOrdenesCompra}>
             Ver Compras Pasadas
             </MuiButton>
-            <MuiButton fullWidth variant="contained" sx={{ mt: 1 }}>Emitir Orden Sugerida</MuiButton>
+
           </Paper>
         </Box>
       </Box>
 
+      {/* Gráfico de ventas por canal */}
+      <Box display="flex" gap={2} mt={3}>
+        {/* Gráfico de ventas por canal */}
+        <Box flex={0.4}>
+          <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+            <VentasCanalChart
+              filters={filtros}
+              onSelectCanal={(canal) =>
+                setFiltros((prev) => ({
+                  ...prev,
+                  canal: canal,
+                }))
+              }
+            />
+          </Paper>
+        </Box>
+
+        {/* Gráfico de top vendedores */}
+        <Box flex={0.6}>
+          <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+           <TopVendedoresChart filters={filtros} />
+            
+          </Paper>
+        </Box>
+      </Box>
+      
       {/* Drawer */}
       <HeaderDrawerProducto
         open={openDrawer}
@@ -747,6 +989,13 @@ useEffect(() => {
         onClose={() => setModalOrdenesOpen(false)}
         data={ordenesCompra}
       />
+
+      <ModalProveedor
+        open={modalProveedorOpen}
+        onClose={() => setModalProveedorOpen(false)}
+        data={proveedorInfo}
+      />
+
 
 
     </Box>

@@ -54,11 +54,16 @@ const HistorialOrdenesCompraModal = ({ open, onClose, data }: Props) => {
     new Date(datosAgrupados[b][0].FechaOrden).getTime() -
     new Date(datosAgrupados[a][0].FechaOrden).getTime()
   );
+// Función para parsear solo la parte de la fecha sin que JS la convierta a local
+const parseFechaLocal = (fechaISO: string) => {
+  const [year, month, day] = fechaISO.split("T")[0].split("-");
+  return new Date(Number(year), Number(month) - 1, Number(day));
+};
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle sx={{ fontWeight: 600, pb: 1 }}>
-        Histórico de Órdenes de Compra
+        Histórico de Órdenes de Compra (Últimos 12 meses)
       </DialogTitle>
 
       <DialogContent dividers sx={{ pt: 0 }}>
@@ -111,7 +116,7 @@ const HistorialOrdenesCompraModal = ({ open, onClose, data }: Props) => {
                           }}
                         >
                           <TableCell>{orden.NumeroOrdenCompra}</TableCell>
-                          <TableCell>{new Date(orden.FechaOrden).toLocaleDateString("es-CL")}</TableCell>
+                          <TableCell>{parseFechaLocal(orden.FechaOrden).toLocaleDateString("es-CL")}</TableCell>
                           <TableCell>{orden.ItemCode}</TableCell>
                           <TableCell>{orden.DescripcionProducto}</TableCell>
                           <TableCell align="right">{orden.CantidadComprada.toLocaleString('es-CL')}</TableCell>

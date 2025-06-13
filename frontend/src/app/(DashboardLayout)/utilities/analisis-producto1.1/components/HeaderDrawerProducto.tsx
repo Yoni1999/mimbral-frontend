@@ -206,7 +206,7 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
               <MenuItem value="1D">Hoy</MenuItem>
               <MenuItem value="7D">Últimos 7 días</MenuItem>
               <MenuItem value="14D">Últimos 14 días</MenuItem>
-              <MenuItem value="1M">Último mes</MenuItem>
+              <MenuItem value="1M">Últimos 30 días</MenuItem>
               <MenuItem value="3M">Últimos 3 meses</MenuItem>
               <MenuItem value="6M">Últimos 6 meses</MenuItem>
             </Select>

@@ -6,12 +6,14 @@ const getVentascanal = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    const periodo = req.query.periodo;
+    const { periodo, itemCode } = req.query;
+
     let fechaFin = new Date();
     let fechaInicio;
 
+    // Calcular fechaInicio según periodo
     if (periodo) {
-      switch (periodo) {
+      switch (periodo.toLowerCase()) {
         case "1d":
           fechaInicio = new Date(fechaFin);
           break;
@@ -29,7 +31,7 @@ const getVentascanal = async (req, res) => {
           break;
         case "3m":
           fechaInicio = new Date(fechaFin);
-          fechaInicio.setMonth(fechaFin.getMonth() - 3);
+          fechaInicio.setMonth(fechaFin.getDate() - 30);
           break;
         case "6m":
           fechaInicio = new Date(fechaFin);
@@ -50,40 +52,51 @@ const getVentascanal = async (req, res) => {
     const fechaInicioStr = fechaInicio.toISOString().split("T")[0];
     const fechaFinStr = fechaFin.toISOString().split("T")[0];
 
-    const result = await pool.request()
+    const request = pool.request()
       .input("FechaInicio", fechaInicioStr)
-      .input("FechaFin", fechaFinStr)
-      .query(`
-        SELECT 
-            SUM(CASE 
-                WHEN (I.WhsCode IN ('03', '05') AND OI.SlpCode IN (426, 364, 355)) 
-                  OR (I.WhsCode = '01' AND OI.SlpCode IN (355, 398)) 
-                THEN I.LineTotal ELSE 0 
-            END) AS Meli,
-            SUM(CASE WHEN I.WhsCode = '03' AND OI.SlpCode = 371 THEN I.LineTotal ELSE 0 END) AS Falabella,
-            SUM(CASE WHEN I.WhsCode = '07' THEN I.LineTotal ELSE 0 END) AS Balmaceda,
-            SUM(CASE WHEN I.WhsCode = '01' AND OI.SlpCode IN (401, 397) THEN I.LineTotal ELSE 0 END) AS Vitex,
-            SUM(CASE 
-                WHEN I.WhsCode = '01' 
-                  AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212) 
-                THEN I.LineTotal ELSE 0 
-            END) AS Chorrillo,
-            SUM(CASE 
-                WHEN I.WhsCode = '01' 
-                  AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212) 
-                THEN I.LineTotal ELSE 0 
-            END) AS Empresas
-        FROM INV1 I
-        INNER JOIN OINV OI ON I.DocEntry = OI.DocEntry
-        WHERE I.DocDate BETWEEN @FechaInicio AND @FechaFin
-      `);
+      .input("FechaFin", fechaFinStr);
+
+    if (itemCode) {
+      request.input("ItemCode", itemCode);
+    }
+
+    const query = `
+      SELECT 
+          SUM(CASE 
+              WHEN (I.WhsCode IN ('03', '05') AND OI.SlpCode IN (426, 364, 355)) 
+                OR (I.WhsCode = '01' AND OI.SlpCode IN (355, 398)) 
+              THEN I.LineTotal ELSE 0 
+          END) AS Meli,
+          SUM(CASE WHEN I.WhsCode = '03' AND OI.SlpCode = 371 THEN I.LineTotal ELSE 0 END) AS Falabella,
+          SUM(CASE WHEN I.WhsCode = '07' THEN I.LineTotal ELSE 0 END) AS Balmaceda,
+          SUM(CASE WHEN I.WhsCode = '01' AND OI.SlpCode IN (401, 397) THEN I.LineTotal ELSE 0 END) AS Vitex,
+          SUM(CASE 
+              WHEN I.WhsCode = '01' 
+                AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212) 
+              THEN I.LineTotal ELSE 0 
+          END) AS Chorrillo,
+          SUM(CASE 
+              WHEN I.WhsCode = '01' 
+                AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212) 
+              THEN I.LineTotal ELSE 0 
+          END) AS Empresas
+      FROM INV1 I
+      INNER JOIN OINV OI ON I.DocEntry = OI.DocEntry
+      WHERE I.DocDate BETWEEN @FechaInicio AND @FechaFin
+      AND OI.CANCELED = 'N'AND OI.CANCELED = 'N'
+        AND OI.CANCELED = 'N'
+        ${itemCode ? "AND I.ItemCode = @ItemCode" : ""}
+    `;
+
+    const result = await request.query(query);
 
     res.json(result.recordset);
   } catch (error) {
-    console.error("❌ Error en consulta de ventas:", error);
+    console.error("❌ Error en consulta de ventas por canal:", error);
     res.status(500).send("Error en el servidor");
   }
 };
+
 
 
 // RESUMEN VENTAS TOP 10 PRODUCTOS CON MAYOR RENTABILIDAD

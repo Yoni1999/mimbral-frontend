@@ -42,7 +42,7 @@ const obtenerVentasProductoComparado = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M' THEN DATEADD(DAY, -30, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -186,7 +186,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M' THEN DATEADD(DAY, -30, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -334,7 +334,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M' THEN DATEADD(DAY, -30, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -479,7 +479,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M' THEN DATEADD(DAY, -30, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -622,7 +622,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M' THEN DATEADD(DAY, -30, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -765,7 +765,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M' THEN DATEADD(DAY, -30, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -910,7 +910,7 @@ const obtenerMargenProductoComparado = async (req, res) => {
             WHEN @Periodo = '1D' THEN @FechaFinActual
             WHEN @Periodo = '7D' THEN DATEADD(DAY, -6, @FechaFinActual)
             WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-            WHEN @Periodo = '1M' THEN DATEADD(MONTH, -1, @FechaFinActual)
+            WHEN @Periodo = '1M' THEN DATEADD(DAY, -30, @FechaFinActual)
             WHEN @Periodo = '3M' THEN DATEADD(MONTH, -3, @FechaFinActual)
             WHEN @Periodo = '6M' THEN DATEADD(MONTH, -6, @FechaFinActual)
             ELSE @FechaFinActual
@@ -1057,7 +1057,7 @@ const obtenerVentasPorCategoriaComparado = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                    WHEN @Periodo = '1M' THEN DATEADD(DAY, -30, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     ELSE @FechaFinActual
@@ -1212,7 +1212,7 @@ const obtenerVentasPorCategoriaComparado = async (req, res) => {
                     WHEN @Periodo = '1D'  THEN @FechaFinActual
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
+                    WHEN @Periodo = '1M' THEN DATEADD(DAY, -30, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     ELSE @FechaFinActual
@@ -1307,7 +1307,7 @@ const obtenerVentasPorCategoriaComparado = async (req, res) => {
                     WHEN @Periodo = '1D'  THEN @FechaFinActual
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
+                    WHEN @Periodo = '1M' THEN DATEADD(DAY, -30, @FechaFinActual)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
                     ELSE @FechaFinActual
@@ -1450,7 +1450,7 @@ const obtenerVentasPorCategoriaComparado = async (req, res) => {
                 CASE 
                     WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFin)
                     WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFin)
-                    WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFin)
+                    WHEN @Periodo = '1M' THEN DATEADD(DAY, -30, @FechaFin)
                     WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFin)
                     WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFin)
                     ELSE @FechaFin

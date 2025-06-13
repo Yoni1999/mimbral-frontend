@@ -1211,7 +1211,7 @@ const obtenerTopVendedores = async (req, res) => {
               CASE 
                   WHEN @Periodo = '7D' THEN DATEADD(DAY, -6, @FechaFinActual)
                   WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                  WHEN @Periodo = '1M' THEN DATEADD(MONTH, DATEDIFF(MONTH, 0, @FechaFinActual), 0)
+                  WHEN @Periodo = '1M' THEN DATEADD(DAY, -30, @FechaFinActual)
                   WHEN @Periodo = '3M' THEN DATEADD(MONTH, -3, @FechaFinActual)
                   WHEN @Periodo = '6M' THEN DATEADD(MONTH, -6, @FechaFinActual)
                   WHEN @Periodo = '1A' THEN DATEADD(YEAR, -1, @FechaFinActual)
@@ -1241,7 +1241,7 @@ const obtenerTopVendedores = async (req, res) => {
           AND T0.CANCELED = 'N'
           AND (
               @CanalParam IS NULL OR (
-                  (@CanalParam = 'Meli' AND ((T1.WhsCode IN ('03', '05') AND T1.SlpCode IN (426, 364, 355))
+                  (@CanalParam = 'Meli' AND ((T1.WhsCode IN ('03', '05') AND T1.SlpCode IN (426, 364, 355, 398))
                       OR (T1.WhsCode = '01' AND T1.SlpCode IN (355, 398)) ))
                   OR (@CanalParam = 'Falabella' AND T1.WhsCode = '03' AND T1.SlpCode = 371)
                   OR (@CanalParam = 'Balmaceda' AND T1.WhsCode = '07')

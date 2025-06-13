@@ -90,41 +90,61 @@ const obtenerResumenProducto = async (req, res) => {
     // 4. COSTOS DE ORDEN DE COMPRA
     const costoCompraQuery = `
       WITH OrdenesCompra AS (
-        SELECT 
-          T1.ItemCode,
-          T0.DocEntry,
-          T0.DocDate,
-          T1.Price,
-          ROW_NUMBER() OVER (ORDER BY T0.DocDate DESC, T0.DocEntry DESC) AS RN
-        FROM OPOR T0
-        INNER JOIN POR1 T1 ON T0.DocEntry = T1.DocEntry
-        WHERE T1.ItemCode = @ItemCode
-          AND T0.CANCELED = 'N'
-      )
       SELECT 
-        Ultima.ItemCode,
-        Ultima.Price AS UltimoCosto,
-        Ultima.DocDate AS FechaUltimaOC,
-        Anterior.Price AS CostoAnterior,
-        Anterior.DocDate AS FechaOCAnterior
-      FROM OrdenesCompra Ultima
-      LEFT JOIN OrdenesCompra Anterior ON Ultima.RN = 1 AND Anterior.RN = 2
-      WHERE Ultima.RN = 1;
+        T1.ItemCode,
+        T0.DocEntry,
+        T0.DocDate,
+        T1.Price,
+        T1.Currency,
+        T1.Rate,
+        ROW_NUMBER() OVER (ORDER BY T0.DocDate DESC, T0.DocEntry DESC) AS RN
+      FROM OPOR T0
+      INNER JOIN POR1 T1 ON T0.DocEntry = T1.DocEntry
+      WHERE T1.ItemCode = @ItemCode
+        AND T0.CANCELED = 'N'
+    )
+    SELECT 
+      Ultima.ItemCode,
+      Ultima.Price AS UltimoCosto,
+      Ultima.DocDate AS FechaUltimaOC,
+      Ultima.Currency AS MonedaUltima,
+      Ultima.Rate AS TipoCambioUltima,
+      Anterior.Price AS CostoAnterior,
+      Anterior.DocDate AS FechaOCAnterior,
+      Anterior.Currency AS MonedaAnterior,
+      Anterior.Rate AS TipoCambioAnterior
+    FROM OrdenesCompra Ultima
+    LEFT JOIN OrdenesCompra Anterior ON Ultima.RN = 1 AND Anterior.RN = 2
+    WHERE Ultima.RN = 1;
     `;
+    // 5. FECHA Y HORA DE LA ÚLTIMA VENTA
+  const ultimaVentaQuery = `
+  SELECT TOP 1 
+    T1.ItemCode,
+    T0.DocDate AS FechaUltimaVenta,
+    T0.DocTime AS HoraUltimaVenta
+  FROM OINV T0
+  INNER JOIN INV1 T1 ON T0.DocEntry = T1.DocEntry
+  WHERE T1.ItemCode = @ItemCode
+  ORDER BY T0.DocDate DESC, T0.DocTime DESC;
+`;
 
-    const [stockTotal, diasInventario, stockTransito, costoCompra] = await Promise.all([
-      request.query(stockTotalQuery),
-      request.query(diasInventarioQuery),
-      request.query(stockTransitoQuery),
-      request.query(costoCompraQuery)
-    ]);
+    const [stockTotal, diasInventario, stockTransito, costoCompra, ultimaVenta] = await Promise.all([
+    request.query(stockTotalQuery),
+    request.query(diasInventarioQuery),
+    request.query(stockTransitoQuery),
+    request.query(costoCompraQuery),
+    request.query(ultimaVentaQuery)
+  ]);
+
 
     res.json({
       itemCode,
       stockTotal: stockTotal.recordset[0] || null,
       cobertura: diasInventario.recordset[0] || null,
       stockTransito: stockTransito.recordset[0]?.OrdenCompra ?? 0,
-      costos: costoCompra.recordset[0] || null
+      costos: costoCompra.recordset[0] || null,
+      ultimaVenta: ultimaVenta.recordset[0] || null
     });
 
   } catch (error) {
@@ -326,4 +346,62 @@ const obtenerStockPorAlmacen = async (req, res) => {
   }
 };
 
-module.exports = { obtenerResumenProducto , obtenerDetalleStock, obtenerVentasMensuales, obtenerHistoricoOrdenesCompra, obtenerStockPorAlmacen };
+const obtenerTiempoEntregaProveedores = async (req, res) => {
+  try {
+    const { itemCode } = req.query;
+
+    if (!itemCode) {
+      return res.status(400).json({ error: 'Falta el parámetro itemCode' });
+    }
+
+    const pool = await poolPromise;
+
+    const result = await pool.request()
+      .input('ItemCode', sql.NVarChar(50), itemCode)
+      .query(`
+        WITH Ultimas4PorProveedor AS (
+          SELECT 
+            OPOR.DocEntry,
+            OPOR.DocNum,
+            OPOR.DocDate,
+            OPOR.CardCode,
+            OPOR.CardName,
+            POR1.LineNum,
+            POR1.ItemCode,
+            POR1.Dscription,
+            ROW_NUMBER() OVER (
+              PARTITION BY OPOR.CardCode
+              ORDER BY OPOR.DocDate DESC, OPOR.DocEntry DESC
+            ) AS RN
+          FROM OPOR
+          INNER JOIN POR1 ON OPOR.DocEntry = POR1.DocEntry
+          WHERE 
+            OPOR.CANCELED = 'N' AND
+            POR1.ItemCode = @ItemCode
+        )
+        SELECT 
+          u4.CardCode AS Proveedor_Codigo,
+          u4.CardName AS Proveedor_Nombre,
+          u4.ItemCode AS Codigo_Articulo,
+          COUNT(DISTINCT u4.DocEntry + CAST(u4.LineNum AS NVARCHAR)) AS Total_Ordenes_Validas,
+          AVG(DATEDIFF(DAY, u4.DocDate, OPDN.DocDate)) AS Promedio_Dias_Entrega
+        FROM Ultimas4PorProveedor u4
+        LEFT JOIN PDN1 ON 
+            PDN1.BaseType = 22 AND 
+            PDN1.BaseEntry = u4.DocEntry AND 
+            PDN1.BaseLine = u4.LineNum
+        LEFT JOIN OPDN ON OPDN.DocEntry = PDN1.DocEntry
+        WHERE u4.RN <= 4 AND OPDN.DocDate IS NOT NULL
+        GROUP BY 
+          u4.CardCode, u4.CardName, u4.ItemCode
+      `);
+
+    res.json(result.recordset); // Devuelve un array con los resultados agrupados por proveedor
+
+  } catch (error) {
+    console.error('❌ Error al obtener tiempo de entrega por proveedor:', error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+};
+
+module.exports = { obtenerResumenProducto , obtenerDetalleStock, obtenerVentasMensuales, obtenerHistoricoOrdenesCompra, obtenerStockPorAlmacen, obtenerTiempoEntregaProveedores };
