@@ -180,6 +180,91 @@ const obtenerSubcategoriasPorCategoria = async (req, res) => {
   }
 };
 
+const obtenerResumenMetasPorCanal = async (req, res) => {
+  const { idPeriodo } = req.query;
+
+  try {
+    const pool = await poolPromise;
+
+    const result = await pool.request()
+      .input('ID_PERIODO', sql.Int, idPeriodo)
+      .query(`
+        DECLARE @FECHA_INICIO DATE = (SELECT FECHA_INICIO FROM PERIODOS_METAS WHERE ID_PERIODO = @ID_PERIODO);
+        DECLARE @FECHA_FIN DATE = (SELECT FECHA_FIN FROM PERIODOS_METAS WHERE ID_PERIODO = @ID_PERIODO);
+        DECLARE @DIAS_TRANSCURRIDOS INT = DATEDIFF(DAY, @FECHA_INICIO, IIF(GETDATE() < @FECHA_FIN, GETDATE(), @FECHA_FIN)) + 1;
+
+        -- DEVOLUCIONES por SKU y Vendedor
+        WITH DEVOLUCIONES AS (
+          SELECT 
+            inm.ItemCode,
+            inm.SlpCode,
+            SUM(inm.InQty) AS CantidadDevuelta
+          FROM OINM inm
+          INNER JOIN ORIN n ON n.DocNum = inm.BASE_REF AND n.CANCELED = 'N'
+          INNER JOIN RIN1 r ON r.DocEntry = n.DocEntry AND r.ItemCode = inm.ItemCode
+          WHERE inm.TransType = 14
+            AND inm.DocDate BETWEEN @FECHA_INICIO AND @FECHA_FIN
+          GROUP BY inm.ItemCode, inm.SlpCode
+        ),
+
+        -- VENTAS por SKU y Vendedor
+        VENTAS AS (
+          SELECT 
+            i.ItemCode,
+            i.SlpCode,
+            SUM(i.Quantity) AS CantidadVendida,
+            SUM(i.LineTotal) AS MontoTotal
+          FROM INV1 i
+          INNER JOIN OINV o ON o.DocEntry = i.DocEntry
+          WHERE o.CANCELED = 'N'
+            AND o.DocDate BETWEEN @FECHA_INICIO AND @FECHA_FIN
+          GROUP BY i.ItemCode, i.SlpCode
+        ),
+
+        -- COMBINAMOS VENTAS Y DEVOLUCIONES para calcular el porcentaje de cumplimiento
+        METAS_CALCULADAS AS (
+          SELECT 
+            m.ID_CANAL,
+            c.NOMBRE_CANAL,
+            m.SKU,
+            m.META_CANTIDAD,
+            ISNULL(v.CantidadVendida, 0) AS CANTIDAD_VENDIDA,
+            ISNULL(d.CantidadDevuelta, 0) AS CANTIDAD_DEVUELTA,
+            ISNULL(v.CantidadVendida, 0) - ISNULL(d.CantidadDevuelta, 0) AS TOTAL_VENDIDO_NETO,
+            CASE 
+              WHEN m.META_CANTIDAD > 0 THEN 
+                ROUND(((ISNULL(v.CantidadVendida, 0) - ISNULL(d.CantidadDevuelta, 0)) * 100.0) / m.META_CANTIDAD, 2)
+              ELSE 0 
+            END AS CUMPLIMIENTO_PORCENTAJE
+          FROM METAS_PRODUCTO_CANAL m
+          INNER JOIN CANALES_VENTA c ON c.ID_CANAL = m.ID_CANAL
+          LEFT JOIN VENDEDORES ve ON ve.ID_CANAL = m.ID_CANAL
+          LEFT JOIN VENTAS v ON v.ItemCode = m.SKU AND v.SlpCode = ve.ID_VENDEDOR
+          LEFT JOIN DEVOLUCIONES d ON d.ItemCode = m.SKU AND d.SlpCode = ve.ID_VENDEDOR
+          WHERE m.ID_PERIODO = @ID_PERIODO
+        )
+
+        -- AGRUPAMOS por canal
+        SELECT 
+          ID_CANAL,
+          NOMBRE_CANAL,
+          COUNT(*) AS TOTAL_METAS,
+          SUM(CASE WHEN CUMPLIMIENTO_PORCENTAJE >= 100 THEN 1 ELSE 0 END) AS METAS_CUMPLIDAS,
+          ROUND(100.0 * SUM(CASE WHEN CUMPLIMIENTO_PORCENTAJE >= 100 THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0), 2) AS PORCENTAJE_CUMPLIMIENTO
+        FROM METAS_CALCULADAS
+        GROUP BY ID_CANAL, NOMBRE_CANAL
+        ORDER BY PORCENTAJE_CUMPLIMIENTO DESC;
+      `);
+
+    res.status(200).json(result.recordset);
+  } catch (error) {
+    console.error("❌ Error al obtener resumen de metas por canal:", error);
+    res.status(500).json({ error: "Error al obtener resumen de metas por canal" });
+  }
+};
+
+
+
 module.exports = {
-  obtenerMetasPorCanal,obtenerCategoriasPorPrimerNivel,obtenerSubcategoriasPorCategoria
+  obtenerMetasPorCanal,obtenerCategoriasPorPrimerNivel,obtenerResumenMetasPorCanal,obtenerSubcategoriasPorCategoria
 };

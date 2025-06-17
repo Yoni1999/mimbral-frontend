@@ -4,11 +4,14 @@ import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
-  Divider,
-  Grid,
   Button as MuiButton,
   Paper,
-  Stack
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody
 } from "@mui/material";
 import {
   FilterAltOutlined, Folder as FolderIcon,
@@ -29,6 +32,7 @@ const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), 
 import VentasChart from "./components/VentasChart";
 import TopVendedoresChart from "./components/TopVendedoresChart";
 import ModalProveedor from './components/ModalProveedor'; 
+import FechaRotacion from "./components/FechaRotacion";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades, calcularVariacion  } from "@/utils/format";
@@ -89,7 +93,12 @@ const AnalisisProductoPage = () => {
   { Proveedor_Codigo: string; Proveedor_Nombre: string; Promedio_Dias_Entrega: number }[]
 >([]);
 
-  const [stockPorAlmacen, setStockPorAlmacen] = useState<null | Record<string, number>>(null);
+  const [stockPorAlmacen, setStockPorAlmacen] = useState<null | Record<string, {
+  unidades: number;
+  notasVenta: number;
+  oc: number;
+  disponible: number;}>>(null);
+
 
   const handleOpenProveedorModal = () => {
   setModalProveedorOpen(true);
@@ -137,7 +146,7 @@ const parseFechaHoraLocal = (fechaISO: string, horaSAP: number): string => {
     // Separar componentes de la fecha
     const [year, month, day] = fechaISO.split("T")[0].split("-");
 
-    // Convertir hora SAP (ej: 941 → 09:41)
+    // Convertir DocTime(ej: 941 → 09:41)
     const horaStr = horaSAP.toString().padStart(4, "0");
     const horas = horaStr.slice(0, 2);
     const minutos = horaStr.slice(2, 4);
@@ -465,11 +474,12 @@ useEffect(() => {
 };
 useEffect(() => {
   const fetchStockPorAlmacen = async () => {
-    console.log("🚀 Ejecutando fetchStockPorAlmacen con:", filtros.itemCode); // ← Asegura que entra al efecto
+    console.log("🚀 Ejecutando fetchStockPorAlmacen con:", filtros.itemCode);
 
     try {
       const url = `${BACKEND_URL}/api/stock-por-almacen?itemCode=${filtros.itemCode}`;
       const res = await fetchWithToken(url);
+
       if (!res || !res.ok) {
         const text = res ? await res.text() : "No response";
         console.error("❌ Error HTTP:", res ? res.status : "No status", text);
@@ -477,7 +487,26 @@ useEffect(() => {
       }
 
       const data = await res.json();
-      setStockPorAlmacen(data);
+
+      // 🔄 Transformar la respuesta al formato esperado por tu tabla
+      const transformed: Record<string, { unidades: number; notasVenta: number; oc: number; disponible: number }> = {};
+
+      Object.entries(data).forEach(([codigo, valores]: [string, any]) => {
+        const key = `Almacen_${codigo.padStart(2, "0")}`; // Asegura nombres como Almacen_01
+        const stock = valores.Stock ?? 0;
+        const nc = valores.NC ?? 0;
+        const oc = valores.OC ?? 0;
+
+        transformed[key] = {
+          unidades: stock,
+          notasVenta: nc,
+          oc: oc,
+          disponible: stock - nc,
+        };
+      });
+
+      setStockPorAlmacen(transformed);
+
     } catch (error) {
       console.error("❌ Error al obtener stock por almacén:", error);
     }
@@ -488,6 +517,7 @@ useEffect(() => {
     fetchStockPorAlmacen();
   }
 }, [filtros.itemCode]);
+
 
 useEffect(() => {
   const fetchProveedores = async () => {
@@ -798,71 +828,79 @@ useEffect(() => {
 
         {/* Columna intermedia */}
         <Box flex={1.2}>
-        <Paper
-          elevation={3}
-          sx={{
-            p: 3,
-            borderRadius: 4,
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'row',
-            gap: 4,
-            bgcolor: 'background.paper',
-          }}
-        >
-          {/* Columna izquierda: Detalle de stock */}
-          <Box flex={1}>
+          <Paper
+            elevation={3}
+            sx={{
+              p: 3,
+              borderRadius: 4,
+              height: 250, // 🔹 Tamaño fijo del panel
+              display: 'flex',
+              flexDirection: 'column',
+              bgcolor: 'background.paper',
+            }}
+          >
             <Typography variant="h6" fontWeight={600} gutterBottom>
-              📦 Detalle de Stock
+              🏬 Detalle Completo por Almacén
             </Typography>
 
-            <Stack spacing={1.2}>
-              <Typography variant="body2" color="text.secondary">
-              <b>Unidades Disponibles:</b> {formatUnidades(resumenProducto?.stockTotal?.StockTotal)}
-              </Typography>
+            <TableContainer
+              component={Box}
+              sx={{
+                flex: 1,
+                overflowY: 'auto',
+                overflowX: 'auto',
+              }}
+            >
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell><b>Código</b></TableCell>
+                    <TableCell><b>Nombre</b></TableCell>
+                    <TableCell align="right"><b>Unidades</b></TableCell>
+                    <TableCell align="right"><b>Notas de Venta</b></TableCell>
+                    <TableCell align="right"><b>OC</b></TableCell>
+                    <TableCell align="right"><b>Disponible</b></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {[
+                    { code: '01', name: 'Centro Comercial' },
+                    { code: '03', name: 'Comercio Electrónico' },
+                    { code: '04', name: 'Control de Pérdida' },
+                    { code: '05', name: 'Envíos Full' },
+                    { code: '07', name: 'Balmaceda' },
+                    { code: '08', name: 'Lo Ovalle' },
+                    { code: '10', name: 'Reservado con Abono' },
+                    { code: '12', name: 'Producto con Falla' },
+                    { code: '13', name: 'Reservado Full' },
+                  ].map(({ code, name }) => {
+                    const key = `Almacen_${code}`;
+                    const almacen = stockPorAlmacen?.[key] as { unidades?: number; notasVenta?: number; oc?: number; disponible?: number } || {};
+                    const unidades = almacen.unidades ?? 0;
+                    const notasVenta = almacen.notasVenta ?? 0;
+                    const oc = almacen.oc ?? 0;
+                    const disponible = (unidades + oc - notasVenta);
 
-              <Typography variant="body2" color="text.secondary">
-                <b>Valor Total Inventario:</b> ${formatVentas(detalleStock?.detalleInventario?.ValorInventario ?? 0)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                <b>Notas de Venta:</b> {formatUnidades(detalleStock?.notasVenta)} unidades
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                <b>Stock Disponible Total:</b> {detalleStock?.detalleInventario?.TotalUnidades?.toLocaleString("es-CL") ?? "0"} unidades
-              </Typography>
-              <Typography variant="body2" color="error">
-                <b>Unidades Con Fallas:</b> {formatUnidades(detalleStock?.unidadesConFallas)}
-              </Typography>
-            </Stack>
-          </Box>
-
-          {/* Separador */}
-          <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
-
-          {/* Columna derecha: Stock por almacén */}
-          <Box flex={1}>
-            <Typography variant="h6" fontWeight={600} gutterBottom>
-              🏬 Stock por Almacén
-            </Typography>
-
-              <Stack spacing={1.2}>
-                  {['01', '02', '03', '05', '07', '12', '13'].map(code => {
-                  const key = `Almacen_${code}`;
-                  const cantidad = stockPorAlmacen?.[key] ?? 0;
-                  return (
-                      <Typography
-                      key={code}
-                      variant="body2"
-                      color={cantidad > 0 ? 'text.primary' : 'text.disabled'}
-                      >
-                      Almacén {code}: {cantidad.toLocaleString('es-CL')} unidades
-                      </Typography>
-                  );
+                    return (
+                      <TableRow key={code}>
+                        <TableCell>{code}</TableCell>
+                        <TableCell>{name}</TableCell>
+                        <TableCell align="right" sx={{ color: unidades > 0 ? 'text.primary' : 'text.disabled' }}>
+                          {unidades.toLocaleString("es-CL")}
+                        </TableCell>
+                        <TableCell align="right">{notasVenta.toLocaleString("es-CL")}</TableCell>
+                        <TableCell align="right">{oc.toLocaleString("es-CL")}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 500, color: disponible === 0 ? 'error.main' : 'success.main' }}>
+                          {disponible.toLocaleString("es-CL")}
+                        </TableCell>
+                      </TableRow>
+                    );
                   })}
-              </Stack>
-          </Box>
-        </Paper>
-      </Box>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        </Box>
 
 
         {/* Columna derecha */}
@@ -973,7 +1011,13 @@ useEffect(() => {
           </Paper>
         </Box>
       </Box>
-      
+      {/* NUEVO COMPONENTE: Análisis por Producto */}
+      <Box mt={3}>
+        <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+          <FechaRotacion />
+        </Paper>
+      </Box>
+            
       {/* Drawer */}
       <HeaderDrawerProducto
         open={openDrawer}

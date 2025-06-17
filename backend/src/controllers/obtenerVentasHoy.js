@@ -955,13 +955,7 @@ const obtenerTopProductosDetallado = async (req, res) => {
             SELECT SUM(W.OnHand)
             FROM OITW W
             WHERE W.ItemCode = I.ItemCode
-              AND (
-                @CanalParam IS NULL AND W.WhsCode NOT IN ('02', '12')
-                OR @CanalParam = 'Meli' AND W.WhsCode IN ('03', '05')
-                OR @CanalParam = 'Falabella' AND W.WhsCode = '03'
-                OR @CanalParam = 'Balmaceda' AND W.WhsCode = '07'
-                OR @CanalParam IN ('Vitex', 'Chorrillo', 'Empresas') AND W.WhsCode = '01'
-              )
+              AND W.WhsCode IN ('01', '03', '05', '06', '07', '08', '10', '13')
           ) AS Stock_Disponible
       FROM INV1 I
       INNER JOIN OITM O ON I.ItemCode = O.ItemCode

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
 import { fetchWithToken } from "@/utils/fetchWithToken";
@@ -16,7 +16,7 @@ interface EstadoCuentasChartProps {
 const EstadoCuentasChart: React.FC<EstadoCuentasChartProps> = ({
   sx,
   width = "100%",
-  height = 300,
+  height = 380,
 }) => {
   const [chartData, setChartData] = useState<number[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
@@ -50,10 +50,10 @@ const EstadoCuentasChart: React.FC<EstadoCuentasChartProps> = ({
       toolbar: { show: false },
     },
     labels: labels,
-    colors: ["#4caf50", "#f44336"],
+    colors: ["#213663", "#606060"],
     responsive: [
       {
-        breakpoint: 480,
+        breakpoint: 380,
         options: {
           chart: { width: 200 },
           legend: { position: "bottom" },
@@ -72,17 +72,18 @@ const EstadoCuentasChart: React.FC<EstadoCuentasChartProps> = ({
 
   return (
     <DashboardCard
-      title="Estado de Cuentas de Usuarios"
-      sx={{
-        maxWidth: 500,
-        mt: 4,
-        ...sx, // permite personalizar desde afuera
-      }}
-    >
+      title="Estado de Cuentas"
+      sx={{ maxWidth: 500, mt: 4, ...sx }}    >
       {loading ? (
         <Typography variant="body1">Cargando gráfico...</Typography>
       ) : (
-        <Chart options={options} series={chartData} type="donut" width={width} height={height} />
+        <Chart
+          options={options}
+          series={chartData}
+          type="donut"
+          width={width}yy
+          height={height}
+        />
       )}
     </DashboardCard>
   );

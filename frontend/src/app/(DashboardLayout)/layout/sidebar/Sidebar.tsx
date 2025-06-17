@@ -1,4 +1,4 @@
-import { useMediaQuery, Box, Drawer } from "@mui/material";
+import {Box, Drawer } from "@mui/material";
 import SidebarItems from "./SidebarItems";  // Importa SidebarItems
 import { Sidebar } from "react-mui-sidebar";
 import LogoMimbral from "@/app/(DashboardLayout)/layout/shared/logo/LogoMimbral";

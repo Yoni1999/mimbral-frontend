@@ -98,13 +98,13 @@ return (
   <Card elevation={1} sx={{ borderRadius: 0, backgroundColor: "transparent", boxShadow: "none" }}>
     <CardContent sx={{ p: 0 }}>
       <Typography variant="h6" fontWeight="bold" mb={2}>
-        Top Vendedores por Producto
+        Top  10 Vendedores del Producto
       </Typography>
 
       <Box
         sx={{
             maxHeight: 320,
-            minHeight: 200, // asegura que siempre se vea "relleno"
+            minHeight: 200, 
             overflowY: "auto",
             overflowX: "auto",
             width: "100%",
@@ -113,14 +113,14 @@ return (
         <Table size="small" stickyHeader sx={{ minWidth: 600 }}>
           <TableHead>
             <TableRow>
-              <TableCell>Vendedor</TableCell>
+              <TableCell>Nombre Vendedores</TableCell>
               <TableCell align="right">
                 <TableSortLabel
                   active={orderBy === "CantidadVendida"}
                   direction={order}
                   onClick={() => handleSort("CantidadVendida")}
                 >
-                  Unidades
+                  Unidades vendidas
                 </TableSortLabel>
               </TableCell>
               <TableCell align="right">

@@ -325,26 +325,34 @@ const obtenerStockPorAlmacen = async (req, res) => {
       .input('ItemCode', sql.NVarChar(50), itemCode)
       .query(`
         SELECT 
-            T0.ItemCode,
-            MAX(CASE WHEN T0.WhsCode = '01' THEN T0.OnHand ELSE 0 END) AS Almacen_01,
-            MAX(CASE WHEN T0.WhsCode = '02' THEN T0.OnHand ELSE 0 END) AS Almacen_02,
-            MAX(CASE WHEN T0.WhsCode = '03' THEN T0.OnHand ELSE 0 END) AS Almacen_03,
-            MAX(CASE WHEN T0.WhsCode = '05' THEN T0.OnHand ELSE 0 END) AS Almacen_05,
-            MAX(CASE WHEN T0.WhsCode = '07' THEN T0.OnHand ELSE 0 END) AS Almacen_07,
-            MAX(CASE WHEN T0.WhsCode = '12' THEN T0.OnHand ELSE 0 END) AS Almacen_12,
-            MAX(CASE WHEN T0.WhsCode = '13' THEN T0.OnHand ELSE 0 END) AS Almacen_13
+          T0.WhsCode AS Almacen,
+          SUM(T0.OnHand) AS Stock,
+          SUM(T0.IsCommited) AS NC,
+          SUM(T0.OnOrder) AS OC
         FROM OITW T0
         WHERE T0.ItemCode = @ItemCode
-        GROUP BY T0.ItemCode
+          AND T0.WhsCode IN ('01', '03', '04', '05', '07', '08', '10', '12', '13')
+        GROUP BY T0.WhsCode
+        ORDER BY T0.WhsCode
       `);
 
-    res.json(result.recordset[0] || {}); // Devuelve un objeto o vacío si no hay datos
+    // Transformar resultado en objeto organizado por almacén
+    const response = {};
+    result.recordset.forEach(row => {
+      response[row.Almacen] = {
+        Stock: row.Stock,
+        NC: row.NC,
+        OC: row.OC
+      };
+    });
 
+    res.json(response);
   } catch (error) {
     console.error('❌ Error al obtener stock por almacén:', error);
     res.status(500).json({ error: 'Error del servidor' });
   }
 };
+
 
 const obtenerTiempoEntregaProveedores = async (req, res) => {
   try {

@@ -32,7 +32,7 @@ type Orden = {
 type Props = {
   open: boolean;
   onClose: () => void;
-  data: Orden[];
+  data?: Orden[]; // ← validación opcional aquí también
 };
 
 const agruparPorMes = (data: Orden[]) => {
@@ -48,17 +48,17 @@ const agruparPorMes = (data: Orden[]) => {
   }, {});
 };
 
-const HistorialOrdenesCompraModal = ({ open, onClose, data }: Props) => {
-  const datosAgrupados = agruparPorMes(data);
-  const mesesOrdenados = Object.keys(datosAgrupados).sort((a, b) =>
-    new Date(datosAgrupados[b][0].FechaOrden).getTime() -
-    new Date(datosAgrupados[a][0].FechaOrden).getTime()
-  );
-// Función para parsear solo la parte de la fecha sin que JS la convierta a local
 const parseFechaLocal = (fechaISO: string) => {
   const [year, month, day] = fechaISO.split("T")[0].split("-");
   return new Date(Number(year), Number(month) - 1, Number(day));
 };
+
+const HistorialOrdenesCompraModal = ({ open, onClose, data }: Props) => {
+  const datosAgrupados = Array.isArray(data) ? agruparPorMes(data) : {};
+  const mesesOrdenados = Object.keys(datosAgrupados).sort((a, b) =>
+    new Date(datosAgrupados[b][0].FechaOrden).getTime() -
+    new Date(datosAgrupados[a][0].FechaOrden).getTime()
+  );
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
@@ -67,8 +67,10 @@ const parseFechaLocal = (fechaISO: string) => {
       </DialogTitle>
 
       <DialogContent dividers sx={{ pt: 0 }}>
-        {data.length === 0 ? (
-          <Typography variant="body2" color="text.secondary">No hay datos disponibles</Typography>
+        {!Array.isArray(data) || data.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            No hay datos disponibles.
+          </Typography>
         ) : (
           <Box>
             {mesesOrdenados.map((mes, idx) => (

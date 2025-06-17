@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useEffect, useState } from "react";
 import {
   Table, TableBody, TableCell, TableContainer,
@@ -6,6 +6,7 @@ import {
 } from "@mui/material";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
+import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
 
 interface SessionData {
   nombre: string;
@@ -30,7 +31,7 @@ const UserSessionTable = () => {
     const fetchStats = async () => {
       try {
         const res = await fetchWithToken(`${BACKEND_URL}/api/admin/session-stats`);
-        if (!res?.ok) throw new Error("Error ");
+        if (!res?.ok) throw new Error("Error al obtener sesiones");
         const json = await res.json();
         setData(json);
       } catch (error) {
@@ -58,55 +59,64 @@ const UserSessionTable = () => {
       return order === "asc" ? valA - valB : valB - valA;
     }
   });
-  
 
   if (loading) return <Typography>Cargando sesiones...</Typography>;
 
   return (
-    <TableContainer component={Paper} sx={{ mt: 4 }}>
-      <Table>
-        <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
-          <TableRow>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === "nombre"}
-                direction={orderBy === "nombre" ? order : "asc"}
-                onClick={() => handleSort("nombre")}
-              >
-                Usuario
-              </TableSortLabel>
-            </TableCell>
-            <TableCell align="right">
-              <TableSortLabel
-                active={orderBy === "minutos"}
-                direction={orderBy === "minutos" ? order : "asc"}
-                onClick={() => handleSort("minutos")}
-              >
-                Tiempo Total
-              </TableSortLabel>
-            </TableCell>
-            <TableCell align="right">
-              <TableSortLabel
-                active={orderBy === "sesiones"}
-                direction={orderBy === "sesiones" ? order : "asc"}
-                onClick={() => handleSort("sesiones")}
-              >
-                Conexiones
-              </TableSortLabel>
-            </TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {sortedData.map((user, i) => (
-            <TableRow key={i}>
-              <TableCell>{user.nombre}</TableCell>
-              <TableCell align="right">{formatTiempo(user.minutos)}</TableCell>
-              <TableCell align="right">{user.sesiones}</TableCell>
+    <DashboardCard title="Resumen de Sesiones" sx={{ maxWidth: 500, mt: 4 }}>
+      <TableContainer
+        component={Paper}
+        sx={{
+          height: 380,
+          overflowY: "auto",
+          backgroundColor: "transparent", 
+          boxShadow: "none",  
+        }}
+      >
+        <Table stickyHeader>
+          <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
+            <TableRow>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === "nombre"}
+                  direction={orderBy === "nombre" ? order : "asc"}
+                  onClick={() => handleSort("nombre")}
+                >
+                  Usuario
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="right">
+                <TableSortLabel
+                  active={orderBy === "minutos"}
+                  direction={orderBy === "minutos" ? order : "asc"}
+                  onClick={() => handleSort("minutos")}
+                >
+                  Tiempo Total
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="right">
+                <TableSortLabel
+                  active={orderBy === "sesiones"}
+                  direction={orderBy === "sesiones" ? order : "asc"}
+                  onClick={() => handleSort("sesiones")}
+                >
+                  Conexiones
+                </TableSortLabel>
+              </TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {sortedData.map((user, i) => (
+              <TableRow key={i}>
+                <TableCell>{user.nombre}</TableCell>
+                <TableCell align="right">{formatTiempo(user.minutos)}</TableCell>
+                <TableCell align="right">{user.sesiones}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </DashboardCard>
   );
 };
 

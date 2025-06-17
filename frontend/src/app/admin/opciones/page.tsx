@@ -142,9 +142,7 @@ const OpcionesAdminPage = () => {
               borderRadius: 2,
             }}
           >
-            <Typography variant="h6" fontWeight="bold" mb={2}>
-              Tiempo de sesión por usuario
-            </Typography>
+
             <UserSessionTable />
           </Box>
         </Grid>

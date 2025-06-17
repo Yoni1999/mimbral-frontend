@@ -18,14 +18,20 @@ const customLabels: Record<string, string> = {
   "crear-usuario": "Crear Usuario",
   "resumen-categorias": "Primer Nivel",
   "resumen2nivel": "Categorías",
-  "resumen3nivel": "Subcategorías",
+  "resumen3nivel": "Sub-Categorías",
   opciones: "Opciones",
   usuarios: "Usuarios",
   roles: "Roles",
   permisos: "Permisos",
   admin: "Administrador",
   inicio: "Dashboard",
+  "analisis-producto1.1": "Análisis por Producto",
+  "metas-general": "Inspección de Metas Comerciales", 
+
 };
+
+// Segmentos que NO deben ser clickeables
+const nonClickableSegments = ["ventas", "informes", "analisis-categoria"];
 
 // Estilo visual como Chip personalizado
 const StyledBreadcrumb = styled(Chip)(({ theme }) => ({
@@ -79,16 +85,35 @@ const AdminBreadcrumb = () => {
           onClick={handleInicioClick}
         />
 
-        {/* Resto no clickeables y omitir 'utilities' */}
+        {/* Segmentos personalizados */}
         {pathSegments.map((segment, index) => {
           if (segment === "utilities") return null;
+
           const label = formatLabel(segment);
+          const fullPath = "/" + pathSegments.slice(0, index + 1).join("/");
+          const isNonClickable = nonClickableSegments.includes(segment);
+
           return (
             <StyledBreadcrumb
               key={index}
               label={label}
-              // Desactivado: no clickeable
-              sx={{ pointerEvents: "none", cursor: "default" }}
+              {...(!isNonClickable
+                ? {
+                    component: "a",
+                    href: fullPath,
+                    onClick: (e: React.MouseEvent) => {
+                      e.preventDefault();
+                      router.push(fullPath);
+                    },
+                  }
+                : {
+                    sx: {
+                      pointerEvents: "none",
+                      cursor: "default",
+                      color: "#9e9e9e",
+                      fontStyle: "italic",
+                    },
+                  })}
             />
           );
         })}
@@ -98,3 +123,4 @@ const AdminBreadcrumb = () => {
 };
 
 export default AdminBreadcrumb;
+// Este componente Breadcrumb muestra una navegación jerárquica basada en la URL actual.

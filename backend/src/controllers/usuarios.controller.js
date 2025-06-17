@@ -103,10 +103,18 @@ const deleteUsuario = async (req, res) => {
   const { id } = req.params;
   try {
     const pool = await poolPromise;
+
+    // Primero eliminar las sesiones relacionadas
+    await pool.request()
+      .input("UsuarioID", sql.Int, id)
+      .query("DELETE FROM SESIONES_USUARIOS WHERE UsuarioID = @UsuarioID");
+
+    // Luego eliminar el usuario
     await pool.request()
       .input("Id", sql.Int, id)
       .query("DELETE FROM USUARIOS WHERE ID = @Id");
-    res.json({ message: "Usuario eliminado correctamente" });
+
+    res.json({ message: "Usuario y sus sesiones eliminados correctamente" });
   } catch (error) {
     console.error("❌ Error al eliminar usuario:", error);
     res.status(500).json({ error: "Error del servidor" });

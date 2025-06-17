@@ -123,7 +123,7 @@ const ProductosVendidos = ({ data }: Props) => {
               direction={orderBy === 'stock' ? order : 'asc'}
               onClick={() => handleSort('stock')}
             >
-              Stock
+              Stock Total
             </TableSortLabel>
           </TableCell>
           <TableCell sortDirection={orderBy === 'margenBruto' ? order : false}>
