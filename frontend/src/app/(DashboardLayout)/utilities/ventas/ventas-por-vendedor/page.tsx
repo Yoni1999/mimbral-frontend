@@ -7,7 +7,6 @@ import MetricCard from "./components/MetricCard";
 import ProgressGauge from "./components/ProgressGauge";
 import dynamic from "next/dynamic";
 import TopProductosChart from "./components/TopProductosChart";
-import TopRentableVendedor from "./components/TopRentableVendedor";
 import {IconCurrencyDollar,IconTrendingUp,IconBox,IconStack2,IconShoppingCart,IconCreditCard,IconReceipt,IconCash} from "@tabler/icons-react";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
@@ -23,6 +22,10 @@ const TopVentasComparadoChart = dynamic(
 const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
   ssr: false,
 });
+const TopRentableVendedor = dynamic(
+  () => import("./components/TopRentableVendedor"),
+  { ssr: false }
+);
 
 const VentasVendedorPage: React.FC = () => {
   // --- Estados de Filtros y Carga ---
