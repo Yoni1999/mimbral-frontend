@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Avatar } from "@mui/material";
-import { BarChart } from "@mui/x-charts/BarChart";
+import { Box, Typography } from "@mui/material";
+import ReactApexChart from "react-apexcharts";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 import { formatVentas } from "@/utils/format";
-
 
 interface ProductoRentable {
   nombre: string;
@@ -91,51 +90,81 @@ const TopRentableVendedor: React.FC<Props> = ({ filtros }) => {
     fetchData();
   }, [filtros]);
 
+  const categorias = data.map((item) =>
+    item.nombre.length > 40 ? item.nombre.slice(0, 37) + "…" : item.nombre
+  );
+
+  const series = [
+    {
+      name: "Margen Absoluto",
+      data: data.map((item) => item.margen),
+    },
+  ];
+
+  const options: ApexCharts.ApexOptions = {
+    chart: {
+      type: "bar",
+      height: 350,
+      stacked: false,
+      toolbar: {
+        show: false,
+      },
+    },
+    plotOptions: {
+      bar: {
+        horizontal: true,
+        barHeight: "80%",
+      },
+    },
+    colors: ["#2e7d32"],
+    dataLabels: { enabled: false },
+    stroke: { width: 1, colors: ["#fff"] },
+    xaxis: {
+      categories: categorias,
+      labels: {
+        formatter: (val: string) => formatVentas(Number(val)),
+      },
+    },
+    legend: {
+      position: "top",
+      labels: { colors: "primary" },
+    },
+    tooltip: {
+      y: {
+        formatter: (val: number) => formatVentas(val),
+      },
+    },
+  };
+
   return (
     <Box
       sx={{
-        p: 2,
-        borderRadius: 1,
         backgroundColor: "#ffffff",
+        p: 1,
+        borderRadius: 1,
         boxShadow: 1,
         height: "100%",
+        border: "1px solid #eee",
       }}
     >
-      <Typography variant="h6" fontWeight={600} mb={2} color="primary">
-        Top 10 Productos Más Rentables
-      </Typography>
+      <Box mb={1}>
+        <Typography variant="h6" fontWeight={700} color="primary">
+          Top 10 Productos Más Rentables
+        </Typography>
+      </Box>
 
       {data.length > 0 ? (
-        <BarChart
-          yAxis={[
-            {
-              scaleType: "band",
-              data: data.map((item) =>
-                item.nombre.length > 50 ? item.nombre.slice(0, 50) + "…" : item.nombre
-              ),
-            },
-          ]}
-          xAxis={[
-            {
-              label: "Margen ($)",
-              valueFormatter: (value) => formatVentas(value),
-            },
-          ]}
-          series={[
-            {
-              data: data.map((item) => item.margen),
-              label: "Margen Absoluto",
-              valueFormatter: (value) => (value != null ? formatVentas(value) : "-"),
-            },
-          ]}
-          height={360}
-          layout="horizontal"
-          margin={{ top: 60, bottom: 30, left: 350, right: 30 }}
-        />
+        <ReactApexChart options={options} series={series} type="bar" height={360} />
       ) : (
-        <Typography variant="body2" color="text.secondary">
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          height={260}
+          sx={{ color: "text.secondary", fontStyle: "italic" }}
+        >
           No hay datos disponibles para los filtros seleccionados.
-        </Typography>
+        </Box>
       )}
     </Box>
   );

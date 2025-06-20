@@ -19,6 +19,8 @@ import {
 } from "@mui/material";
 import ExpandIcon from "@mui/icons-material/ZoomOutMap";
 import CloseIcon from "@mui/icons-material/Close";
+import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 import { formatVentas } from "@/utils/format";
@@ -29,6 +31,14 @@ interface Producto {
   Cantidad_Vendida: number;
   Total_Ventas: number;
   Imagen?: string;
+  Ventas_Anterior: number;
+  Unidades_Anterior: number;
+  MargenBruto_Actual: number;
+  MargenBruto_Anterior: number;
+  PorcentajeCambioVentas: number;
+  PorcentajeCambioUnidades: number;
+  MargenBruto_Actual_Porcentaje: number;
+  MargenBruto_Anterior_Porcentaje: number;
 }
 
 interface Filters {
@@ -63,7 +73,6 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
   };
 
   useEffect(() => {
-
     const buildQuery = () => {
       const params = new URLSearchParams();
 
@@ -102,18 +111,25 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
           Cantidad_Vendida: item.Unidades_Actual,
           Total_Ventas: item.Ventas_Actual,
           Imagen: item.U_Imagen,
+          Ventas_Anterior: item.Ventas_Anterior,
+          Unidades_Anterior: item.Unidades_Anterior,
+          MargenBruto_Actual: item.MargenBruto_Actual,
+          MargenBruto_Anterior: item.MargenBruto_Anterior,
+          PorcentajeCambioVentas: item.PorcentajeCambioVentas,
+          PorcentajeCambioUnidades: item.PorcentajeCambioUnidades,
+          MargenBruto_Actual_Porcentaje: item.MargenBruto_Actual_Porcentaje,
+          MargenBruto_Anterior_Porcentaje: item.MargenBruto_Anterior_Porcentaje,
         }));
 
         setData(mapped);
       } catch (error) {
         console.error("Error al obtener datos de categoría:", error);
-        setData([]); // en caso de error, también limpiamos
+        setData([]);
       }
     };
 
     fetchData();
   }, [filtros]);
-
 
   const formatMillones = (valor: number): string =>
     `$${(valor / 1_000_000).toFixed(2)} MM`;
@@ -122,14 +138,15 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
     row.Nombre_Categoria.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const TablaSubcategorias = ({ height = 320 }: { height?: number }) => (
-    <Box sx={{ maxHeight: height, overflowY: "auto", overflowX: "auto", mt: 1 }}>
+  const TablaSubcategorias = () => (
+    <Box sx={{ flex: 1, overflowY: "auto", overflowX: "auto", mt: 1 }}>
       <Table stickyHeader size="small">
         <TableHead>
           <TableRow>
             <TableCell sx={{ fontWeight: "bold" }}>Categoría</TableCell>
             <TableCell align="right" sx={{ fontWeight: "bold" }}>Unidades</TableCell>
             <TableCell align="right" sx={{ fontWeight: "bold" }}>Ventas</TableCell>
+            <TableCell align="right" sx={{ fontWeight: "bold" }}>Margen Bruto</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -156,11 +173,68 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
                   </Typography>
                 </Box>
               </TableCell>
+
+              {/* Unidades + variación */}
               <TableCell align="right">
-                {row.Cantidad_Vendida.toLocaleString("es-CL")}
+              <Typography fontWeight={500}>{row.Cantidad_Vendida.toLocaleString("es-CL")}</Typography>
+                <Box display="flex" justifyContent="flex-end" alignItems="center" gap={0.5}>
+                  {row.PorcentajeCambioUnidades > 0 ? (
+                    <ArrowDropUpIcon sx={{ color: "success.main", fontSize: 20 }} />
+                  ) : row.PorcentajeCambioUnidades < 0 ? (
+                    <ArrowDropDownIcon sx={{ color: "error.main", fontSize: 20 }} />
+                  ) : null}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color:
+                        row.PorcentajeCambioUnidades > 0
+                          ? "success.main"
+                          : row.PorcentajeCambioUnidades < 0
+                          ? "error.main"
+                          : "text.secondary",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {row.PorcentajeCambioUnidades?.toFixed(1)}%
+                  </Typography>
+                </Box>
               </TableCell>
+
+              {/* Ventas */}
               <TableCell align="right">
-                {formatMillones(row.Total_Ventas)}
+                <Typography fontWeight={500}>
+                  {formatMillones(row.Total_Ventas)}
+                </Typography>
+              </TableCell>
+
+              {/* Margen Bruto Actual + variación */}
+              <TableCell align="right">
+                <Box display="flex" flexDirection="column" alignItems="flex-end">
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <Typography fontWeight={500}>
+                      {row.MargenBruto_Actual_Porcentaje?.toFixed(2)}%
+                    </Typography>
+                    {row.PorcentajeCambioVentas > 0 ? (
+                      <ArrowDropUpIcon sx={{ color: "success.main", fontSize: 20 }} />
+                    ) : row.PorcentajeCambioVentas < 0 ? (
+                      <ArrowDropDownIcon sx={{ color: "error.main", fontSize: 20 }} />
+                    ) : null}
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color:
+                        row.PorcentajeCambioVentas > 0
+                          ? "success.main"
+                          : row.PorcentajeCambioVentas < 0
+                          ? "error.main"
+                          : "text.secondary",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {row.PorcentajeCambioVentas?.toFixed(1)}%
+                  </Typography>
+                </Box>
               </TableCell>
             </TableRow>
           ))}
@@ -177,11 +251,12 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
           borderRadius: 2,
           background: "#fff",
           border: "1px solid #e0e0e0",
-          p: 2,
-          height: 460,
+          height: 490,
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        <CardContent>
+        <CardContent sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <Box display="flex" alignItems="center" justifyContent="space-between" gap={2}>
             <Typography variant="h6" color="primary" fontWeight={600}>
               Categorías Vendidas
@@ -201,7 +276,6 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
               </IconButton>
             </Tooltip>
           </Box>
-
           <TablaSubcategorias />
         </CardContent>
       </Card>
@@ -225,7 +299,9 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
               <CloseIcon />
             </IconButton>
           </Box>
-          <TablaSubcategorias height={500} />
+          <Box sx={{ maxHeight: 500, overflowY: "auto" }}>
+            <TablaSubcategorias />
+          </Box>
         </DialogContent>
       </Dialog>
     </>

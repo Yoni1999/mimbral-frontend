@@ -16,7 +16,7 @@ interface Props {
   total?: number;
   title?: string;
   detalleRuta?: string;
-  height?: number; // 🔥 Añadimos este nuevo prop
+  height?: number; 
 }
 
 const ProgressGauge = ({
@@ -36,10 +36,9 @@ const ProgressGauge = ({
         borderRadius: 2,
         p: 2,
         background: "#fff",
-        minWidth: 150,
-        maxWidth: 300,
+
         elevation: 0,
-        height: height, // 🔥 Usamos el height que nos mandan
+        height: height, 
         flexGrow: 1,
         display: "flex",
         flexDirection: "column",

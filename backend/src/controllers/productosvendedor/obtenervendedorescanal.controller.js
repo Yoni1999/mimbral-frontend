@@ -1,5 +1,7 @@
 const sql = require("mssql");
 const { poolPromise } = require('../../models/db');
+const { obtenerResumenFormasPago } = require('../../models/ventas-por-vendedor/formasPago.model');
+
 
 const obtenerVendedoresPorCanal = async (req, res) => {
   const canal = req.query.canal;
@@ -41,5 +43,27 @@ const obtenerVendedoresPorCanal = async (req, res) => {
   }
 };
 
-module.exports = {
-  obtenerVendedoresPorCanal};
+const getResumenFormasPago = async (req, res) => {
+  try {
+    const canal = req.query.canal || null;
+    const vendedorEmpresa = req.query.vendedorEmpresa || null;
+    const periodo = req.query.periodo || '7D';
+    const fechaInicio = req.query.fechaInicio || null;
+    const fechaFin = req.query.fechaFin || null;
+
+    const result = await obtenerResumenFormasPago({
+      canal,
+      vendedorEmpresa,
+      periodo,
+      fechaInicio,
+      fechaFin,
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error('❌ Error al obtener resumen de formas de pago:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+module.exports = {obtenerVendedoresPorCanal, getResumenFormasPago};

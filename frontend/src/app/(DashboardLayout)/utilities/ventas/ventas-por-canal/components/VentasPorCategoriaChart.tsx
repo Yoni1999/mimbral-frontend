@@ -101,7 +101,7 @@ const VentasPorCategoriaChart: React.FC<Props> = ({ data }) => {
         </Box>
 
         <Box sx={{ overflow: "hidden" }}>
-          <Chart options={options} series={series} type="bar" height={400} />
+          <Chart options={options} series={series} type="bar" height={390} />
         </Box>
       </CardContent>
     </Card>

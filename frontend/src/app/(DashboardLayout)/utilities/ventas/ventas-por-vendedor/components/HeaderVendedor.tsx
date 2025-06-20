@@ -289,7 +289,7 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
           <Grid item xs={12} md={9}>
             <Grid container spacing={1.5} justifyContent="flex-end">
               {/* Canal */}
-              <Grid item xs={6} sm={3} md={1.5}>
+              <Grid item xs={7} sm={3} md={1.5}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Canal</InputLabel>
                   <Select
@@ -307,7 +307,7 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
               </Grid>
 
               {/* Vendedor */}
-              <Grid item xs={6} sm={3} md={1.8}>
+              <Grid item xs={6} sm={3} md={1.5}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Vendedor</InputLabel>
                   <Select
@@ -333,7 +333,7 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
               </Grid>
 
               {/* Temporada */}
-              <Grid item xs={6} sm={3} md={2}>
+              <Grid item xs={6} sm={3} md={1.5}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Temporada</InputLabel>
                   <Select
@@ -352,7 +352,7 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
               </Grid>
 
               {/* Período */}
-              <Grid item xs={6} sm={3} md={2.5}>
+              <Grid item xs={6} sm={3} md={1.5}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Período</InputLabel>
                   <Select
@@ -372,7 +372,7 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
               </Grid>
 
               {/* Fecha Inicio */}
-              <Grid item xs={6} sm={3} md={2}>
+              <Grid item xs={6} sm={3} md={1.5}>
                 <TextField
                   label="Inicio"
                   type="date"
@@ -388,7 +388,7 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
               </Grid>
 
               {/* Fecha Fin */}
-              <Grid item xs={6} sm={3} md={2}>
+              <Grid item xs={6} sm={3} md={1.5}>
                 <TextField
                   label="Fin"
                   type="date"
@@ -403,7 +403,7 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
                 />
               </Grid>
               {/* Modo Comparación */}
-              <Grid item xs={6} sm={3} md={2}>
+              <Grid item xs={6} sm={3} md={1.5}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Comparar con</InputLabel>
                   <Select
@@ -419,7 +419,7 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
               </Grid>
 
 
-              <Grid item xs={6} sm={3} md={2}>
+              <Grid item xs={6} sm={3} md={1.5}>
                 <Button
                   variant="outlined"
                   color="primary"

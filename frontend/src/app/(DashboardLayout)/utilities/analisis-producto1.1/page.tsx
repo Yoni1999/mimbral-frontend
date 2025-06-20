@@ -37,7 +37,13 @@ import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades, calcularVariacion  } from "@/utils/format";
 
-// Justo debajo de los imports
+type UnidadesMes = {
+  Año: string;
+  Mes: string;
+  NumeroMes: number;
+  UnidadesVendidas: number;
+};
+
 type Producto = {
   itemcode: string;
   itemname: string;
@@ -98,6 +104,7 @@ const AnalisisProductoPage = () => {
   notasVenta: number;
   oc: number;
   disponible: number;}>>(null);
+  const [unidadesMesData, setUnidadesMesData] = useState<UnidadesMes[]>([]); 
 
 
   const handleOpenProveedorModal = () => {
@@ -547,6 +554,39 @@ useEffect(() => {
     fetchProveedores();
   }
 }, [filtros.itemCode]);
+
+useEffect(() => {
+  const fetchUnidadesVendidasMes = async () => {
+    try {
+      // Reutiliza la función buildQueryFromFiltros para construir la URL
+      const query = buildQueryFromFiltros(filtros);
+      const response = await fetchWithToken(`${BACKEND_URL}/api/unidades-vendidas?${query}`);
+
+      if (!response || !response.ok) {
+        throw new Error("Error al obtener unidades vendidas por mes");
+      }
+
+      const data = await response.json();
+      console.log("📊 Unidades Vendidas por Mes:", data);
+
+      if (Array.isArray(data)) {
+        setUnidadesMesData(data); // Actualiza el estado con los datos de la API
+      } else {
+        setUnidadesMesData([]); // Si no es un array, setea a vacío
+        console.warn("⚠️ Formato de datos inesperado para unidades vendidas por mes:", data);
+      }
+    } catch (error) {
+      console.error("❌ Error al obtener unidades vendidas por mes:", error);
+      setUnidadesMesData([]); // En caso de error, limpia los datos
+    }
+  };
+
+  // Solo ejecutar si hay un itemCode seleccionado
+  if (filtros.itemCode) {
+    fetchUnidadesVendidasMes();
+  }
+  // Añade 'filtros' como dependencia para que se re-ejecute cuando los filtros cambien
+}, [filtros]); // <--- Dependencia importante
 
 
 
@@ -1014,7 +1054,7 @@ useEffect(() => {
       {/* NUEVO COMPONENTE: Análisis por Producto */}
       <Box mt={3}>
         <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
-          <FechaRotacion />
+          <FechaRotacion data={unidadesMesData} isLoading={false} />
         </Paper>
       </Box>
             

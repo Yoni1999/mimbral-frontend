@@ -3,14 +3,25 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
-import Image from 'next/image';
-import { Grid, Paper, CircularProgress, Box, Typography } from "@mui/material";
+import SeccionTitulo from "../resumen-ventas/components/SeccionTitulo";
+import { Grid, Paper, CircularProgress, Box, Typography,} from "@mui/material";
 import MetricCard from "./components/MetricCard";
+import FechaRotacion from "./components/FechaRotacion";
 import NivelNavigation from "../components/NivelNavigation";
 import HeaderFilters, { Filters } from "./components/HeaderFilters";
+import ClientesFrecuentesTable from "./components/ClientesFrecuentesTable";
 import dynamic from "next/dynamic";
+import { formatUnidades, formatVentas } from "@/utils/format";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
+import {
+  IconCurrencyDollar,
+  IconTrendingUp,
+  IconStack2,
+  IconBox,
+  IconShoppingCart
+} from "@tabler/icons-react";
+
 
 const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
   ssr: false,
@@ -21,12 +32,7 @@ const TopProductosChart = dynamic(() => import("./components/TopProductosChart")
 const VentasPorCategoriaChart = dynamic(() => import("./components/VentasPorCategoriaChart"), {
   ssr: false,
 });
-const TransaccionesChart = dynamic(() => import("./components/TransaccionesChart"), {
-  ssr: false,
-});
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(value);
 
 const VentasPorCanal = () => {
   const searchParams = useSearchParams();
@@ -43,7 +49,6 @@ const VentasPorCanal = () => {
 
   const [filters, setFilters] = useState<Filters>({
   canal: canalParam,
-  vendedorEmpresa: "",
   periodo: "1D",
   fechaInicio: "",
   fechaFin: "",
@@ -85,7 +90,7 @@ useEffect(() => {
       const baseUrl = `${BACKEND_URL}/api/`;
       const query = new URLSearchParams(
         Object.fromEntries(
-          Object.entries({ ...filters, vendedorEmpresa: selectedVendedor || filters.vendedorEmpresa })
+          Object.entries({ ...filters, vendedorEmpresa: selectedVendedor })
             .filter(([_, value]) => value !== undefined && value !== null)
             .map(([key, value]) => [key, String(value)])
         )
@@ -136,121 +141,148 @@ useEffect(() => {
     setSelectedVendedor(null);
     localStorage.setItem("filtrosVentasCanal", JSON.stringify(newFilters));
   };
-  
+  const periodoLabels: { [key: string]: string } = {
+  "1D": "Hoy",
+  "7D": "Últimos 7 días",
+  "14D": "Últimos 14 días",
+  "1M": "Último mes",
+  "3M": "Últimos 3 meses",
+  "6M": "Últimos 6 meses",
+};
+
   return (
     <>
-    <NivelNavigation/>
-    <PageContainer title="Ventas por Canal" description="Resumen de ventas filtradas por canal, período y rango de fechas">
-      <HeaderFilters filters={filters} onFilterChange={handleFilterChange}/>
+      <NivelNavigation />
+      <PageContainer title="Ventas por Canal" description="Resumen de ventas filtradas por canal, período y rango de fechas">
+        <Box sx={{ p: 0 }}>
+          {/* Texto alineado a la derecha con el resumen del filtro */}
+          <Box sx={{ mb: 1, display: "flex", justifyContent: "flex-end", px: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              {filters.periodo && periodoLabels[filters.periodo]
+                ? `Filtrando por périodo de: ${periodoLabels[filters.periodo]}`
+                : filters.fechaInicio && filters.fechaFin
+                ? `Filtrando por rango: ${filters.fechaInicio} al ${filters.fechaFin}`
+                : "Sin período seleccionado"}
+            </Typography>
+          </Box>
+          <HeaderFilters filters={filters} onFilterChange={handleFilterChange} />
 
-
-      <Grid container spacing={2} alignItems="stretch">
-        <Grid item xs={12} md={6}>
-        <VentasCanalChart
-          canal={filters.canal}
-          periodo={filters.periodo}
-          fechaInicio={filters.fechaInicio}
-          fechaFin={filters.fechaFin}
-          onVendedorSeleccionado={(vendedor) => setSelectedVendedor(vendedor)}
-        />
-
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Grid container spacing={1}>
-            {[{
-              title: filters.fechaInicio && filters.fechaFin ? "Total Ventas (Por Rango)" : `Total Ventas (${filters.periodo})`,
-              value: formatCurrency(data.ventasHoy.TotalVentasPeriodo),
-              subtitle: `Anterior: ${formatCurrency(data.ventasHoy.TotalVentasAnterior)}`,
-              percentageChange: data.ventasHoy.PorcentajeCambio,
-            },
-            {
-              title: "Margen Bruto",
-              value: formatCurrency(data.margenBruto.MargenBrutoPeriodo),
-              subtitle: `Anterior: ${formatCurrency(data.margenBruto.MargenBrutoAnterior)}`,
-              percentageChange: data.margenBruto.PorcentajeCambio,
-            }].map((card, index) => (
-              <Grid item xs={12} sm={6} key={index}>
-                {loading ? (
-                  <Paper sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 120 }}>
-                    <CircularProgress />
-                  </Paper>
-                ) : (
-                  <MetricCard title={card.title} value={card.value} subtitle={card.subtitle} percentageChange={card.percentageChange} />
-                )}
-              </Grid>
-            ))}
-
-            {/* 🔹 Segunda fila de métricas (2 tarjetas) */}
-            {[
-              {
-                title: `Unidades Vendidas (${filters.periodo})`,
-                value: data.unidadesVendidas.CantidadVendida,
-                subtitle: `Anterior: ${data.unidadesVendidas.CantidadVendidaAnterior}`,
-                percentageChange: data.unidadesVendidas.PorcentajeCambio,
-              },
-              {
-                title: `Total Ítems Vendidos (${filters.periodo})`,
-                value: data.productosDistintos.ProductosPeriodoActual,
-                subtitle: `Anterior: ${data.productosDistintos.ProductosPeriodoAnterior}`,
-                percentageChange: data.productosDistintos.PorcentajeCambio,
-              },
-            ].map((card, index) => (
-              <Grid item xs={12} sm={6} md={6} key={index}>
-                {loading ? (
-                  <Paper sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 120 }}>
-                    <CircularProgress />
-                  </Paper>
-                ) : (
-                  <MetricCard title={card.title} value={card.value} subtitle={card.subtitle} percentageChange={card.percentageChange} />
-                )}
-              </Grid>
-            ))}
-            {/* TERCERA fila de métricas (1 tarjetas) */}
-            {[
-              {
-                title: `Transacciones (${filters.periodo})`,
-                value: data.transaccionesPeriodo.CantidadTransaccionesPeriodo,
-                subtitle: `Anterior: ${data.transaccionesPeriodo.CantidadTransaccionesAnterior}`,
-                percentageChange: data.transaccionesPeriodo.PorcentajeCambio,
-              },
-              {
-                title: `EXTRA (${filters.periodo})`,
-                value: data.transaccionesPeriodo.CantidadTransaccionesPeriodo,
-                subtitle: `Anterior: ${data.transaccionesPeriodo.CantidadTransaccionesAnterior}`,
-                percentageChange: data.transaccionesPeriodo.PorcentajeCambio,
-              },
-            ].map((card, index) => (
-              <Grid item xs={12} sm={6} md={6} key={index}>
-                {loading ? (
-                  <Paper sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 120 }}>
-                    <CircularProgress />
-                  </Paper>
-                ) : (
-                  <MetricCard title={card.title} value={card.value} subtitle={card.subtitle} percentageChange={card.percentageChange} />
-                )}
-              </Grid>
-            ))}
-           {/* 🔹 Cuarta fila: Tarjeta con gráfico de transacciones */}
-           <Grid item xs={12} md={12}>
-              <TransaccionesChart />
+          {/* --- Sección de Métricas Principales --- */}
+          <Grid container spacing={2} mt={2}>
+            <Grid item xs={12}>
+              <SeccionTitulo
+                title="Métricas Clave del Canal"
+                infoRight="Información detallada del desempeño de ventas del canal seleccionado."
+              />
             </Grid>
+            <Grid item xs={12}> {/* Este Grid item envuelve todas las MetricCards */}
+              <Grid container spacing={2}>
+                {[
+                  {
+                    title: filters.fechaInicio && filters.fechaFin ? "Total Ventas (Por Rango)" : `Total Ventas`,
+                    value: formatVentas(data.ventasHoy.TotalVentasPeriodo),
+                    subtitle: `Anterior: ${formatVentas(data.ventasHoy.TotalVentasAnterior)}`,
+                    percentageChange: data.ventasHoy.PorcentajeCambio,
+                    icon: <IconCurrencyDollar />,
+                  },
+                  {
+                    title: "Margen Bruto",
+                    value: formatVentas(data.margenBruto.MargenBrutoPeriodo),
+                    subtitle: `Anterior: ${formatVentas(data.margenBruto.MargenBrutoAnterior)}`,
+                    percentageChange: data.margenBruto.PorcentajeCambio,
+                    icon: <IconTrendingUp />,
+                  },
+                  {
+                    title: `Unidades Vendidas `,
+                    value: formatUnidades(data.unidadesVendidas.CantidadVendida),
+                    subtitle: `Anterior: ${formatUnidades(data.unidadesVendidas.CantidadVendidaAnterior)}`,
+                    percentageChange: data.unidadesVendidas.PorcentajeCambio,
+                    icon: <IconStack2 />,
+                  },
+                  {
+                    title: `Total Ítems Vendidos `,
+                    value: formatUnidades(data.productosDistintos.ProductosPeriodoActual),
+                    subtitle: `Anterior: ${formatUnidades(data.productosDistintos.ProductosPeriodoAnterior)}`,
+                    percentageChange: data.productosDistintos.PorcentajeCambio,
+                    icon: <IconBox />,
+                  },
+                  {
+                    title: `Transacciones `,
+                    value: formatUnidades(data.transaccionesPeriodo.CantidadTransaccionesPeriodo),
+                    subtitle: `Anterior: ${formatUnidades(data.transaccionesPeriodo.CantidadTransaccionesAnterior)}`,
+                    percentageChange: data.transaccionesPeriodo.PorcentajeCambio,
+                    icon: <IconShoppingCart />,
+                  },
+                  // Si tienes una sexta métrica, agrégala aquí
+                  {
+                     title: `Tickets Promedio `,
+                     value: formatUnidades(data.transaccionesPeriodo.CantidadTransaccionesPeriodo), // Usando los mismos datos como ejemplo
+                     subtitle: `Anterior: ${formatUnidades(data.transaccionesPeriodo.CantidadTransaccionesAnterior)}`,
+                     percentageChange: data.transaccionesPeriodo.PorcentajeCambio,
+                     icon: <IconShoppingCart />, // Puedes cambiar el icono
+                   },
+                ].map((card, index) => (
+                  <Grid item xs={12} sm={6} md={4} lg={2} key={index}> {/* md={4} para 3 por fila, lg={2} para 6 por fila */}
+                    {loading ? (
+                      <Paper
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          height: 120, // Altura consistente
+                          borderRadius: 2,
+                          boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
+                          backgroundColor: "#f5f5f5",
+                        }}
+                      >
+                        <CircularProgress />
+                      </Paper>
+                    ) : (
+                      <MetricCard {...card} />
+                    )}
+                  </Grid>
+                ))}
+              </Grid>
+            </Grid>
+          </Grid>
 
+          {/* --- Sección de Gráficos de Análisis por Canal --- */}
+          <Grid container spacing={2} mt={2}>
+            <Grid item xs={12}>
+              <SeccionTitulo
+                title="Análisis Detallado por Canal"
+                infoRight="Visualización de ventas por canal, productos y categorías."
+              />
+            </Grid>
+            <Grid item xs={12} md={6}> {/* Un gráfico grande */}
+              <VentasCanalChart
+                canal={filters.canal}
+                periodo={filters.periodo}
+                fechaInicio={filters.fechaInicio}
+                fechaFin={filters.fechaFin}
+                onVendedorSeleccionado={(vendedor) => setSelectedVendedor(vendedor)}
+                // Puedes pasar 'data.transaccionesPeriodo' si TransaccionesChart espera esos datos
+              />
+            </Grid>
+            <Grid item xs={12} md={6}> {/* Un gráfico grande */}
+              <ClientesFrecuentesTable/>
+            </Grid>
+          {/* --- Segunda Fila de Gráficos --- */}
+          <Grid container spacing={2} mt={2}>
+            <Grid item xs={12} md={4}>
+              <TopProductosChart data={data.topProductos} /> {/* Pasa los datos de topProductos */}
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FechaRotacion /> 
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <VentasPorCategoriaChart data={data.ventasCategoria} /> {/* Pasa los datos de ventasCategoria */}
+            </Grid>
           </Grid>
         </Grid>
-      </Grid>
-      {/* 🔹 Segunda fila: Gráficos */}
-      <Grid container spacing={2} mt={2}>
-        <Grid item xs={12} md={6}>
-          <TopProductosChart data={data.topProductos} />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <VentasPorCategoriaChart data={data.ventasCategoria} />
-        </Grid>
-      </Grid>
-    </PageContainer>
-  </>
+        </Box>
+      </PageContainer>
+    </>
   );
 };
 

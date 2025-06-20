@@ -1020,162 +1020,174 @@ const obtenerMargenProductoComparado = async (req, res) => {
   };
 //  CATEGORÍAS VENDIDAS VENDEDOR
 const obtenerVentasPorCategoriaComparado = async (req, res) => {
-    try {
-      const pool = await poolPromise;
-  
-      const canal = req.query.canal || null;
-      const vendedor = req.query.vendedorEmpresa || null;
-      const periodo = req.query.periodo || "7D";
-      const fechaInicio = req.query.fechaInicio || null;
-      const fechaFin = req.query.fechaFin || null;
-      const modoComparacion = req.query.modoComparacion || "PeriodoAnterior";
-      const fechaInicioAnterior = req.query.fechaInicioAnterior || null;
-      const fechaFinAnterior = req.query.fechaFinAnterior || null;
-  
-      const query = `
-        DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
-        DECLARE @VendedorEmpresaParam INT = @VendedorEmpresaParamInput;
-        DECLARE @Periodo VARCHAR(10) = @PeriodoInput;
-        DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
-        DECLARE @FechaFinCustom DATE = @FechaFinInput;
-        DECLARE @ModoComparacion VARCHAR(30) = @ModoComparacionInput;
-        DECLARE @FechaInicioAnteriorCustom DATE = @FechaInicioAnteriorInput;
-        DECLARE @FechaFinAnteriorCustom DATE = @FechaFinAnteriorInput;
-  
-        DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
-        DECLARE @FechaInicioAnterior DATE, @FechaFinAnterior DATE;
-  
-        IF (@FechaInicioCustom IS NOT NULL AND @FechaFinCustom IS NOT NULL)
-        BEGIN
-            SET @FechaInicioActual = @FechaInicioCustom;
-            SET @FechaFinActual = @FechaFinCustom;
-        END
-        ELSE
-        BEGIN
-            SET @FechaFinActual = CAST(GETDATE() AS DATE);
-            SET @FechaInicioActual =
-                CASE 
-                    WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
-                    WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                    WHEN @Periodo = '1M' THEN DATEADD(DAY, -30, @FechaFinActual)
-                    WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
-                    WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
-                    ELSE @FechaFinActual
-                END;
-        END
-  
-        IF @ModoComparacion = 'PeriodoAnterior'
-        BEGIN
-            DECLARE @Dias INT = DATEDIFF(DAY, @FechaInicioActual, @FechaFinActual) + 1;
-            SET @FechaFinAnterior = DATEADD(DAY, -1, @FechaInicioActual);
-            SET @FechaInicioAnterior = DATEADD(DAY, -@Dias, @FechaInicioActual);
-        END
-        ELSE IF @ModoComparacion = 'MismoPeriodoAnoAnterior'
-        BEGIN
-            SET @FechaInicioAnterior = DATEADD(YEAR, -1, @FechaInicioActual);
-            SET @FechaFinAnterior = DATEADD(YEAR, -1, @FechaFinActual);
-        END
-        ELSE IF @ModoComparacion = 'Custom' AND @FechaInicioAnteriorCustom IS NOT NULL AND @FechaFinAnteriorCustom IS NOT NULL
-        BEGIN
-            SET @FechaInicioAnterior = @FechaInicioAnteriorCustom;
-            SET @FechaFinAnterior = @FechaFinAnteriorCustom;
-        END
-  
-        ;WITH VentasActual AS (
-            SELECT 
-                C.U_Imagen,
-                C.Name AS Categoria,
-                C.code,
-                SUM(I.LineTotal) AS Ventas_Actual,
-                CAST(SUM(I.Quantity) AS INT) AS Unidades_Actual
-            FROM INV1 I
-            INNER JOIN OITM O ON I.ItemCode = O.ItemCode
-            INNER JOIN [@categoria] C ON O.U_Categoria = C.Code
-            INNER JOIN OINV T0 ON I.DocEntry = T0.DocEntry
-            WHERE 
-                T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
-                AND T0.CANCELED = 'N'
-                AND (
-                    @CanalParam IS NULL
-                    OR (
-                        (@CanalParam = 'Meli' AND ((I.WhsCode IN ('03', '05') AND T0.SlpCode IN (426, 364, 355)) OR (I.WhsCode = '01' AND T0.SlpCode IN (355, 398))))
-                        OR (@CanalParam = 'Falabella' AND I.WhsCode = '03' AND T0.SlpCode = 371)
-                        OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
-                        OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
-                        OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
-                        OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' AND I.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
-                    )
-                )
-                AND (@VendedorEmpresaParam IS NULL OR I.SlpCode = @VendedorEmpresaParam)
-            GROUP BY C.Name, C.U_Imagen, c.code
-        ),
-        VentasAnterior AS (
-            SELECT 
-                C.U_Imagen,
-                C.Name AS Categoria,
-                C.code,
-                SUM(I.LineTotal) AS Ventas_Anterior,
-                CAST(SUM(I.Quantity) AS INT) AS Unidades_Anterior
-            FROM INV1 I
-            INNER JOIN OITM O ON I.ItemCode = O.ItemCode
-            INNER JOIN [@categoria] C ON O.U_Categoria = C.Code
-            INNER JOIN OINV T0 ON I.DocEntry = T0.DocEntry
-            WHERE 
-                T0.DocDate BETWEEN @FechaInicioAnterior AND @FechaFinAnterior
-                AND T0.CANCELED = 'N'
-                AND (
-                    @CanalParam IS NULL
-                    OR (
-                        (@CanalParam = 'Meli' AND ((I.WhsCode IN ('03', '05') AND T0.SlpCode IN (426, 364, 355)) OR (I.WhsCode = '01' AND T0.SlpCode IN (355, 398))))
-                        OR (@CanalParam = 'Falabella' AND I.WhsCode = '03' AND T0.SlpCode = 371)
-                        OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
-                        OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND I.SlpCode IN (401, 397))
-                        OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
-                        OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' AND I.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
-                    )
-                )
-                AND (@VendedorEmpresaParam IS NULL OR I.SlpCode = @VendedorEmpresaParam)
-            GROUP BY C.Name, C.U_Imagen, C.code
-        )
-  
-        SELECT 
-            VA.U_Imagen,
-            VA.Categoria,
-            VA.code,
-            VA.Ventas_Actual,
-            VAnt.Ventas_Anterior,
-            VA.Unidades_Actual,
-            VAnt.Unidades_Anterior,
-            CASE 
-                WHEN VAnt.Ventas_Anterior = 0 THEN NULL
-                ELSE CAST(((VA.Ventas_Actual - VAnt.Ventas_Anterior) * 100.0 / VAnt.Ventas_Anterior) AS DECIMAL(18, 2))
-            END AS PorcentajeCambioVentas,
-            CASE 
-                WHEN VAnt.Unidades_Anterior = 0 THEN NULL
-                ELSE CAST(((VA.Unidades_Actual - VAnt.Unidades_Anterior) * 100.0 / VAnt.Unidades_Anterior) AS DECIMAL(18, 2))
-            END AS PorcentajeCambioUnidades
-        FROM VentasActual VA
-        LEFT JOIN VentasAnterior VAnt ON VA.Categoria = VAnt.Categoria
-        ORDER BY VA.Ventas_Actual DESC;
-      `;
-  
-      const request = pool.request();
-      request.input("CanalParamInput", sql.VarChar, canal);
-      request.input("VendedorEmpresaParamInput", sql.Int, vendedor);
-      request.input("PeriodoInput", sql.VarChar, periodo);
-      request.input("FechaInicioInput", sql.Date, fechaInicio);
-      request.input("FechaFinInput", sql.Date, fechaFin);
-      request.input("ModoComparacionInput", sql.VarChar, modoComparacion);
-      request.input("FechaInicioAnteriorInput", sql.Date, fechaInicioAnterior);
-      request.input("FechaFinAnteriorInput", sql.Date, fechaFinAnterior);
-  
-      const result = await request.query(query);
-      res.status(200).json(result.recordset);
-    } catch (error) {
-      console.error("❌ Error al obtener ventas por categoría comparadas:", error);
-      res.status(500).json({ error: "Error en el servidor." });
-    }
-  };
+  try {
+    const pool = await poolPromise;
+
+    const canal = req.query.canal || null;
+    const vendedor = req.query.vendedorEmpresa || null;
+    const periodo = req.query.periodo || "7D";
+    const fechaInicio = req.query.fechaInicio || null;
+    const fechaFin = req.query.fechaFin || null;
+    const modoComparacion = req.query.modoComparacion || "PeriodoAnterior";
+    const fechaInicioAnterior = req.query.fechaInicioAnterior || null;
+    const fechaFinAnterior = req.query.fechaFinAnterior || null;
+
+    const query = `
+      DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
+      DECLARE @VendedorEmpresaParam INT = @VendedorEmpresaParamInput;
+      DECLARE @Periodo VARCHAR(10) = @PeriodoInput;
+      DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
+      DECLARE @FechaFinCustom DATE = @FechaFinInput;
+      DECLARE @ModoComparacion VARCHAR(30) = @ModoComparacionInput;
+      DECLARE @FechaInicioAnteriorCustom DATE = @FechaInicioAnteriorInput;
+      DECLARE @FechaFinAnteriorCustom DATE = @FechaFinAnteriorInput;
+
+      DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
+      DECLARE @FechaInicioAnterior DATE, @FechaFinAnterior DATE;
+
+      IF (@FechaInicioCustom IS NOT NULL AND @FechaFinCustom IS NOT NULL)
+      BEGIN
+          SET @FechaInicioActual = @FechaInicioCustom;
+          SET @FechaFinActual = @FechaFinCustom;
+      END
+      ELSE
+      BEGIN
+          SET @FechaFinActual = CAST(GETDATE() AS DATE);
+          SET @FechaInicioActual =
+              CASE 
+                  WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
+                  WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
+                  WHEN @Periodo = '1M' THEN DATEADD(DAY, -30, @FechaFinActual)
+                  WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
+                  WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
+                  ELSE @FechaFinActual
+              END;
+      END
+
+      IF @ModoComparacion = 'PeriodoAnterior'
+      BEGIN
+          DECLARE @Dias INT = DATEDIFF(DAY, @FechaInicioActual, @FechaFinActual) + 1;
+          SET @FechaFinAnterior = DATEADD(DAY, -1, @FechaInicioActual);
+          SET @FechaInicioAnterior = DATEADD(DAY, -@Dias, @FechaInicioActual);
+      END
+      ELSE IF @ModoComparacion = 'MismoPeriodoAnoAnterior'
+      BEGIN
+          SET @FechaInicioAnterior = DATEADD(YEAR, -1, @FechaInicioActual);
+          SET @FechaFinAnterior = DATEADD(YEAR, -1, @FechaFinActual);
+      END
+      ELSE IF @ModoComparacion = 'Custom' AND @FechaInicioAnteriorCustom IS NOT NULL AND @FechaFinAnteriorCustom IS NOT NULL
+      BEGIN
+          SET @FechaInicioAnterior = @FechaInicioAnteriorCustom;
+          SET @FechaFinAnterior = @FechaFinAnteriorCustom;
+      END
+
+      ;WITH VentasActual AS (
+          SELECT 
+              C.U_Imagen,
+              C.Name AS Categoria,
+              C.code,
+              SUM(I.LineTotal) AS Ventas_Actual,
+              CAST(SUM(I.Quantity) AS INT) AS Unidades_Actual,
+              SUM(I.LineTotal - (I.StockPrice * I.Quantity)) AS MargenBruto_Actual
+          FROM INV1 I
+          INNER JOIN OITM O ON I.ItemCode = O.ItemCode
+          INNER JOIN [@categoria] C ON O.U_Categoria = C.Code
+          INNER JOIN OINV T0 ON I.DocEntry = T0.DocEntry
+          WHERE 
+              T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
+              AND T0.CANCELED = 'N'
+              AND (
+                  @CanalParam IS NULL
+                  OR (
+                      (@CanalParam = 'Meli' AND ((I.WhsCode IN ('03', '05') AND T0.SlpCode IN (426, 364, 355)) OR (I.WhsCode = '01' AND T0.SlpCode IN (355, 398))))
+                      OR (@CanalParam = 'Falabella' AND I.WhsCode = '03' AND T0.SlpCode = 371)
+                      OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
+                      OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
+                      OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
+                      OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' AND I.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
+                  )
+              )
+              AND (@VendedorEmpresaParam IS NULL OR I.SlpCode = @VendedorEmpresaParam)
+          GROUP BY C.Name, C.U_Imagen, c.code
+      ),
+      VentasAnterior AS (
+          SELECT 
+              C.U_Imagen,
+              C.Name AS Categoria,
+              C.code,
+              SUM(I.LineTotal) AS Ventas_Anterior,
+              CAST(SUM(I.Quantity) AS INT) AS Unidades_Anterior,
+              SUM(I.LineTotal - (I.StockPrice * I.Quantity)) AS MargenBruto_Anterior
+          FROM INV1 I
+          INNER JOIN OITM O ON I.ItemCode = O.ItemCode
+          INNER JOIN [@categoria] C ON O.U_Categoria = C.Code
+          INNER JOIN OINV T0 ON I.DocEntry = T0.DocEntry
+          WHERE 
+              T0.DocDate BETWEEN @FechaInicioAnterior AND @FechaFinAnterior
+              AND T0.CANCELED = 'N'
+              AND (
+                  @CanalParam IS NULL
+                  OR (
+                      (@CanalParam = 'Meli' AND ((I.WhsCode IN ('03', '05') AND T0.SlpCode IN (426, 364, 355)) OR (I.WhsCode = '01' AND T0.SlpCode IN (355, 398))))
+                      OR (@CanalParam = 'Falabella' AND I.WhsCode = '03' AND T0.SlpCode = 371)
+                      OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
+                      OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND I.SlpCode IN (401, 397))
+                      OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
+                      OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' AND I.SlpCode IN (227, 250, 205,209, 228, 226, 137, 212,225,138))
+                  )
+              )
+              AND (@VendedorEmpresaParam IS NULL OR I.SlpCode = @VendedorEmpresaParam)
+          GROUP BY C.Name, C.U_Imagen, C.code
+      )
+
+      SELECT 
+          VA.U_Imagen,
+          VA.Categoria,
+          VA.code,
+          VA.Ventas_Actual,
+          VAnt.Ventas_Anterior,
+          VA.Unidades_Actual,
+          VAnt.Unidades_Anterior,
+          VA.MargenBruto_Actual,
+          VAnt.MargenBruto_Anterior,
+          CASE 
+              WHEN VAnt.Ventas_Anterior = 0 THEN NULL
+              ELSE CAST(((VA.Ventas_Actual - VAnt.Ventas_Anterior) * 100.0 / VAnt.Ventas_Anterior) AS DECIMAL(18, 2))
+          END AS PorcentajeCambioVentas,
+          CASE 
+              WHEN VAnt.Unidades_Anterior = 0 THEN NULL
+              ELSE CAST(((VA.Unidades_Actual - VAnt.Unidades_Anterior) * 100.0 / VAnt.Unidades_Anterior) AS DECIMAL(18, 2))
+          END AS PorcentajeCambioUnidades,
+          CASE 
+              WHEN VA.Ventas_Actual = 0 THEN NULL
+              ELSE CAST((VA.MargenBruto_Actual * 100.0 / VA.Ventas_Actual) AS DECIMAL(18, 2))
+          END AS MargenBruto_Actual_Porcentaje,
+          CASE 
+              WHEN VAnt.Ventas_Anterior = 0 THEN NULL
+              ELSE CAST((VAnt.MargenBruto_Anterior * 100.0 / VAnt.Ventas_Anterior) AS DECIMAL(18, 2))
+          END AS MargenBruto_Anterior_Porcentaje
+      FROM VentasActual VA
+      LEFT JOIN VentasAnterior VAnt ON VA.Categoria = VAnt.Categoria
+      ORDER BY VA.Ventas_Actual DESC;
+    `;
+
+    const request = pool.request();
+    request.input("CanalParamInput", sql.VarChar, canal);
+    request.input("VendedorEmpresaParamInput", sql.Int, vendedor);
+    request.input("PeriodoInput", sql.VarChar, periodo);
+    request.input("FechaInicioInput", sql.Date, fechaInicio);
+    request.input("FechaFinInput", sql.Date, fechaFin);
+    request.input("ModoComparacionInput", sql.VarChar, modoComparacion);
+    request.input("FechaInicioAnteriorInput", sql.Date, fechaInicioAnterior);
+    request.input("FechaFinAnteriorInput", sql.Date, fechaFinAnterior);
+
+    const result = await request.query(query);
+    res.status(200).json(result.recordset);
+  } catch (error) {
+    console.error("❌ Error al obtener ventas por categoría comparadas:", error);
+    res.status(500).json({ error: "Error en el servidor." });
+  }
+};
 
   //PRODUCTOS RENTABLES VENDEDOR
 

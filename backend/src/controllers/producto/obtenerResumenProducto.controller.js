@@ -1,5 +1,6 @@
 const sql = require("mssql");
 const { poolPromise } = require('../../models/db');
+const obtenerUnidadesVendidasPorMes = require('../../models/producto/rotación-producto.model').obtenerUnidadesVendidasPorMes;
 
 const obtenerResumenProducto = async (req, res) => {
   try {
@@ -411,5 +412,21 @@ const obtenerTiempoEntregaProveedores = async (req, res) => {
     res.status(500).json({ error: 'Error del servidor' });
   }
 };
+// CONTROLLER OBTENER ROTACION ULTIMOS 4 AÑOS EN PRODUCTOS
+const getUnidadesVendidas = async (req, res) => {
+  try {
+    const { itemCode, canal } = req.query;
 
-module.exports = { obtenerResumenProducto , obtenerDetalleStock, obtenerVentasMensuales, obtenerHistoricoOrdenesCompra, obtenerStockPorAlmacen, obtenerTiempoEntregaProveedores };
+    if (!itemCode) {
+      return res.status(400).json({ error: "El parámetro 'itemCode' es requerido." });
+    }
+
+    const data = await obtenerUnidadesVendidasPorMes(itemCode, canal || null);
+    res.json(data);
+  } catch (error) {
+    console.error("Error en getUnidadesVendidas:", error.message);
+    res.status(500).json({ error: "Error al obtener las unidades vendidas." });
+  }
+};
+
+module.exports = { obtenerResumenProducto , obtenerDetalleStock, obtenerVentasMensuales, obtenerHistoricoOrdenesCompra, obtenerStockPorAlmacen, obtenerTiempoEntregaProveedores, getUnidadesVendidas };
