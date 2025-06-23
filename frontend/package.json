@@ -52,6 +52,7 @@
     "@mui/material": "^5.15.15",
     "@mui/system": "^6.4.3",
     "@mui/x-charts": "^7.28.0",
+    "@mui/x-data-grid": "^8.5.3",
     "@mui/x-date-pickers": "^7.27.1",
     "@mui/x-date-pickers-pro": "^7.27.1",
     "@tabler/icons-react": "2.30.0",

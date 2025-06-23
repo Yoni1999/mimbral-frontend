@@ -84,6 +84,12 @@ const Menuitems = [
     icon: IconTruckDelivery,
     href: "/utilities/analisis-producto1.1",
   },
+  {
+    id: uniqueId(),
+    title: "Gestión de Compras",
+    icon: IconChartLine,
+    href: "/utilities/gestion-compras",
+  },
 
   {
     navlabel: true,
@@ -106,12 +112,6 @@ const Menuitems = [
         title: "Ventas de Productos",
         icon: IconChartBar,
         href: "/informes/ventas-productos",
-      },
-      {
-        id: uniqueId(),
-        title: "Ventas Alta Rotación",
-        icon: IconChartLine,
-        href: "/informes/ventas-productos-alta-rotacion",
       },
       {
         id: uniqueId(),
