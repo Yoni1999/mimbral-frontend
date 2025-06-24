@@ -179,7 +179,7 @@ useEffect(() => {
               <Grid container spacing={2}>
                 {[
                   {
-                    title: filters.fechaInicio && filters.fechaFin ? "Total Ventas (Por Rango)" : `Total Ventas`,
+                    title: "Total Ventas",
                     value: formatVentas(data.ventasHoy.TotalVentasPeriodo),
                     subtitle: `Anterior: ${formatVentas(data.ventasHoy.TotalVentasAnterior)}`,
                     percentageChange: data.ventasHoy.PorcentajeCambio,

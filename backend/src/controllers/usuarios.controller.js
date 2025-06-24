@@ -1,13 +1,6 @@
 const { sql, poolPromise } = require("../models/db");
-const nodemailer = require("nodemailer");
+const { sendEmail } = require("../utils/emailService");
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
 
 const getUsuarios = async (req, res) => {
   try {
@@ -80,13 +73,13 @@ const updateUsuario = async (req, res) => {
         </div>
       `;
 
-      await transporter.sendMail({
-        from: `"Equipo Mimbral" <${process.env.EMAIL_USER}>`,
+      await sendEmail({
         to: email ?? current.EMAIL,
         subject: asunto,
         html: mensajeHTML,
-        text: `Tu cuenta ha sido ${estadoTexto} por un administrador.`
+        text: `Tu cuenta ha sido ${estadoTexto} por un administrador.`,
       });
+
 
       console.log(`📩 Notificación de cambio de estado enviada a ${email ?? current.EMAIL}`);
     }
