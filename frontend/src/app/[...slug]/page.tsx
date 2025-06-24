@@ -1,8 +1,7 @@
 "use client";
-import { Box, Typography, Button, Fab, Tooltip } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import { useRouter } from "next/navigation";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
-import ChatRoundedIcon from "@mui/icons-material/ChatRounded";
 
 const NotFoundSlugPage = () => {
   const router = useRouter();
@@ -23,15 +22,31 @@ const NotFoundSlugPage = () => {
       px={2}
       position="relative"
     >
+      {/* GIF en la parte superior */}
+      <Box
+        component="img"
+        src="/images/backgrounds/404-error-idea.gif"
+        alt="404"
+        sx={{
+          position: "absolute",
+          top: 0,
+          width: "100%",
+          maxHeight: { xs: 200, sm: 300, md: 400 },
+          objectFit: "contain",
+          pointerEvents: "none",
+        }}
+      />
+
       {/* Contenido principal */}
       <Box
         sx={{
           backgroundColor: "#fff",
-          padding: 6,
+          padding: { xs: 4, sm: 6 },
           borderRadius: 4,
           boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
           maxWidth: 500,
           width: "100%",
+          mt: { xs: 28, sm: 22 }, // espacio extra en móviles
         }}
       >
         <WarningAmberRoundedIcon color="warning" sx={{ fontSize: 80, mb: 2 }} />

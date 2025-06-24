@@ -82,7 +82,7 @@ const Menuitems = [
     id: uniqueId(),
     title: "Supply Chain",
     icon: IconTruckDelivery,
-    href: "/utilities/analisis-producto1.1",
+    href: "/utilities/supply-chain1",
   },
   {
     id: uniqueId(),
@@ -117,7 +117,7 @@ const Menuitems = [
         id: uniqueId(),
         title: "Tiempo de Entrega Proveedores",
         icon: IconTruckDelivery,
-        href: "/informes/tiempo-entrega-proveedores",
+        href: "/informes/tiempo-entrega-proveedoresss",
       },
     ],
   },

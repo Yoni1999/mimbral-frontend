@@ -103,12 +103,18 @@ const Profile = () => {
           },
         }}
       >
-        <MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose2(); // cierra el menú
+            router.push("/perfil"); // redirige a la página de perfil
+          }}
+        >
           <ListItemIcon>
             <IconUser width={20} />
           </ListItemIcon>
           <ListItemText>Mi Perfil</ListItemText>
         </MenuItem>
+
 
         {isAdmin && (
           <>
