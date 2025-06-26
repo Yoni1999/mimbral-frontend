@@ -163,7 +163,7 @@ const HeaderFilters = ({ filters, onFilterChange }: HeaderFiltersProps) => {
               <MenuItem value="Meli">Meli</MenuItem>
               <MenuItem value="Falabella">Falabella</MenuItem>
               <MenuItem value="Balmaceda">Balmaceda</MenuItem>
-              <MenuItem value="Vtex">Vitex</MenuItem>
+              <MenuItem value="Vitex">Vtex</MenuItem>
               <MenuItem value="Chorrillo">Chorrillo</MenuItem>
               <MenuItem value="Empresas">Empresas</MenuItem>
             </Select>

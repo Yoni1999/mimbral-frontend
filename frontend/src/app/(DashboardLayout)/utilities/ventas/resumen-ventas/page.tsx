@@ -23,22 +23,22 @@ import {
   IconStack2,
   IconBox,
 } from "@tabler/icons-react";
-import TopRentabilidadMinima from "./components/TopRentabilidadMinima";
+import TopRentabilidadMinima from "./components/Top10RentabilidadMinima";
 import NivelNavigation from "../components/NivelNavigation";
 import FotoDelDiaHeader, { Filters } from "./components/FotoDelDiaHeader.tsx";
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades } from "@/utils/format";
 import ProductosEstancadosTable from "./components/ProductosEstancadosTable";
 import ProductosVendidos from "./components/ProductosVendidos";
-import TopVendedoresChart from "./components/TopVendedores";
+import TopVendedoresChart from "./components/Top10Vendedores";
 
 const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
   ssr: false, 
 });
-const TopProductosChart = dynamic(() => import("./components/TopVendedores"), {
+const TopProductosChart = dynamic(() => import("./components/Top10Vendedores"), {
   ssr: false,
 });
-const RentabilidadChart = dynamic(() => import("./components/RentabilidadChart"), {
+const RentabilidadChart = dynamic(() => import("./components/Top10RentabilidadChart"), {
   ssr: false,
 });
 
@@ -356,13 +356,10 @@ const FotoDelDia = () => {
       <Grid item xs={12}> {/* Full width for detailed product table */}
         <ProductosVendidos data={detalleTransformado} />
       </Grid>
-      <Grid item xs={12}> {/* Another full width for a critical table */}
+      {/*
+      <Grid item xs={12}>
         <ProductosEstancadosTable data={productosEstancados} />
       </Grid>
-
-      {/*
-        GOALS / METAS
-        This section clearly outlines the progress towards different goals/targets.
       */}
       <Grid item xs={12}>
         <SeccionTitulo
@@ -394,3 +391,7 @@ const FotoDelDia = () => {
 };
 
 export default FotoDelDia;
+
+
+
+

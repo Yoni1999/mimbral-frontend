@@ -132,11 +132,17 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
   return (
     <DashboardCard
       title="Vendedores"
-      sx={{ minHeight: "480px", display: "flex", flexDirection: "column", justifyContent: "center" }}
+      sx={{
+        borderRadius: 4,
+        height: 405,
+        boxShadow: '0px 4px 20px rgba(0,0,0,0.1)',
+        background: '#fff',
+        p: 2,
+      }}
     >
-      <Box sx={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "350px" }}>
-        <Chart options={options} series={chartData} type="donut" width="550px" height="350px" />
-      </Box>
+    <Box sx={{ width: "100%", maxWidth: 500, mx: "auto" }}>
+      <Chart options={options} series={chartData} type="donut" width="100%" height="350px" />
+    </Box>
     </DashboardCard>
   );
 };

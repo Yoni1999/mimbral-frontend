@@ -144,11 +144,11 @@ const getMayorRentabilidad = async (req, res) => {
           O.ItemName AS Nombre_Producto,
           SUM(I.Quantity) AS Cantidad_Vendida,
           AVG(I.Price) AS Precio_Venta_Promedio,
-          AVG(O.AvgPrice) AS Costo_Promedio,
-          SUM((I.Price - O.AvgPrice) * I.Quantity) AS Rentabilidad_Total,
+          AVG(I.StockPrice) AS Costo_Promedio,
+          SUM((I.Price - I.StockPrice) * I.Quantity) AS Rentabilidad_Total,
           CASE 
               WHEN AVG(I.Price) = 0 THEN 0
-              ELSE ((AVG(I.Price) - AVG(O.AvgPrice)) / NULLIF(AVG(I.Price), 0)) * 100
+              ELSE ((AVG(I.Price) - AVG(I.StockPrice)) / NULLIF(AVG(I.Price), 0)) * 100
           END AS Margen_Porcentaje
       FROM INV1 I
       INNER JOIN OITM O ON I.ItemCode = O.ItemCode
@@ -157,7 +157,7 @@ const getMayorRentabilidad = async (req, res) => {
           T0.DocDate BETWEEN @FechaInicio AND @FechaFin
           AND T0.CANCELED = 'N'
           AND I.ItemCode <> '701001008'
-          AND O.AvgPrice > 0
+          AND I.StockPrice > 0
           AND (
               @CanalParam IS NULL
               OR (
@@ -191,6 +191,7 @@ const getMayorRentabilidad = async (req, res) => {
     res.status(500).json({ error: "Error en el servidor." });
   }
 };
+
 const getMenorRentabilidad = async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -235,11 +236,11 @@ const getMenorRentabilidad = async (req, res) => {
           O.ItemName AS Nombre_Producto,
           SUM(I.Quantity) AS Cantidad_Vendida,
           AVG(I.Price) AS Precio_Venta_Promedio,
-          AVG(O.AvgPrice) AS Costo_Promedio,
-          SUM((I.Price - O.AvgPrice) * I.Quantity) AS Rentabilidad_Total,
+          AVG(I.StockPrice) AS Costo_Promedio,
+          SUM((I.Price - I.StockPrice) * I.Quantity) AS Rentabilidad_Total,
           CASE 
               WHEN AVG(I.Price) = 0 THEN 0
-              ELSE ((AVG(I.Price) - AVG(O.AvgPrice)) / NULLIF(AVG(I.Price), 0)) * 100
+              ELSE ((AVG(I.Price) - AVG(I.StockPrice)) / NULLIF(AVG(I.Price), 0)) * 100
           END AS Margen_Porcentaje
       FROM INV1 I
       INNER JOIN OITM O ON I.ItemCode = O.ItemCode
@@ -247,8 +248,9 @@ const getMenorRentabilidad = async (req, res) => {
       WHERE 
           T0.DocDate BETWEEN @FechaInicio AND @FechaFin
           AND T0.CANCELED = 'N'
+          AND I.Quantity > 0
           AND I.ItemCode <> '701001008'
-          AND O.AvgPrice > 0
+          AND I.StockPrice > 0
           AND (
               @CanalParam IS NULL
               OR (
@@ -282,6 +284,7 @@ const getMenorRentabilidad = async (req, res) => {
     res.status(500).json({ error: "Error en el servidor." });
   }
 };
+
 
 
 module.exports = { getVentascanal, getMayorRentabilidad, getMenorRentabilidad};

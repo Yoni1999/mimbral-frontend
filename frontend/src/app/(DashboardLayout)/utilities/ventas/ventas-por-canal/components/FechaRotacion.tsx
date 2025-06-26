@@ -20,7 +20,7 @@ const sampleDataset = [
 
 const chartSettings = {
   yAxis: [{ label: 'Unidades', width: 60 }],
-  height: 420,
+  height: 300,
 };
 
 export default function ProductoAnalisisChart() {

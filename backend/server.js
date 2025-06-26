@@ -28,10 +28,11 @@ const obtenervendedorescanalRoutes = require("./src/routes/productosvendedor/obt
 const obtenerProductosDetenidos = require("./src/routes/informes/productosdetenidos.routes");
 const obtenerproveedoresRoutes = require("./src/routes/informes/filtrosdetenidos.routes");
 const productoRoutes = require("./src/routes/productos/producto.routes")
+const top10clientesRoutes = require("./src/routes/ventas-canal/ventascanal.routes"); 
 
 const app = express();
 app.use(cors({
-  origin: "*", // o "http://localhost:3000" si quieres restringir
+  origin: "*", 
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
@@ -72,6 +73,7 @@ app.use("/api/oc", obtenervendedorescanalRoutes);
 app.use("/api", obtenerProductosDetenidos);
 app.use("/api/",obtenerproveedoresRoutes);
 app.use("/api/", productoRoutes);
+app.use("/api", top10clientesRoutes);
 
 // Obtener IP local
 function getLocalIP() {

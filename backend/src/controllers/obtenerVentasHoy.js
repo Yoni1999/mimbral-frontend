@@ -945,10 +945,10 @@ const obtenerTopProductosDetallado = async (req, res) => {
           SUM(I.Quantity) AS Cantidad_Vendida,
           SUM(I.LineTotal) AS Total_Ventas,
           AVG(I.PriceAfVAT) AS Precio_Promedio_Venta,
-          SUM(I.Quantity * O.AvgPrice) AS Costo_Total,
-          SUM(I.LineTotal - (I.Quantity * O.AvgPrice)) AS Margen_Absoluto,
+          SUM(I.Quantity * I.StockPrice) AS Costo_Total,
+          SUM(I.LineTotal - (I.Quantity * I.StockPrice)) AS Margen_Absoluto,
           CAST(
-              (SUM(I.LineTotal - (I.Quantity * O.AvgPrice)) * 100.0) / NULLIF(SUM(I.LineTotal), 0)
+              (SUM(I.LineTotal - (I.Quantity * I.StockPrice)) * 100.0) / NULLIF(SUM(I.LineTotal), 0)
               AS DECIMAL(18, 2)
           ) AS Margen_Porcentaje,
           (
@@ -965,7 +965,7 @@ const obtenerTopProductosDetallado = async (req, res) => {
       WHERE 
           T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
           AND T0.CANCELED = 'N'
-          AND O.AvgPrice > 0
+          AND I.StockPrice > 0
           AND (
               @CanalParam IS NULL
               OR (
@@ -1001,6 +1001,7 @@ const obtenerTopProductosDetallado = async (req, res) => {
     res.status(500).json({ error: "Error en el servidor." });
   }
 };
+
 
 const obtenerProductosDetallado = async (req, res) => {
   try {
