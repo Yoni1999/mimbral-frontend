@@ -22,7 +22,7 @@ const NotFoundSlugPage = () => {
       px={2}
       position="relative"
     >
-      {/* GIF en la parte superior */}
+
       <Box
         component="img"
         src="/images/backgrounds/404-error-idea.gif"
