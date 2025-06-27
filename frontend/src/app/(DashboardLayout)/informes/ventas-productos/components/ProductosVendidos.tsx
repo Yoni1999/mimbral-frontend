@@ -1,11 +1,11 @@
 'use client';
+
 import React, { useState } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Paper, Typography, Box, TextField, TableSortLabel, Button, Stack
+  TableRow, Paper, Typography, Box, TextField, TableSortLabel
 } from '@mui/material';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
+import { formatUnidades, formatVentas } from '@/utils/format';
 
 type ProductoVendido = {
   imagen: string;
@@ -15,81 +15,46 @@ type ProductoVendido = {
   categoria: string;
   cantidadVendida: number;
   margenPorcentaje: number;
-  stock: number;
   margenBruto: number;
   precioPromedio: number;
   totalVentas: number;
-};
-
-type Props = {
-  data: ProductoVendido[];
+  facturasUnicas: number;
 };
 
 type Order = 'asc' | 'desc';
 type OrderBy =
   | 'cantidadVendida'
   | 'margenPorcentaje'
-  | 'stock'
   | 'margenBruto'
   | 'precioPromedio'
-  | 'totalVentas';
+  | 'totalVentas'
+  | 'facturasUnicas';
 
-const ProductosVendidos = ({ data }: Props) => {
+interface Props {
+  data: ProductoVendido[];
+  onSortChange: (campo: OrderBy) => void;
+  ordenActual: Order;
+  ordenPorActual: OrderBy;
+}
+
+const ProductosVendidos = ({
+  data,
+  onSortChange,
+  ordenActual,
+  ordenPorActual,
+}: Props) => {
   const [busqueda, setBusqueda] = useState('');
-  const [order, setOrder] = useState<Order>('desc');
-  const [orderBy, setOrderBy] = useState<OrderBy>('cantidadVendida');
-
-  const handleSort = (campo: OrderBy) => {
-    const isAsc = orderBy === campo && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
-    setOrderBy(campo);
-  };
 
   const filteredData = data.filter((producto) =>
     producto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
     producto.sku.toLowerCase().includes(busqueda.toLowerCase())
   );
 
-  const sortedData = [...filteredData].sort((a, b) => {
-    const valA = a[orderBy];
-    const valB = b[orderBy];
-    if (valA < valB) return order === 'asc' ? -1 : 1;
-    if (valA > valB) return order === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-  const exportToExcel = () => {
-    const excelData = sortedData.map((row) => ({
-      SKU: row.sku,
-      Nombre: row.nombre,
-      'Primer Nivel': row.primerNivel,
-      Categoría: row.categoria,
-      'Cantidad Vendida': row.cantidadVendida,
-      'Total Ventas': row.totalVentas,
-      '% Margen': row.margenPorcentaje,
-      Stock: row.stock,
-      'Margen Bruto': row.margenBruto,
-      'Precio Prom. Venta': row.precioPromedio,
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'ProductosVendidos');
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(blob, 'productos_vendidos.xlsx');
-  };
-
   return (
     <Box mt={3}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-        <Typography variant="h6" fontWeight={600}>
-          Productos Vendidos 
-        </Typography>
-        <Button variant="outlined" onClick={exportToExcel}>
-          Exportar a Excel
-        </Button>
-      </Stack>
+      <Typography variant="h6" fontWeight={600} mb={1}>
+        Productos Vendidos
+      </Typography>
 
       <Box mb={2}>
         <TextField
@@ -102,70 +67,59 @@ const ProductosVendidos = ({ data }: Props) => {
         />
       </Box>
 
-      <TableContainer
-        component={Paper}
-        sx={{
-          borderRadius: 2,
-        }}
-      >
-
+      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
         <Table stickyHeader>
           <TableHead>
             <TableRow>
               <TableCell>Imagen</TableCell>
               <TableCell>Producto (SKU)</TableCell>
-              <TableCell>Primer Nivel</TableCell>
-              <TableCell>Categoría</TableCell>
-              <TableCell sortDirection={orderBy === 'cantidadVendida' ? order : false}>
+              <TableCell>Primer Nivel / Categoría</TableCell>
+
+              <TableCell sortDirection={ordenPorActual === 'cantidadVendida' ? ordenActual : false}>
                 <TableSortLabel
-                  active={orderBy === 'cantidadVendida'}
-                  direction={orderBy === 'cantidadVendida' ? order : 'asc'}
-                  onClick={() => handleSort('cantidadVendida')}
+                  active={ordenPorActual === 'cantidadVendida'}
+                  direction={ordenPorActual === 'cantidadVendida' ? ordenActual : 'asc'}
+                  onClick={() => onSortChange('cantidadVendida')}
                 >
                   Cant. Vendida
                 </TableSortLabel>
               </TableCell>
-              <TableCell sortDirection={orderBy === 'totalVentas' ? order : false}>
+
+              <TableCell sortDirection={ordenPorActual === 'facturasUnicas' ? ordenActual : false}>
                 <TableSortLabel
-                  active={orderBy === 'totalVentas'}
-                  direction={orderBy === 'totalVentas' ? order : 'asc'}
-                  onClick={() => handleSort('totalVentas')}
+                  active={ordenPorActual === 'facturasUnicas'}
+                  direction={ordenPorActual === 'facturasUnicas' ? ordenActual : 'asc'}
+                  onClick={() => onSortChange('facturasUnicas')}
+                >
+                  Cant. Transacciones
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell sortDirection={ordenPorActual === 'totalVentas' ? ordenActual : false}>
+                <TableSortLabel
+                  active={ordenPorActual === 'totalVentas'}
+                  direction={ordenPorActual === 'totalVentas' ? ordenActual : 'asc'}
+                  onClick={() => onSortChange('totalVentas')}
                 >
                   Total Ventas
                 </TableSortLabel>
               </TableCell>
-              <TableCell sortDirection={orderBy === 'margenPorcentaje' ? order : false}>
+
+              <TableCell sortDirection={ordenPorActual === 'margenBruto' ? ordenActual : false}>
                 <TableSortLabel
-                  active={orderBy === 'margenPorcentaje'}
-                  direction={orderBy === 'margenPorcentaje' ? order : 'asc'}
-                  onClick={() => handleSort('margenPorcentaje')}
+                  active={ordenPorActual === 'margenBruto'}
+                  direction={ordenPorActual === 'margenBruto' ? ordenActual : 'asc'}
+                  onClick={() => onSortChange('margenBruto')}
                 >
-                  % Margen
+                  Margen Bruto / %
                 </TableSortLabel>
               </TableCell>
-              <TableCell sortDirection={orderBy === 'stock' ? order : false}>
+
+              <TableCell sortDirection={ordenPorActual === 'precioPromedio' ? ordenActual : false}>
                 <TableSortLabel
-                  active={orderBy === 'stock'}
-                  direction={orderBy === 'stock' ? order : 'asc'}
-                  onClick={() => handleSort('stock')}
-                >
-                  Stock
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sortDirection={orderBy === 'margenBruto' ? order : false}>
-                <TableSortLabel
-                  active={orderBy === 'margenBruto'}
-                  direction={orderBy === 'margenBruto' ? order : 'asc'}
-                  onClick={() => handleSort('margenBruto')}
-                >
-                  Margen Bruto
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sortDirection={orderBy === 'precioPromedio' ? order : false}>
-                <TableSortLabel
-                  active={orderBy === 'precioPromedio'}
-                  direction={orderBy === 'precioPromedio' ? order : 'asc'}
-                  onClick={() => handleSort('precioPromedio')}
+                  active={ordenPorActual === 'precioPromedio'}
+                  direction={ordenPorActual === 'precioPromedio' ? ordenActual : 'asc'}
+                  onClick={() => onSortChange('precioPromedio')}
                 >
                   Precio Prom. Venta
                 </TableSortLabel>
@@ -174,7 +128,7 @@ const ProductosVendidos = ({ data }: Props) => {
           </TableHead>
 
           <TableBody>
-            {sortedData.map((row, idx) => (
+            {filteredData.map((row, idx) => (
               <TableRow key={idx}>
                 <TableCell>
                   <img
@@ -189,18 +143,29 @@ const ProductosVendidos = ({ data }: Props) => {
                     style={{ objectFit: 'cover', borderRadius: 4 }}
                   />
                 </TableCell>
+
                 <TableCell>
                   <Typography fontWeight={600}>{row.nombre}</Typography>
                   <Typography variant="caption" color="textSecondary">{row.sku}</Typography>
                 </TableCell>
-                <TableCell>{row.primerNivel}</TableCell>
-                <TableCell>{row.categoria}</TableCell>
-                <TableCell>{row.cantidadVendida}</TableCell>
-                <TableCell>${row.totalVentas.toLocaleString('es-CL')}</TableCell>
-                <TableCell>{row.margenPorcentaje?.toFixed(2)}%</TableCell>
-                <TableCell>{row.stock}</TableCell>
-                <TableCell>${row.margenBruto.toLocaleString('es-CL')}</TableCell>
-                <TableCell>${row.precioPromedio.toLocaleString('es-CL')}</TableCell>
+
+                <TableCell>
+                  <Typography>{row.primerNivel}</Typography>
+                  <Typography variant="caption" color="textSecondary">{row.categoria}</Typography>
+                </TableCell>
+
+                <TableCell>{formatUnidades(row.cantidadVendida)}</TableCell>
+                <TableCell>{row.facturasUnicas}</TableCell>
+                <TableCell>{formatVentas(row.totalVentas)}</TableCell>
+
+                <TableCell>
+                  <Typography>{formatVentas(row.margenBruto)}</Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {row.margenPorcentaje?.toFixed(2)}%
+                  </Typography>
+                </TableCell>
+
+                <TableCell>{formatVentas(row.precioPromedio)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

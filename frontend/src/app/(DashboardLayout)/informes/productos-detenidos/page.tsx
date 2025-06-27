@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Box, Typography, Divider, Snackbar, Alert, IconButton,
-  Pagination, CircularProgress
+  Pagination, CircularProgress, Button
 } from "@mui/material";
 import { TrendingDown, Close as CloseIcon } from "@mui/icons-material";
 import ProductosEstancadosTable from "./components/ProductosEstancadosTable";
@@ -11,6 +11,7 @@ import HeaderProductosDetenidos from "./components/HeaderProductosDetenidos";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 import CustomTabs from "../components/CustomTabs";
+import * as XLSX from "xlsx";
 
 const limit = 20;
 
@@ -110,6 +111,46 @@ const ProductosDetenidosPage = () => {
     }
   };
 
+  const exportarExcelActivos = async () => {
+    try {
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
+      params.append("sinPaginacion", "true");
+
+      const res = await fetchWithToken(`${BACKEND_URL}/api/productos-detenidos?${params}`);
+      const data = await res!.json();
+
+      const worksheet = XLSX.utils.json_to_sheet(data.data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Activos");
+      XLSX.writeFile(workbook, "productos_detenidos_activos.xlsx");
+    } catch (err) {
+      console.error("Error al exportar activos:", err);
+    }
+  };
+
+  const exportarExcelInactivos = async () => {
+    try {
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
+      params.append("sinPaginacion", "true");
+
+      const res = await fetchWithToken(`${BACKEND_URL}/api/stock-detenido-ventas?${params}`);
+      const data = await res!.json();
+
+      const worksheet = XLSX.utils.json_to_sheet(data.data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Inactivos");
+      XLSX.writeFile(workbook, "productos_detenidos_inactivos.xlsx");
+    } catch (err) {
+      console.error("Error al exportar inactivos:", err);
+    }
+  };
+
   const handleFilterChange = (newFilters: FiltroProductos) => {
     setFilters(newFilters);
     setPage(1);
@@ -145,9 +186,14 @@ const ProductosDetenidosPage = () => {
             <HeaderProductosDetenidos onFilterChange={handleFilterChange} />
             <Divider sx={{ my: 3 }} />
 
-            <Typography variant="subtitle2" mb={2}>
-              Mostrando {productos.length} de {total} productos
-            </Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="subtitle2">
+                Mostrando {productos.length} de {total} productos
+              </Typography>
+              <Button variant="outlined" onClick={exportarExcelActivos}>
+                Exportar Excel
+              </Button>
+            </Box>
 
             {loading ? (
               <Box display="flex" flexDirection="column" alignItems="center" height={200} justifyContent="center">
@@ -184,9 +230,14 @@ const ProductosDetenidosPage = () => {
             <HeaderProductosDetenidos onFilterChange={handleFilterChange} />
             <Divider sx={{ my: 3 }} />
 
-            <Typography variant="subtitle2" mb={2}>
-              Mostrando {stockInactivos.length} productos
-            </Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="subtitle2">
+                Mostrando {stockInactivos.length} productos
+              </Typography>
+              <Button variant="outlined" onClick={exportarExcelInactivos}>
+                Exportar Excel
+              </Button>
+            </Box>
 
             {loadingInactivos ? (
               <Box display="flex" justifyContent="center" alignItems="center" height={200}>
@@ -227,7 +278,7 @@ const ProductosDetenidosPage = () => {
             fontSize: "0.9rem",
           }}
         >
-           Este informe de productos detenidos se actualiza a diario, ¡si necesitas información más reciente pide al usuario ADMIN que actualice la información! 
+          Este informe de productos detenidos se actualiza a diario, ¡si necesitas información más reciente pide al usuario ADMIN que actualice la información!
         </Alert>
       </Snackbar>
     </Box>

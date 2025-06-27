@@ -1,15 +1,16 @@
 "use client";
 
-import { Card, CardContent, Typography, Box, Stack } from "@mui/material";
+import { CardContent, Typography, Box, Paper } from "@mui/material"; // Added Paper
 import { IconArrowUpRight, IconArrowDownRight } from "@tabler/icons-react";
+import React from "react"; // Ensure React is imported
 
 interface Props {
   title: string;
-  value: string;
+  value: string | number;
   subtitle?: string;
   percentageChange?: number;
   icon?: React.ReactNode;
-  small?: boolean;
+  elevation?: number; // Prop for controlling Paper's shadow
 }
 
 const MetricCard = ({
@@ -18,89 +19,98 @@ const MetricCard = ({
   subtitle,
   percentageChange,
   icon,
-  small = false,
+  elevation = 1, // Default elevation to 1 for a subtle shadow
 }: Props) => {
   const isNegative = percentageChange !== undefined && percentageChange < 0;
-  const isPositive = percentageChange !== undefined && percentageChange >= 0;
-  const variationColor = isNegative ? "error.main" : "success.main";
 
   return (
-    <Card
+    <Paper
+      elevation={elevation} // Use elevation prop
+      variant="outlined" // Gives it a clean border
       sx={{
-        borderRadius: 3,
-        boxShadow: 2,
-        background: "#ffffff",
-        border: "1px solid #e0e0e0",
+        borderRadius: 2,
+        // Removed explicit border as variant="outlined" handles it
         transition: "0.3s",
-        "&:hover": { transform: "translateY(-3px)", boxShadow: 4 },
-        height: small ? "100px" : "auto",
+        "&:hover": {
+          transform: "translateY(-3px)", // Subtle lift effect
+          boxShadow: `0px ${elevation + 4}px ${elevation * 2 + 8}px rgba(0,0,0,0.08)`, // More pronounced hover shadow
+        },
       }}
     >
-      <CardContent
-        sx={{
-          padding: small ? 1 : 2,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-        }}
-      >
-        <Stack direction="row" alignItems="center" spacing={1}>
-          {icon}
-          <Typography
-            variant="subtitle2"
-            fontWeight={600}
-            color="text.secondary"
-            fontSize={small ? "0.8rem" : "0.95rem"}
-          >
+      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+        {/* 🔹 Icon and Title */}
+        <Box display="flex" alignItems="center" gap={1} mb={1}>
+          {icon && ( // Only render icon Box if an icon is provided
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                backgroundColor: "rgba(41, 98, 255, 0.1)", // Primary blue background
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "primary.main", // Primary blue icon color
+                flexShrink: 0,
+              }}
+            >
+              {icon}
+            </Box>
+          )}
+          <Typography variant="subtitle2" color="text.secondary" fontWeight={600} noWrap>
             {title}
           </Typography>
-        </Stack>
+        </Box>
 
-        <Box mt={0.5} display="flex" alignItems="center">
+        {/* 🔹 Value and Percentage Change */}
+        <Box display="flex" alignItems="baseline" justifyContent="space-between" mt={1}>
           <Typography
-            variant={small ? "h6" : "h5"}
-            fontWeight={700}
-            color="primary"
+            variant="h5" // Slightly smaller than h4, but still prominent
+            sx={{
+              fontWeight: 700,
+              letterSpacing: "-0.5px",
+              color: "text.primary",
+              lineHeight: 1, // Tighter line height for the main value
+              mr: 1, // Margin right to separate from percentage change
+            }}
           >
             {value}
           </Typography>
 
           {percentageChange !== undefined && (
             <Box
+              px={0.8} // Reduced horizontal padding
+              py={0.2} // Reduced vertical padding
+              borderRadius="4px" // Slightly less rounded than 12 for a cleaner look
+              bgcolor={isNegative ? "error.light" : "success.light"}
+              color={isNegative ? "error.main" : "success.main"}
+              fontSize="0.75rem" // Slightly smaller font size for percentage
+              fontWeight="bold"
               display="flex"
               alignItems="center"
-              color={variationColor}
-              ml={1}
-              sx={{
-                fontWeight: "bold",
-                fontSize: small ? "0.75rem" : "0.9rem",
-              }}
+              flexShrink={0} // Prevents percentage from shrinking on smaller screens
             >
-              {isNegative ? (
-                <IconArrowDownRight size={16} />
-              ) : (
-                <IconArrowUpRight size={16} />
-              )}
-              {Math.abs(percentageChange)}%
+              {isNegative ? <IconArrowDownRight size={14} /> : <IconArrowUpRight size={14} />} {/* Smaller icon */}
+              &nbsp;{Math.abs(percentageChange).toFixed(2)}%
             </Box>
           )}
         </Box>
 
+        {/* 🔹 Subtitle (if available) */}
         {subtitle && (
           <Typography
-            variant="caption"
-            color="text.secondary"
+            variant="caption" // Smaller variant for subtle subtitle
             sx={{
-              mt: 0.5,
-              fontSize: small ? "0.7rem" : "0.8rem",
-              lineHeight: 1.3,
+              color: "text.secondary",
+              mt: 0.5, // Reduced top margin for a tighter grouping
+              display: "block", // Ensures it takes its own line below the main value
             }}
           >
             {subtitle}
           </Typography>
         )}
       </CardContent>
-    </Card>
+    </Paper>
   );
 };
 

@@ -1,4 +1,10 @@
-const { obtenerTopClientesCompradoresDB } = require("../../models/ventas-canal/clientes.model");
+const {
+  obtenerTopClientesCompradoresDB
+} = require("../../models/ventas-canal/clientes.model");
+
+const {
+  obtenerVentasPorMesYCanal
+} = require("../../models/ventas-canal/rotacion-ventas"); // <-- Asegúrate de que el path coincida con tu estructura
 
 const obtenerTopClientesCompradores = async (req, res) => {
   try {
@@ -23,4 +29,19 @@ const obtenerTopClientesCompradores = async (req, res) => {
   }
 };
 
-module.exports = { obtenerTopClientesCompradores };
+const obtenerVentasMensualesPorCanal = async (req, res) => {
+  const { canal } = req.query;
+
+  try {
+    const data = await obtenerVentasPorMesYCanal(canal);
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener ventas por canal:', error);
+    res.status(500).json({ error: 'Error al obtener datos' });
+  }
+};
+
+module.exports = {
+  obtenerTopClientesCompradores,
+  obtenerVentasMensualesPorCanal 
+};

@@ -41,7 +41,8 @@ interface Props {
 }
 
 const canales = [
-  { value: "Chorrillo", label: "Sucrusal Chorrillo" },
+  { value: "", label: "Todos los canales" }, 
+  { value: "Chorrillo", label: "Sucursal Chorrillos" },
   { value: "Meli", label: "Mercado Libre" },
   { value: "Vitex", label: "Vtex" },
   { value: "Empresas", label: "Ventas Empresas" },
@@ -56,7 +57,6 @@ const periodos = [
   { value: "1M", label: "Último mes" },
   { value: "3M", label: "Últimos 3 meses" },
   { value: "6M", label: "Últimos 6 meses" },
-  { value: "1Y", label: "Último año" },
   { value: "RANGO", label: "Rango personalizado" },
 ];
 

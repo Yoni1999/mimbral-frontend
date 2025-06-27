@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import {
-  Box, Drawer, Typography, IconButton, Divider, Grid, Avatar,
+  Box, Drawer, Typography, IconButton, Grid, Avatar,
   FormControl, InputLabel, Select, MenuItem, TextField, Button, CircularProgress
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
@@ -14,7 +14,7 @@ import { BACKEND_URL } from "@/config";
 interface Props {
   open: boolean;
   onClose: () => void;
-  onApply: (filters: Filters, producto?: Producto | null) => void; // ✅ acepta también el producto seleccionado
+  onApply: (filters: Filters, producto?: Producto | null) => void;
 }
 
 type Producto = {
@@ -54,11 +54,17 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
     canal: "",
     modoComparacion: "",
   });
-  
+
   const [skuOptions, setSkuOptions] = useState<Producto[]>([]);
   const [loadingSku, setLoadingSku] = useState(false);
   const [selectedProducto, setSelectedProducto] = useState<Producto | null>(null);
   const [inputValue, setInputValue] = useState("");
+  const [errores, setErrores] = useState({
+    periodo: false,
+    temporada: false,
+    fechaInicio: false,
+    fechaFin: false,
+  });
 
   const handleChange = (key: keyof Filters, value: string) => {
     let updated = { ...filters, [key]: value };
@@ -96,7 +102,6 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
     }
 
     setFilters(updated);
-    console.log("Filtros aplicados:", updated);
   };
 
   const handleClear = () => {
@@ -112,6 +117,7 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
     setFilters(reset);
     setSelectedProducto(null);
     setInputValue("");
+    setErrores({ periodo: false, temporada: false, fechaInicio: false, fechaFin: false });
   };
 
   const fetchSKUs = async (query: string) => {
@@ -130,16 +136,12 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
   };
 
   return (
-    <Drawer
-      anchor="right"
-      open={open}
-      onClose={onClose}
-      PaperProps={{ sx: { width: { xs: "100%", sm: 400 }, p: 3 } }}
-    >
+    <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: "100%", sm: 400 }, p: 3 } }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6">Filtros Avanzados</Typography>
         <IconButton onClick={onClose}><CloseIcon /></IconButton>
       </Box>
+
       <Grid container spacing={2} direction="column">
         <Grid item>
           <Autocomplete
@@ -181,11 +183,13 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
             )}
           />
         </Grid>
+
         <Grid item>
           <FormControl fullWidth size="small">
             <InputLabel>Temporada</InputLabel>
             <Select
               value={filters.temporada}
+              error={errores.temporada}
               onChange={(e) => handleChange("temporada", e.target.value)}
               label="Temporada"
             >
@@ -195,11 +199,13 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
             </Select>
           </FormControl>
         </Grid>
+
         <Grid item>
           <FormControl fullWidth size="small">
             <InputLabel>Período</InputLabel>
             <Select
               value={filters.periodo}
+              error={errores.periodo}
               onChange={(e) => handleChange("periodo", e.target.value)}
               label="Período"
             >
@@ -212,6 +218,7 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
             </Select>
           </FormControl>
         </Grid>
+
         <Grid item>
           <FormControl fullWidth size="small">
             <InputLabel>Canal</InputLabel>
@@ -230,6 +237,7 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
             </Select>
           </FormControl>
         </Grid>
+
         <Grid item>
           <TextField
             fullWidth
@@ -238,9 +246,11 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
             size="small"
             InputLabelProps={{ shrink: true }}
             value={filters.fechaInicio}
+            error={errores.fechaInicio}
             onChange={(e) => handleChange("fechaInicio", e.target.value)}
           />
         </Grid>
+
         <Grid item>
           <TextField
             fullWidth
@@ -249,9 +259,11 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
             size="small"
             InputLabelProps={{ shrink: true }}
             value={filters.fechaFin}
+            error={errores.fechaFin}
             onChange={(e) => handleChange("fechaFin", e.target.value)}
           />
         </Grid>
+
         <Grid item>
           <FormControl fullWidth size="small">
             <InputLabel>Comparar con</InputLabel>
@@ -265,21 +277,44 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
             </Select>
           </FormControl>
         </Grid>
+
+        {selectedProducto && (errores.periodo || errores.temporada || errores.fechaInicio || errores.fechaFin) && (
+          <Typography color="error" variant="body2">
+            Debes seleccionar un período, temporada o fechas si buscas por SKU.
+          </Typography>
+        )}
+
         <Grid item container spacing={2}>
           <Grid item xs={6}>
             <Button fullWidth variant="outlined" onClick={handleClear} startIcon={<DeleteOutlineIcon />}>Limpiar</Button>
           </Grid>
-          <Button
-            fullWidth
-            variant="contained"
-            onClick={() => {
-              onApply(filters, selectedProducto); 
-              onClose();
-            }}
-          >
-            Aplicar
-          </Button>
+          <Grid item xs={6}>
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={() => {
+                const requiereFecha = selectedProducto !== null;
+                const periodoOK = filters.periodo !== "";
+                const temporadaOK = filters.temporada !== "";
+                const fechasOK = filters.fechaInicio !== "" && filters.fechaFin !== "";
+                const valido = !requiereFecha || periodoOK || temporadaOK || fechasOK;
 
+                setErrores({
+                  periodo: requiereFecha && !periodoOK,
+                  temporada: requiereFecha && !temporadaOK,
+                  fechaInicio: requiereFecha && filters.fechaInicio === "",
+                  fechaFin: requiereFecha && filters.fechaFin === "",
+                });
+
+                if (!valido) return;
+
+                onApply(filters, selectedProducto);
+                onClose();
+              }}
+            >
+              Aplicar
+            </Button>
+          </Grid>
         </Grid>
       </Grid>
     </Drawer>

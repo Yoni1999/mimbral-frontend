@@ -18,7 +18,7 @@ import HeaderVentasProductosDrawer from "./components/HeaderVentasProductosDrawe
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 
-const limit = 100; // <-- Cambiado a 100
+const limit = 100;
 
 interface FiltrosVentas {
   canal?: string;
@@ -31,6 +31,15 @@ interface FiltrosVentas {
   subcategoria?: string;
 }
 
+type Order = "asc" | "desc";
+type OrderBy =
+  | "cantidadVendida"
+  | "margenPorcentaje"
+  | "margenBruto"
+  | "precioPromedio"
+  | "totalVentas"
+  | "facturasUnicas";
+
 const InformeVentaPage = () => {
   const [filters, setFilters] = useState<FiltrosVentas>({ periodo: "1D", canal: "Vitex" });
   const [productos, setProductos] = useState([]);
@@ -38,10 +47,17 @@ const InformeVentaPage = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showMensaje, setShowMensaje] = useState(true);
+  const [orden, setOrden] = useState<Order>("desc");
+  const [ordenPor, setOrdenPor] = useState<OrderBy>("cantidadVendida");
 
   const totalPages = Math.ceil(total / limit);
 
-  const fetchProductos = async (filtros: FiltrosVentas, pageNumber = 1) => {
+  const fetchProductos = async (
+    filtros: FiltrosVentas,
+    pageNumber = 1,
+    campoOrden: OrderBy = ordenPor,
+    direccionOrden: Order = orden
+  ) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -53,6 +69,8 @@ const InformeVentaPage = () => {
 
       params.append("offset", offset.toString());
       params.append("limit", limit.toString());
+      params.append("orderBy", campoOrden);
+      params.append("order", direccionOrden);
 
       const res = await fetchWithToken(`${BACKEND_URL}/api/obtener-productos-detallado?${params}`);
       const data = await res!.json();
@@ -66,8 +84,46 @@ const InformeVentaPage = () => {
     }
   };
 
+  const handleSortChange = (campo: OrderBy) => {
+    const nuevoOrden = ordenPor === campo && orden === "asc" ? "desc" : "asc";
+    setOrden(nuevoOrden);
+    setOrdenPor(campo);
+    fetchProductos(filters, page, campo, nuevoOrden);
+  };
+
+  const exportarTodosLosProductos = async () => {
+    try {
+      const params = new URLSearchParams();
+
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
+
+      params.append("sinPaginacion", "true");
+      params.append("orderBy", ordenPor);
+      params.append("order", orden);
+
+      const res = await fetchWithToken(`${BACKEND_URL}/api/obtener-productos-detallado?${params}`);
+      const data = await res!.json();
+
+      if (Array.isArray(data.data)) {
+        exportToExcel(data.data);
+      }
+    } catch (error) {
+      console.error("Error al exportar productos:", error);
+    }
+  };
+
+  const exportToExcel = (productosData: any[]) => {
+    import("xlsx").then((xlsx) => {
+      const worksheet = xlsx.utils.json_to_sheet(productosData);
+      const workbook = xlsx.utils.book_new();
+      xlsx.utils.book_append_sheet(workbook, worksheet, "Productos");
+      xlsx.writeFile(workbook, "informe_venta_productos.xlsx");
+    });
+  };
+
   const handleFilterChange = (newFilters: FiltrosVentas) => {
-    console.log("Filtros aplicados:", newFilters);
     setFilters(newFilters);
     setPage(1);
     fetchProductos(newFilters, 1);
@@ -106,16 +162,45 @@ const InformeVentaPage = () => {
 
       <Divider sx={{ my: 2 }} />
 
-      <Typography variant="subtitle2" mb={2}>
-        Mostrando {productos.length} de {total} productos
-      </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="subtitle2">
+          {total === 0 ? (
+            "Sin productos para mostrar"
+          ) : (
+            <>
+              Mostrando del <strong>{(page - 1) * limit + 1}</strong> al{" "}
+              <strong>{Math.min(page * limit, total)}</strong> de{" "}
+              <strong>{total}</strong> productos
+            </>
+          )}
+        </Typography>
+
+        <button
+          onClick={exportarTodosLosProductos}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#1976d2",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        >
+          Exportar Informe a Excel
+        </button>
+      </Box>
 
       {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" height={200}>
           <CircularProgress />
         </Box>
       ) : (
-        <ProductosVendidosTable data={productos} />
+        <ProductosVendidosTable
+          data={productos}
+          onSortChange={handleSortChange}
+          ordenActual={orden}
+          ordenPorActual={ordenPor}
+        />
       )}
 
       {totalPages > 1 && !loading && (
@@ -159,7 +244,8 @@ const InformeVentaPage = () => {
             fontSize: "0.9rem",
           }}
         >
-           Este informe se actualiza a diario con la información de ventas más reciente, si necesitas información más actualizada pide al usuario ADMIN que actualice la información.
+          Este informe se actualiza a diario con la información de ventas más reciente. Si necesitas
+          información más actualizada, pide al usuario ADMIN que actualice la información.
         </Alert>
       </Snackbar>
     </Box>

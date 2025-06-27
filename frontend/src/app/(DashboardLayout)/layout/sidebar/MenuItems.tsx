@@ -1,20 +1,6 @@
 // src/layout/Menuitems.ts
-import {
-  IconLayoutDashboard,
-  IconReportAnalytics,
-  IconChartBar,
-  IconChartDonut,
-  IconChartPie,
-  IconChartLine,
-  IconBoxSeam,
-  IconPackages,
-  IconHierarchy3,
-  IconTruckDelivery,
-  IconClipboardCheck,
-  IconTargetArrow,
-  IconMessage2,
-  IconChevronRight,
-} from "@tabler/icons-react";
+import {IconLayoutDashboard,IconCreditCard, IconChartBar,IconChartDonut,IconChartPie,IconChartLine,
+  IconBoxSeam,IconHierarchy3,IconTruckDelivery,IconClipboardCheck,IconTargetArrow,IconMessage2,} from "@tabler/icons-react";
 
 import { uniqueId } from "lodash";
 const Menuitems = [
@@ -90,7 +76,17 @@ const Menuitems = [
     icon: IconChartLine,
     href: "/utilities/gestion-compras",
   },
-
+  {
+    navlabel: true,
+    subheader: "Clientes",
+    divider: true,
+  },
+    {
+      id: uniqueId(),
+      title: "Línea de crédito",
+      icon: IconCreditCard,
+      href: "/utilities/linea-credito",
+    },
   {
     navlabel: true,
     subheader: "Informes & Metas",

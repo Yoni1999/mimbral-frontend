@@ -52,12 +52,18 @@ const TopProductosChart: React.FC<Props> = ({ data }) => {
     tooltip: {
       theme: "dark",
       y: { formatter: (val: number) => `${val.toLocaleString()} unidades` },
+      marker: {
+        show: true,
+      },
+      fixed: {
+        enabled: false, // permite que se sobreponga naturalmente
+      },
     },
     dataLabels: {
       enabled: true,
       style: { fontSize: "12px", colors: ["#fff"] },
       offsetX: 10,
-      formatter: (val) => `${val} u.`, // 🔹 Simplifica la visualización
+      formatter: (val) => `${val} u.`,
     },
   };
 
@@ -75,6 +81,8 @@ const TopProductosChart: React.FC<Props> = ({ data }) => {
         boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
         background: "#fff",
         p: 2,
+        position: "relative",   // 💡 permite que el tooltip se renderice sobre el card
+        overflow: "visible",    // 💡 importante para que el tooltip no se recorte
       }}
     >
       <CardContent>
@@ -82,7 +90,7 @@ const TopProductosChart: React.FC<Props> = ({ data }) => {
           Top 10 Productos Más Vendidos
         </Typography>
 
-        <Box sx={{ overflow: "hidden" }}>
+        <Box sx={{ position: "relative", zIndex: 1 }}>
           <Chart options={options} series={series} type="bar" height={400} />
         </Box>
       </CardContent>

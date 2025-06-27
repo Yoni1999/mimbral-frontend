@@ -36,26 +36,22 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
       setNoData(true);
       return;
     }
-    
+
     const fetchData = async () => {
       try {
         const params = new URLSearchParams();
-    
+
         if (canal) params.append("canal", canal);
         if (periodo) params.append("periodo", periodo);
         if (fechaInicio && fechaFin) {
           params.append("fechaInicio", fechaInicio);
           params.append("fechaFin", fechaFin);
         }
-    
+
         const url = `${BACKEND_URL}/api/canal-vendedor?${params.toString()}`;
-    
         const response = await fetchWithToken(url);
         const data = await response?.json();
-        
-    
-        // resto igual...
-    
+
         if (!Array.isArray(data) || data.length === 0) {
           setLabels(["Sin datos"]);
           setChartData([0.001]);
@@ -97,12 +93,15 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
       },
     },
     labels,
+    legend: {
+      show: false, // 👈 Elimina la leyenda
+    },
     responsive: [
       {
         breakpoint: 480,
         options: {
           chart: { width: 200 },
-          legend: { position: "bottom" },
+          legend: { show: false },
         },
       },
     ],
@@ -118,12 +117,28 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
     plotOptions: {
       pie: {
         donut: {
+          size: "70%",
           labels: {
             show: true,
-            name: { show: true },
-            value: { show: !noData },
+            name: {
+              show: true,
+              fontSize: "16px",
+              fontWeight: 600,
+              color: "#000",
+              offsetY: -10,
+            },
+            value: {
+              show: !noData,
+              fontSize: "18px",
+              fontWeight: 700,
+              color: "#000",
+              offsetY: 10,
+              formatter: (val: string) => `${parseFloat(val).toFixed(1)}%`,
+            },
+            total: {
+              show: false,
+            },
           },
-          size: "70%",
         },
       },
     },
@@ -134,15 +149,15 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
       title="Vendedores"
       sx={{
         borderRadius: 4,
-        height: 405,
-        boxShadow: '0px 4px 20px rgba(0,0,0,0.1)',
-        background: '#fff',
+        height: "100%",
+        boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
+        background: "#fff",
         p: 2,
       }}
     >
-    <Box sx={{ width: "100%", maxWidth: 500, mx: "auto" }}>
-      <Chart options={options} series={chartData} type="donut" width="100%" height="350px" />
-    </Box>
+      <Box sx={{ width: "100%", maxWidth: 500, mx: "auto" }}>
+        <Chart options={options} series={chartData} type="donut" width="100%" height="350px" />
+      </Box>
     </DashboardCard>
   );
 };

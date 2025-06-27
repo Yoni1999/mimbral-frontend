@@ -1019,7 +1019,26 @@ const obtenerProductosDetallado = async (req, res) => {
       subcategoria = null,
       limit = 100,
       offset = 0,
+      sinPaginacion = 'false',
+      orderBy = 'cantidadVendida',
+      order = 'desc',
     } = req.query;
+
+    const aplicarPaginacion = sinPaginacion !== 'true';
+
+    // Validar campos de ordenamiento permitidos
+    const camposPermitidos = [
+      'cantidadVendida',
+      'margenPorcentaje',
+      'margenBruto',
+      'precioPromedio',
+      'totalVentas',
+      'facturasUnicas'
+    ];
+    const direccionesPermitidas = ['asc', 'desc'];
+
+    const campoOrden = camposPermitidos.includes(orderBy) ? orderBy : 'cantidadVendida';
+    const direccionOrden = direccionesPermitidas.includes(order.toLowerCase()) ? order.toLowerCase() : 'desc';
 
     const request = pool.request();
     request.input("CanalParamInput", sql.VarChar, canal);
@@ -1033,6 +1052,10 @@ const obtenerProductosDetallado = async (req, res) => {
     request.input("Subcategoria", sql.VarChar, subcategoria);
     request.input("Limit", sql.Int, limit);
     request.input("Offset", sql.Int, offset);
+
+    const paginacionSQL = aplicarPaginacion
+      ? `OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY`
+      : ``;
 
     const query = `
       DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
@@ -1076,11 +1099,12 @@ const obtenerProductosDetallado = async (req, res) => {
           CAT.Name AS categoria,
           SUM(I.Quantity) AS cantidadVendida,
           SUM(I.LineTotal) AS totalVentas,
+          COUNT(DISTINCT T0.DocEntry) AS facturasUnicas,
           AVG(I.PriceAfVAT) AS precioPromedio,
-          SUM(I.Quantity * O.AvgPrice) AS costoTotal,
-          SUM(I.LineTotal - (I.Quantity * O.AvgPrice)) AS margenBruto,
+          SUM(I.Quantity * I.StockPrice) AS costoTotal,
+          SUM(I.LineTotal - (I.Quantity * I.StockPrice)) AS margenBruto,
           CAST(
-              (SUM(I.LineTotal - (I.Quantity * O.AvgPrice)) * 100.0) / NULLIF(SUM(I.LineTotal), 0)
+              (SUM(I.LineTotal - (I.Quantity * I.StockPrice)) * 100.0) / NULLIF(SUM(I.LineTotal), 0)
               AS DECIMAL(18, 2)
           ) AS margenPorcentaje,
           (
@@ -1122,13 +1146,12 @@ const obtenerProductosDetallado = async (req, res) => {
                       AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
               )
           )
-          AND (@VendedorParam IS NULL OR T0.SlpCode = @VendedorParam)
+          AND (@VendedorParam IS NULL OR I.SlpCode = @VendedorParam)
       GROUP BY 
           I.ItemCode, O.ItemName, O.U_Imagen, O.U_Primer_Nivel, O.U_Categoria,
           PN.Name, CAT.Name
-      ORDER BY cantidadVendida DESC
-      OFFSET @Offset ROWS
-      FETCH NEXT @Limit ROWS ONLY;
+      ORDER BY ${campoOrden} ${direccionOrden}
+      ${paginacionSQL};
 
       ;WITH ProductosProveedor AS (
         SELECT DISTINCT POR1.ItemCode
@@ -1162,7 +1185,7 @@ const obtenerProductosDetallado = async (req, res) => {
                       AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
               )
           )
-          AND (@VendedorParam IS NULL OR T0.SlpCode = @VendedorParam);
+          AND (@VendedorParam IS NULL OR I.SlpCode = @VendedorParam);
     `;
 
     const result = await request.query(query);
@@ -1176,6 +1199,7 @@ const obtenerProductosDetallado = async (req, res) => {
     res.status(500).json({ error: "Error en el servidor." });
   }
 };
+
 
 const obtenerTopVendedores = async (req, res) => {
   try {

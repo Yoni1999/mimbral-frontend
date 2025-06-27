@@ -6,7 +6,7 @@ import PageContainer from "@/app/(DashboardLayout)/components/container/PageCont
 import SeccionTitulo from "../resumen-ventas/components/SeccionTitulo";
 import { Grid, Paper, CircularProgress, Box, Typography, FormControlLabel, Checkbox,} from "@mui/material";
 import MetricCard from "./components/MetricCard";
-import FechaRotacion from "./components/FechaRotacion";
+import FechaRotacion from "./components/VentasMensualesRotacion";
 import NivelNavigation from "../components/NivelNavigation";
 import HeaderFilters, { Filters } from "./components/HeaderFilters";
 import ClientesFrecuentesTable from "./components/ClientesFrecuentesTable";
@@ -18,10 +18,10 @@ import {IconCurrencyDollar,IconTrendingUp,IconStack2,IconBox,IconShoppingCart} f
 import ProductosVendidos from "./components/ProductosVendidos";
 
 
-const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
+const VentasCanalChart = dynamic(() => import("./components/Vendedores"), {
   ssr: false,
 });
-const TopProductosChart = dynamic(() => import("./components/TopProductosChart"), {
+const TopProductosChart = dynamic(() => import("./components/Top10ProductosVendidos"), {
   ssr: false,
 });
 const VentasPorCategoriaChart = dynamic(() => import("./components/VentasPorCategoriaChart"), {
@@ -316,7 +316,10 @@ return (
                 />
               </Grid>
               <Grid item xs={12} md={6} lg={7}>
-                <FechaRotacion />
+                <FechaRotacion 
+                  filters={{
+                    ...filters
+                  }}/>
               </Grid>
               <Grid item xs={12}>
                 <ClientesFrecuentesTable
