@@ -1435,7 +1435,8 @@ const obtenerTopProductosEstancados = async (req, res) => {
 };
 module.exports = {obtenerTransaccionesPeriodo, obtenerNotascredito, obtenerMargenCategoriasComparado,  
   obtenerTopProductos, obtenerVentasPeriodo, obtenerUnidadesVendidasPeriodo,obtenerProductosDistintosPeriodo,
-  obtenerMargenVentas, obtenerTopProductosDetallado,obtenerProductosDetallado, obtenerTopVendedores, obtenerTopProductosEstancados};
+  obtenerMargenVentas, obtenerTopProductosDetallado,obtenerProductosDetallado, obtenerTopVendedores,
+   obtenerTopProductosEstancados};
 
 
   

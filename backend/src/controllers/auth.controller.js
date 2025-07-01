@@ -264,13 +264,17 @@ const loginUser = async (req, res) => {
         `);
 
       // Registrar inicio de sesión
+      const fechaInicio = dayjs().tz("America/Santiago").format("YYYY-MM-DD HH:mm:ss");
+
       await pool.request()
         .input("UsuarioID", sql.Int, user.ID)
-        .input("FechaInicio", sql.DateTime, dayjs().tz("America/Santiago").format("YYYY-MM-DD HH:mm:ss"))
+        .input("FechaInicio", sql.DateTime, fechaInicio)
+        .input("Token", sql.NVarChar, token)
         .query(`
-          INSERT INTO SESIONES_USUARIOS (UsuarioID, FechaInicio)
-          VALUES (@UsuarioID, GETDATE())
+          INSERT INTO SESIONES_USUARIOS (UsuarioID, FechaInicio, Token)
+          VALUES (@UsuarioID, @FechaInicio, @Token)
         `);
+
 
       return res.json({ message: "Login exitoso sin OTP", token, rol: user.ROL });
     }

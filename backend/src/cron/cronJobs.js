@@ -3,18 +3,17 @@ const { ejecutarProcedimientos } = require("../services/actualizar.service");
 
 const zonaHoraria = "America/Santiago";
 
-// 🕕 Ejecutar a las 06:00, 12:00, 18:00
 cron.schedule(
   "0 0,6,10,14,18,22 * * *",
   async () => {
     const horaActual = new Date().toLocaleString("es-CL", { timeZone: zonaHoraria });
-    console.log(`⏰ [${horaActual}] Iniciando actualización automática`);
+    console.log(`[${horaActual}] Iniciando actualización automática`);
 
     try {
       await ejecutarProcedimientos();
-      console.log(`✅ [${horaActual}] Actualización finalizada con éxito`);
+      console.log(` [${horaActual}] Actualización finalizada con éxito`);
     } catch (error) {
-      console.error(`❌ [${horaActual}] Error en la actualización automática:`, error.message);
+      console.error(` [${horaActual}] Error en la actualización automática:`, error.message);
     }
   },
   {

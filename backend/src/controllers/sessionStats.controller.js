@@ -6,13 +6,12 @@ const getUserSessionStats = async (req, res) => {
     const result = await pool.request().query(`
       SELECT 
         U.Nombre AS nombre,
-        COUNT(S.ID) AS sesiones,
-        SUM(DATEDIFF(MINUTE, S.FechaInicio, S.FechaFin)) AS minutos
+        COUNT(S.FechaInicio) AS sesiones,
+        MAX(S.FechaInicio) AS ultimaConexion
       FROM SESIONES_USUARIOS S
       JOIN USUARIOS U ON U.ID = S.UsuarioID
-      WHERE S.FechaFin IS NOT NULL
       GROUP BY U.Nombre
-      ORDER BY minutos DESC
+      ORDER BY ultimaConexion DESC
     `);
 
     res.json(result.recordset);

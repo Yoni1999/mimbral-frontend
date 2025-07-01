@@ -27,8 +27,9 @@ const productosvendedorRoutes = require("./src/routes/productosvendedor/producto
 const obtenervendedorescanalRoutes = require("./src/routes/productosvendedor/obtenervendedorescanal.routes");
 const obtenerProductosDetenidos = require("./src/routes/informes/productosdetenidos.routes");
 const obtenerproveedoresRoutes = require("./src/routes/informes/filtrosdetenidos.routes");
-const productoRoutes = require("./src/routes/productos/producto.routes")
+const productoRoutes = require("./src/routes/productos/producto.routes");
 const top10clientesRoutes = require("./src/routes/ventas-canal/ventascanal.routes"); 
+const omcRoutes = require("./src/routes/omc.routes");
 
 const app = express();
 app.use(cors({
@@ -41,7 +42,7 @@ app.use(express.json());
 
 // 🔐 Middleware de autenticación
 app.use((req, res, next) => {
-  const publicRoutes = ["/api/auth", "/api/entradas"];
+  const publicRoutes = ["/api/auth", "/api/entradas", "/api/templace"];
   const isPublic = publicRoutes.some((route) => req.path.startsWith(route));
   if (isPublic) return next();
   authMiddleware(req, res, next);
@@ -49,6 +50,7 @@ app.use((req, res, next) => {
 
 // Rutas públicas
 app.use("/api/auth", authRoutes);
+app.use("/api/templace", omcRoutes);
 
 // Rutas protegidas
 app.use("/api", ventasRoutes);

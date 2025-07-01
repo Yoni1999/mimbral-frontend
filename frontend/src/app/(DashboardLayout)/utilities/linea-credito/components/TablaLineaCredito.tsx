@@ -27,12 +27,13 @@ export interface ClienteCredito {
   creditoDisponible: number;
   estado: string;
   ultimaModificacion: string;
+  pagoPredeterminado: string; // ✅ Nuevo campo
 }
 
 const TablaLineaCredito: React.FC = () => {
   const data: ClienteCredito[] = [
     {
-      cliente: "Juan Pérez",
+      cliente: "JONATHAN MOLINA",
       rut: "12.345.678-9",
       telefono: "+56912345678",
       direccion: "Av. Siempre Viva 123",
@@ -43,10 +44,11 @@ const TablaLineaCredito: React.FC = () => {
       limiteCredito: 5000000,
       creditoDisponible: 1200000,
       estado: "Activo",
-      ultimaModificacion: "2024-06-10"
+      ultimaModificacion: "2024-06-10",
+      pagoPredeterminado: "Contado"
     },
     {
-      cliente: "María González",
+      cliente: "CATALINA SAAVEDRA",
       rut: "98.765.432-1",
       telefono: "+56998765432",
       direccion: "Calle Falsa 456",
@@ -57,7 +59,8 @@ const TablaLineaCredito: React.FC = () => {
       limiteCredito: 3500000,
       creditoDisponible: 2000000,
       estado: "Inactivo",
-      ultimaModificacion: "2024-05-20"
+      ultimaModificacion: "2024-05-20",
+      pagoPredeterminado: "30 días"
     }
   ];
 
@@ -71,7 +74,6 @@ const TablaLineaCredito: React.FC = () => {
             <TableCell>RUT</TableCell>
             <TableCell>Teléfono</TableCell>
             <TableCell>Dirección</TableCell>
-            <TableCell>Ciudad</TableCell>
             <TableCell>Razón Social</TableCell>
             <TableCell>Categoría</TableCell>
             <TableCell>Fecha Apertura</TableCell>
@@ -79,6 +81,7 @@ const TablaLineaCredito: React.FC = () => {
             <TableCell>Crédito Disponible</TableCell>
             <TableCell>Estado</TableCell>
             <TableCell>Última Modificación</TableCell>
+            <TableCell>Pago Predeterminado</TableCell> {/* ✅ Nueva columna */}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -90,8 +93,9 @@ const TablaLineaCredito: React.FC = () => {
               <TableCell>{row.cliente}</TableCell>
               <TableCell>{row.rut}</TableCell>
               <TableCell>{row.telefono}</TableCell>
-              <TableCell>{row.direccion}</TableCell>
-              <TableCell>{row.ciudad}</TableCell>
+              <TableCell>
+                {row.direccion}, {row.ciudad}
+              </TableCell>
               <TableCell>{row.razonSocial}</TableCell>
               <TableCell>{row.categoria}</TableCell>
               <TableCell>{row.fechaApertura}</TableCell>
@@ -99,6 +103,7 @@ const TablaLineaCredito: React.FC = () => {
               <TableCell>${row.creditoDisponible.toLocaleString("es-CL")}</TableCell>
               <TableCell>{row.estado}</TableCell>
               <TableCell>{row.ultimaModificacion}</TableCell>
+              <TableCell>{row.pagoPredeterminado}</TableCell> {/* ✅ Nueva celda */}
             </TableRow>
           ))}
         </TableBody>

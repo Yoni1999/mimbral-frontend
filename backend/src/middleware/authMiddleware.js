@@ -27,11 +27,11 @@ const authMiddleware = async (req, res, next) => {
           .query(`
             UPDATE SESIONES_USUARIOS
             SET FECHA_FIN = GETDATE()
-            WHERE TOKEN = @Token AND FECHA_FIN IS NULL
+            WHERE TOKEN = @Token AND FECHAFIN IS NULL
           `);
         console.log("⏳ FECHA_FIN marcada por vencimiento inminente");
       } catch (err) {
-        console.error("❌ Error al marcar FECHA_FIN anticipadamente:", err);
+        console.error("❌ Error al marcar FECHAFIN anticipadamente:", err);
       }
     }
 
@@ -58,8 +58,8 @@ const authMiddleware = async (req, res, next) => {
           .input("Token", sql.NVarChar, token)
           .query(`
             UPDATE SESIONES_USUARIOS
-            SET FECHA_FIN = GETDATE()
-            WHERE TOKEN = @Token AND FECHA_FIN IS NULL
+            SET FECHAFIN = GETDATE()
+            WHERE TOKEN = @Token AND FECHAFIN IS NULL
           `);
         console.log("❌ FECHA_FIN registrada por token expirado");
       } catch (err) {
