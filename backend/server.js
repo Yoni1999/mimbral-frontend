@@ -29,7 +29,7 @@ const obtenerProductosDetenidos = require("./src/routes/informes/productosdeteni
 const obtenerproveedoresRoutes = require("./src/routes/informes/filtrosdetenidos.routes");
 const productoRoutes = require("./src/routes/productos/producto.routes");
 const top10clientesRoutes = require("./src/routes/ventas-canal/ventascanal.routes"); 
-const omcRoutes = require("./src/routes/omc.routes");
+const omcRoutes = require("./src/routes/OMC/templace.routes");
 
 const app = express();
 app.use(cors({

@@ -15,8 +15,7 @@ import {
   Button,
   Slider,
   Checkbox,
-  ListItemText,
-  Chip
+  ListItemText
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -25,39 +24,22 @@ import { formatVentas } from "@/utils/format";
 interface Props {
   open: boolean;
   onClose: () => void;
-  onApply: (filters: FiltrosLineaCredito) => void;
+  onApply: (filters: any) => void;
 }
 
-export type FiltrosLineaCredito = {
-  rut: string;
-  estadoCuenta: string;
-  riesgo: string[];
-  tipoCliente: string[];
-  estadoDeuda: string;
-  canal: string[];
-  montoDesde: string;
-  montoHasta: string;
-  fechaInicio: string;
-  fechaFin: string;
-};
-
 const HeaderDrawerLineaCredito: React.FC<Props> = ({ open, onClose, onApply }) => {
-  const [filters, setFilters] = useState<FiltrosLineaCredito>({
+  const [filters, setFilters] = useState({
     rut: "",
-    estadoCuenta: "",
-    riesgo: [],
-    tipoCliente: [],
-    estadoDeuda: "",
-    canal: [],
-    montoDesde: "0",
-    montoHasta: "150000000",
-    fechaInicio: "",
-    fechaFin: "",
+    estado: "",
+    tieneDeuda: "",
+    tipoCliente: [] as string[],
+    montoInicio: 0,
+    montoFin: 150000000,
   });
 
   const [montoRange, setMontoRange] = useState<number[]>([0, 150000000]);
 
-  const handleChange = (key: keyof FiltrosLineaCredito, value: any) => {
+  const handleChange = (key: string, value: any) => {
     setFilters({ ...filters, [key]: value });
   };
 
@@ -65,36 +47,48 @@ const HeaderDrawerLineaCredito: React.FC<Props> = ({ open, onClose, onApply }) =
     setMontoRange([0, 150000000]);
     setFilters({
       rut: "",
-      estadoCuenta: "",
-      riesgo: [],
+      estado: "",
+      tieneDeuda: "",
       tipoCliente: [],
-      estadoDeuda: "",
-      canal: [],
-      montoDesde: "0",
-      montoHasta: "150000000",
-      fechaInicio: "",
-      fechaFin: "",
+      montoInicio: 0,
+      montoFin: 150000000,
     });
   };
 
   const handleMontoChange = (_: Event, newValue: number | number[]) => {
     const [desde, hasta] = newValue as number[];
     setMontoRange([desde, hasta]);
-    setFilters({ ...filters, montoDesde: desde.toString(), montoHasta: hasta.toString() });
+    setFilters({ ...filters, montoInicio: desde, montoFin: hasta });
   };
 
+  const tipoClienteOptions = [
+    { label: "Clientes", value: "100" },
+    { label: "Prov.Nacional", value: "101" },
+    { label: "Cliente Terreno", value: "102" },
+    { label: "Cliente Agricola", value: "103" },
+    { label: "Prov.Honorario", value: "104" },
+    { label: "Prov.Extranjero", value: "105" },
+    { label: "Cliente Personal", value: "106" },
+    { label: "Club del Maestro", value: "108" },
+    { label: "Cliente Proveedor", value: "109" },
+    { label: "Grupo Mimbral", value: "110" },
+    { label: "Cliente interno", value: "111" },
+    { label: "Venta Empresa", value: "112" },
+    { label: "Entidades Publicas", value: "113" },
+    { label: "Cliente Premium", value: "115" },
+    { label: "Cliente Preferencial", value: "116" },
+    { label: "EERR", value: "117" },
+    { label: "Grupo Proyecto", value: "118" },
+    { label: "Grupo Red", value: "119" }
+  ];
+
   const opciones = {
-    estadoCuenta: ["Activo", "Inactivo"],
-    riesgo: ["Alto", "Medio", "Bajo"],
-    tipoCliente: [
-      "Clientes", "Prov.Nacional", "Cliente Terreno", "Cliente Agricola",
-      "Prov.Honorario", "Prov.Extranjero", "Cliente Personal", "Club del Maestro",
-      "Cliente Proveedor", "Grupo Mimbral", "Cliente interno", "Venta Empresa",
-      "Entidades Publicas", "Cliente Premium", "Cliente Preferencial", "EERR",
-      "Grupo Proyecto", "Grupo Red"
-    ],
-    estadoDeuda: ["Activo", "Inactivo"],
-    canal: ["Empresas", "Meli", "Vitex", "Chorrillo", "Balmaceda"]
+    estado: ["Y", "N"],
+    tieneDeuda: [
+      { label: "Todos", value: "" },
+      { label: "Con deuda", value: "1" },
+      { label: "Sin deuda", value: "0" }
+    ]
   };
 
   return (
@@ -120,49 +114,61 @@ const HeaderDrawerLineaCredito: React.FC<Props> = ({ open, onClose, onApply }) =
           />
         </Grid>
 
-        {(["estadoCuenta", "estadoDeuda"] as const).map((key) => (
-          <Grid item key={key}>
-            <FormControl fullWidth size="small">
-              <InputLabel>{key.replace(/([A-Z])/g, " $1")}</InputLabel>
-              <Select
-                value={filters[key]}
-                onChange={(e) => handleChange(key, e.target.value)}
-                label={key.replace(/([A-Z])/g, " $1")}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {opciones[key].map((valor) => (
-                  <MenuItem key={valor} value={valor}>{valor}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        ))}
+        <Grid item>
+          <FormControl fullWidth size="small">
+            <InputLabel>Estado</InputLabel>
+            <Select
+              value={filters.estado}
+              onChange={(e) => handleChange("estado", e.target.value)}
+              label="Estado"
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {opciones.estado.map((valor) => (
+                <MenuItem key={valor} value={valor}>{valor === "Y" ? "Activo" : "Inactivo"}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
 
-        {(["riesgo", "tipoCliente", "canal"] as const).map((key) => (
-          <Grid item key={key}>
-            <FormControl fullWidth size="small">
-              <InputLabel>{key.replace(/([A-Z])/g, " $1")}</InputLabel>
-              <Select
-                multiple
-                value={filters[key]}
-                onChange={(e) => handleChange(key, typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
-                renderValue={(selected) => {
-                  const items = selected as string[];
-                  if (items.length <= 2) return items.join(", ");
-                  return `${items.slice(0, 2).join(", ")} +${items.length - 2}`;
-                }}
-                label={key.replace(/([A-Z])/g, " $1")}
-              >
-                {opciones[key].map((valor) => (
-                  <MenuItem key={valor} value={valor}>
-                    <Checkbox checked={filters[key].indexOf(valor) > -1} />
-                    <ListItemText primary={valor} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        ))}
+        <Grid item>
+          <FormControl fullWidth size="small">
+            <InputLabel>Estado Deuda</InputLabel>
+            <Select
+              value={filters.tieneDeuda}
+              onChange={(e) => handleChange("tieneDeuda", e.target.value)}
+              label="Estado Deuda"
+            >
+              {opciones.tieneDeuda.map((op) => (
+                <MenuItem key={op.value} value={op.value}>{op.label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item>
+          <FormControl fullWidth size="small">
+            <InputLabel>Tipo Cliente</InputLabel>
+            <Select
+              multiple
+              value={filters.tipoCliente}
+              onChange={(e) => handleChange("tipoCliente", typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+              renderValue={(selected) => {
+                const items = selected as string[];
+                if (items.length <= 2) return tipoClienteOptions.filter(opt => items.includes(opt.value)).map(opt => opt.label).join(", ");
+                const visibles = tipoClienteOptions.filter(opt => items.includes(opt.value)).slice(0, 2).map(opt => opt.label);
+                return `${visibles.join(", ")} +${items.length - 2}`;
+              }}
+              label="Tipo Cliente"
+            >
+              {tipoClienteOptions.map((op) => (
+                <MenuItem key={op.value} value={op.value}>
+                  <Checkbox checked={filters.tipoCliente.indexOf(op.value) > -1} />
+                  <ListItemText primary={op.label} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
 
         <Grid item>
           <Typography variant="subtitle2" gutterBottom>
@@ -178,29 +184,6 @@ const HeaderDrawerLineaCredito: React.FC<Props> = ({ open, onClose, onApply }) =
             getAriaLabel={() => "Rango de monto"}
             getAriaValueText={(value) => formatVentas(value)}
             valueLabelFormat={(value) => formatVentas(value)}
-          />
-        </Grid>
-
-        <Grid item>
-          <TextField
-            label="Fecha inicio"
-            type="date"
-            fullWidth
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={filters.fechaInicio}
-            onChange={(e) => handleChange("fechaInicio", e.target.value)}
-          />
-        </Grid>
-        <Grid item>
-          <TextField
-            label="Fecha fin"
-            type="date"
-            fullWidth
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={filters.fechaFin}
-            onChange={(e) => handleChange("fechaFin", e.target.value)}
           />
         </Grid>
 

@@ -34,6 +34,9 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
 }
 
 const [usuario, setUsuario] = useState<Usuario | null>(null);
+const [dolarData, setDolarData] = useState<any>(null);
+const [anchorDolar, setAnchorDolar] = useState<null | HTMLElement>(null);
+
 
 
   const handleRefreshClick = async () => {
@@ -61,8 +64,18 @@ const [usuario, setUsuario] = useState<Usuario | null>(null);
       console.error("❌ Error al obtener datos del usuario:", err);
     }
   };
+  const obtenerDolar = async () => {
+    try {
+      const res = await fetch("https://cl.dolarapi.com/v1/cotizaciones/usd");
+      const data = await res.json();
+      setDolarData(data);
+    } catch (error) {
+      console.error("❌ Error al obtener datos del dólar:", error);
+    }
+  };
 
   obtenerUsuario();
+  obtenerDolar();
 }, []);
 
 
@@ -110,6 +123,43 @@ const [usuario, setUsuario] = useState<Usuario | null>(null);
               ANÁLISIS DE DATOS
             </Typography>
           </Box>
+          {/* Dólar resumen */}
+          <IconButton
+            size="large"
+            color="inherit"
+            onClick={(e) => setAnchorDolar(e.currentTarget)}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              px: 1.5,
+            }}
+          >
+            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1 }}>
+              USD
+            </Typography>
+
+            <Box display="flex" gap={0.5}>
+              <Typography
+                variant="body2"
+                fontWeight={600}
+                sx={{ color: "success.main" }}
+              >
+                ${dolarData?.compra ?? "-"}
+              </Typography>
+              <Typography variant="body2" fontWeight={600} color="text.secondary">
+                /
+              </Typography>
+              <Typography
+                variant="body2"
+                fontWeight={600}
+                sx={{ color: "error.main" }}
+              >
+                ${dolarData?.venta ?? "-"}
+              </Typography>
+            </Box>
+          </IconButton>
+
 
           {/* Botones a la derecha */}
           <Stack
@@ -210,6 +260,35 @@ const [usuario, setUsuario] = useState<Usuario | null>(null);
           </Typography>
         </Box>
       </Popover>
+      <Popover
+        open={Boolean(anchorDolar)}
+        anchorEl={anchorDolar}
+        onClose={() => setAnchorDolar(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        transformOrigin={{ vertical: "top", horizontal: "center" }}
+        PaperProps={{
+          elevation: 4,
+          sx: {
+            borderRadius: 2,
+            padding: 2,
+            minWidth: 260,
+            backgroundColor: "#f9fafb",
+            border: "1px solid #213663",
+          },
+        }}
+      >
+        <Box>
+          <Typography variant="subtitle1" fontWeight="bold" color="primary.main" gutterBottom>
+            Dólar USD – Detalle
+          </Typography>
+          <Typography variant="body2"><strong>Moneda:</strong> {dolarData?.moneda ?? "-"}</Typography>
+          <Typography variant="body2"><strong>Compra:</strong> ${dolarData?.compra ?? "-"}</Typography>
+          <Typography variant="body2"><strong>Venta:</strong> ${dolarData?.venta ?? "-"}</Typography>
+          <Typography variant="body2"><strong>Último cierre:</strong> ${dolarData?.ultimoCierre ?? "-"}</Typography>
+          <Typography variant="body2"><strong>Actualizado:</strong> {dolarData?.fechaActualizacion ? new Date(dolarData.fechaActualizacion).toLocaleString() : "-"}</Typography>
+        </Box>
+      </Popover>
+
     </>
   );
 };
