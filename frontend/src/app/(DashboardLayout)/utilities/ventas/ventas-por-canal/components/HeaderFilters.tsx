@@ -140,7 +140,7 @@ const HeaderFilters = ({ filters, onFilterChange }: HeaderFiltersProps) => {
 
 
 
-         <Grid item xs={12} sm={2} md={2}>
+         <Grid item xs={12} sm={2} md={1.5}>
           <FormControl
             fullWidth
             size="small"
@@ -160,18 +160,18 @@ const HeaderFilters = ({ filters, onFilterChange }: HeaderFiltersProps) => {
               onChange={(e) => setCanal(e.target.value)}
             >
               <MenuItem value="">Todos</MenuItem>
-              <MenuItem value="Meli">Meli</MenuItem>
+              <MenuItem value="Meli">Mercado Libre</MenuItem>
               <MenuItem value="Falabella">Falabella</MenuItem>
               <MenuItem value="Balmaceda">Balmaceda</MenuItem>
               <MenuItem value="Vitex">Vtex</MenuItem>
-              <MenuItem value="Chorrillo">Chorrillo</MenuItem>
+              <MenuItem value="Chorrillo">Chorrillos</MenuItem>
               <MenuItem value="Empresas">Empresas</MenuItem>
             </Select>
           </FormControl>
         </Grid>
 
         {/* Select Período */}
-        <Grid item xs={12} sm={2} md={2}>
+        <Grid item xs={12} sm={2} md={1.5}>
           <FormControl
             fullWidth
             size="small"
@@ -204,7 +204,7 @@ const HeaderFilters = ({ filters, onFilterChange }: HeaderFiltersProps) => {
         </Grid>
 
         {/* Fecha Inicio */}
-        <Grid item xs={12} sm={2} md={1.2}>
+        <Grid item xs={12} sm={2} md={1.5}>
           <TextField
             label="Fecha Inicio"
             type="date"

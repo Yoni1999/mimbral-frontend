@@ -177,19 +177,25 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
             <Grid item xs={6} sm={3} md={2}>
               <FormControl fullWidth size="small">
                 <InputLabel sx={{ fontSize: "0.75rem" }}>Canal</InputLabel>
-                  <Select
-                    value={filters.canal}
-                    onChange={(e) => handleChange("canal", e.target.value)}
-                    label="Canal"
-                    sx={{ fontSize: "0.75rem", height: 36 }}
-                  >
-                    {Object.keys(canalSlpMap).map((canal) => (
-                      <MenuItem key={canal} value={canal} sx={{ fontSize: "0.75rem" }}>
-                        {canal.replace('Meli', ' Mercado Libre')} {/* Opcional: muestra 'Mercado Libre' en lugar de 'Mercado_Libre' */}
-                      </MenuItem>
-                    ))}
-                  </Select>
+                <Select
+                  value={filters.canal}
+                  onChange={(e) => handleChange("canal", e.target.value)}
+                  label="Canal"
+                  sx={{ fontSize: "0.75rem", height: 36 }}
+                >
+                  {Object.keys(canalSlpMap).map((canal) => {
+                    let label = canal;
+                    if (label === 'Meli') label = 'Mercado Libre';
+                    if (label === 'Vitex') label = 'Vtex';
+                    if (label === 'Chorrillo') label = 'Chorrillos';
 
+                    return (
+                      <MenuItem key={canal} value={canal} sx={{ fontSize: "0.75rem" }}>
+                        {label}
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
               </FormControl>
             </Grid>
 
