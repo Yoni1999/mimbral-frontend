@@ -85,6 +85,7 @@ const getVentascanal = async (req, res) => {
       WHERE I.DocDate BETWEEN @FechaInicio AND @FechaFin
       AND OI.CANCELED = 'N'AND OI.CANCELED = 'N'
         AND OI.CANCELED = 'N'
+        AND I.ItemCode <> '701001008'
         ${itemCode ? "AND I.ItemCode = @ItemCode" : ""}
     `;
 

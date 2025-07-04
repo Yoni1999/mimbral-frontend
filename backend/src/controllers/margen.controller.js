@@ -154,8 +154,8 @@ const obtenerMargenBrutoPorCategoria = async (req, res) => {
                   WHEN @Periodo = '14D' THEN DATEADD(DAY, -14, @FechaFinActual)
                   WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual) 
                   WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
-                  WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual) -- ✅ Agregado
-                  WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual) -- ✅ Agregado
+                  WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual) 
+                  WHEN @Periodo = '1A'  THEN DATEADD(YEAR, -1, @FechaFinActual) 
                   ELSE @FechaFinActual -- Si es '1D', solo hoy
               END;
       END
@@ -173,7 +173,7 @@ const obtenerMargenBrutoPorCategoria = async (req, res) => {
           END AS MargenBrutoPorcentaje
       FROM INV1 I
       INNER JOIN OITM O ON I.ItemCode = O.ItemCode
-      INNER JOIN [@categoria] C ON O.U_Categoria = C.Code -- ✅ Se usa la tabla correcta de categorías
+      INNER JOIN [@categoria] C ON O.U_Categoria = C.Code 
       INNER JOIN OINV T0 ON I.DocEntry = T0.DocEntry
       WHERE 
           T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual

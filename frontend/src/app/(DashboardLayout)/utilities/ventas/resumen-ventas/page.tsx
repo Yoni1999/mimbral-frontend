@@ -228,7 +228,7 @@ const FotoDelDia = () => {
                 ventasHoy.PromedioVentasPeriodo
               )}`,
               percentageChange: ventasHoy.PorcentajeCambio,
-              isLoading: !ventasHoy.TotalVentasPeriodo,
+              isLoading: !ventasHoy.TotalVentasPeriodo === undefined,
               icon: <IconCurrencyDollar />,
             },
             {
@@ -236,7 +236,7 @@ const FotoDelDia = () => {
               value: `${margenBrutoHoy.MargenPorcentajePeriodo}%`,
               subtitle: `Variación: ${margenBrutoHoy.VariacionMargen}%`,
               percentageChange: margenBrutoHoy.VariacionMargen,
-              isLoading: !margenBrutoHoy.MargenPorcentajePeriodo,
+              isLoading: !margenBrutoHoy.MargenPorcentajePeriodo === undefined,
               icon: <IconTrendingUp />,
             },
             {
@@ -244,7 +244,7 @@ const FotoDelDia = () => {
               value: formatUnidades(transaccionHoy.CantidadTransaccionesHoy),
               subtitle: `Periodo Anterior: ${formatUnidades(transaccionHoy.CantidadTransaccionesAyer)}`,
               percentageChange: transaccionHoy.PorcentajeCambio,
-              isLoading: !transaccionHoy.CantidadTransaccionesHoy,
+              isLoading: !transaccionHoy.CantidadTransaccionesHoy === undefined,
               icon: <IconShoppingCart />,
             },
             {
@@ -260,7 +260,7 @@ const FotoDelDia = () => {
               value: formatUnidades(productosDistintos.ProductosPeriodoActual),
               subtitle: `Periodo Anterior: ${formatUnidades(productosDistintos.ProductosPeriodoAnterior)}`,
               percentageChange: productosDistintos.PorcentajeCambio,
-              isLoading: !productosDistintos.ProductosPeriodoActual,
+              isLoading: !productosDistintos.ProductosPeriodoActual === undefined,
               icon: <IconStack2 />,
             },
             {
@@ -268,7 +268,7 @@ const FotoDelDia = () => {
               value: formatUnidades(unidadesVendidas.CantidadVendida),
               subtitle: `Periodo Anterior: ${formatUnidades(unidadesVendidas.CantidadVendidaAnterior)}`,
               percentageChange: unidadesVendidas.PorcentajeCambio,
-              isLoading: !unidadesVendidas.CantidadVendida,
+              isLoading: !unidadesVendidas.CantidadVendida === undefined,
               icon: <IconBox />,
             },
           ].map((card, index) => (

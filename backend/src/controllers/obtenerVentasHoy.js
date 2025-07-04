@@ -301,6 +301,7 @@ const obtenerVentasPeriodo = async (req, res) => {
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
                 AND T0.CANCELED = 'N'
+                AND T1.ItemCode <> '701001008'
                 AND (
                     @CanalParam IS NULL
                     OR (
@@ -325,6 +326,7 @@ const obtenerVentasPeriodo = async (req, res) => {
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioAnterior AND @FechaFinAnterior
                 AND T0.CANCELED = 'N'
+                AND T1.ItemCode <> '701001008'
                 AND (
                     @CanalParam IS NULL
                     OR (
@@ -420,6 +422,7 @@ const obtenerTransaccionesPeriodo = async (req, res) => {
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
                 AND T0.CANCELED = 'N'
+                AND T1.ItemCode <> '701001008'
                 AND (
                     @CanalParam IS NULL
                     OR (
@@ -443,6 +446,7 @@ const obtenerTransaccionesPeriodo = async (req, res) => {
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioAnterior AND @FechaFinAnterior
                 AND T0.CANCELED = 'N'
+                AND T1.ItemCode <> '701001008'
                 AND (
                     @CanalParam IS NULL
                     OR (
@@ -535,6 +539,7 @@ const obtenerUnidadesVendidasPeriodo = async (req, res) => {
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
                 AND T0.CANCELED = 'N'
+                AND T1.ItemCode <> '701001008'
                 AND (
                     @CanalParam IS NULL
                     OR (
@@ -559,6 +564,7 @@ const obtenerUnidadesVendidasPeriodo = async (req, res) => {
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioAnterior AND @FechaFinAnterior
                 AND T0.CANCELED = 'N'
+                AND T1.ItemCode <> '701001008'
                 AND (
                     @CanalParam IS NULL
                     OR (
@@ -738,6 +744,7 @@ const obtenerMargenVentas = async (req, res) => {
           WHERE 
             O.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
             AND O.CANCELED = 'N'
+            AND I.ItemCode <> '701001008'
         ),
         PeriodoAnterior AS (
           SELECT
@@ -749,6 +756,7 @@ const obtenerMargenVentas = async (req, res) => {
           WHERE 
             O.DocDate BETWEEN @FechaInicioAnterior AND @FechaFinAnterior
             AND O.CANCELED = 'N'
+            AND I.ItemCode <> '701001008'
         )
   
         SELECT
@@ -834,6 +842,7 @@ const obtenerProductosDistintosPeriodo = async (req, res) => {
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
                 AND T0.CANCELED = 'N'
+                AND T1.ItemCode <> '701001008'
                 AND (
                     @CanalParam IS NULL
                     OR (
@@ -858,6 +867,7 @@ const obtenerProductosDistintosPeriodo = async (req, res) => {
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioAnterior AND @FechaFinAnterior
                 AND T0.CANCELED = 'N'
+                AND T1.ItemCode <> '701001008'
                 AND (
                     @CanalParam IS NULL
                     OR (
@@ -1258,6 +1268,7 @@ const obtenerTopVendedores = async (req, res) => {
       WHERE
           T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
           AND T0.CANCELED = 'N'
+          AND T1.ItemCode <> '701001008'
           AND (
               @CanalParam IS NULL OR (
                   (@CanalParam = 'Meli' AND ((T1.WhsCode IN ('03', '05') AND T1.SlpCode IN (426, 364, 355, 398))

@@ -866,6 +866,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
         WHERE 
             OI.DocDate BETWEEN @FechaInicio AND @FechaFin
             AND OI.CANCELED = 'N'
+            AND I.ItemCode <> '701001008'
             AND (@PrimerNivelParam IS NULL OR ITM.U_PRIMER_NIVEL = @PrimerNivelParam)
         GROUP BY 
             OI.DocDate
