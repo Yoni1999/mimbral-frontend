@@ -58,8 +58,8 @@ const NavItem = ({ item, pathDirect, onClick, isOpen }: ItemType) => {
     },
   }));
 
-  // Log para verificar el estado de isOpen
-  console.log("isOpen for", item.title, isOpen);  // Aquí agregas el log de isOpen
+
+  console.log("isOpen for", item.title, isOpen);
 
   return (
     <>
@@ -83,7 +83,6 @@ const NavItem = ({ item, pathDirect, onClick, isOpen }: ItemType) => {
           )}
         </ListItemStyled>
       </List>
-
       {item.subMenu && item.subMenu.length > 0 && (
         <Collapse in={isOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
@@ -101,7 +100,5 @@ const NavItem = ({ item, pathDirect, onClick, isOpen }: ItemType) => {
     </>
   );
 };
-
-
-
 export default NavItem;
+

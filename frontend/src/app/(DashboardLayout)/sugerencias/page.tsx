@@ -141,48 +141,55 @@ const Page = () => {
         <AddIcon />
       </Fab>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Enviar nueva sugerencia</DialogTitle>
-        <DialogContent>
-          <form onSubmit={handleSubmit}>
-            <TextField
-              label="Departamento"
-              select
-              fullWidth
-              value={departamento}
-              onChange={(e) => setDepartamento(e.target.value)}
-              margin="normal"
-              required
-            >
-              {departamentos.map((d) => (
-                <MenuItem key={d} value={d}>
-                  {d}
-                </MenuItem>
-              ))}
-            </TextField>
+<Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
+  <DialogTitle>Enviar nueva sugerencia</DialogTitle>
+  <DialogContent
+    sx={{
+      maxHeight: "70vh",
+      overflowY: "auto",
+    }}
+  >
+    <form onSubmit={handleSubmit}>
+      <TextField
+        label="Departamento"
+        select
+        fullWidth
+        value={departamento}
+        onChange={(e) => setDepartamento(e.target.value)}
+        margin="normal"
+        required
+      >
+        {departamentos.map((d) => (
+          <MenuItem key={d} value={d}>
+            {d}
+          </MenuItem>
+        ))}
+      </TextField>
 
-            <TextField
-              label="Escribe tu sugerencia"
-              multiline
-              rows={4}
-              fullWidth
-              value={mensaje}
-              onChange={(e) => setMensaje(e.target.value)}
-              margin="normal"
-              inputProps={{ maxLength: 700 }}
-              helperText={`${mensaje.length}/700 caracteres`}
-              required
-            />
+      <TextField
+        label="Escribe tu sugerencia"
+        multiline
+        fullWidth
+        value={mensaje}
+        onChange={(e) => setMensaje(e.target.value)}
+        margin="normal"
+        inputProps={{ maxLength: 700 }}
+        helperText={`${mensaje.length}/700 caracteres`}
+        required
+        minRows={4}
+        maxRows={12}
+      />
 
-            <DialogActions>
-              <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
-              <Button type="submit" variant="contained">
-                Enviar
-              </Button>
-            </DialogActions>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <DialogActions>
+        <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
+        <Button type="submit" variant="contained">
+          Enviar
+        </Button>
+      </DialogActions>
+    </form>
+  </DialogContent>
+</Dialog>
+
 
       <Snackbar
         open={success}
