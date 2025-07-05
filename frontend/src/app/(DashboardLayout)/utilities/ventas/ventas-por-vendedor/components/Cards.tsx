@@ -20,15 +20,15 @@ const MetricCard = ({
 
   return (
     <Paper
-      elevation={elevation} // Use elevation prop
-      variant="outlined" // Gives it a clean border
+      elevation={elevation}
+      variant="outlined" 
       sx={{
         borderRadius: 2,
-        // Removed explicit border as variant="outlined" handles it
+        
         transition: "0.3s",
         "&:hover": {
           transform: "translateY(-3px)", // Subtle lift effect
-          boxShadow: `0px ${elevation + 4}px ${elevation * 2 + 8}px rgba(0,0,0,0.08)`, // More pronounced hover shadow
+          boxShadow: `0px ${elevation + 4}px ${elevation * 2 + 8}px rgba(0,0,0,0.08)`, 
         },
       }}
     >

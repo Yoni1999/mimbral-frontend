@@ -151,18 +151,30 @@ const ProductosVendidos = ({ data }: Props) => {
         {sortedData.map((row, idx) => (
           <TableRow key={idx}>
             <TableCell>
-              <img
-                src={
-                  typeof row.imagen === 'string' && row.imagen.startsWith('http')
-                    ? row.imagen
-                    : 'https://res.cloudinary.com/dhzahos7u/image/upload/v1748960388/producto_sin_imagen_vqaps4.jpg'
-                }
-                alt={row.nombre}
+              <Box
+                component="img"
+                src={row.imagen}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src =
+                    'https://res.cloudinary.com/dhzahos7u/image/upload/v1748960388/producto_sin_imagen_vqaps4.jpg';
+                }}
+                alt=""
                 width={50}
                 height={50}
-                style={{ objectFit: 'cover', borderRadius: 4 }}
+                sx={{
+                  objectFit: 'contain',
+                  borderRadius: 1,
+                  border: '1px solid #e0e0e0',
+                  backgroundColor: '#fff',
+                  maxWidth: 50,
+                  maxHeight: 50,
+                  display: 'block',
+                }}
               />
             </TableCell>
+
             <TableCell>
               <Typography fontWeight={600}>{row.nombre}</Typography>
               <Typography variant="caption" color="textSecondary">{row.sku}</Typography>

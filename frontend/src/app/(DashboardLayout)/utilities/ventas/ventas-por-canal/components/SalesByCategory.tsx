@@ -85,11 +85,9 @@ const VentasPorCategoriaChart: React.FC<Props> = ({ data }) => {
     <Card
       sx={{
         borderRadius: 4,
-        boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
-        background: "#fff",
+        boxShadow: '0px 4px 20px rgba(0,0,0,0.1)',
+        background: '#fff',
         p: 2,
-        position: "relative",
-        overflow: "visible",
       }}
     >
       <CardContent>

@@ -15,20 +15,12 @@ import dynamic from "next/dynamic";
 import ProgressGauge from "./components/ProgressGauge";
 import SeccionTitulo from "./components/SeccionTitulo";
 import { fetchWithToken } from "@/utils/fetchWithToken";
-import {
-  IconCurrencyDollar,
-  IconTrendingUp,
-  IconCreditCard,
-  IconShoppingCart,
-  IconStack2,
-  IconBox,
-} from "@tabler/icons-react";
+import { IconCurrencyDollar, IconTrendingUp, IconCreditCard, IconShoppingCart, IconStack2, IconBox, } from "@tabler/icons-react";
 import TopRentabilidadMinima from "./components/Top10RentabilidadMinima";
 import NivelNavigation from "../components/NivelNavigation";
 import FotoDelDiaHeader, { Filters } from "./components/FotoDelDiaHeader.tsx";
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades } from "@/utils/format";
-import ProductosEstancadosTable from "./components/ProductosEstancadosTable";
 import ProductosVendidos from "./components/ProductosVendidos";
 import TopVendedoresChart from "./components/Top10Vendedores";
 
@@ -42,19 +34,10 @@ const RentabilidadChart = dynamic(() => import("./components/Top10RentabilidadCh
   ssr: false,
 });
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: "CLP",
-  }).format(value);
-
-const formatMillions = (value: number) =>
-  `$${(value / 1_000_000).toFixed(2)}M`;
-
-const FotoDelDia = () => {
+const ResumenVentas = () => {
   const [loading, setLoading] = useState(true);
   const [filtros, setFiltros] = useState<Omit<Filters, "vendedor">>({
-    canal: "", // <-- necesario ahora
+    canal: "", 
     temporada: "",
     periodo: "",
     fechaInicio: "",
@@ -106,8 +89,6 @@ const FotoDelDia = () => {
   const [productosEstancados, setProductosEstancados] = useState<any[]>([]);
   const [productosRentabilidadMinima, setProductosRentabilidadMinima] = useState<any[]>([]);
 
-
-
   const detalleTransformado = detalleVentas.map((item) => ({
     imagen: item.Imagen,
     sku: item.Codigo_Producto,
@@ -121,8 +102,6 @@ const FotoDelDia = () => {
     precioPromedio: item.Precio_Promedio_Venta,
     totalVentas: item.Total_Ventas,
   }));
-
-
 
   const fetchData = async (
     endpoint: string,
@@ -141,7 +120,6 @@ const FotoDelDia = () => {
       console.error(`Error al obtener datos de ${endpoint}:`, error);
     }
   };
-
   useEffect(() => {
     const getPeriodoParam = () => {
       switch (filtros.periodo) {
@@ -154,7 +132,6 @@ const FotoDelDia = () => {
         default: return "1D";
       }
     };
-
     const buildQuery = () => {
       const params = new URLSearchParams();
       if (filtros.canal) params.append("canal", filtros.canal);
@@ -164,7 +141,6 @@ const FotoDelDia = () => {
       if (filtros.temporada) params.append("temporada", filtros.temporada);
       return params.toString();
     };
-
     const query = buildQuery();
     setLoading(true);
 
@@ -186,7 +162,6 @@ const FotoDelDia = () => {
         fetchData(`margen-ventas?${query}`, setMargenBrutoHoy),
       ]);
     };
-
     const fetchSecondaryData = async () => {
       await Promise.all([
         fetchData(`ventas-canal?${query}`, setVentascanal),
@@ -202,14 +177,12 @@ const FotoDelDia = () => {
         fetchData(`obtener-detalle-ventas?${query}`, setDetalleVentas),
         fetchData(`top-productos-estancados?${query}`, setProductosEstancados),
         fetchData(`productos-rentabilidad-minima?${query}`, setProductosRentabilidadMinima),
-
       ]);
       setLoading(false);
     };
 
     fetchPrimaryData().then(fetchSecondaryData);
   }, [filtros]);
-
 
   return (
     <>
@@ -218,7 +191,7 @@ const FotoDelDia = () => {
       <Box sx={{ p: 0}}>
         <FotoDelDiaHeader onFilterChange={(f) => setFiltros(f)} />
         <Grid container spacing={2}>
-      <Grid item xs={12}> {/* Use full width for the section containing the metric cards */}
+      <Grid item xs={12}>
         <Grid container spacing={2}>
           {[
             {
@@ -272,7 +245,7 @@ const FotoDelDia = () => {
               icon: <IconBox />,
             },
           ].map((card, index) => (
-            <Grid item xs={12} sm={6} md={4} lg={2} key={index}> {/* Adjusted grid size for better visual flow on larger screens */}
+            <Grid item xs={12} sm={6} md={4} lg={2} key={index}> 
               {card.isLoading ? (
                 <Paper
                   sx={{
@@ -302,95 +275,74 @@ const FotoDelDia = () => {
         </Grid>
       </Grid>
 
-      {/*
-        SALES TRENDS & DISTRIBUTION
-        This section groups charts related to how sales are performing over time
-        and across different channels/categories.
-      */}
       <Grid item xs={12}>
         <SeccionTitulo
           title="Análisis de Ventas"
           infoRight="Visualización de tendencias y distribución de ventas."
         />
       </Grid>
-      <Grid item xs={12} md={5}> {/* Side-by-side with main chart for channel insights */}
-        <VentasCanalChart filters={filtros} />
-      </Grid>
-      <Grid item xs={12} md={7}> {/* Main sales chart takes more space */}
-        <VentasChart filtros={filtros} />
-      </Grid>
-            {/*
-        CATEGORY PERFORMANCE
-        Focus on how different product categories are performing.
-      */}
-      <Grid item xs={12}>
-        <SeccionTitulo
-          title="Rendimiento por Categoría y Vendedores"
-          infoRight="Análisis del desempeño de las categorías de productos."
-        />
-      </Grid>
-      <Grid item xs={12} md={5.5}> {/* Full width for category bar chart */}
-        <CategoriasBarChart data={categoriasData} />
-      </Grid>
-      <Grid item xs={12} md={6.5}> {/* Top sellers chart next to category performance */}
-        <TopVendedoresChart data={topVendedores} />
-      </Grid>
-
-      {/*
-        PRODUCT PERFORMANCE
-        Dedicated section for product-specific metrics like top sellers,
-        profitability, and slow-moving items.
-      */}
-      <Grid item xs={12}>
-        <SeccionTitulo
-          title="Rendimiento de Productos"
-          infoRight="Desglose por productos más vendidos y rentables."
-        />
-      </Grid>
-      <Grid item xs={12} md={7}> {/* Top selling products chart */}
-        <TopRentabilidadMinima data={productosRentabilidadMinima} />
-      </Grid>
-      <Grid item xs={12} md={5}> {/* Rentability chart next to top sellers */}
-        <RentabilidadChart data={productosRentabilidad} />
-      </Grid>
-      <Grid item xs={12}> {/* Full width for detailed product table */}
-        <ProductosVendidos data={detalleTransformado} />
-      </Grid>
-      {/*
-      <Grid item xs={12}>
-        <ProductosEstancadosTable data={productosEstancados} />
-      </Grid>
-      */}
-      <Grid item xs={12}>
-        <SeccionTitulo
-          title="Metas por Canal"
-          infoRight="Se está mostrando el período actual de las metas."
-        />
-      </Grid>
-      <Grid item xs={12}> {/* Full width grid for the gauges */}
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}> {/* Responsive grid for gauges */}
-            <ProgressGauge value={720} total={1000} title="Empresas" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <ProgressGauge value={550} total={1000} title="Chorrillo" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <ProgressGauge value={300} total={1000} title="Meli" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <ProgressGauge value={820} total={1000} title="Balmaceda" />
+        <Grid item xs={12} md={5}> {/* Side-by-side with main chart for channel insights */}
+          <VentasCanalChart filters={filtros} />
+        </Grid>
+        <Grid item xs={12} md={7}> {/* Main sales chart takes more space */}
+          <VentasChart filtros={filtros} />
+        </Grid>
+        <Grid item xs={12}>
+          <SeccionTitulo
+            title="Rendimiento por Categoría y Vendedores"
+            infoRight="Análisis del desempeño de las categorías de productos."
+          />
+        </Grid>
+        <Grid item xs={12} md={5.5}> {/* Full width for category bar chart */}
+          <CategoriasBarChart data={categoriasData} />
+        </Grid>
+        <Grid item xs={12} md={6.5}> {/* Top sellers chart next to category performance */}
+          <TopVendedoresChart data={topVendedores} />
+        </Grid>
+        <Grid item xs={12}>
+          <SeccionTitulo
+            title="Rendimiento de Productos"
+            infoRight="Desglose por productos más vendidos y rentables."
+          />
+        </Grid>
+        <Grid item xs={12} md={7}> {/* Top selling products chart */}
+          <TopRentabilidadMinima data={productosRentabilidadMinima} />
+        </Grid>
+        <Grid item xs={12} md={5}> {/* Rentability chart next to top sellers */}
+          <RentabilidadChart data={productosRentabilidad} />
+        </Grid>
+        <Grid item xs={12}> {/* Full width for detailed product table */}
+          <ProductosVendidos data={detalleTransformado} />
+        </Grid>
+        <Grid item xs={12}>
+          <SeccionTitulo
+            title="Metas por Canal"
+            infoRight="Se está mostrando el período actual de las metas."
+          />
+        </Grid>
+        <Grid item xs={12}> {/* Full width grid for the gauges */}
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={3}> {/* Responsive grid for gauges */}
+              <ProgressGauge value={720} total={1000} title="Empresas" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <ProgressGauge value={550} total={1000} title="Chorrillo" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <ProgressGauge value={300} total={1000} title="Meli" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <ProgressGauge value={820} total={1000} title="Balmaceda" />
+            </Grid>
           </Grid>
         </Grid>
       </Grid>
-    </Grid>
   </Box>
 </PageContainer>
     </>
   );
 };
-
-export default FotoDelDia;
+export default ResumenVentas;
 
 
 

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
-import { Box } from "@mui/material";
+import { Box, CircularProgress } from "@mui/material";
 import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
 import { ApexOptions } from "apexcharts";
 import { fetchWithToken } from "@/utils/fetchWithToken";
@@ -27,6 +27,7 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
   const [chartData, setChartData] = useState<number[]>([]);
   const [vendedorCodigos, setVendedorCodigos] = useState<number[]>([]);
   const [noData, setNoData] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!canal) {
@@ -34,11 +35,13 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
       setChartData([]);
       setVendedorCodigos([]);
       setNoData(true);
+      setIsLoading(false);
       return;
     }
 
     const fetchData = async () => {
       try {
+        setIsLoading(true);
         const params = new URLSearchParams();
 
         if (canal) params.append("canal", canal);
@@ -74,6 +77,8 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
         setChartData([0.001]);
         setVendedorCodigos([0]);
         setNoData(true);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -93,9 +98,7 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
       },
     },
     labels,
-    legend: {
-      show: false, // 👈 Elimina la leyenda
-    },
+    legend: { show: false },
     responsive: [
       {
         breakpoint: 480,
@@ -149,15 +152,32 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
       title="Vendedores"
       sx={{
         borderRadius: 4,
-        height: "100%",
+        minHeight: 400, // ✅ Altura consistente
         boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
         background: "#fff",
         p: 2,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
       }}
     >
-      <Box sx={{ width: "100%", maxWidth: 500, mx: "auto" }}>
-        <Chart options={options} series={chartData} type="donut" width="100%" height="350px" />
-      </Box>
+      {isLoading ? (
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 300, // Asegura espacio visual al loader
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Box sx={{ width: "100%", maxWidth: 500, mx: "auto" }}>
+          <Chart options={options} series={chartData} type="donut" width="100%" height="350px" />
+        </Box>
+      )}
     </DashboardCard>
   );
 };

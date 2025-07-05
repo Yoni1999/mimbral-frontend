@@ -1,12 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Box, Grid, Paper, CircularProgress } from "@mui/material";
+import { Box, Grid, Paper, CircularProgress, Typography } from "@mui/material";
 import NivelNavigation from "../components/NivelNavigation";
-import HeaderVendedor, { Filters } from "./components/HeaderVendedor";
-import MetricCard from "./components/MetricCard";
-import ProgressGauge from "./components/ProgressGauge";
+import HeaderVendedor, { Filters } from "./components/Header";
+import MetricCard from "./components/Cards";
+import ProgressGauge from "./components/Goals";
 import dynamic from "next/dynamic";
-import TopProductosChart from "./components/TopProductosChart";
+import TopProductosChart from "./components/SoldCategories";
 import {IconCurrencyDollar,IconTrendingUp,IconBox,IconStack2,IconShoppingCart,IconCreditCard,IconReceipt,IconCash} from "@tabler/icons-react";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
@@ -16,14 +16,14 @@ import { formatVentas, formatUnidades } from "@/utils/format";
 
 // Dynamic imports para componentes de gráficos
 const TopVentasComparadoChart = dynamic(
-  () => import("./components/TopVentasComparadoChart"),
+  () => import("./components/TopSalesComparison"),
   { ssr: false }
 );
-const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
+const VentasCanalChart = dynamic(() => import("./components/FormaPago"), {
   ssr: false,
 });
 const TopRentableVendedor = dynamic(
-  () => import("./components/TopRentableVendedor"),
+  () => import("./components/Top10MostProfitable"),
   { ssr: false }
 );
 
@@ -507,28 +507,48 @@ return (
               infoRight="Se está mostrando el período actual de las metas."
             />
           </Grid>
-          <Grid item xs={12}> {/* Full width grid for the gauges */}
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={2}> {/* Responsive grid for gauges */}
-                <ProgressGauge value={720} total={1000} title="Cemento Polpaico 25kg" detalleRuta="/ventas-vendedor/metas" height={220} />
-              </Grid>
-              <Grid item xs={12} sm={6} md={2}>
-                <ProgressGauge value={550} total={1000} title="Zinc Acanalado 2.5 mts " detalleRuta="/ventas-vendedor/metas" height={220} />
-              </Grid>
-              <Grid item xs={12} sm={6} md={2}>
-                <ProgressGauge value={300} total={1000} title="Plancha Yeso Cartón 9mm" detalleRuta="/ventas-vendedor/metas" height={220} />
-              </Grid>
-              <Grid item xs={12} sm={6} md={2}>
-                <ProgressGauge value={820} total={1000} title="Urea Granulada 25kg" detalleRuta="/ventas-vendedor/metas" height={220} />
-              </Grid>
-              <Grid item xs={12} sm={6} md={2}>
-                <ProgressGauge value={820} total={1000} title="Adhesivo Ceramico" detalleRuta="/ventas-vendedor/metas" height={220} />
-              </Grid>
-              <Grid item xs={12} sm={6} md={2}>
-                <ProgressGauge value={820} total={1000} title="Malla Acma Construcción" detalleRuta="/ventas-vendedor/metas" height={220} />
+          
+            {/* Contenedor de aviso temporal de desarrollo */}
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  backgroundColor: "#fff3cd",
+                  border: "1px solid #ffeeba",
+                  borderRadius: 2,
+                  padding: 2,
+                  mb: 2,
+                  textAlign: "center",
+                }}
+              >
+                <Typography variant="subtitle1" sx={{ color: "#856404" }}>
+                  Este apartado para ver metas por vendedor aún está en desarrollo. Los datos mostrados son falsos.
+                </Typography>
+              </Box>
+            </Grid>
+
+            <Grid item xs={12}> {/* Full width grid for the gauges */}
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={2}>
+                  <ProgressGauge value={720} total={1000} title="Cemento Polpaico 25kg" detalleRuta="/ventas-vendedor/metas" height={220} />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <ProgressGauge value={550} total={1000} title="Zinc Acanalado 2.5 mts " detalleRuta="/ventas-vendedor/metas" height={220} />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <ProgressGauge value={300} total={1000} title="Plancha Yeso Cartón 9mm" detalleRuta="/ventas-vendedor/metas" height={220} />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <ProgressGauge value={820} total={1000} title="Urea Granulada 25kg" detalleRuta="/ventas-vendedor/metas" height={220} />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <ProgressGauge value={820} total={1000} title="Adhesivo Ceramico" detalleRuta="/ventas-vendedor/metas" height={220} />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <ProgressGauge value={820} total={1000} title="Malla Acma Construcción" detalleRuta="/ventas-vendedor/metas" height={220} />
+                </Grid>
               </Grid>
             </Grid>
-          </Grid>
+
         </Grid>
       </Box>
     </>
