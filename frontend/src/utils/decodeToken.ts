@@ -4,7 +4,7 @@ export const decodeToken = (token: string) => {
       const payload = token.split(".")[1];
       return JSON.parse(atob(payload));
     } catch (err) {
-      console.error("❌ Error al decodificar token:", err);
+      console.error("Error al decodificar token:", err);
       return null;
     }
   };

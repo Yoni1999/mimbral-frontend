@@ -10,21 +10,36 @@ import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCa
 
 interface SessionData {
   nombre: string;
-  minutos: number;
   sesiones: number;
+  ultimaConexion: string;
 }
 
-const formatTiempo = (min: number) => {
-  if (min < 60) return `${min} min`;
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  return `${h}h ${m}min`;
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth(); // 0-11
+  const day = date.getUTCDate();
+  const hours = date.getUTCHours();
+  const minutes = date.getUTCMinutes();
+  const seconds = date.getUTCSeconds();
+
+  // Función auxiliar para añadir ceros iniciales si es necesario
+  const pad = (num: number) => num < 10 ? '0' + num : num;
+
+  // Nombres de los meses en español
+  const monthNames = ["ene", "feb", "mar", "abr", "may", "jun",
+    "jul", "ago", "sep", "oct", "nov", "dic"
+  ];
+
+  // Construimos la cadena de fecha y hora en formato UTC
+  return `${pad(day)} ${monthNames[month]} ${year}, ${pad(hours)}:${pad(minutes)}:${pad(seconds)} `;
 };
 
 const UserSessionTable = () => {
   const [data, setData] = useState<SessionData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [orderBy, setOrderBy] = useState<keyof SessionData>("minutos");
+  const [orderBy, setOrderBy] = useState<keyof SessionData>("ultimaConexion");
   const [order, setOrder] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
@@ -53,6 +68,10 @@ const UserSessionTable = () => {
     if (orderBy === "nombre") {
       const result = a.nombre.localeCompare(b.nombre);
       return order === "asc" ? result : -result;
+    } else if (orderBy === "ultimaConexion") {
+      const dateA = new Date(a.ultimaConexion).getTime();
+      const dateB = new Date(b.ultimaConexion).getTime();
+      return order === "asc" ? dateA - dateB : dateB - dateA;
     } else {
       const valA = a[orderBy] as number;
       const valB = b[orderBy] as number;
@@ -60,17 +79,17 @@ const UserSessionTable = () => {
     }
   });
 
-  if (loading) return <Typography>Cargando sesiones...</Typography>;
+  if (loading) return <Typography sx={{ mt: 4 }}>Cargando sesiones...</Typography>;
 
   return (
-    <DashboardCard title="Resumen de Sesiones" sx={{ maxWidth: 500, mt: 4 }}>
+    <DashboardCard title="Resumen de Sesiones" sx={{ maxWidth: 500, mt: 0 }}>
       <TableContainer
         component={Paper}
         sx={{
-          height: 380,
+          height: 280,
           overflowY: "auto",
-          backgroundColor: "transparent", 
-          boxShadow: "none",  
+          backgroundColor: "transparent",
+          boxShadow: "none",
         }}
       >
         <Table stickyHeader>
@@ -87,11 +106,11 @@ const UserSessionTable = () => {
               </TableCell>
               <TableCell align="right">
                 <TableSortLabel
-                  active={orderBy === "minutos"}
-                  direction={orderBy === "minutos" ? order : "asc"}
-                  onClick={() => handleSort("minutos")}
+                  active={orderBy === "ultimaConexion"}
+                  direction={orderBy === "ultimaConexion" ? order : "asc"}
+                  onClick={() => handleSort("ultimaConexion")}
                 >
-                  Tiempo Total
+                  Última Conexión
                 </TableSortLabel>
               </TableCell>
               <TableCell align="right">
@@ -109,7 +128,7 @@ const UserSessionTable = () => {
             {sortedData.map((user, i) => (
               <TableRow key={i}>
                 <TableCell>{user.nombre}</TableCell>
-                <TableCell align="right">{formatTiempo(user.minutos)}</TableCell>
+                <TableCell align="right">{formatDate(user.ultimaConexion)}</TableCell>
                 <TableCell align="right">{user.sesiones}</TableCell>
               </TableRow>
             ))}

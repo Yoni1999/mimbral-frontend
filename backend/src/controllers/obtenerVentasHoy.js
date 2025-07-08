@@ -1027,6 +1027,7 @@ const obtenerProductosDetallado = async (req, res) => {
       primerNivel = null,
       categoria = null,
       subcategoria = null,
+      tipoEnvio = null,
       limit = 100,
       offset = 0,
       sinPaginacion = 'false',
@@ -1034,9 +1035,16 @@ const obtenerProductosDetallado = async (req, res) => {
       order = 'desc',
     } = req.query;
 
+    // Validar tipoEnvio
+    const tiposPermitidos = ['full', 'colecta', null];
+    if (tipoEnvio && !tiposPermitidos.includes(tipoEnvio)) {
+      return res.status(400).json({
+        error: "Parámetro 'tipoEnvio' inválido. Valores permitidos: 'full', 'colecta'.",
+      });
+    }
+
     const aplicarPaginacion = sinPaginacion !== 'true';
 
-    // Validar campos de ordenamiento permitidos
     const camposPermitidos = [
       'cantidadVendida',
       'margenPorcentaje',
@@ -1060,6 +1068,7 @@ const obtenerProductosDetallado = async (req, res) => {
     request.input("PrimerNivel", sql.VarChar, primerNivel);
     request.input("Categoria", sql.VarChar, categoria);
     request.input("Subcategoria", sql.VarChar, subcategoria);
+    request.input("TipoEnvio", sql.VarChar, tipoEnvio);
     request.input("Limit", sql.Int, limit);
     request.input("Offset", sql.Int, offset);
 
@@ -1084,13 +1093,13 @@ const obtenerProductosDetallado = async (req, res) => {
       BEGIN
           SET @FechaFinActual = CAST(GETDATE() AS DATE);
           SET @FechaInicioActual =
-              CASE 
-                  WHEN @Periodo = '1D'  THEN @FechaFinActual
-                  WHEN @Periodo = '7D'  THEN DATEADD(DAY, -6, @FechaFinActual)
+              CASE
+                  WHEN @Periodo = '1D' THEN @FechaFinActual
+                  WHEN @Periodo = '7D' THEN DATEADD(DAY, -6, @FechaFinActual)
                   WHEN @Periodo = '14D' THEN DATEADD(DAY, -13, @FechaFinActual)
-                  WHEN @Periodo = '1M'  THEN DATEADD(MONTH, -1, @FechaFinActual)
-                  WHEN @Periodo = '3M'  THEN DATEADD(MONTH, -3, @FechaFinActual)
-                  WHEN @Periodo = '6M'  THEN DATEADD(MONTH, -6, @FechaFinActual)
+                  WHEN @Periodo = '1M' THEN DATEADD(MONTH, -1, @FechaFinActual)
+                  WHEN @Periodo = '3M' THEN DATEADD(MONTH, -3, @FechaFinActual)
+                  WHEN @Periodo = '6M' THEN DATEADD(MONTH, -6, @FechaFinActual)
                   ELSE @FechaFinActual
               END;
       END;
@@ -1134,7 +1143,7 @@ const obtenerProductosDetallado = async (req, res) => {
       INNER JOIN OINV T0 ON I.DocEntry = T0.DocEntry
       LEFT JOIN [@PRIMER_NIVEL] PN ON PN.Code = O.U_Primer_Nivel
       LEFT JOIN [@CATEGORIA] CAT ON CAT.Code = O.U_Categoria
-      WHERE 
+      WHERE
           T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
           AND T0.CANCELED = 'N'
           AND O.AvgPrice > 0
@@ -1145,19 +1154,26 @@ const obtenerProductosDetallado = async (req, res) => {
           AND (
               @CanalParam IS NULL
               OR (
-                  (@CanalParam = 'Meli' AND ((I.WhsCode IN ('03', '05') AND T0.SlpCode IN (426, 364, 355))
-                      OR (I.WhsCode = '01' AND T0.SlpCode IN (355, 398)) ))
+                  (@CanalParam = 'Meli' AND (
+                      (I.WhsCode IN ('03', '05') AND T0.SlpCode IN (426, 364, 355)
+                        AND (@TipoEnvio IS NULL
+                             OR (@TipoEnvio = 'full' AND I.WhsCode = '05' AND I.SlpCode = 355)
+                             OR (@TipoEnvio = 'colecta' AND I.WhsCode = '03' AND I.SlpCode = 355)
+                            )
+                      )
+                      OR (I.WhsCode = '01' AND T0.SlpCode IN (355, 398))
+                  ))
                   OR (@CanalParam = 'Falabella' AND I.WhsCode = '03' AND T0.SlpCode = 371)
                   OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
                   OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
-                  OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' 
+                  OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01'
                       AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
-                  OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' 
+                  OR (@CanalParam = 'Empresas' AND I.WhsCode = '01'
                       AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
               )
           )
           AND (@VendedorParam IS NULL OR I.SlpCode = @VendedorParam)
-      GROUP BY 
+      GROUP BY
           I.ItemCode, O.ItemName, O.U_Imagen, O.U_Primer_Nivel, O.U_Categoria,
           PN.Name, CAT.Name
       ORDER BY ${campoOrden} ${direccionOrden}
@@ -1173,7 +1189,7 @@ const obtenerProductosDetallado = async (req, res) => {
       FROM INV1 I
       INNER JOIN OITM O ON I.ItemCode = O.ItemCode
       INNER JOIN OINV T0 ON I.DocEntry = T0.DocEntry
-      WHERE 
+      WHERE
           T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
           AND T0.CANCELED = 'N'
           AND O.AvgPrice > 0
@@ -1184,14 +1200,21 @@ const obtenerProductosDetallado = async (req, res) => {
           AND (
               @CanalParam IS NULL
               OR (
-                  (@CanalParam = 'Meli' AND ((I.WhsCode IN ('03', '05') AND T0.SlpCode IN (426, 364, 355))
-                      OR (I.WhsCode = '01' AND T0.SlpCode IN (355, 398)) ))
+                  (@CanalParam = 'Meli' AND (
+                      (I.WhsCode IN ('03', '05') AND T0.SlpCode IN (426, 364, 355)
+                        AND (@TipoEnvio IS NULL
+                             OR (@TipoEnvio = 'full' AND I.WhsCode = '05' AND I.SlpCode = 355)
+                             OR (@TipoEnvio = 'colecta' AND I.WhsCode = '03' AND I.SlpCode = 355)
+                            )
+                      )
+                      OR (I.WhsCode = '01' AND T0.SlpCode IN (355, 398))
+                  ))
                   OR (@CanalParam = 'Falabella' AND I.WhsCode = '03' AND T0.SlpCode = 371)
                   OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
                   OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
-                  OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' 
+                  OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01'
                       AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
-                  OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' 
+                  OR (@CanalParam = 'Empresas' AND I.WhsCode = '01'
                       AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
               )
           )
@@ -1209,6 +1232,7 @@ const obtenerProductosDetallado = async (req, res) => {
     res.status(500).json({ error: "Error en el servidor." });
   }
 };
+
 
 
 const obtenerTopVendedores = async (req, res) => {

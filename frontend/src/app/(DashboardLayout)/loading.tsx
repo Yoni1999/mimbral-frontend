@@ -20,12 +20,12 @@ const Loading = () => {
         src="/images/logos/logoitem.jpg"
         alt="Logo Mimbral"
         sx={{
-          width: 70, // Más pequeño
+          width: 70, 
           height: 70,
           borderRadius: '50%',
           objectFit: 'cover',
           animation: 'spin 2s linear infinite',
-          mb: 2, // margen inferior
+          mb: 2, 
         }}
       />
       <Typography variant="body1" color="text.secondary" fontWeight={500}>

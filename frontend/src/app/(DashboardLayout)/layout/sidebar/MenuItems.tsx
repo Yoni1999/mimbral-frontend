@@ -1,6 +1,6 @@
 // src/layout/Menuitems.ts
 import {IconLayoutDashboard,IconCreditCard, IconChartBar,IconChartDonut,IconChartPie,IconChartLine,
-  IconBoxSeam,IconHierarchy3,IconTruckDelivery,IconClipboardCheck,IconTargetArrow,IconMessage2,} from "@tabler/icons-react";
+  IconBoxSeam,IconHierarchy3,IconTruckDelivery,IconClipboardCheck,IconTargetArrow,IconMessage2,IconUsersGroup,} from "@tabler/icons-react";
 
 import { uniqueId } from "lodash";
 const Menuitems = [
@@ -68,7 +68,7 @@ const Menuitems = [
     id: uniqueId(),
     title: "Supply Chain",
     icon: IconTruckDelivery,
-    href: "/utilities/supply-chain1",
+    href: "/utilities/supplychain",
   },
   {
     id: uniqueId(),
@@ -108,6 +108,12 @@ const Menuitems = [
         title: "Ventas de Productos",
         icon: IconChartBar,
         href: "/informes/ventas-productos",
+      },
+      {
+        id: uniqueId(),
+        title: "Reporte Vendedores",
+        icon: IconUsersGroup,
+        href: "/informes/Vendedores",
       },
       {
         id: uniqueId(),

@@ -2,9 +2,21 @@
 
 import React, { useState } from 'react';
 import {
-  Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Paper, Typography, Box, TextField, TableSortLabel
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Typography,
+  Box,
+  TextField,
+  TableSortLabel,
+  Avatar,
+  Stack
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { formatUnidades, formatVentas } from '@/utils/format';
 
 type ProductoVendido = {
@@ -36,6 +48,24 @@ interface Props {
   ordenActual: Order;
   ordenPorActual: OrderBy;
 }
+
+// Estilos consistentes con el componente anterior
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  '&.MuiTableCell-head': {
+    backgroundColor: theme.palette.primary.dark,
+    color: theme.palette.common.white,
+    fontWeight: 'bold',
+  },
+  '&.MuiTableCell-body': {
+    fontSize: 14,
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:nth-of-type(odd)': {
+    backgroundColor: theme.palette.action.hover,
+  },
+}));
 
 const ProductosVendidos = ({
   data,
@@ -71,11 +101,11 @@ const ProductosVendidos = ({
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell>Imagen</TableCell>
-              <TableCell>Producto (SKU)</TableCell>
-              <TableCell>Primer Nivel / Categoría</TableCell>
+              <StyledTableCell>Imagen</StyledTableCell>
+              <StyledTableCell>Producto (SKU)</StyledTableCell>
+              <StyledTableCell>Primer Nivel / Categoría</StyledTableCell>
 
-              <TableCell sortDirection={ordenPorActual === 'cantidadVendida' ? ordenActual : false}>
+              <StyledTableCell sortDirection={ordenPorActual === 'cantidadVendida' ? ordenActual : false}>
                 <TableSortLabel
                   active={ordenPorActual === 'cantidadVendida'}
                   direction={ordenPorActual === 'cantidadVendida' ? ordenActual : 'asc'}
@@ -83,19 +113,19 @@ const ProductosVendidos = ({
                 >
                   Cant. Vendida
                 </TableSortLabel>
-              </TableCell>
+              </StyledTableCell>
 
-              <TableCell sortDirection={ordenPorActual === 'facturasUnicas' ? ordenActual : false}>
+              <StyledTableCell sortDirection={ordenPorActual === 'facturasUnicas' ? ordenActual : false}>
                 <TableSortLabel
                   active={ordenPorActual === 'facturasUnicas'}
                   direction={ordenPorActual === 'facturasUnicas' ? ordenActual : 'asc'}
                   onClick={() => onSortChange('facturasUnicas')}
                 >
-                  Cant. Transacciones
+                  Transacciones
                 </TableSortLabel>
-              </TableCell>
+              </StyledTableCell>
 
-              <TableCell sortDirection={ordenPorActual === 'totalVentas' ? ordenActual : false}>
+              <StyledTableCell sortDirection={ordenPorActual === 'totalVentas' ? ordenActual : false}>
                 <TableSortLabel
                   active={ordenPorActual === 'totalVentas'}
                   direction={ordenPorActual === 'totalVentas' ? ordenActual : 'asc'}
@@ -103,9 +133,9 @@ const ProductosVendidos = ({
                 >
                   Total Ventas
                 </TableSortLabel>
-              </TableCell>
+              </StyledTableCell>
 
-              <TableCell sortDirection={ordenPorActual === 'margenBruto' ? ordenActual : false}>
+              <StyledTableCell sortDirection={ordenPorActual === 'margenBruto' ? ordenActual : false}>
                 <TableSortLabel
                   active={ordenPorActual === 'margenBruto'}
                   direction={ordenPorActual === 'margenBruto' ? ordenActual : 'asc'}
@@ -113,9 +143,9 @@ const ProductosVendidos = ({
                 >
                   Margen Bruto / %
                 </TableSortLabel>
-              </TableCell>
+              </StyledTableCell>
 
-              <TableCell sortDirection={ordenPorActual === 'precioPromedio' ? ordenActual : false}>
+              <StyledTableCell sortDirection={ordenPorActual === 'precioPromedio' ? ordenActual : false}>
                 <TableSortLabel
                   active={ordenPorActual === 'precioPromedio'}
                   direction={ordenPorActual === 'precioPromedio' ? ordenActual : 'asc'}
@@ -123,52 +153,61 @@ const ProductosVendidos = ({
                 >
                   Precio Prom. Venta
                 </TableSortLabel>
-              </TableCell>
+              </StyledTableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
             {filteredData.map((row, idx) => (
-              <TableRow key={idx}>
-                <TableCell>
-                  <img
+              <StyledTableRow key={idx}>
+                <StyledTableCell>
+                  <Avatar
                     src={
-                      typeof row.imagen === 'string' && row.imagen.startsWith('http')
+                      row.imagen && row.imagen.startsWith('http')
                         ? row.imagen
                         : 'https://res.cloudinary.com/dhzahos7u/image/upload/v1748960388/producto_sin_imagen_vqaps4.jpg'
                     }
                     alt={row.nombre}
-                    width={50}
-                    height={50}
-                    style={{ objectFit: 'cover', borderRadius: 4 }}
+                    sx={{ width: 48, height: 48 }}
+                    variant="rounded"
                   />
-                </TableCell>
+                </StyledTableCell>
 
-                <TableCell>
+                <StyledTableCell>
                   <Typography fontWeight={600}>{row.nombre}</Typography>
-                  <Typography variant="caption" color="textSecondary">{row.sku}</Typography>
-                </TableCell>
+                  <Typography variant="caption" color="text.secondary">{row.sku}</Typography>
+                </StyledTableCell>
 
-                <TableCell>
+                <StyledTableCell>
                   <Typography>{row.primerNivel}</Typography>
-                  <Typography variant="caption" color="textSecondary">{row.categoria}</Typography>
-                </TableCell>
+                  <Typography variant="caption" color="text.secondary">{row.categoria}</Typography>
+                </StyledTableCell>
 
-                <TableCell>{formatUnidades(row.cantidadVendida)}</TableCell>
-                <TableCell>{row.facturasUnicas}</TableCell>
-                <TableCell>{formatVentas(row.totalVentas)}</TableCell>
+                <StyledTableCell>{formatUnidades(row.cantidadVendida)}</StyledTableCell>
+                <StyledTableCell>{row.facturasUnicas}</StyledTableCell>
+                <StyledTableCell>{formatVentas(row.totalVentas)}</StyledTableCell>
 
-                <TableCell>
+                <StyledTableCell>
                   <Typography>{formatVentas(row.margenBruto)}</Typography>
-                  <Typography variant="caption" color="textSecondary">
+                  <Typography variant="caption" color="text.secondary">
                     {row.margenPorcentaje?.toFixed(2)}%
                   </Typography>
-                </TableCell>
+                </StyledTableCell>
 
-                <TableCell>{formatVentas(row.precioPromedio)}</TableCell>
-              </TableRow>
+                <StyledTableCell>{formatVentas(row.precioPromedio)}</StyledTableCell>
+              </StyledTableRow>
             ))}
           </TableBody>
+          {filteredData.length === 0 && (
+  <StyledTableRow>
+    <StyledTableCell colSpan={8} align="center">
+      <Typography variant="body2" color="text.secondary">
+        {busqueda ? 'No se encontraron productos con ese filtro.' : 'Cargando datos...'}
+      </Typography>
+    </StyledTableCell>
+  </StyledTableRow>
+)}
+
         </Table>
       </TableContainer>
     </Box>

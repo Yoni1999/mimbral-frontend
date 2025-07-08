@@ -126,29 +126,11 @@ const OpcionesAdminPage = () => {
               borderRadius: 2,
             }}
           >
-            <UsuariosPorRolChart />
-          </Box>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Box
-            sx={{
-              height: "100%",
-              minHeight: 360,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              p: 2,
-              borderRadius: 2,
-            }}
-          >
 
             <UserSessionTable />
           </Box>
         </Grid>
       </Grid>
-
-
 
 
       {/* 🔹 Botón flotante: crear usuario */}

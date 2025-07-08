@@ -22,6 +22,8 @@ interface FiltroVentas {
   primerNivel?: string;
   categoria?: string;
   subcategoria?: string;
+  // Nuevo campo para el tipo de envío
+  tipoEnvioMeli?: 'FULL' | 'COLECTA' | 'TODAS'; 
 }
 
 interface Categoria {
@@ -41,12 +43,12 @@ interface Props {
 }
 
 const canales = [
-  { value: "", label: "Todos los canales" }, 
-  { value: "Chorrillo", label: "Sucursal Chorrillos" },
+  { value: "", label: "Todos" },
+  { value: "Chorrillo", label: "Chorrillos" },
   { value: "Meli", label: "Mercado Libre" },
   { value: "Vitex", label: "Vtex" },
-  { value: "Empresas", label: "Ventas Empresas" },
-  { value: "Balmaceda", label: "Sucursal Balmaceda" },
+  { value: "Empresas", label: "Empresas" },
+  { value: "Balmaceda", label: "Balmaceda" },
   { value: "Falabella", label: "Falabella" },
 ];
 
@@ -60,67 +62,136 @@ const periodos = [
   { value: "RANGO", label: "Rango personalizado" },
 ];
 
+// Opciones para el nuevo selector de tipo de envío
+const tiposEnvioMeli = [
+    { value: "TODAS", label: "Todas" },
+    { value: "FULL", label: "Full" },
+    { value: "COLECTA", label: "Colecta" },
+];
+
 const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters }) => {
   const [open, setOpen] = useState(false);
-  const [filters, setFilters] = useState<FiltroVentas>(currentFilters || { periodo: "7D" });
+  // Inicializa tipoEnvioMeli a 'TODAS' por defecto cuando el canal es Meli o si no hay un filtro actual
+  const [filters, setFilters] = useState<FiltroVentas>(() => {
+    const initialFilters = currentFilters || { periodo: "7D" };
+    // Asegurarse de que tipoEnvioMeli se inicialice a 'TODAS' si el canal es Meli
+    if (initialFilters.canal === "Meli" && !initialFilters.tipoEnvioMeli) {
+      return { ...initialFilters, tipoEnvioMeli: "TODAS" };
+    }
+    return initialFilters;
+  });
 
   const [primerNiveles, setPrimerNiveles] = useState<Categoria[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [subcategorias, setSubcategorias] = useState<Categoria[]>([]);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
-  const [proveedorSearchInput, setProveedorSearchInput] = useState(""); // Added search input for proveedores
-  const [loadingProveedores, setLoadingProveedores] = useState(false); // Loading state for proveedores
-  const [showProveedorSuggestions, setShowProveedorSuggestions] = useState(false); // State to show supplier suggestions
+  const [proveedorSearchInput, setProveedorSearchInput] = useState("");
+  const [loadingProveedores, setLoadingProveedores] = useState(false);
+  const [showProveedorSuggestions, setShowProveedorSuggestions] = useState(false);
 
   // Fetch PrimerNivel and Proveedores data on component mount
   useEffect(() => {
     const fetchData = async () => {
-      const [primerNivelData, proveedoresData] = await Promise.all([
-        fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`).then(res => res!.json()),
-        fetchWithToken(`${BACKEND_URL}/api/obtenerproveedores`).then(res => res!.json())
-      ]);
-      setPrimerNiveles(primerNivelData);
-      setProveedores(proveedoresData);
+      setLoadingProveedores(true); // Set loading true for proveedores
+      try {
+        const [primerNivelData, proveedoresData] = await Promise.all([
+          fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`).then(res => res!.json()),
+          fetchWithToken(`${BACKEND_URL}/api/obtenerproveedores`).then(res => res!.json())
+        ]);
+        setPrimerNiveles(primerNivelData);
+        setProveedores(proveedoresData);
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+      } finally {
+        setLoadingProveedores(false); // Set loading false for proveedores
+      }
     };
 
     fetchData();
   }, []);
 
+  // Effect para cargar categorías y subcategorías si los filtros iniciales ya las tienen
+  useEffect(() => {
+    if (filters.primerNivel && categorias.length === 0) {
+      fetchCategorias(filters.primerNivel);
+    }
+    if (filters.categoria && subcategorias.length === 0) {
+      fetchSubcategorias(filters.categoria);
+    }
+    // Set proveedor search input if currentFilters has a supplier
+    if (currentFilters?.proveedor && proveedores.length > 0) {
+      const selectedProv = proveedores.find(p => p.CardCode === currentFilters.proveedor);
+      if (selectedProv) {
+        setProveedorSearchInput(selectedProv.CardName);
+      }
+    }
+  }, [filters.primerNivel, filters.categoria, currentFilters, proveedores]); // Dependencias para re-ejecutar
+
+
   const handleChange = async (key: keyof FiltroVentas, value: string) => {
-    const updatedFilters = { ...filters, [key]: value };
+    let updatedFilters: FiltroVentas = { ...filters, [key]: value };
+
+    // Lógica para el nuevo filtro de tipo de envío
+    if (key === "canal") {
+      if (value === "Meli") {
+        // Si se selecciona Mercado Libre, asegúrate de que tipoEnvioMeli esté en 'TODAS' por defecto
+        updatedFilters.tipoEnvioMeli = updatedFilters.tipoEnvioMeli || "TODAS";
+      } else {
+        // Si no es Mercado Libre, elimina el filtro de tipo de envío
+        delete updatedFilters.tipoEnvioMeli;
+      }
+    }
 
     // Reset dependent filters
     if (key === "primerNivel") {
       updatedFilters.categoria = undefined;
       updatedFilters.subcategoria = undefined;
-      await fetchCategorias(value);
+      if (value) { // Only fetch if a primerNivel is selected
+        await fetchCategorias(value);
+      } else {
+        setCategorias([]);
+      }
       setSubcategorias([]);
     }
 
     if (key === "categoria") {
       updatedFilters.subcategoria = undefined;
-      await fetchSubcategorias(value);
+      if (value) { // Only fetch if a categoria is selected
+        await fetchSubcategorias(value);
+      } else {
+        setSubcategorias([]);
+      }
     }
 
     setFilters(updatedFilters);
   };
 
   const fetchCategorias = async (primerNivel: string) => {
-    const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getcat?primerNivel=${primerNivel}`);
-    const data = await res!.json();
-    setCategorias(data.map((cat: any) => ({ codigo: cat.codigo_categoria, nombre: cat.nombre_categoria, imagen: cat.IMAGEN })));
+    try {
+      const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getcat?primerNivel=${primerNivel}`);
+      const data = await res!.json();
+      setCategorias(data.map((cat: any) => ({ codigo: cat.codigo_categoria, nombre: cat.nombre_categoria, imagen: cat.IMAGEN })));
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setCategorias([]);
+    }
   };
 
   const fetchSubcategorias = async (categoria: string) => {
-    const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getsub?categoria=${categoria}`);
-    const data = await res!.json();
-    setSubcategorias(data.map((sub: any) => ({ codigo: sub.codigo_subcategoria, nombre: sub.nombre_subcategoria, imagen: sub.IMAGEN })));
+    try {
+      const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getsub?categoria=${categoria}`);
+      const data = await res!.json();
+      setSubcategorias(data.map((sub: any) => ({ codigo: sub.codigo_subcategoria, nombre: sub.nombre_subcategoria, imagen: sub.IMAGEN })));
+    } catch (error) {
+      console.error("Error fetching subcategories:", error);
+      setSubcategorias([]);
+    }
   };
 
   const handleProveedorSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setProveedorSearchInput(value);
-    setShowProveedorSuggestions(true); // Show suggestions when user types
+    setShowProveedorSuggestions(true);
     if (value === "") {
       setFilters(prev => ({ ...prev, proveedor: undefined }));
     }
@@ -128,8 +199,8 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
 
   const handleProveedorSelect = (proveedor: Proveedor) => {
     setFilters((prev) => ({ ...prev, proveedor: proveedor.CardCode }));
-    setProveedorSearchInput(proveedor.CardName); // Display name in the input
-    setShowProveedorSuggestions(false); // Hide suggestions after selection
+    setProveedorSearchInput(proveedor.CardName);
+    setShowProveedorSuggestions(false);
   };
 
   const handleApply = () => {
@@ -140,25 +211,48 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
   const handleClear = () => {
     const cleared: FiltroVentas = { periodo: "7D" };
     setFilters(cleared);
-    setProveedorSearchInput(""); // Clear supplier search input
-    setCategorias([]); // Clear dependent dropdowns
-    setSubcategorias([]); // Clear dependent dropdowns
+    setProveedorSearchInput("");
+    setCategorias([]);
+    setSubcategorias([]);
     onFilterChange(cleared);
-    setOpen(false); // Close the drawer after clearing
+    setOpen(false);
   };
 
   const handleChipDelete = (key: keyof FiltroVentas) => {
-    const updated = { ...filters, [key]: undefined };
-    if (key === "primerNivel") {
-      updated.categoria = undefined;
-      updated.subcategoria = undefined;
-      setCategorias([]);
-      setSubcategorias([]);
+    let updated: FiltroVentas = { ...filters };
+
+    if (key === "canal") {
+      updated.canal = undefined;
+      // Si se elimina el filtro de canal, también se debe eliminar tipoEnvioMeli
+      delete updated.tipoEnvioMeli;
+    } else if (key === "periodo") {
+        updated.periodo = "7D"; // Restablecer al valor por defecto
+        updated.fechaInicio = undefined;
+        updated.fechaFin = undefined;
+    } else if (key === "proveedor") {
+        updated.proveedor = undefined;
+        setProveedorSearchInput(""); // También limpiar el input del buscador
+    } else if (key === "primerNivel") {
+        updated.primerNivel = undefined;
+        updated.categoria = undefined;
+        updated.subcategoria = undefined;
+        setCategorias([]);
+        setSubcategorias([]);
+    } else if (key === "categoria") {
+        updated.categoria = undefined;
+        updated.subcategoria = undefined;
+        setSubcategorias([]);
+    } else if (key === "subcategoria") {
+        updated.subcategoria = undefined;
+    } else if (key === "tipoEnvioMeli") { // Nuevo caso para tipoEnvioMeli
+        delete updated.tipoEnvioMeli;
+    } else if (key === "fechaInicio" || key === "fechaFin") {
+        // Cuando se borra el chip de rango, el periodo vuelve a 7D
+        updated.periodo = "7D";
+        updated.fechaInicio = undefined;
+        updated.fechaFin = undefined;
     }
-    if (key === "categoria") {
-      updated.subcategoria = undefined;
-      setSubcategorias([]);
-    }
+
     setFilters(updated);
     onFilterChange(updated);
   };
@@ -172,12 +266,48 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
     <Box mb={2}>
       <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
         <Box display="flex" gap={1} flexWrap="wrap">
-          {filters.canal && <Chip label={`Canal: ${canales.find(c => c.value === filters.canal)?.label}`} onDelete={() => handleChipDelete("canal")} />}
-          {filters.periodo && <Chip label={`Período: ${periodos.find(p => p.value === filters.periodo)?.label}`} onDelete={() => handleChipDelete("periodo")} />}
-          {filters.proveedor && <Chip label={`Proveedor: ${proveedores.find(p => p.CardCode === filters.proveedor)?.CardName || filters.proveedor}`} onDelete={() => handleChipDelete("proveedor")} />}
-          {filters.primerNivel && <Chip label={`Primer Nivel`} onDelete={() => handleChipDelete("primerNivel")} />}
-          {filters.categoria && <Chip label={`Categoría`} onDelete={() => handleChipDelete("categoria")} />}
-          {filters.subcategoria && <Chip label={`Subcategoría`} onDelete={() => handleChipDelete("subcategoria")} />}
+          {filters.canal && (
+            <Chip 
+                label={`Canal: ${canales.find(c => c.value === filters.canal)?.label}`} 
+                onDelete={() => handleChipDelete("canal")} 
+            />
+          )}
+          {filters.tipoEnvioMeli && filters.canal === "Meli" && ( // Mostrar chip solo si canal es Meli
+            <Chip 
+                label={`Envío Meli: ${tiposEnvioMeli.find(t => t.value === filters.tipoEnvioMeli)?.label}`} 
+                onDelete={() => handleChipDelete("tipoEnvioMeli")} 
+            />
+          )}
+          {filters.periodo && filters.periodo !== "RANGO" && (
+            <Chip 
+                label={`Período: ${periodos.find(p => p.value === filters.periodo)?.label}`} 
+                onDelete={() => handleChipDelete("periodo")} 
+            />
+          )}
+          {filters.proveedor && (
+            <Chip 
+                label={`Proveedor: ${proveedores.find(p => p.CardCode === filters.proveedor)?.CardName || filters.proveedor}`} 
+                onDelete={() => handleChipDelete("proveedor")} 
+            />
+          )}
+          {filters.primerNivel && (
+            <Chip 
+                label={`Primer Nivel: ${primerNiveles.find(pn => pn.codigo === filters.primerNivel)?.nombre || filters.primerNivel}`} 
+                onDelete={() => handleChipDelete("primerNivel")} 
+            />
+          )}
+          {filters.categoria && (
+            <Chip 
+                label={`Categoría: ${categorias.find(c => c.codigo === filters.categoria)?.nombre || filters.categoria}`} 
+                onDelete={() => handleChipDelete("categoria")} 
+            />
+          )}
+          {filters.subcategoria && (
+            <Chip 
+                label={`Subcategoría: ${subcategorias.find(sc => sc.codigo === filters.subcategoria)?.nombre || filters.subcategoria}`} 
+                onDelete={() => handleChipDelete("subcategoria")} 
+            />
+          )}
           {filters.periodo === "RANGO" && filters.fechaInicio && filters.fechaFin && (
             <Chip label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`} onDelete={() => handleChipDelete("fechaInicio")} />
           )}
@@ -203,6 +333,23 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
                 </Select>
               </FormControl>
             </Grid>
+
+            {/* Nuevo selector de Tipo de Envío para Mercado Libre */}
+            {filters.canal === "Meli" && (
+              <Grid item xs={12}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Tipo de Envío Meli</InputLabel>
+                  <Select
+                    value={filters.tipoEnvioMeli || "TODAS"} // Valor por defecto
+                    onChange={(e) => handleChange("tipoEnvioMeli", e.target.value as 'FULL' | 'COLECTA' | 'TODAS')}
+                  >
+                    {tiposEnvioMeli.map((tipo) => (
+                      <MenuItem key={tipo.value} value={tipo.value}>{tipo.label}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
 
             <Grid item xs={12}>
               <FormControl fullWidth size="small">
@@ -232,7 +379,9 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
                 value={proveedorSearchInput}
                 onChange={handleProveedorSearchInputChange}
                 onFocus={() => setShowProveedorSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowProveedorSuggestions(false), 100)}
+                // Usa onBlur para ocultar las sugerencias después de un pequeño retraso
+                // Esto permite que el evento onClick del MenuItem se dispare antes de que se oculte la lista
+                onBlur={() => setTimeout(() => setShowProveedorSuggestions(false), 200)}
               />
               {loadingProveedores && <Box display="flex" justifyContent="center" my={2}><CircularProgress size={24} /></Box>}
               {showProveedorSuggestions && filteredProveedores.length > 0 && (
@@ -266,6 +415,7 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
               <FormControl fullWidth size="small">
                 <InputLabel>Primer Nivel</InputLabel>
                 <Select value={filters.primerNivel || ""} onChange={(e) => handleChange("primerNivel", e.target.value)}>
+                  <MenuItem value="">Todos</MenuItem> {/* Opción "Todos" */}
                   {primerNiveles.map((cat) => (
                     <MenuItem key={cat.codigo} value={cat.codigo}>
                       <ListItemIcon><Avatar src={cat.imagen} sx={{ width: 24, height: 24 }} /></ListItemIcon>
@@ -282,6 +432,7 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
                 <FormControl fullWidth size="small">
                   <InputLabel>Categoría</InputLabel>
                   <Select value={filters.categoria || ""} onChange={(e) => handleChange("categoria", e.target.value)}>
+                    <MenuItem value="">Todas</MenuItem> {/* Opción "Todas" */}
                     {categorias.map((cat) => (
                       <MenuItem key={cat.codigo} value={cat.codigo}>
                         <ListItemIcon><Avatar src={cat.imagen} sx={{ width: 24, height: 24 }} /></ListItemIcon>
@@ -299,6 +450,7 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
                 <FormControl fullWidth size="small">
                   <InputLabel>Subcategoría</InputLabel>
                   <Select value={filters.subcategoria || ""} onChange={(e) => handleChange("subcategoria", e.target.value)}>
+                    <MenuItem value="">Todas</MenuItem> {/* Opción "Todas" */}
                     {subcategorias.map((sub) => (
                       <MenuItem key={sub.codigo} value={sub.codigo}>
                         <ListItemIcon><Avatar src={sub.imagen} sx={{ width: 24, height: 24 }} /></ListItemIcon>
