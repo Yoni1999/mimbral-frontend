@@ -14,7 +14,6 @@ import {
   TextField,
   TableSortLabel,
   Avatar,
-  Stack
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { formatUnidades, formatVentas } from '@/utils/format';
@@ -31,6 +30,9 @@ type ProductoVendido = {
   precioPromedio: number;
   totalVentas: number;
   facturasUnicas: number;
+  stockCanal: number;           // ← Stock actual del canal (antes stock)
+  stockChorrillo?: number;
+  stockOnOrder?: number;
 };
 
 type Order = 'asc' | 'desc';
@@ -40,7 +42,8 @@ type OrderBy =
   | 'margenBruto'
   | 'precioPromedio'
   | 'totalVentas'
-  | 'facturasUnicas';
+  | 'facturasUnicas'
+  | 'stockCanal';
 
 interface Props {
   data: ProductoVendido[];
@@ -49,7 +52,6 @@ interface Props {
   ordenPorActual: OrderBy;
 }
 
-// Estilos consistentes con el componente anterior
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   '&.MuiTableCell-head': {
     backgroundColor: theme.palette.primary.dark,
@@ -154,6 +156,19 @@ const ProductosVendidos = ({
                   Precio Prom. Venta
                 </TableSortLabel>
               </StyledTableCell>
+
+              <StyledTableCell sortDirection={ordenPorActual === 'stockCanal' ? ordenActual : false}>
+                <TableSortLabel
+                  active={ordenPorActual === 'stockCanal'}
+                  direction={ordenPorActual === 'stockCanal' ? ordenActual : 'asc'}
+                  onClick={() => onSortChange('stockCanal')}
+                >
+                  Stock Actual
+                </TableSortLabel>
+              </StyledTableCell>
+
+              <StyledTableCell>Stock Chorrillo</StyledTableCell>
+              <StyledTableCell>OC (On Order)</StyledTableCell>
             </TableRow>
           </TableHead>
 
@@ -163,7 +178,7 @@ const ProductosVendidos = ({
                 <StyledTableCell>
                   <Avatar
                     src={
-                      row.imagen && row.imagen.startsWith('http')
+                      row.imagen?.startsWith('http')
                         ? row.imagen
                         : 'https://res.cloudinary.com/dhzahos7u/image/upload/v1748960388/producto_sin_imagen_vqaps4.jpg'
                     }
@@ -195,19 +210,21 @@ const ProductosVendidos = ({
                 </StyledTableCell>
 
                 <StyledTableCell>{formatVentas(row.precioPromedio)}</StyledTableCell>
+                <StyledTableCell>{formatUnidades(row.stockCanal)}</StyledTableCell>
+                <StyledTableCell>{row.stockChorrillo !== undefined ? formatUnidades(row.stockChorrillo) : 'N/A'}</StyledTableCell>
+                <StyledTableCell>{row.stockOnOrder !== undefined ? formatUnidades(row.stockOnOrder) : 'N/A'}</StyledTableCell>
               </StyledTableRow>
             ))}
+            {filteredData.length === 0 && (
+              <StyledTableRow>
+                <StyledTableCell colSpan={12} align="center">
+                  <Typography variant="body2" color="text.secondary">
+                    {busqueda ? 'No se encontraron productos con ese filtro.' : 'Cargando datos...'}
+                  </Typography>
+                </StyledTableCell>
+              </StyledTableRow>
+            )}
           </TableBody>
-          {filteredData.length === 0 && (
-  <StyledTableRow>
-    <StyledTableCell colSpan={8} align="center">
-      <Typography variant="body2" color="text.secondary">
-        {busqueda ? 'No se encontraron productos con ese filtro.' : 'Cargando datos...'}
-      </Typography>
-    </StyledTableCell>
-  </StyledTableRow>
-)}
-
         </Table>
       </TableContainer>
     </Box>

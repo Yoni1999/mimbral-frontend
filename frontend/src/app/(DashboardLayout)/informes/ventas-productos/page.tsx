@@ -43,7 +43,7 @@ interface FiltrosVentas {
   primerNivel?: string;
   categoria?: string;
   subcategoria?: string;
-  tipoEnvio?: string;
+  tipoEnvio?: "todas" | "full" | "colecta";
 }
 
 type Order = "asc" | "desc";
@@ -95,8 +95,14 @@ const InformeVentaPage = () => {
       const offset = (pageNumber - 1) * limit;
 
       Object.entries(filtros).forEach(([key, value]) => {
-        if (value) params.append(key, value);
+        if (!value) return;
+
+        // No enviar tipoEnvio si es "todos"
+        if (key === "tipoEnvio" && value === "todas") return;
+
+        params.append(key, value);
       });
+
 
       params.append("offset", offset.toString());
       params.append("limit", limit.toString());

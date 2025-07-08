@@ -22,8 +22,8 @@ interface FiltroVentas {
   primerNivel?: string;
   categoria?: string;
   subcategoria?: string;
-  // Nuevo campo para el tipo de envío
-  tipoEnvioMeli?: 'FULL' | 'COLECTA' | 'TODAS'; 
+  // CAMBIO 1: Renombrar a 'tipoEnvio' y usar literales de string en minúscula
+  tipoEnvio?: 'full' | 'colecta' | 'todas';
 }
 
 interface Categoria {
@@ -62,21 +62,22 @@ const periodos = [
   { value: "RANGO", label: "Rango personalizado" },
 ];
 
-// Opciones para el nuevo selector de tipo de envío
+// CAMBIO 2: Opciones para el nuevo selector de tipo de envío con valores en minúsculas
 const tiposEnvioMeli = [
-    { value: "TODAS", label: "Todas" },
-    { value: "FULL", label: "Full" },
-    { value: "COLECTA", label: "Colecta" },
+    { value: "todas", label: "Todas" }, // Cambiado a minúscula
+    { value: "full", label: "Full" },   // Cambiado a minúscula
+    { value: "colecta", label: "Colecta" }, // Cambiado a minúscula
 ];
 
 const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters }) => {
   const [open, setOpen] = useState(false);
-  // Inicializa tipoEnvioMeli a 'TODAS' por defecto cuando el canal es Meli o si no hay un filtro actual
+  // Inicializa tipoEnvio a 'todas' por defecto cuando el canal es Meli o si no hay un filtro actual
   const [filters, setFilters] = useState<FiltroVentas>(() => {
     const initialFilters = currentFilters || { periodo: "7D" };
-    // Asegurarse de que tipoEnvioMeli se inicialice a 'TODAS' si el canal es Meli
-    if (initialFilters.canal === "Meli" && !initialFilters.tipoEnvioMeli) {
-      return { ...initialFilters, tipoEnvioMeli: "TODAS" };
+    // Asegurarse de que tipoEnvio se inicialice a 'todas' si el canal es Meli
+    // CAMBIO 3: Usar 'tipoEnvio' en lugar de 'tipoEnvioMeli' y 'todas' en minúscula
+    if (initialFilters.canal === "Meli" && !initialFilters.tipoEnvio) {
+      return { ...initialFilters, tipoEnvio: "todas" };
     }
     return initialFilters;
   });
@@ -134,11 +135,13 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
     // Lógica para el nuevo filtro de tipo de envío
     if (key === "canal") {
       if (value === "Meli") {
-        // Si se selecciona Mercado Libre, asegúrate de que tipoEnvioMeli esté en 'TODAS' por defecto
-        updatedFilters.tipoEnvioMeli = updatedFilters.tipoEnvioMeli || "TODAS";
+        // Si se selecciona Mercado Libre, asegúrate de que tipoEnvio esté en 'todas' por defecto
+        // CAMBIO 4: Usar 'tipoEnvio' en lugar de 'tipoEnvioMeli' y 'todas' en minúscula
+        updatedFilters.tipoEnvio = updatedFilters.tipoEnvio || "todas";
       } else {
         // Si no es Mercado Libre, elimina el filtro de tipo de envío
-        delete updatedFilters.tipoEnvioMeli;
+        // CAMBIO 5: Eliminar 'tipoEnvio'
+        delete updatedFilters.tipoEnvio;
       }
     }
 
@@ -204,6 +207,7 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
   };
 
   const handleApply = () => {
+    console.log("Filtros aplicados:", filters);
     onFilterChange(filters);
     setOpen(false);
   };
@@ -223,8 +227,9 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
 
     if (key === "canal") {
       updated.canal = undefined;
-      // Si se elimina el filtro de canal, también se debe eliminar tipoEnvioMeli
-      delete updated.tipoEnvioMeli;
+      // Si se elimina el filtro de canal, también se debe eliminar tipoEnvio
+      // CAMBIO 6: Eliminar 'tipoEnvio'
+      delete updated.tipoEnvio;
     } else if (key === "periodo") {
         updated.periodo = "7D"; // Restablecer al valor por defecto
         updated.fechaInicio = undefined;
@@ -244,8 +249,8 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
         setSubcategorias([]);
     } else if (key === "subcategoria") {
         updated.subcategoria = undefined;
-    } else if (key === "tipoEnvioMeli") { // Nuevo caso para tipoEnvioMeli
-        delete updated.tipoEnvioMeli;
+    } else if (key === "tipoEnvio") { // CAMBIO 7: Nuevo caso para 'tipoEnvio'
+        delete updated.tipoEnvio;
     } else if (key === "fechaInicio" || key === "fechaFin") {
         // Cuando se borra el chip de rango, el periodo vuelve a 7D
         updated.periodo = "7D";
@@ -267,45 +272,45 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
       <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
         <Box display="flex" gap={1} flexWrap="wrap">
           {filters.canal && (
-            <Chip 
-                label={`Canal: ${canales.find(c => c.value === filters.canal)?.label}`} 
-                onDelete={() => handleChipDelete("canal")} 
+            <Chip
+                label={`Canal: ${canales.find(c => c.value === filters.canal)?.label}`}
+                onDelete={() => handleChipDelete("canal")}
             />
           )}
-          {filters.tipoEnvioMeli && filters.canal === "Meli" && ( // Mostrar chip solo si canal es Meli
-            <Chip 
-                label={`Envío Meli: ${tiposEnvioMeli.find(t => t.value === filters.tipoEnvioMeli)?.label}`} 
-                onDelete={() => handleChipDelete("tipoEnvioMeli")} 
+          {filters.tipoEnvio && filters.canal === "Meli" && ( // Mostrar chip solo si canal es Meli
+            <Chip
+                label={`Envío Meli: ${tiposEnvioMeli.find(t => t.value === filters.tipoEnvio)?.label}`} // CAMBIO 8: Usar 'tipoEnvio'
+                onDelete={() => handleChipDelete("tipoEnvio")} // CAMBIO 9: Usar 'tipoEnvio'
             />
           )}
           {filters.periodo && filters.periodo !== "RANGO" && (
-            <Chip 
-                label={`Período: ${periodos.find(p => p.value === filters.periodo)?.label}`} 
-                onDelete={() => handleChipDelete("periodo")} 
+            <Chip
+                label={`Período: ${periodos.find(p => p.value === filters.periodo)?.label}`}
+                onDelete={() => handleChipDelete("periodo")}
             />
           )}
           {filters.proveedor && (
-            <Chip 
-                label={`Proveedor: ${proveedores.find(p => p.CardCode === filters.proveedor)?.CardName || filters.proveedor}`} 
-                onDelete={() => handleChipDelete("proveedor")} 
+            <Chip
+                label={`Proveedor: ${proveedores.find(p => p.CardCode === filters.proveedor)?.CardName || filters.proveedor}`}
+                onDelete={() => handleChipDelete("proveedor")}
             />
           )}
           {filters.primerNivel && (
-            <Chip 
-                label={`Primer Nivel: ${primerNiveles.find(pn => pn.codigo === filters.primerNivel)?.nombre || filters.primerNivel}`} 
-                onDelete={() => handleChipDelete("primerNivel")} 
+            <Chip
+                label={`Primer Nivel: ${primerNiveles.find(pn => pn.codigo === filters.primerNivel)?.nombre || filters.primerNivel}`}
+                onDelete={() => handleChipDelete("primerNivel")}
             />
           )}
           {filters.categoria && (
-            <Chip 
-                label={`Categoría: ${categorias.find(c => c.codigo === filters.categoria)?.nombre || filters.categoria}`} 
-                onDelete={() => handleChipDelete("categoria")} 
+            <Chip
+                label={`Categoría: ${categorias.find(c => c.codigo === filters.categoria)?.nombre || filters.categoria}`}
+                onDelete={() => handleChipDelete("categoria")}
             />
           )}
           {filters.subcategoria && (
-            <Chip 
-                label={`Subcategoría: ${subcategorias.find(sc => sc.codigo === filters.subcategoria)?.nombre || filters.subcategoria}`} 
-                onDelete={() => handleChipDelete("subcategoria")} 
+            <Chip
+                label={`Subcategoría: ${subcategorias.find(sc => sc.codigo === filters.subcategoria)?.nombre || filters.subcategoria}`}
+                onDelete={() => handleChipDelete("subcategoria")}
             />
           )}
           {filters.periodo === "RANGO" && filters.fechaInicio && filters.fechaFin && (
@@ -340,8 +345,8 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
                 <FormControl fullWidth size="small">
                   <InputLabel>Tipo de Envío Meli</InputLabel>
                   <Select
-                    value={filters.tipoEnvioMeli || "TODAS"} // Valor por defecto
-                    onChange={(e) => handleChange("tipoEnvioMeli", e.target.value as 'FULL' | 'COLECTA' | 'TODAS')}
+                    value={filters.tipoEnvio || "todas"} // CAMBIO 10: Usar 'tipoEnvio' y 'todas' en minúscula
+                    onChange={(e) => handleChange("tipoEnvio", e.target.value as 'full' | 'colecta' | 'todas')} // CAMBIO 11: Usar 'tipoEnvio' y los literales de string en minúscula
                   >
                     {tiposEnvioMeli.map((tipo) => (
                       <MenuItem key={tipo.value} value={tipo.value}>{tipo.label}</MenuItem>

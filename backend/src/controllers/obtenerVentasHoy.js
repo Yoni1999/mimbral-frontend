@@ -1017,7 +1017,7 @@ const obtenerProductosDetallado = async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    const {
+    let {
       canal = null,
       vendedor = null,
       periodo = null,
@@ -1035,6 +1035,11 @@ const obtenerProductosDetallado = async (req, res) => {
       order = 'desc',
     } = req.query;
 
+    // Normalizar tipoEnvio
+    if (tipoEnvio === '' || tipoEnvio === 'null' || tipoEnvio === 'todas') {
+      tipoEnvio = null;
+    }
+
     // Validar tipoEnvio
     const tiposPermitidos = ['full', 'colecta', null];
     if (tipoEnvio && !tiposPermitidos.includes(tipoEnvio)) {
@@ -1044,17 +1049,15 @@ const obtenerProductosDetallado = async (req, res) => {
     }
 
     const aplicarPaginacion = sinPaginacion !== 'true';
-
     const camposPermitidos = [
       'cantidadVendida',
       'margenPorcentaje',
       'margenBruto',
       'precioPromedio',
       'totalVentas',
-      'facturasUnicas'
+      'facturasUnicas',
     ];
     const direccionesPermitidas = ['asc', 'desc'];
-
     const campoOrden = camposPermitidos.includes(orderBy) ? orderBy : 'cantidadVendida';
     const direccionOrden = direccionesPermitidas.includes(order.toLowerCase()) ? order.toLowerCase() : 'desc';
 
@@ -1126,18 +1129,39 @@ const obtenerProductosDetallado = async (req, res) => {
               (SUM(I.LineTotal - (I.Quantity * I.StockPrice)) * 100.0) / NULLIF(SUM(I.LineTotal), 0)
               AS DECIMAL(18, 2)
           ) AS margenPorcentaje,
+
           (
             SELECT SUM(W.OnHand)
             FROM OITW W
             WHERE W.ItemCode = I.ItemCode
               AND (
-                @CanalParam IS NULL AND W.WhsCode NOT IN ('02', '12')
-                OR @CanalParam = 'Meli' AND W.WhsCode IN ('03', '05')
-                OR @CanalParam = 'Falabella' AND W.WhsCode = '03'
-                OR @CanalParam = 'Balmaceda' AND W.WhsCode = '07'
-                OR @CanalParam IN ('Vitex', 'Chorrillo', 'Empresas') AND W.WhsCode = '01'
+                (@CanalParam IS NULL AND W.WhsCode NOT IN ('02', '12'))
+                OR (
+                  @CanalParam = 'Meli' AND (
+                    (@TipoEnvio = 'full' AND W.WhsCode = '05')
+                    OR (@TipoEnvio = 'colecta' AND W.WhsCode = '03')
+                    OR (@TipoEnvio IS NULL AND W.WhsCode IN ('03', '05'))
+                  )
+                )
+                OR (@CanalParam = 'Falabella' AND W.WhsCode = '03')
+                OR (@CanalParam = 'Balmaceda' AND W.WhsCode = '07')
+                OR (@CanalParam IN ('Vitex', 'Chorrillo', 'Empresas') AND W.WhsCode = '01')
               )
-          ) AS stock
+          ) AS stockCanal,
+
+          (
+            SELECT SUM(W.OnHand)
+            FROM OITW W
+            WHERE W.ItemCode = I.ItemCode
+              AND W.WhsCode = '01'
+          ) AS stockChorrillo,
+
+          (
+            SELECT SUM(W.OnOrder)
+            FROM OITW W
+            WHERE W.ItemCode = I.ItemCode
+          ) AS stockOnOrder
+
       FROM INV1 I
       INNER JOIN OITM O ON I.ItemCode = O.ItemCode
       INNER JOIN OINV T0 ON I.DocEntry = T0.DocEntry
@@ -1179,6 +1203,7 @@ const obtenerProductosDetallado = async (req, res) => {
       ORDER BY ${campoOrden} ${direccionOrden}
       ${paginacionSQL};
 
+      -- Segundo query: conteo total
       ;WITH ProductosProveedor AS (
         SELECT DISTINCT POR1.ItemCode
         FROM POR1
@@ -1232,6 +1257,7 @@ const obtenerProductosDetallado = async (req, res) => {
     res.status(500).json({ error: "Error en el servidor." });
   }
 };
+
 
 
 
