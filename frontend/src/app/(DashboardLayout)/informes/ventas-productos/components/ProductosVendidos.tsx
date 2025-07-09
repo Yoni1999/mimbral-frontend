@@ -30,7 +30,7 @@ type ProductoVendido = {
   precioPromedio: number;
   totalVentas: number;
   facturasUnicas: number;
-  stockCanal: number;           // ← Stock actual del canal (antes stock)
+  stockCanal: number;
   stockChorrillo?: number;
   stockOnOrder?: number;
 };
@@ -42,8 +42,7 @@ type OrderBy =
   | 'margenBruto'
   | 'precioPromedio'
   | 'totalVentas'
-  | 'facturasUnicas'
-  | 'stockCanal';
+  | 'facturasUnicas';
 
 interface Props {
   data: ProductoVendido[];
@@ -157,14 +156,8 @@ const ProductosVendidos = ({
                 </TableSortLabel>
               </StyledTableCell>
 
-              <StyledTableCell sortDirection={ordenPorActual === 'stockCanal' ? ordenActual : false}>
-                <TableSortLabel
-                  active={ordenPorActual === 'stockCanal'}
-                  direction={ordenPorActual === 'stockCanal' ? ordenActual : 'asc'}
-                  onClick={() => onSortChange('stockCanal')}
-                >
-                  Stock Actual
-                </TableSortLabel>
+              <StyledTableCell>
+                Stock Actual
               </StyledTableCell>
 
               <StyledTableCell>Stock Chorrillo</StyledTableCell>

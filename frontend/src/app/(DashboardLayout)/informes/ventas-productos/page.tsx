@@ -31,6 +31,7 @@ import { BACKEND_URL } from "@/config";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { OrderBy } from "@/types/orderBy";
 
 const limit = 100;
 
@@ -47,13 +48,7 @@ interface FiltrosVentas {
 }
 
 type Order = "asc" | "desc";
-type OrderBy =
-  | "cantidadVendida"
-  | "margenPorcentaje"
-  | "margenBruto"
-  | "precioPromedio"
-  | "totalVentas"
-  | "facturasUnicas";
+
 
 const InformeVentaPage = () => {
   const [filters, setFilters] = useState<FiltrosVentas>({ periodo: "1D", canal: "Vitex" });
@@ -166,12 +161,31 @@ const InformeVentaPage = () => {
     }
   };
 
-  const exportToExcel = (productosData: any[]) => {
-    const worksheet = XLSX.utils.json_to_sheet(productosData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Productos");
-    XLSX.writeFile(workbook, "informe_venta_productos.xlsx");
-  };
+const exportToExcel = (productosData: any[]) => {
+  const dataFiltrada = productosData.map((item, index) => ({
+    "#": index + 1,
+    SKU: item.sku,
+    Nombre: item.nombre,
+    "Primer Nivel": item.primerNivel,
+    Categoría: item.categoria,
+    "Cantidad Vendida": item.cantidadVendida,
+    Transacciones: item.facturasUnicas,
+    "Precio Prom. Venta": item.precioPromedio,
+    "Total Ventas": item.totalVentas,
+    "Margen Bruto": item.margenBruto,
+    "% Margen": item.margenPorcentaje,
+    "Stock Canal": item.stockCanal,
+    "Stock Chorrillo": item.stockChorrillo,
+    "OC (On Order)": item.stockOnOrder,
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(dataFiltrada);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Productos");
+
+  XLSX.writeFile(workbook, "informe_venta_productos.xlsx");
+};
+
 
 const exportToPDF = (productosData: any[], usuario: string) => {
   if (productosData.length === 0) {
@@ -191,6 +205,7 @@ const exportToPDF = (productosData: any[], usuario: string) => {
   const primerNivel = filters.primerNivel || "N/A";
   const categoria = filters.categoria || "N/A";
   const subcategoria = filters.subcategoria || "N/A";
+  const tipoEnvio = filters.tipoEnvio || "todas";
 
   const periodoTexto = (() => {
     switch (periodo) {
@@ -237,11 +252,19 @@ const exportToPDF = (productosData: any[], usuario: string) => {
     const lineHeight = 15;
 
     const info = [
-      ["Generado por:", usuario, "Fecha:", fechaStr + " · Hora: " + horaStr],
+      ["Generado por:", usuario, "Fecha:", `${fechaStr} · Hora: ${horaStr}`],
       ["Canal:", canal, "Período:", periodoTexto],
       ["Proveedor:", proveedor, "Primer nivel:", primerNivel],
       ["Categoría:", categoria, "Subcategoría:", subcategoria],
     ];
+
+    // Si canal es MercadoLibre, agregar tipo de envío
+    if (canal === "Meli") {
+      const tipoEnvioTexto =
+        tipoEnvio === "full" ? "FULL" :
+        tipoEnvio === "colecta" ? "COLECTA" : "TODOS";
+      info.push(["Tipo de Envío:", tipoEnvioTexto, "", ""]);
+    }
 
     info.forEach((row, i) => {
       row.forEach((txt, j) => {
@@ -264,6 +287,9 @@ const exportToPDF = (productosData: any[], usuario: string) => {
       { key: "categoria", label: "Categoría" },
       { key: "cantidadVendida", label: "Cantidad Vendida" },
       { key: "facturasUnicas", label: "Transacciones" },
+      { key: "stockCanal", label: "Stock Canal" },
+      { key: "stockChorrillo", label: "Stock Chorrillo" },
+      { key: "stockOnOrder", label: "OC (On Order)" },
     ];
 
     const headers = columnas.map(c => c.label);
@@ -296,6 +322,7 @@ const exportToPDF = (productosData: any[], usuario: string) => {
     doc.save("informe_venta_productos.pdf");
   };
 };
+
 
   const handleFilterChange = (newFilters: FiltrosVentas) => {
     setFilters(newFilters);
