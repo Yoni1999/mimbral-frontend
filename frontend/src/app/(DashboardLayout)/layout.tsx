@@ -3,7 +3,7 @@ import { styled, Container, Box } from "@mui/material";
 import React, { useState } from "react";
 import Header from "@/app/(DashboardLayout)/layout/header/Header";
 import Sidebar from "@/app/(DashboardLayout)/layout/sidebar/Sidebar";
-import AdminBreadcrumb from "@/app/admin/opciones/components/AdminBreadcrumb"; // ✅ Importación
+import AdminBreadcrumb from "@/app/admin/opciones/components/AdminBreadcrumb";
 
 const MainWrapper = styled("div")(() => ({
   display: "flex",
@@ -28,36 +28,34 @@ export default function RootLayout({ children }: Props) {
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <MainWrapper className="mainwrapper">
-      {/* Sidebar */}
-      <Sidebar
-        isSidebarOpen={isSidebarOpen}
-        isMobileSidebarOpen={isMobileSidebarOpen}
-        onSidebarClose={() => setMobileSidebarOpen(false)}
-      />
-      
-      <PageWrapper className="page-wrapper">
-        {/* Header */}
-        <Header toggleMobileSidebar={() => setMobileSidebarOpen(true)} />
+      <MainWrapper className="mainwrapper">
+        {/* Sidebar */}
+        <Sidebar
+          isSidebarOpen={isSidebarOpen}
+          isMobileSidebarOpen={isMobileSidebarOpen}
+          onSidebarClose={() => setMobileSidebarOpen(false)}
+        />
 
-   
-        <AdminBreadcrumb />
+        <PageWrapper className="page-wrapper">
+          {/* Header */}
+          <Header toggleMobileSidebar={() => setMobileSidebarOpen(true)} />
 
-        {/* Contenido */}
-        <Container
-          disableGutters
-          maxWidth={false} // 
-          sx={{
-            paddingTop: "20px",
-            px: { xs: 2, md: 4, xl: 6 }, 
-          }}
-        >
+          <AdminBreadcrumb />
 
-          <Box sx={{ minHeight: "calc(100vh - 170px)" }}>
-            {children}
-          </Box>
-        </Container>
-      </PageWrapper>
-    </MainWrapper>
+          {/* Contenido */}
+          <Container
+            disableGutters
+            maxWidth={false}
+            sx={{
+              paddingTop: "20px",
+              px: { xs: 2, md: 4, xl: 6 },
+            }}
+          >
+            <Box sx={{ minHeight: "calc(100vh - 170px)" }}>
+              {children}
+            </Box>
+          </Container>
+        </PageWrapper>
+      </MainWrapper>
   );
 }

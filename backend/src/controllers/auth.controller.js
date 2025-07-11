@@ -244,8 +244,29 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ error: "Contraseña incorrecta" });
     }
 
-    // Decidir aleatoriamente si se pide OTP (50% de las veces)
-    const pedirOTP = Math.random() < 0.5;
+    //Pedirá OTP
+    let pedirOTP = false;
+
+    // Verifica si el usuario nunca ha iniciado sesión o lleva más de 5 días
+    const sesionResult = await pool.request()
+      .input("UsuarioID", sql.Int, user.ID)
+      .query(`
+        SELECT MAX(FechaInicio) AS ultimaSesion 
+        FROM SESIONES_USUARIOS 
+        WHERE UsuarioID = @UsuarioID
+      `);
+
+    const ultimaSesion = sesionResult.recordset[0].ultimaSesion;
+
+    if (!ultimaSesion) {
+      pedirOTP = true; // nunca inició sesión
+    } else {
+      const diasSinSesion = dayjs().diff(dayjs(ultimaSesion), "day");
+      if (diasSinSesion >= 3) {
+        pedirOTP = true; // inactivo por más de 3 días
+      }
+    }
+
 
     if (!pedirOTP) {
       const token = jwt.sign(
@@ -254,7 +275,7 @@ const loginUser = async (req, res) => {
         { expiresIn: "4h" }
       );
 
-      // Guardar en TOKENS_ACTIVOS
+      // Guardar token en TOKENS_ACTIVOS
       await pool.request()
         .input("UsuarioID", sql.Int, user.ID)
         .input("Token", sql.NVarChar, token)
@@ -263,26 +284,27 @@ const loginUser = async (req, res) => {
           VALUES (@UsuarioID, @Token, 1)
         `);
 
-      // Registrar inicio de sesión
-      const fechaInicio = dayjs().tz("America/Santiago").format("YYYY-MM-DD HH:mm:ss");
+      // Registrar sesión completa (con token)
+      const nowChile = dayjs().tz("America/Santiago");
+      const fechaInicio = nowChile.subtract(4, 'hour').toDate(); 
 
       await pool.request()
         .input("UsuarioID", sql.Int, user.ID)
         .input("FechaInicio", sql.DateTime, fechaInicio)
         .input("Token", sql.NVarChar, token)
         .query(`
-          INSERT INTO SESIONES_USUARIOS (UsuarioID, FechaInicio, Token)
-          VALUES (@UsuarioID, @FechaInicio, @Token)
+          INSERT INTO SESIONES_USUARIOS (UsuarioID, FechaInicio, FechaFin, Token)
+          VALUES (@UsuarioID, @FechaInicio, NULL, @Token)
         `);
+
 
 
       return res.json({ message: "Login exitoso sin OTP", token, rol: user.ROL });
     }
 
-    // 🔐 Si se decide pedir OTP:
+    // Si se pide OTP
     const otpCode = generateOTP().toString();
-    const expirationTime = new Date();
-    expirationTime.setMinutes(expirationTime.getMinutes() + 5);
+    const expirationTime = dayjs().add(5, "minute").toDate();
 
     // Guardar OTP
     await pool.request()
@@ -294,54 +316,27 @@ const loginUser = async (req, res) => {
         VALUES (@UsuarioID, @OTP, @ExpiraEn)
       `);
 
-    // Enviar correo con OTP
+    // Enviar email con OTP
     await sendEmail({
       to: email,
       subject: "Código de acceso - Equipo Mimbral",
       html: `
-        <div style="
-          font-family: 'Segoe UI', Arial, sans-serif;
-          max-width: 520px;
-          margin: 0 auto;
-          padding: 30px;
-          border-radius: 10px;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-          background-color: #ffffff;
-          border: 1px solid #e0e0e0;
-        ">
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 30px; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); background-color: #ffffff; border: 1px solid #e0e0e0;">
           <div style="text-align: center; margin-bottom: 20px;">
             <img src="https://res.cloudinary.com/dhzahos7u/image/upload/v1747080896/mimbral_af8zz8.png" alt="Mimbral Logo" style="max-height: 60px;" />
           </div>
-
-          <h2 style="color: #1a1a1a; text-align: center; margin-bottom: 10px;">
-            Código de acceso temporal
-          </h2>
-
+          <h2 style="color: #1a1a1a; text-align: center; margin-bottom: 10px;">Código de acceso temporal</h2>
           <p style="font-size: 15px; color: #333; text-align: center; margin-bottom: 24px;">
             Estimado usuario, tu código de acceso es:
           </p>
-
-          <div style="
-            font-size: 32px;
-            font-weight: 600;
-            color: #0a7cff;
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 12px 24px;
-            background-color: #f3f9ff;
-            border-radius: 8px;
-            display: inline-block;
-          ">
+          <div style="font-size: 32px; font-weight: 600; color: #0a7cff; text-align: center; margin-bottom: 30px; padding: 12px 24px; background-color: #f3f9ff; border-radius: 8px; display: inline-block;">
             ${otpCode}
           </div>
-
           <p style="font-size: 14px; color: #555; line-height: 1.6; text-align: center;">
             Este código tiene una validez de <strong>5 minutos</strong> desde su emisión y <strong>solo puede ser utilizado una vez</strong>.
             Si no solicitaste este código, puedes ignorar este correo.
           </p>
-
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
-
           <p style="font-size: 12px; color: #aaa; text-align: center;">
             © ${new Date().getFullYear()} Mimbral mts - Todos los derechos reservados.
           </p>
@@ -349,25 +344,14 @@ const loginUser = async (req, res) => {
       `,
       text: `Tu código de acceso es: ${otpCode} (válido por 5 minutos, solo se puede usar una vez).`,
     });
-
-
-    // Registrar sesión (sin token aún, se guardará en verifyOTP)
-    await pool.request()
-      .input("UsuarioID", sql.Int, user.ID)
-      .input("FechaInicio", sql.DateTime, dayjs().tz("America/Santiago").format("YYYY-MM-DD HH:mm:ss"))
-      .query(`
-        INSERT INTO SESIONES_USUARIOS (UsuarioID, FechaInicio)
-        VALUES (@UsuarioID, GETDATE())
-      `);
-
+    console.log("📧 OTP enviado al correo:", email);
     return res.json({
       message: "Código enviado al correo electrónico",
       requiresOtp: true
     });
-      
 
   } catch (error) {
-    console.error("❌ Error en loginUser:", error);
+    console.error("Error en loginUser:", error);
     res.status(500).json({ error: "Error en el servidor" });
   }
 };
@@ -399,18 +383,21 @@ const verifyOTP = async (req, res) => {
       return res.status(401).json({ error: "Código incorrecto o expirado" });
     }
 
+    // Obtener datos del usuario
     const userQuery = await pool.request()
       .input("Email", sql.NVarChar, email)
       .query("SELECT ID, Email, ROL, NOMBRE FROM USUARIOS WHERE EMAIL = @Email");
 
     const user = userQuery.recordset[0];
 
+    // Generar token
     const token = jwt.sign(
       { id: user.ID, email: user.Email, rol: user.ROL, nombre: user.NOMBRE },
       JWT_SECRET,
       { expiresIn: "4h" }
     );
 
+    // Marcar OTP como usado y asociar el token
     const expirationTime = new Date();
     expirationTime.setHours(expirationTime.getHours() + 1);
     expirationTime.setMinutes(expirationTime.getMinutes() - expirationTime.getTimezoneOffset());
@@ -427,7 +414,7 @@ const verifyOTP = async (req, res) => {
           AND OTP = @OTP
       `);
 
-    // 🆕 Insertar el token en TOKENS_ACTIVOS
+    // Guardar el token en TOKENS_ACTIVOS
     await pool.request()
       .input("UsuarioID", sql.Int, user.ID)
       .input("Token", sql.NVarChar, token)
@@ -436,12 +423,27 @@ const verifyOTP = async (req, res) => {
         VALUES (@UsuarioID, @Token, 1)
       `);
 
+    // 🆕 Registrar la sesión completa ahora que el OTP fue verificado
+    const nowChile = dayjs().tz("America/Santiago");
+    const fechaInicio = nowChile.subtract(4, 'hour').toDate(); // tu lógica original
+
+    await pool.request()
+      .input("UsuarioID", sql.Int, user.ID)
+      .input("FechaInicio", sql.DateTime, fechaInicio)
+      .input("Token", sql.NVarChar, token)
+      .query(`
+        INSERT INTO SESIONES_USUARIOS (UsuarioID, FechaInicio, FechaFin, Token)
+        VALUES (@UsuarioID, @FechaInicio, NULL, @Token)
+      `);
     res.json({ message: "Código correcto", token, rol: user.ROL });
+
   } catch (error) {
     console.error("❌ Error en verifyOTP:", error);
     res.status(500).json({ error: "Error en el servidor" });
   }
 };
+
+
 const logoutUser = async (req, res) => {
   try {
     const token = req.header("Authorization")?.split(" ")[1];
@@ -468,18 +470,22 @@ const logoutUser = async (req, res) => {
     //  Actualizar la última sesión abierta (FechaFin = ahora)
     await pool.request()
       .input("UsuarioID", sql.Int, usuarioId)
-      .input("FechaFin", sql.DateTime, dayjs().tz("America/Santiago").format("YYYY-MM-DD HH:mm:ss"))
       .query(`
         UPDATE SESIONES_USUARIOS
         SET FechaFin = GETDATE()
-        WHERE UsuarioID = @UsuarioID AND FechaFin IS NULL
+        WHERE ID = (
+          SELECT TOP 1 ID
+          FROM SESIONES_USUARIOS
+          WHERE UsuarioID = @UsuarioID
+          ORDER BY FechaInicio DESC
+        )
       `);
-      
 
     res.json({ message: "Sesión cerrada correctamente" });
 
+
   } catch (error) {
-    console.error("❌ Error al cerrar sesión:", error);
+    console.error("Error al cerrar sesión:", error);
     res.status(500).json({ error: "Error al cerrar sesión" });
   }
 };
@@ -523,6 +529,8 @@ const obtenerUsuarioDesdeToken = async (req, res) => {
     res.status(401).json({ error: "Token inválido o expirado" });
   }
 };
+
+
 
 
 

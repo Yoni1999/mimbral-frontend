@@ -16,12 +16,13 @@ import { BACKEND_URL } from "@/config";
 // --- INTERFACES (Moved out from within the component for clarity) ---
 interface FiltroProductos {
   periodo: string;
-  fechaInicio?: string;
-  fechaFin?: string;
-  primerNivel?: string;
-  categoria?: string;
-  subcategoria?: string;
-  proveedor?: string; // This will hold the CardCode of the selected supplier
+  fechaInicio?: string | undefined;
+  fechaFin?: string | undefined;
+  primerNivel?: string | undefined;
+  categoria?: string | undefined;
+  subcategoria?: string | undefined;
+  proveedor?: string | undefined;
+  almacenes?: string[]; // Add almacenes to the filter interface
 }
 
 interface Categoria {
@@ -44,12 +45,13 @@ interface Props {
 const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters }) => {
   const [openDrawer, setOpenDrawer] = useState(false);
   // Initialize filters with currentFilters if provided, otherwise default to "7D"
-  const [filters, setFilters] = useState<FiltroProductos>(currentFilters || { periodo: "1M" });
+  // Initialize almacenes as an empty array if not provided
+  const [filters, setFilters] = useState<FiltroProductos>(currentFilters || { periodo: "1M", almacenes: [] });
 
   const [primerNiveles, setPrimerNiveles] = useState<Categoria[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [subcategorias, setSubcategorias] = useState<Categoria[]>([]);
-  
+
   // State for all fetched suppliers
   const [allProveedores, setAllProveedores] = useState<Proveedor[]>([]);
   // State for the text in the supplier search input
@@ -70,9 +72,25 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     { value: "RANGO", label: "Rango personalizado" },
   ];
 
+  // Define the almacenes options with their descriptions
+  const almacenesDisponibles = [
+    { value: "01", label: "Centro comercial" },
+    { value: "02", label: "Devoluciones" },
+    { value: "03", label: "Comercio electrónico" },
+    { value: "04", label: "Control de pérdida" },
+    { value: "05", label: "Envíos full" },
+    { value: "06", label: "Bodega fábrica" },
+    { value: "07", label: "Ferretería Balmaceda" },
+    { value: "08", label: "Bodega Ovalle" },
+    { value: "10", label: "Reservado con abono" },
+    { value: "12", label: "Producto con falla" },
+    { value: "13", label: "Reservado full" },
+  ];
+
   // Sync internal state with external filters when currentFilters changes
   useEffect(() => {
-    setFilters(currentFilters || { periodo: "1M" });
+    // Ensure almacenes is an array, even if undefined in currentFilters
+    setFilters(currentFilters ? { ...currentFilters, almacenes: currentFilters.almacenes || [] } : { periodo: "1M", almacenes: [] });
     // Also update the supplier search input if a supplier is already selected
     if (currentFilters?.proveedor) {
       const selectedProv = allProveedores.find(p => p.CardCode === currentFilters.proveedor);
@@ -124,12 +142,12 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
   }, [openDrawer, fetchAllProveedores]);
 
 
-  const handleChange = async (key: keyof FiltroProductos, value: string) => {
+  const handleChange = async (key: keyof FiltroProductos, value: string | string[]) => {
     const updated = { ...filters, [key]: value };
 
     if (key === "primerNivel") {
-      updated.categoria = "";
-      updated.subcategoria = "";
+      updated.categoria = undefined; // Use undefined to explicitly clear
+      updated.subcategoria = undefined; // Use undefined to explicitly clear
       try {
         const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getcat?primerNivel=${value}`);
         const data = await res!.json();
@@ -145,7 +163,7 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     }
 
     if (key === "categoria") {
-      updated.subcategoria = "";
+      updated.subcategoria = undefined; // Use undefined to explicitly clear
       try {
         const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getsub?categoria=${value}`);
         const data = await res!.json();
@@ -178,8 +196,16 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     setShowProveedorSuggestions(false); // Hide suggestions after selection
   };
 
-  const handleChipDelete = (key: keyof FiltroProductos) => {
-    const updated: FiltroProductos = { ...filters, [key]: undefined }; // Use undefined for optional fields
+  const handleChipDelete = (key: keyof FiltroProductos | "fechaRango") => {
+    let updated: FiltroProductos = { ...filters };
+
+    if (key === "periodo" || key === "primerNivel" || key === "categoria" || key === "subcategoria" || key === "proveedor") { // Use undefined for optional fields
+    } else if (key === "almacenes") {
+      updated.almacenes = []; // Clear the array for almacenes
+    } else if (key === "fechaRango") { // Special case for date range chip
+      updated.fechaInicio = undefined;
+      updated.fechaFin = undefined;
+    }
 
     if (key === "primerNivel") {
       updated.categoria = undefined;
@@ -192,22 +218,30 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
       updated.subcategoria = undefined;
       setSubcategorias([]);
     }
-    
+
     if (key === "proveedor") {
-        setProveedorSearchInput(""); // Clear the search input if supplier chip is deleted
+      setProveedorSearchInput(""); // Clear the search input if supplier chip is deleted
     }
 
     setFilters(updated);
     onFilterChange(updated);
   };
 
+  const handleAlmacenChipDelete = (almacenToDelete: string) => {
+    const updatedAlmacenes = filters.almacenes?.filter(a => a !== almacenToDelete) || [];
+    const updatedFilters = { ...filters, almacenes: updatedAlmacenes };
+    setFilters(updatedFilters);
+    onFilterChange(updatedFilters);
+  };
+
   const handleApply = () => {
+    console.log("Applying filters:", filters);
     onFilterChange(filters);
     setOpenDrawer(false);
   };
 
   const handleClear = () => {
-    const cleared: FiltroProductos = { periodo: "1M" }; // Reset to default period
+    const cleared: FiltroProductos = { periodo: "1M", almacenes: [] }; // Reset to default period and empty almacenes
     setFilters(cleared);
     setProveedorSearchInput(""); // Clear supplier search input
     setCategorias([]); // Clear dependent dropdowns
@@ -231,9 +265,9 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
             <Chip label={`Período: ${periodos.find(p => p.value === filters.periodo)?.label}`} onDelete={() => handleChipDelete("periodo")} />
           )}
           {filters.proveedor && (
-            <Chip 
-              label={`Proveedor: ${allProveedores.find(p => p.CardCode === filters.proveedor)?.CardName || filters.proveedor}`} 
-              onDelete={() => handleChipDelete("proveedor")} 
+            <Chip
+              label={`Proveedor: ${allProveedores.find(p => p.CardCode === filters.proveedor)?.CardName || filters.proveedor}`}
+              onDelete={() => handleChipDelete("proveedor")}
             />
           )}
           {filters.primerNivel && (
@@ -245,12 +279,21 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
           {filters.subcategoria && (
             <Chip label={`Subcategoría: ${subcategorias.find(p => p.codigo === filters.subcategoria)?.nombre}`} onDelete={() => handleChipDelete("subcategoria")} />
           )}
+          {filters.almacenes && filters.almacenes.length > 0 && (
+            // Render a chip for each selected almacen
+            filters.almacenes.map(almacenCode => {
+              const almacen = almacenesDisponibles.find(a => a.value === almacenCode);
+              return (
+                <Chip
+                  key={almacenCode}
+                  label={`Almacén: ${almacen?.label || almacenCode}`}
+                  onDelete={() => handleAlmacenChipDelete(almacenCode)}
+                />
+              );
+            })
+          )}
           {filters.periodo === "RANGO" && filters.fechaInicio && filters.fechaFin && (
-              <Chip label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`} onDelete={() => {
-                  const updated = { ...filters, fechaInicio: undefined, fechaFin: undefined };
-                  setFilters(updated);
-                  onFilterChange(updated);
-              }} />
+            <Chip label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`} onDelete={() => handleChipDelete("fechaRango")} />
           )}
         </Box>
         <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setOpenDrawer(true)}>
@@ -295,6 +338,35 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
                 >
                   {periodos.map((p) => (
                     <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Almacenes */}
+            <Grid item xs={12}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Almacenes</InputLabel>
+                <Select
+                  multiple // Allow multiple selections
+                  value={filters.almacenes || []} // Ensure it's an array for multiple select
+                  onChange={(e) => handleChange("almacenes", e.target.value as string[])} // Cast to string[]
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {(selected as string[]).map((value) => (
+                        <Chip
+                          key={value}
+                          label={almacenesDisponibles.find(a => a.value === value)?.label || value}
+                          size="small"
+                        />
+                      ))}
+                    </Box>
+                  )}
+                >
+                  {almacenesDisponibles.map((almacen) => (
+                    <MenuItem key={almacen.value} value={almacen.value}>
+                      {almacen.label}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
