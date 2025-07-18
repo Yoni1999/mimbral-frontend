@@ -243,7 +243,7 @@ const loginUser = async (req, res) => {
     if (!validPassword) {
       return res.status(401).json({ error: "Contraseña incorrecta" });
     }
-
+//cambios de login otp 
     //Pedirá OTP
     let pedirOTP = false;
 
