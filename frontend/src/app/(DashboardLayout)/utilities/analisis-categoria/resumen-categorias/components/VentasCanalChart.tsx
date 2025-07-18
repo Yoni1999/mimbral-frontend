@@ -18,6 +18,16 @@ import CloseIcon from "@mui/icons-material/Close";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 
+// ✅ Mapeo visual de nombre de canales
+const canalNameMap: Record<string, string> = {
+  empresas: "Empresas",
+  chorrillo: "Chorrillo",
+  balmaceda: "Balmaceda",
+  vitex: "Vtex",
+  meli: "Mercado Libre",
+  falabella: "Falabella",
+};
+
 interface Props {
   filters: Filters;
 }
@@ -29,6 +39,7 @@ interface VentasCanalData {
 const VentasCanalChart: React.FC<Props> = ({ filters }) => {
   const [chartData, setChartData] = useState<number[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
+  const [rawLabels, setRawLabels] = useState<string[]>([]); // <- crudo para usar en la navegación
   const [loading, setLoading] = useState<boolean>(true);
   const [openModal, setOpenModal] = useState<boolean>(false);
 
@@ -75,16 +86,25 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
 
         if (!json || (Array.isArray(json) && json.length === 0)) {
           setLabels([]);
+          setRawLabels([]);
           setChartData([]);
           return;
         }
 
         const data: VentasCanalData = Array.isArray(json) ? json[0] : json;
-        setLabels(Object.keys(data));
+
+        const rawKeys = Object.keys(data);
+        const mappedKeys = rawKeys.map(
+          (key) => canalNameMap[key.toLowerCase()] || key
+        );
+
+        setRawLabels(rawKeys); // para navegación
+        setLabels(mappedKeys); // para mostrar en gráfico
         setChartData(Object.values(data));
       } catch (error) {
         console.error("❌ Error al obtener datos de ventas por canal:", error);
         setLabels([]);
+        setRawLabels([]);
         setChartData([]);
       } finally {
         setLoading(false);
@@ -101,8 +121,8 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
       events: {
         dataPointSelection: (event, chartContext, config) => {
           const indexClicked = config.dataPointIndex;
-          const channelName = labels[indexClicked];
-          router.push(`/utilities/ventas/ventas-por-canal?canal=${encodeURIComponent(channelName)}`);
+          const canalOriginal = rawLabels[indexClicked];
+          router.push(`/utilities/ventas/ventas-por-canal?canal=${encodeURIComponent(canalOriginal)}`);
         },
       },
     },
@@ -163,27 +183,26 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
           </Box>
         }
       >
-  <Box>
-    {loading ? (
-      <Typography variant="body1">Cargando gráfico...</Typography>
-    ) : (
-      <>
-        <Chart options={options} series={chartData} type="donut" width="100%" height={300} />
-        <Box mt={2} textAlign="right">
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => setOpenModal(true)}
-            startIcon={<FullscreenIcon />}
-          >
-            Expandir
-          </Button>
+        <Box>
+          {loading ? (
+            <Typography variant="body1">Cargando gráfico...</Typography>
+          ) : (
+            <>
+              <Chart options={options} series={chartData} type="donut" width="100%" height={300} />
+              <Box mt={2} textAlign="right">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setOpenModal(true)}
+                  startIcon={<FullscreenIcon />}
+                >
+                  Expandir
+                </Button>
+              </Box>
+            </>
+          )}
         </Box>
-      </>
-    )}
-  </Box>
-</DashboardCard>
-
+      </DashboardCard>
 
       <Dialog
         open={openModal}

@@ -18,6 +18,16 @@ import CloseIcon from "@mui/icons-material/Close";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 
+// ✅ Mapeo legible para etiquetas de canal
+const canalNameMap: Record<string, string> = {
+  empresas: "Empresas",
+  chorrillo: "Chorrillo",
+  balmaceda: "Balmaceda",
+  vitex: "Vtex",
+  meli: "Mercado Libre",
+  falabella: "Falabella",
+};
+
 interface Props {
   filters: Filters;
 }
@@ -29,6 +39,7 @@ interface VentasCanalData {
 const VentasCanalChart: React.FC<Props> = ({ filters }) => {
   const [chartData, setChartData] = useState<number[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
+  const [rawLabels, setRawLabels] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [openModal, setOpenModal] = useState<boolean>(false);
 
@@ -52,7 +63,6 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
       params.append("periodo", mapPeriodo[filters.periodo] || "1d");
     }
 
-    // ✅ Aquí usamos subcategoria en lugar de categoria
     if (filters.subcategoria) {
       params.append("subcategoria", filters.subcategoria);
     }
@@ -76,16 +86,22 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
 
         if (!json || (Array.isArray(json) && json.length === 0)) {
           setLabels([]);
+          setRawLabels([]);
           setChartData([]);
           return;
         }
 
         const data: VentasCanalData = Array.isArray(json) ? json[0] : json;
-        setLabels(Object.keys(data));
+        const keys = Object.keys(data);
+        const mappedKeys = keys.map((key) => canalNameMap[key.toLowerCase()] || key);
+
+        setRawLabels(keys);
+        setLabels(mappedKeys);
         setChartData(Object.values(data));
       } catch (error) {
         console.error("❌ Error al obtener datos de ventas por canal:", error);
         setLabels([]);
+        setRawLabels([]);
         setChartData([]);
       } finally {
         setLoading(false);
@@ -102,8 +118,8 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
       events: {
         dataPointSelection: (event, chartContext, config) => {
           const indexClicked = config.dataPointIndex;
-          const channelName = labels[indexClicked];
-          router.push(`/utilities/ventas/ventas-por-canal?canal=${encodeURIComponent(channelName)}`);
+          const canalOriginal = rawLabels[indexClicked];
+          router.push(`/utilities/ventas/ventas-por-canal?canal=${encodeURIComponent(canalOriginal)}`);
         },
       },
     },
@@ -150,60 +166,54 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
               borderLeft: "4px solid #d93a3a",
             }}
           >
-  
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 700,
+                color: "primary.main",
+                textTransform: "uppercase",
+                fontSize: "0.85rem",
+              }}
+            >
+              Ventas por Canal
+            </Typography>
           </Box>
         }
       >
-      <Box>
-        {loading ? (
-          <Typography variant="body1">Cargando gráfico...</Typography>
-        ) : (
-          <Box>
-            {/* Header con botón a la derecha */}
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                mb: 2,
-              }}
-            >
-              <Typography
-                variant="subtitle2"
+        <Box>
+          {loading ? (
+            <Typography variant="body1">Cargando gráfico...</Typography>
+          ) : (
+            <Box>
+              <Box
                 sx={{
-                  fontWeight: 700,
-                  color: "primary.main",
-                  textTransform: "uppercase",
-                  fontSize: "0.85rem",
-                  pl: 2,
-                  borderLeft: "4px solid #d93a3a",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 2,
                 }}
               >
-                Ventas por Canal
-              </Typography>
+                <div /> {/* espacio para alinear botón a la derecha */}
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setOpenModal(true)}
+                  startIcon={<FullscreenIcon />}
+                >
+                  Expandir
+                </Button>
+              </Box>
 
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => setOpenModal(true)}
-                startIcon={<FullscreenIcon />}
-              >
-                Expandir
-              </Button>
+              <Chart
+                options={options}
+                series={chartData}
+                type="donut"
+                width="100%"
+                height={300}
+              />
             </Box>
-
-            {/* Gráfico */}
-            <Chart
-              options={options}
-              series={chartData}
-              type="donut"
-              width="100%"
-              height={300}
-            />
-          </Box>
-        )}
-      </Box>
-
+          )}
+        </Box>
       </DashboardCard>
 
       <Dialog
@@ -220,7 +230,13 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
               <CloseIcon />
             </IconButton>
           </Box>
-          <Chart options={options} series={chartData} type="donut" width="100%" height={400} />
+          <Chart
+            options={options}
+            series={chartData}
+            type="donut"
+            width="100%"
+            height={400}
+          />
         </DialogContent>
       </Dialog>
     </>
@@ -228,4 +244,3 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
 };
 
 export default VentasCanalChart;
-

@@ -3,21 +3,18 @@ import React, { useEffect, useState } from 'react';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material';
 import { formatVentas } from '@/utils/format';
-import { fetchWithToken } from '@/utils/fetchWithToken'; // Importamos la utilidad
-import { BACKEND_URL } from '@/config'; // Importamos la URL base
+import { fetchWithToken } from '@/utils/fetchWithToken';
+import { BACKEND_URL } from '@/config';
 
 // --- INTERFACES ---
-
-// Reutilizamos la interfaz de filtros del componente padre
 interface Filters {
   canal: string;
   periodo: string;
   fechaInicio: string;
   fechaFin: string;
-  vendedor?: number | null; // Aunque este componente solo use 'canal', lo mantenemos consistente
+  vendedor?: number | null;
 }
 
-// Interfaz para un elemento de dato de la API
 interface ApiDataPoint {
   Año: string;
   Mes: string;
@@ -26,10 +23,9 @@ interface ApiDataPoint {
   TotalVentas: number;
 }
 
-// Interfaz para el dataset transformado para el BarChart
 interface ChartDatasetItem {
   month: string;
-  [year: string]: number | string; // Permite propiedades dinámicas como '2022', '2023', etc.
+  [year: string]: number | string;
 }
 
 interface Props {
@@ -42,27 +38,34 @@ const MESES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
-// Colores fijos para los años (puedes ajustarlos o hacerlos dinámicos si tienes muchos años)
 const coloresPorAño: { [key: string]: string } = {
   '2022': '#6BAAF7',
   '2023': '#FF914A',
   '2024': '#9583FF',
   '2025': '#459148',
-  '2026': '#DA3636', // Añade más si esperas más años
-  // Agrega más colores para más años si es necesario
+  '2026': '#DA3636',
+};
+
+// 🆕 Mapeo visual de nombre de canales
+const canalNameMap: Record<string, string> = {
+  empresas: "Empresas",
+  chorrillo: "Chorrillo",
+  balmaceda: "Balmaceda",
+  vitex: "Vtex",
+  meli: "Mercado Libre",
+  falabella: "Falabella",
 };
 
 const ProductoAnalisisChart: React.FC<Props> = ({ filters }) => {
   const [dataset, setDataset] = useState<ChartDatasetItem[]>([]);
-  const [series, setSeries] = useState<any[]>([]); // Array de objetos de serie para el BarChart
+  const [series, setSeries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [displayedCanal, setDisplayedCanal] = useState<string>(''); // Para mostrar el canal actual
+  const [displayedCanal, setDisplayedCanal] = useState<string>('Todos los Canales');
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Construye los parámetros de la URL. Solo incluimos 'canal' si está presente.
         const queryParams = new URLSearchParams();
         if (filters.canal && filters.canal !== '') {
           queryParams.append('canal', filters.canal);
@@ -78,50 +81,45 @@ const ProductoAnalisisChart: React.FC<Props> = ({ filters }) => {
           return;
         }
 
-        const apiData: ApiDataPoint[] = await res?.json();
+        const apiData: ApiDataPoint[] = await res.json();
 
-        // 1. Determinar el nombre del canal a mostrar
-        setDisplayedCanal(filters.canal && filters.canal !== '' ? filters.canal : 'Todos los Canales');
+        // 🆕 Mapeo visual del canal mostrado en subtítulo
+        const canalKey = filters.canal?.toLowerCase();
+        const canalNombreLegible = canalNameMap[canalKey] || "Todos los Canales";
+        setDisplayedCanal(canalNombreLegible);
 
-        // 2. Procesar los datos para el formato del gráfico
         const processedData: { [month: string]: ChartDatasetItem } = {};
         const uniqueYears = new Set<string>();
 
-        // Inicializar processedData con todos los meses y valores por defecto
         MESES.forEach(month => {
-          processedData[month] = { month: month };
+          processedData[month] = { month };
         });
 
         apiData.forEach(item => {
           const year = item.Año.toString();
           uniqueYears.add(year);
-          // Asegúrate de que el mes exista en processedData
           if (!processedData[item.Mes]) {
             processedData[item.Mes] = { month: item.Mes };
           }
           processedData[item.Mes][year] = item.TotalVentas;
         });
 
-        // Convertir el objeto a un array, asegurando el orden de los meses
         const finalDataset = MESES.map(month => {
-          // Asegura que todos los años tengan un valor (o 0 si no hay datos para ese mes/año)
-          const item: ChartDatasetItem = { month: month };
-          Array.from(uniqueYears).sort().forEach(year => { // Ordenar años para consistencia
-            item[year] = (processedData[month] ? processedData[month][year] : 0) || 0;
+          const item: ChartDatasetItem = { month };
+          Array.from(uniqueYears).sort().forEach(year => {
+            item[year] = (processedData[month]?.[year] as number) || 0;
           });
           return item;
         });
 
-        // 3. Crear las series para el gráfico
         const newSeries = Array.from(uniqueYears).sort().map(year => ({
           dataKey: year,
           label: year,
-          color: coloresPorAño[year] || '#CCCCCC', // Color por defecto si no está definido
+          color: coloresPorAño[year] || '#CCCCCC',
         }));
 
         setDataset(finalDataset);
         setSeries(newSeries);
-
       } catch (error) {
         console.error("❌ Error al obtener datos de ventas mensuales:", error);
         setDataset([]);
@@ -132,7 +130,7 @@ const ProductoAnalisisChart: React.FC<Props> = ({ filters }) => {
     };
 
     fetchData();
-  }, [filters.canal]); // Solo volvemos a cargar si cambia el canal
+  }, [filters.canal]);
 
   return (
     <Card
@@ -141,7 +139,7 @@ const ProductoAnalisisChart: React.FC<Props> = ({ filters }) => {
         boxShadow: '0px 4px 20px rgba(0,0,0,0.1)',
         background: '#fff',
         p: 2,
-        minHeight: 300 // Para que tenga una altura mínima consistente
+        minHeight: 300
       }}
     >
       <CardContent>
@@ -164,34 +162,28 @@ const ProductoAnalisisChart: React.FC<Props> = ({ filters }) => {
             </Typography>
           </Box>
         ) : (
-          <Box sx={{ overflowX: 'auto', width: '100%' }}> {/* Permite scroll horizontal si hay muchos meses/barras */}
+          <Box sx={{ overflowX: 'auto', width: '100%' }}>
             <BarChart
               dataset={dataset}
-              xAxis={[
-                {
-                  dataKey: 'month',
-                  label: 'Mes',
-                  scaleType: 'band',
-                  // Puedes ajustar la rotación de las etiquetas si hay muchos meses y se superponen
-                  // tickLabelStyle: { angle: -45, textAnchor: 'end' }, 
-                },
-              ]}
+              xAxis={[{
+                dataKey: 'month',
+                label: 'Mes',
+                scaleType: 'band',
+              }]}
               series={series}
-              yAxis={[
-                {
-                  label: '', // Etiqueta del eje Y
-                  valueFormatter: (value: number) => formatVentas(value),
-                },
-              ]}
-              margin={{ left: 80, right: 10, top: 30, bottom: 60 }} // Aumentar bottom para etiquetas X rotadas
-              height={330} // Ajustar altura para acomodar todo
-              skipAnimation={false} // Mantener animaciones
+              yAxis={[{
+                label: '',
+                valueFormatter: (value: number) => formatVentas(value),
+              }]}
+              margin={{ left: 80, right: 10, top: 30, bottom: 60 }}
+              height={330}
+              skipAnimation={false}
             />
           </Box>
         )}
       </CardContent>
     </Card>
   );
-}
+};
 
 export default ProductoAnalisisChart;

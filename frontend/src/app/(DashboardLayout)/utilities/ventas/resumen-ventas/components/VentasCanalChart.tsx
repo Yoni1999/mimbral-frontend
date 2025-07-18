@@ -7,7 +7,7 @@ import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCa
 import { ApexOptions } from "apexcharts";
 import { useRouter } from "next/navigation";
 import { BACKEND_URL } from "@/config";
-import { formatVentas } from "@/utils/format"; // ✅ nuevo import
+import { formatVentas } from "@/utils/format";
 
 interface Props {
   filters: {
@@ -25,9 +25,20 @@ interface VentasCanalData {
 const VentasCanalChart: React.FC<Props> = ({ filters }) => {
   const [chartData, setChartData] = useState<number[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
+  const [rawKeys, setRawKeys] = useState<string[]>([]); // para mantener los keys reales
   const [loading, setLoading] = useState<boolean>(true);
 
   const router = useRouter();
+
+  // 🔁 Mapeo visual de nombres de canal
+  const canalNameMap: Record<string, string> = {
+    empresas: "Empresas",
+    chorrillo: "Chorrillo",
+    balmaceda: "Balmaceda",
+    vitex: "Vtex",
+    meli: "Mercado Libre",
+    falabella: "Falabella",
+  };
 
   const buildQuery = () => {
     const params = new URLSearchParams();
@@ -55,11 +66,14 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
         if (!response) return;
 
         const data: VentasCanalData = (await response.json())[0];
-        const newLabels = Object.keys(data).map((key) => key.replace(/_/g, " "));
+        const keys = Object.keys(data);
+
+        const newLabels = keys.map((key) => canalNameMap[key.toLowerCase()] || key);
         const newSeries = Object.values(data);
 
         setLabels(newLabels);
         setChartData(newSeries);
+        setRawKeys(keys); // guardamos los nombres originales
       } catch (error) {
         console.error("❌ Error al obtener datos de ventas por canal:", error);
       } finally {
@@ -77,8 +91,8 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
       events: {
         dataPointSelection: (event, chartContext, config) => {
           const indexClicked = config.dataPointIndex;
-          const channelName = labels[indexClicked];
-          router.push(`/utilities/ventas/ventas-por-canal?canal=${encodeURIComponent(channelName)}`);
+          const canalOriginal = rawKeys[indexClicked];
+          router.push(`/utilities/ventas/ventas-por-canal?canal=${encodeURIComponent(canalOriginal)}`);
         },
       },
     },
@@ -86,7 +100,7 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
     colors: ["#9583ff", "#ff914a", "#f0d45f", "#45914b", "#284270", "#d93a3a"],
     tooltip: {
       y: {
-        formatter: (val: number) => formatVentas(val), // ✅ nuevo formateador
+        formatter: (val: number) => formatVentas(val),
       },
     },
     responsive: [

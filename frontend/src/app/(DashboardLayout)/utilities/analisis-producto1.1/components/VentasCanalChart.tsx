@@ -8,6 +8,16 @@ import { useRouter } from "next/navigation";
 import { BACKEND_URL } from "@/config";
 import { formatVentas } from "@/utils/format";
 
+// ✅ Mapeo de nombres legibles por canal
+const canalNameMap: Record<string, string> = {
+  empresas: "Empresas",
+  chorrillo: "Chorrillo",
+  balmaceda: "Balmaceda",
+  vitex: "Vtex",
+  meli: "Mercado Libre",
+  falabella: "Falabella",
+};
+
 interface Props {
   filters: {
     temporada: string;
@@ -17,7 +27,7 @@ interface Props {
     canal?: string;
     itemCode?: string;
   };
-  onSelectCanal?: (canal: string) => void; // 👈 NUEVO
+  onSelectCanal?: (canal: string) => void;
 }
 
 interface VentasCanalData {
@@ -27,6 +37,7 @@ interface VentasCanalData {
 const VentasCanalChart: React.FC<Props> = ({ filters, onSelectCanal }) => {
   const [chartData, setChartData] = useState<number[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
+  const [rawLabels, setRawLabels] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const router = useRouter();
@@ -54,14 +65,16 @@ const VentasCanalChart: React.FC<Props> = ({ filters, onSelectCanal }) => {
         if (!response) return;
 
         const data: VentasCanalData = (await response.json())[0];
-        const newLabels = Object.keys(data).map((key) => key.replace(/_/g, " "));
-        const newSeries = Object.values(data);
+        const keys = Object.keys(data);
+        const mappedLabels = keys.map((key) => canalNameMap[key.toLowerCase()] || key);
 
-        setLabels(newLabels);
-        setChartData(newSeries);
+        setRawLabels(keys);
+        setLabels(mappedLabels);
+        setChartData(Object.values(data));
       } catch (error) {
         console.error("❌ Error al obtener datos de ventas por canal:", error);
         setLabels([]);
+        setRawLabels([]);
         setChartData([]);
       } finally {
         setLoading(false);
@@ -78,11 +91,11 @@ const VentasCanalChart: React.FC<Props> = ({ filters, onSelectCanal }) => {
       events: {
         dataPointSelection: (event, chartContext, config) => {
           const indexClicked = config.dataPointIndex;
-          const channelName = labels[indexClicked];
+          const canalOriginal = rawLabels[indexClicked];
           if (onSelectCanal) {
-            onSelectCanal(channelName); // 👈 ACTUALIZA EL CANAL EN PAGE
+            onSelectCanal(canalOriginal);
           } else {
-            router.push(`/utilities/ventas/ventas-por-canal?canal=${encodeURIComponent(channelName)}`);
+            router.push(`/utilities/ventas/ventas-por-canal?canal=${encodeURIComponent(canalOriginal)}`);
           }
         },
       },

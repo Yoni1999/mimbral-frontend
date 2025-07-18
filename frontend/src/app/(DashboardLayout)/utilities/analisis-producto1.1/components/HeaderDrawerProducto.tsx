@@ -233,7 +233,7 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
               <MenuItem value="Balmaceda">Tienda Balmaceda</MenuItem>
               <MenuItem value="Meli">Mercado Libre</MenuItem>
               <MenuItem value="Falabella">Falabella</MenuItem>
-              <MenuItem value="Vitex">Vitex</MenuItem>
+              <MenuItem value="Vitex">Vtex</MenuItem>
             </Select>
           </FormControl>
         </Grid>

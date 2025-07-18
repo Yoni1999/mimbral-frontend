@@ -126,7 +126,7 @@ const VentasChart: React.FC<Props> = ({ filters }) => {
           { key: "meli", color: "#17616e", name: "Mercado Libre" },
           { key: "falabella", color: "#7697a0", name: "Falabella" },
           { key: "empresas", color: "#fd8916", name: "Empresas" },
-          { key: "vitex", color: "#ffebd0", name: "Vitex" },
+          { key: "vitex", color: "#ffebd0", name: "Vtex" },
           { key: "balmaceda", color: "#bf360c", name: "Balmaceda" },
         ].map((line) => (
           <Line
