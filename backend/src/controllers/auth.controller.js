@@ -272,7 +272,7 @@ const loginUser = async (req, res) => {
       const token = jwt.sign(
         { id: user.ID, email: user.Email, rol: user.ROL, nombre: user.NOMBRE },
         JWT_SECRET,
-        { expiresIn: "11m" }
+        { expiresIn: "2h" }
       );
 
       // Guardar token en TOKENS_ACTIVOS
