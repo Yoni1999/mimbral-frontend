@@ -262,8 +262,8 @@ const loginUser = async (req, res) => {
       pedirOTP = true; // nunca inició sesión
     } else {
       const diasSinSesion = dayjs().diff(dayjs(ultimaSesion), "day");
-      if (diasSinSesion >= 3) {
-        pedirOTP = true; // inactivo por más de 3 días
+      if (diasSinSesion >= 4) {
+        pedirOTP = true; 
       }
     }
 
@@ -272,7 +272,7 @@ const loginUser = async (req, res) => {
       const token = jwt.sign(
         { id: user.ID, email: user.Email, rol: user.ROL, nombre: user.NOMBRE },
         JWT_SECRET,
-        { expiresIn: "4h" }
+        { expiresIn: "11m" }
       );
 
       // Guardar token en TOKENS_ACTIVOS

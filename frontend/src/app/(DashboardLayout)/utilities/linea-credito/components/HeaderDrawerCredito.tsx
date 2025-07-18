@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Drawer,
@@ -15,11 +15,15 @@ import {
   Button,
   Slider,
   Checkbox,
-  ListItemText
+  ListItemText,
+  Autocomplete,
+  CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { formatVentas } from "@/utils/format";
+import { fetchWithToken } from "@/utils/fetchWithToken";
+import { BACKEND_URL } from "@/config";
 
 interface Props {
   open: boolean;
@@ -38,6 +42,9 @@ const HeaderDrawerLineaCredito: React.FC<Props> = ({ open, onClose, onApply }) =
   });
 
   const [montoRange, setMontoRange] = useState<number[]>([0, 150000000]);
+  const [tipoClienteOptions, setTipoClienteOptions] = useState<{ label: string; value: string }[]>([]);
+  const [rutOptions, setRutOptions] = useState<{ CardCode: string; CardName: string; LicTradNum: string }[]>([]);
+  const [loadingRut, setLoadingRut] = useState(false);
 
   const handleChange = (key: string, value: any) => {
     setFilters({ ...filters, [key]: value });
@@ -61,26 +68,40 @@ const HeaderDrawerLineaCredito: React.FC<Props> = ({ open, onClose, onApply }) =
     setFilters({ ...filters, montoInicio: desde, montoFin: hasta });
   };
 
-  const tipoClienteOptions = [
-    { label: "Clientes", value: "100" },
-    { label: "Prov.Nacional", value: "101" },
-    { label: "Cliente Terreno", value: "102" },
-    { label: "Cliente Agricola", value: "103" },
-    { label: "Prov.Honorario", value: "104" },
-    { label: "Prov.Extranjero", value: "105" },
-    { label: "Cliente Personal", value: "106" },
-    { label: "Club del Maestro", value: "108" },
-    { label: "Cliente Proveedor", value: "109" },
-    { label: "Grupo Mimbral", value: "110" },
-    { label: "Cliente interno", value: "111" },
-    { label: "Venta Empresa", value: "112" },
-    { label: "Entidades Publicas", value: "113" },
-    { label: "Cliente Premium", value: "115" },
-    { label: "Cliente Preferencial", value: "116" },
-    { label: "EERR", value: "117" },
-    { label: "Grupo Proyecto", value: "118" },
-    { label: "Grupo Red", value: "119" }
-  ];
+  useEffect(() => {
+    const fetchTiposCliente = async () => {
+      try {
+        const res = await fetchWithToken(`${BACKEND_URL}/api/tiposcliente`);
+        const data = await res!.json();
+        const formatted = data.map((item: any) => ({
+          label: item.GroupName,
+          value: item.GroupCode.toString()
+        }));
+        setTipoClienteOptions(formatted);
+      } catch (error) {
+        console.error("Error al cargar tipos de cliente", error);
+      }
+    };
+
+    fetchTiposCliente();
+  }, []);
+
+  const handleRutInputChange = async (_: any, value: string) => {
+    if (!value || value.length < 2) {
+      setRutOptions([]);
+      return;
+    }
+    setLoadingRut(true);
+    try {
+      const res = await fetchWithToken(`${BACKEND_URL}/api/buscar-rut?query=${encodeURIComponent(value)}`);
+      const data = await res!.json();
+      setRutOptions(data);
+    } catch (error) {
+      console.error("Error al buscar rut:", error);
+    } finally {
+      setLoadingRut(false);
+    }
+  };
 
   const opciones = {
     estado: ["Y", "N"],
@@ -105,12 +126,46 @@ const HeaderDrawerLineaCredito: React.FC<Props> = ({ open, onClose, onApply }) =
 
       <Grid container spacing={2} direction="column">
         <Grid item>
-          <TextField
-            label="RUT"
-            fullWidth
+          <Autocomplete
+            freeSolo
             size="small"
-            value={filters.rut}
-            onChange={(e) => handleChange("rut", e.target.value)}
+            options={rutOptions}
+            loading={loadingRut}
+            getOptionLabel={(option) =>
+              typeof option === "string"
+                ? option
+                : `${option.CardCode} - ${option.CardName}`
+            }
+            isOptionEqualToValue={(option, value) =>
+              option.LicTradNum === value.LicTradNum
+            }
+            onInputChange={(_, value) => handleRutInputChange(_, value)}
+            onChange={(_, newValue) => {
+              if (typeof newValue === "string") {
+                handleChange("rut", newValue.split('-')[0]); // por si escriben el RUT completo manualmente
+              } else if (newValue) {
+                const rutSinDv = newValue.LicTradNum.split('-')[0];
+                handleChange("rut", rutSinDv);
+              } else {
+                handleChange("rut", "");
+              }
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Buscar RUT"
+                fullWidth
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {loadingRut ? <CircularProgress size={18} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
           />
         </Grid>
 
@@ -151,7 +206,14 @@ const HeaderDrawerLineaCredito: React.FC<Props> = ({ open, onClose, onApply }) =
             <Select
               multiple
               value={filters.tipoCliente}
-              onChange={(e) => handleChange("tipoCliente", typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+              onChange={(e) =>
+                handleChange(
+                  "tipoCliente",
+                  typeof e.target.value === "string"
+                    ? e.target.value.split(",")
+                    : e.target.value
+                )
+              }
               renderValue={(selected) => {
                 const items = selected as string[];
                 if (items.length <= 2) return tipoClienteOptions.filter(opt => items.includes(opt.value)).map(opt => opt.label).join(", ");
@@ -172,7 +234,7 @@ const HeaderDrawerLineaCredito: React.FC<Props> = ({ open, onClose, onApply }) =
 
         <Grid item>
           <Typography variant="subtitle2" gutterBottom>
-            Rango Monto ({ formatVentas(montoRange[0])} a { formatVentas(montoRange[1])}):
+            Rango Monto ({formatVentas(montoRange[0])} a {formatVentas(montoRange[1])}):
           </Typography>
           <Slider
             value={montoRange}

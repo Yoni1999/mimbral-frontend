@@ -40,7 +40,7 @@ const LineaCreditoPage = () => {
         onApply={handleApplyFilters}
       />
 
-      <TablaLineaCredito />
+      <TablaLineaCredito filters={filters} />
     </Box>
   );
 };

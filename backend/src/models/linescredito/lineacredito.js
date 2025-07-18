@@ -101,6 +101,45 @@ async function obtenerClientesConCreditoYDeuda(filtros) {
   }
 }
 
-module.exports = {
-  obtenerClientesConCreditoYDeuda
-};
+async function obtenerTiposDeCliente() {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .query(`
+        SELECT GroupCode, GroupName
+        FROM OCRG
+        ORDER BY GroupName
+      `);
+    return result.recordset;
+  } catch (error) {
+    console.error('Error al obtener tipos de cliente:', error);
+    throw error;
+  }
+}
+async function buscarClientesPorRut(query) {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('query', sql.NVarChar, query)
+      .query(`
+        SELECT TOP 10 
+          CardCode,
+          CardName,
+          LicTradNum
+        FROM OCRD
+        WHERE 
+          LEFT(LicTradNum, LEN(LicTradNum) - 2) LIKE '%' + @query + '%'
+          AND CardType = 'C'
+        ORDER BY CardName
+      `);
+
+    return result.recordset;
+
+  } catch (error) {
+    console.error('Error en modelo buscarClientesPorRut:', error);
+    throw error;
+  }
+}
+
+
+module.exports = { obtenerClientesConCreditoYDeuda, obtenerTiposDeCliente, buscarClientesPorRut };

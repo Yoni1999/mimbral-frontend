@@ -59,9 +59,9 @@ const authMiddleware = async (req, res, next) => {
             WHERE TOKEN = @Token AND FechaFin IS NULL
           `);
 
-        console.log("🕓 FechaFin registrada por expiración de token");
+        console.log("FechaFin registrada por expiración de token");
       } catch (err) {
-        console.error("⚠️Error al actualizar Fecha Fin por expiración:", err);
+        console.error("Error al actualizar Fecha Fin por expiración:", err);
       }
 
       return errorResponse("Token expirado. Inicia sesión nuevamente.");

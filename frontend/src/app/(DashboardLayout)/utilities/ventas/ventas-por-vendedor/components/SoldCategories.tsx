@@ -20,6 +20,8 @@ import {
 } from "@mui/icons-material";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
+import { formatVentas, formatUnidades } from "@/utils/format";
+
 
 interface Producto {
   Codigo_Categoria: string;
@@ -247,7 +249,7 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
                   </TableCell>
 
                   <TableCell align="right">
-                    <Typography fontWeight={500}>{row.Cantidad_Vendida.toLocaleString("es-CL")}</Typography>
+                    <Typography fontWeight={500}>{formatUnidades(row.Cantidad_Vendida)}</Typography>
                     <Box display="flex" justifyContent="flex-end" alignItems="center" gap={0.5}>
                       {row.PorcentajeCambioUnidades > 0 ? (
                         <ArrowDropUpIcon sx={{ color: "success.main", fontSize: 20 }} />
@@ -272,7 +274,7 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
                   </TableCell>
 
                   <TableCell align="right">
-                    <Typography fontWeight={500}>{formatMillones(row.Total_Ventas)}</Typography>
+                    <Typography fontWeight={500}>{formatVentas(row.Total_Ventas)}</Typography>
                   </TableCell>
 
                   <TableCell align="right">

@@ -1,4 +1,6 @@
 const { obtenerClientesConCreditoYDeuda } = require('../../models/linescredito/lineacredito');
+const { obtenerTiposDeCliente } = require('../../models/linescredito/lineacredito');
+const { buscarClientesPorRut } = require('../../models/linescredito/lineacredito');
 
 const getClientes = async (req, res) => {
   try {
@@ -25,6 +27,29 @@ const getClientes = async (req, res) => {
   }
 };
 
-module.exports = {
-  getClientes
+const getTiposDeCliente = async (req, res) => {
+  try {
+    const tipos = await obtenerTiposDeCliente();
+    res.status(200).json(tipos);
+  } catch (error) {
+    console.error('Error en getTiposDeCliente:', error);
+    res.status(500).json({
+      error: 'Error interno del servidor',
+      detalle: error.message
+    });
+  }
 };
+
+const getClientesPorRut = async (req, res) => {
+  try {
+    const query = req.query.query || '';
+    const clientes = await buscarClientesPorRut(query);
+    res.status(200).json(clientes);
+  } catch (error) {
+    console.error('Error en getClientesPorRut:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+
+module.exports = { getClientes, getTiposDeCliente, getClientesPorRut };

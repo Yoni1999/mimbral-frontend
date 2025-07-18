@@ -4,7 +4,7 @@ export const fetchWithToken = async (
   ) => {
     const token = localStorage.getItem("token");
   
-    // 🔐 Si no hay token, redirige inmediatamente
+    //  Si no hay token, redirige inmediatamente
     if (!token) {
       window.location.href = "/authentication/login";
       return null;
