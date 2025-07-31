@@ -305,11 +305,11 @@ const obtenerVentasPeriodo = async (req, res) => {
                 AND (
                     @CanalParam IS NULL
                     OR (
-                        (@CanalParam = 'Meli' AND ((T1.WhsCode IN ('03', '05') AND T0.SlpCode IN (426, 364, 355))
-                            OR (T1.WhsCode = '01' AND T0.SlpCode IN (355, 398)) ))
-                        OR (@CanalParam = 'Falabella' AND T1.WhsCode = '03' AND T0.SlpCode = 371)
+                        (@CanalParam = 'Meli' AND ((T1.WhsCode IN ('03', '05') AND T1.SlpCode IN (426, 364, 355))
+                            OR (T1.WhsCode = '01' AND T1.SlpCode IN (355, 398)) ))
+                        OR (@CanalParam = 'Falabella' AND T1.WhsCode = '03' AND T1.SlpCode = 371)
                         OR (@CanalParam = 'Balmaceda' AND T1.WhsCode = '07')
-                        OR (@CanalParam = 'Vitex' AND T1.WhsCode = '01' AND T0.SlpCode IN (401, 397))
+                        OR (@CanalParam = 'Vitex' AND T1.WhsCode = '01' AND T1.SlpCode IN (401, 397))
                         OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
                             AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                         OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
@@ -330,11 +330,11 @@ const obtenerVentasPeriodo = async (req, res) => {
                 AND (
                     @CanalParam IS NULL
                     OR (
-                        (@CanalParam = 'Meli' AND ((T1.WhsCode IN ('03', '05') AND T0.SlpCode IN (426, 364, 355))
-                            OR (T1.WhsCode = '01' AND T0.SlpCode IN (355, 398)) ))
-                        OR (@CanalParam = 'Falabella' AND T1.WhsCode = '03' AND T0.SlpCode = 371)
+                        (@CanalParam = 'Meli' AND ((T1.WhsCode IN ('03', '05') AND T1.SlpCode IN (426, 364, 355))
+                            OR (T1.WhsCode = '01' AND T1.SlpCode IN (355, 398)) ))
+                        OR (@CanalParam = 'Falabella' AND T1.WhsCode = '03' AND T1.SlpCode = 371)
                         OR (@CanalParam = 'Balmaceda' AND T1.WhsCode = '07')
-                        OR (@CanalParam = 'Vitex' AND T1.WhsCode = '01' AND T0.SlpCode IN (401, 397))
+                        OR (@CanalParam = 'Vitex' AND T1.WhsCode = '01' AND T1.SlpCode IN (401, 397))
                         OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
                             AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                         OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 

@@ -30,6 +30,7 @@ const obtenerVentasPorMesYCanal = async (canalParam) => {
         WHERE 
             YEAR(T0.DocDate) >= YEAR(GETDATE()) - 3
             AND T0.CANCELED = 'N'
+            AND T1.ItemCode <> '701001008'
       )
 
       SELECT 

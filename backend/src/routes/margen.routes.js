@@ -8,3 +8,5 @@ router.get("/bruto-periodo",obtenerMargenBrutoPeriodo);
 router.get("/bruto-categoria",obtenerMargenBrutoPorCategoria);
 
 module.exports = router;
+
+

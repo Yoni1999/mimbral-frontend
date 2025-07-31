@@ -4,15 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import SeccionTitulo from "../resumen-ventas/components/SeccionTitulo";
-import {
-  Grid,
-  Paper,
-  CircularProgress,
-  Box,
-  Typography,
-  FormControlLabel,
-  Checkbox,
-} from "@mui/material";
+import { Grid, Paper, CircularProgress, Box, Typography, FormControlLabel, Checkbox, } from "@mui/material";
 import MetricCard from "./components/Cards";
 import FechaRotacion from "./components/MonthlySalesRotation";
 import NivelNavigation from "../components/NivelNavigation";
@@ -22,13 +14,7 @@ import dynamic from "next/dynamic";
 import { formatUnidades, formatVentas } from "@/utils/format";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
-import {
-  IconCurrencyDollar,
-  IconTrendingUp,
-  IconStack2,
-  IconBox,
-  IconShoppingCart,
-} from "@tabler/icons-react";
+import { IconCurrencyDollar, IconTrendingUp, IconStack2, IconBox, IconShoppingCart, } from "@tabler/icons-react";
 import ProductosVendidos from "./components/SoldProducts";
 
 const VentasCanalChart = dynamic(() => import("./components/Sellers"), {
@@ -51,8 +37,6 @@ const VentasPorCanal = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // 1. Inicialización del estado 'filters' utilizando una función para cargar desde localStorage
-  // Esto asegura que los filtros se establezcan correctamente desde el primer renderizado.
   const [filters, setFilters] = useState<Filters>(() => {
     const canalParam = searchParams.get("canal") || "";
     if (typeof window !== "undefined") {
@@ -82,7 +66,6 @@ const VentasPorCanal = () => {
     };
   });
 
-  // Efecto para redirigir si no hay token (esto está bien donde está)
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -159,16 +142,13 @@ const VentasPorCanal = () => {
         ventasCategoria: [],
       });
     } finally {
-      setLoading(false); // Siempre ponlo en false al finalizar la carga (sea exitosa o con error)
+      setLoading(false);
     }
-  }, [filters, selectedVendedor]); // Las dependencias son los valores que realmente afectan la llamada a la API
+  }, [filters, selectedVendedor]); 
 
-  // Este useEffect se encargará de disparar fetchData
-  // Se ejecutará en el montaje inicial (con los filtros ya correctos) y cada vez que fetchData cambie
-  // (lo que ocurre cuando filters o selectedVendedor cambian).
   useEffect(() => {
     fetchData();
-  }, [fetchData]); // La única dependencia es fetchData, que ya está memorizada con useCallback
+  }, [fetchData]);
 
   const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
@@ -255,7 +235,7 @@ const VentasPorCanal = () => {
                   <Grid container spacing={2}>
                     {[
                       {
-                        title: "Total Ventas",
+                        title: "Ventas",
                         value: formatVentas(data.ventasHoy.TotalVentasPeriodo),
                         subtitle: `Anterior: ${formatVentas(
                           data.ventasHoy.TotalVentasAnterior
@@ -285,7 +265,7 @@ const VentasPorCanal = () => {
                         icon: <IconStack2 />,
                       },
                       {
-                        title: `Total Ítems Vendidos `,
+                        title: `Ítems Vendidos `,
                         value: formatUnidades(
                           data.productosDistintos.ProductosPeriodoActual
                         ),
@@ -297,7 +277,7 @@ const VentasPorCanal = () => {
                         icon: <IconBox />,
                       },
                       {
-                        title: `Transacciones `,
+                        title: `Cantidad de Ventas`,
                         value: formatUnidades(
                           data.transaccionesPeriodo.CantidadTransaccionesPeriodo
                         ),
