@@ -1,6 +1,7 @@
 // src/layout/Menuitems.ts
 import {IconLayoutDashboard,IconCreditCard, IconChartBar,IconChartDonut,IconChartPie,IconChartLine,
-  IconBoxSeam,IconHierarchy3,IconTruckDelivery,IconClipboardCheck,IconTargetArrow,IconMessage2,IconUsersGroup,} from "@tabler/icons-react";
+  IconBoxSeam,IconHierarchy3,IconTruckDelivery,IconClipboardCheck,IconTargetArrow,IconMessage2,IconUsersGroup,
+  IconChartBarOff,} from "@tabler/icons-react";
 
 import { uniqueId } from "lodash";
 const Menuitems = [
@@ -109,17 +110,23 @@ const Menuitems = [
         icon: IconChartBar,
         href: "/informes/ventas-productos",
       },
+      // {
+      //   id: uniqueId(),
+      //   title: "Reporte Vendedores",
+      //   icon: IconUsersGroup,
+      //   href: "/informes/Vendedores",
+      // },
+      // {
+      //   id: uniqueId(),
+      //   title: "Tiempo de Entrega Proveedores",
+      //   icon: IconTruckDelivery,
+      //   href: "/informes/tiempo-entrega-proveedoresss",
+      // },
       {
         id: uniqueId(),
-        title: "Reporte Vendedores",
-        icon: IconUsersGroup,
-        href: "/informes/Vendedores",
-      },
-      {
-        id: uniqueId(),
-        title: "Tiempo de Entrega Proveedores",
-        icon: IconTruckDelivery,
-        href: "/informes/tiempo-entrega-proveedoresss",
+        title: "Productos menos rentables",
+        icon: IconChartBarOff,
+        href: "/informes/productos-menos-rentables",
       },
     ],
   },
