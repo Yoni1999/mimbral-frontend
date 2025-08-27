@@ -33,7 +33,7 @@ export default function RootLayout({ children }: Props) {
 
   const { mostrarModal, cerrarModal } = useVerificarExpiracionToken();
 
-  // ✅ Esta función ahora retorna explícitamente un booleano
+
   const handleRenovar = async (password: string): Promise<boolean> => {
     const exito = await renovarSesion(password);
     if (exito) {

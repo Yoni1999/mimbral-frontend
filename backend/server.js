@@ -33,6 +33,7 @@ const omcRoutes = require("./src/routes/OMC/templace.routes");
 const creditoRoutes = require("./src/routes/lineacredito/credito.routes")
 const renovarSesionRoutes = require("./src/routes/renovarSesion.routes");
 const productosmenosrentablesRoutes = require("./src/routes/informes/productosmenosrentables.routes");
+const sinventasRoutes = require("./src/routes/informes/productossinventas.routes");
 
 const app = express();
 app.use(cors({
@@ -82,6 +83,7 @@ app.use("/api", top10clientesRoutes);
 app.use("/api", creditoRoutes);
 app.use("/api", renovarSesionRoutes);
 app.use("/api/informes", productosmenosrentablesRoutes);
+app.use("/api/informes", sinventasRoutes);
 
 // Obtener IP local
 function getLocalIP() {
@@ -96,7 +98,7 @@ function getLocalIP() {
   return "127.0.0.1";
 }
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 const HOST = "0.0.0.0";
 const localIP = getLocalIP();
 //Jobs automático
