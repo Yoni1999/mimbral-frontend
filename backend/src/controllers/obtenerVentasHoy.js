@@ -1012,7 +1012,7 @@ const obtenerTopProductosDetallado = async (req, res) => {
   }
 };
 
-
+/*
 const obtenerProductosDetallado = async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -1257,7 +1257,7 @@ const obtenerProductosDetallado = async (req, res) => {
     res.status(500).json({ error: "Error en el servidor." });
   }
 };
-
+*/
 
 
 
@@ -1496,7 +1496,7 @@ const obtenerTopProductosEstancados = async (req, res) => {
 };
 module.exports = {obtenerTransaccionesPeriodo, obtenerNotascredito, obtenerMargenCategoriasComparado,  
   obtenerTopProductos, obtenerVentasPeriodo, obtenerUnidadesVendidasPeriodo,obtenerProductosDistintosPeriodo,
-  obtenerMargenVentas, obtenerTopProductosDetallado,obtenerProductosDetallado, obtenerTopVendedores,
+  obtenerMargenVentas, obtenerTopProductosDetallado,/*obtenerProductosDetallado,*/ obtenerTopVendedores,
    obtenerTopProductosEstancados};
 
 
