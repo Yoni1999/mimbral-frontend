@@ -15,13 +15,17 @@ import ProductosMenosRentablesTable from './components/ProductosMenosRentablesTa
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
+
+import { fetchWithToken } from '@/utils/fetchWithToken';
+import { BACKEND_URL } from "@/config";
 
 // ---- Tipos (siguen el estilo de ventas-productos) ----
 type Order = 'asc' | 'desc';
 type OrderBy = 'cantidadVendida' | 'facturasUnicas' | 'totalVentas' | 'margenBruto' | 'precioPromedio';
 
 interface FiltroVentas {
-    canal?: string;
+    canal?: string | string[]; // multiples canales
     periodo: string;
     fechaInicio?: string;
     fechaFin?: string;
@@ -184,24 +188,152 @@ const ProductosMenosRentablesPage: React.FC = () => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [openExportModal, setOpenExportModal] = useState(false);
     const [exportCount, setExportCount] = useState<number>(100);
+    const [exportTarget, setExportTarget] = useState<'excel' | 'pdf'>('excel'); // <-- unificado
 
     const totalPages = Math.ceil(total / limit);
 
-    // Carga (mock) — mantiene el patrón de fetch pero sin API
-    const fetchProductos = (filtros: FiltroVentas, pageNumber = 1, campoOrden: OrderBy = ordenPor, direccionOrden: Order = orden) => {
+    // api de productos menos rentables
+    const fetchProductos = async (
+        filtros: FiltroVentas,
+        pageNumber = 1,
+        campoOrden?: OrderBy,     // override opcional
+        direccionOrden?: Order    // override opcional
+    ) => {
         setLoading(true);
-        // Simula paginación/orden
-        setTimeout(() => {
-            const sorted = [...MOCK_PRODUCTOS_MENOS_RENTABLES].sort((a, b) => {
-                const av = a[campoOrden] as number;
-                const bv = b[campoOrden] as number;
-                return direccionOrden === 'asc' ? av - bv : bv - av;
-            });
-            const offset = (pageNumber - 1) * limit;
-            setProductos(sorted.slice(offset, offset + limit));
-            setTotal(sorted.length);
+
+        // --- helpers locales ---
+        const isYYYYMMDD = (d?: string) => !!d && /^\d{4}-\d{2}-\d{2}$/.test(d);
+        const hasValidRange = (a?: string, b?: string) => isYYYYMMDD(a) && isYYYYMMDD(b);
+
+        const parsePercent = (txt?: string | null) => {
+            if (!txt) return 0;
+            const n = Number(String(txt).replace("%", "").replace(",", ".").trim());
+            return Number.isFinite(n) ? n : 0;
+        };
+        const splitProduct = (s: string) => {
+            const [sku = "", name = ""] = (s || "").split(" / ");
+            return { sku: sku.trim(), nombre: name.trim() };
+        };
+        const splitHierarchy = (s: string) => {
+            const [nivel = "", cat = ""] = (s || "").split(" / ");
+            return { primerNivel: (nivel || "").trim(), categoria: (cat || "").trim() };
+        };
+
+        // --- helpers locales ---
+        const toCsvLower = (v?: string | string[]) =>
+            Array.isArray(v)
+                ? v.map(x => String(x).trim().toLowerCase()).filter(Boolean).join(',')
+                : (v ? String(v).trim().toLowerCase() : '');
+
+        try {
+            // helper local para normalizar canal a CSV en minúsculas (sin mover otros helpers)
+            const toCsvLower = (v?: string | string[]) =>
+                Array.isArray(v)
+                    ? v.map(x => String(x).trim().toLowerCase()).filter(Boolean).join(',')
+                    : (v ? String(v).trim().toLowerCase() : '');
+
+            // --- reglas mínimas exigidas por la API ---
+            const canalCsv = toCsvLower(filtros.canal ?? "");
+            const periodo = filtros.periodo ?? null;
+            const { fechaInicio, fechaFin } = filtros;
+
+            const tieneRango = hasValidRange(fechaInicio, fechaFin);
+            const tienePeriodo = !!periodo && !tieneRango; // si hay rango, no enviamos periodo
+
+            if (!canalCsv || (!tienePeriodo && !tieneRango)) {
+                setProductos([]);
+                setTotal(0);
+                return;
+            }
+
+            // --- orden actual (toma overrides si vienen)
+            //  ---
+            const ob: OrderBy = campoOrden ?? ordenPor;
+            const od: Order = direccionOrden ?? orden;
+
+            // map a campos válidos del backend
+            const orderByMap: Record<
+                OrderBy,
+                "Rentabilidad_Total" | "Cantidad_Vendida" | "Precio_Venta_Promedio" | "Costo_Promedio" | "Margen_Porcentaje"
+            > = {
+                cantidadVendida: "Cantidad_Vendida",
+                facturasUnicas: "Cantidad_Vendida",      // proxy (API no trae transacciones)
+                totalVentas: "Rentabilidad_Total",       // aprox. visual
+                margenBruto: "Rentabilidad_Total",       // idem
+                precioPromedio: "Precio_Venta_Promedio",
+            };
+
+            // --- query ---
+            const params = new URLSearchParams();
+            params.append("canal", canalCsv);
+            if (tienePeriodo) params.append("periodo", String(periodo)); // no enviar si hay rango válido
+            if (tieneRango) {
+                params.append("fechaInicio", String(fechaInicio));
+                params.append("fechaFin", String(fechaFin));
+            }
+            if (filtros.proveedor) params.append("proveedor", filtros.proveedor);
+            if (filtros.primerNivel) params.append("primerNivel", filtros.primerNivel);
+            if (filtros.categoria) params.append("categoria", filtros.categoria);
+            if (filtros.subcategoria) params.append("subcategoria", filtros.subcategoria);
+
+            // paginación según tu componente
+            params.append("page", String(pageNumber));
+            params.append("pageSize", String(limit)); // usa tu limit actual (20)
+
+            // orden
+            params.append("orderBy", orderByMap[ob] ?? "Rentabilidad_Total");
+            params.append("order", od === "asc" ? "asc" : "desc");
+
+            // --- llamada con token ---
+            const res = await fetchWithToken(
+                `${BACKEND_URL}/api/informes/productos-menos-rentables?${params.toString()}`
+            );
+            if (!res) {
+                setProductos([]);
+                setTotal(0);
+                return;
+            }
+
+            const data = await res.json();
+
+            // --- adaptación al shape de tu tabla ---
+            const rows: ProductoMenosRentable[] = Array.isArray(data?.data)
+                ? data.data.map((r: any) => {
+                    const { sku, nombre } = splitProduct(r.product);
+                    const { primerNivel, categoria } = splitHierarchy(r.hierarchy);
+                    return {
+                        sku,
+                        nombre,
+                        imagen: r.image || undefined,
+                        primerNivel,
+                        categoria,
+                        cantidadVendida: r.soldQuantity ?? 0,
+                        facturasUnicas: r.soldQuantity ?? 0, // proxy para mantener columna
+                        totalVentas: Math.round((r.avgPrice || 0) * (r.soldQuantity || 0)), // aprox. visual
+                        margenBruto: r.totalProfit ?? 0,
+                        margenPorcentaje: parsePercent(r.profitMargin),
+                        precioPromedio: r.avgPrice ?? 0,
+                        stockCanal: r.totalStock ?? 0,
+                        stockChorrillo: r.chorrilloStock ?? 0,
+                        stockOnOrder: r.onOrderStock ?? 0,
+                    };
+                })
+                : [];
+
+            setProductos(rows);
+
+            // total: usa el de la API si viene; si no, estima para no romper paginación
+            const totalApi = typeof data?.total === "number" ? data.total : undefined;
+            const estimated = (pageNumber - 1) * limit + rows.length + (rows.length === limit ? 1 : 0);
+            setTotal(totalApi ?? estimated);
+        } catch (error: any) {
+            console.error("Error al cargar productos menos rentables:", error?.message || error);
+            setProductos([]);
+            setTotal(0);
+        } finally {
             setLoading(false);
-        }, 300);
+        }
+
     };
 
     useEffect(() => {
@@ -226,88 +358,334 @@ const ProductosMenosRentablesPage: React.FC = () => {
         fetchProductos(filters, page, campo, nuevoOrden);
     };
 
-    // ---- Exportar (mismo patrón que ventas) ----
+    // ---- Exportar ----
     const handleOpenExportMenu = (e: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(e.currentTarget);
     const handleCloseExportMenu = () => setAnchorEl(null);
     const handleSelectExportFormat = (format: 'excel' | 'pdf') => {
         setAnchorEl(null);
-        if (format === 'excel') {
-            setOpenExportModal(true);
-        } else {
-            exportProductos('pdf', 'all');
-        }
+        setExportTarget(format);     // guardar destino
+        setOpenExportModal(true);    // abrir único modal
     };
 
-    const exportProductos = (tipo: 'excel' | 'pdf', exportLimit: number | 'all') => {
+
+    const exportProductos = async (tipo: 'excel' | 'pdf', exportLimit: number | 'all') => {
         // En mock exportamos desde todo el dataset ordenado actual
-        const sorted = [...MOCK_PRODUCTOS_MENOS_RENTABLES].sort((a, b) => {
-            const av = a[ordenPor] as number;
-            const bv = b[ordenPor] as number;
-            return orden === 'asc' ? av - bv : bv - av;
-        });
-        const data = exportLimit === 'all' ? sorted : sorted.slice(0, exportLimit);
+        // --- exportación real desde backend usando filtros vigentes ---
 
-        if (tipo === 'excel') {
-            const ws = XLSX.utils.json_to_sheet(
-                data.map((item, idx) => ({
-                    '#': idx + 1,
-                    SKU: item.sku,
-                    Nombre: item.nombre,
-                    'Primer Nivel': item.primerNivel,
-                    Categoría: item.categoria,
-                    'Cantidad Vendida': item.cantidadVendida,
-                    Transacciones: item.facturasUnicas,
-                    'Total Ventas': item.totalVentas,
-                    'Margen Bruto': item.margenBruto,
-                    '% Margen': item.margenPorcentaje,
-                    'Precio Promedio': item.precioPromedio,
-                    'Stock Canal': item.stockCanal,
-                    'Stock Chorrillo': item.stockChorrillo ?? 'N/A',
-                    'OC (On Order)': item.stockOnOrder ?? 'N/A',
-                }))
-            );
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Productos menos rentables');
-            XLSX.writeFile(wb, 'productos_menos_rentables.xlsx');
-        } else {
-            const doc = new jsPDF();
-            doc.setFontSize(12);
-            doc.text('Informe de Productos menos Rentables', 14, 16);
-            doc.setFontSize(10);
-            doc.text(`Canal: ${filters.canal || 'Todos'} | Período: ${filters.periodo}`, 14, 22);
+        setLoading(true);
+        try {
+            // helpers internos (duplicados para no mover los de fetchProductos)
+            const toCsvLowerLocal = (v?: string | string[]) =>
+                Array.isArray(v)
+                    ? v.map(x => String(x).trim().toLowerCase()).filter(Boolean).join(',')
+                    : (v ? String(v).trim().toLowerCase() : '');
 
-            (doc as any).autoTable({
-                startY: 28,
-                head: [[
-                    '#', 'SKU', 'Nombre', 'Primer Nivel', 'Categoría', 'Cant.', 'Transac.',
-                    'Total', 'Margen', '%', 'Precio', 'Stock', 'Chorrillo', 'OC'
-                ]],
-                body: data.map((item, idx) => [
-                    idx + 1,
-                    item.sku,
-                    item.nombre,
-                    item.primerNivel || '',
-                    item.categoria || '',
-                    item.cantidadVendida,
-                    item.facturasUnicas,
-                    item.totalVentas,
-                    item.margenBruto,
-                    `${item.margenPorcentaje.toFixed(2)}%`,
-                    item.precioPromedio,
-                    item.stockCanal,
-                    item.stockChorrillo ?? 'N/A',
-                    item.stockOnOrder ?? 'N/A',
-                ]),
-                styles: { fontSize: 8 },
-                headStyles: { fillColor: [33, 150, 243] },
-            });
+            const parsePercent = (txt?: string | null) => {
+                if (!txt) return 0;
+                const n = Number(String(txt).replace("%", "").replace(",", ".").trim());
+                return Number.isFinite(n) ? n : 0;
+            };
+            const splitProduct = (s: string) => {
+                const [sku = "", name = ""] = (s || "").split(" / ");
+                return { sku: sku.trim(), nombre: name.trim() };
+            };
+            const splitHierarchy = (s: string) => {
+                const [nivel = "", cat = ""] = (s || "").split(" / ");
+                return { primerNivel: (nivel || "").trim(), categoria: (cat || "").trim() };
+            };
+            const mapRow = (r: any) => {
+                const { sku, nombre } = splitProduct(r.product);
+                const { primerNivel, categoria } = splitHierarchy(r.hierarchy);
+                return {
+                    sku,
+                    nombre,
+                    imagen: r.image || undefined,
+                    primerNivel,
+                    categoria,
+                    cantidadVendida: r.soldQuantity ?? 0,
+                    facturasUnicas: r.soldQuantity ?? 0,
+                    totalVentas: Math.round((r.avgPrice || 0) * (r.soldQuantity || 0)),
+                    margenBruto: r.totalProfit ?? 0,
+                    margenPorcentaje: parsePercent(r.profitMargin),
+                    precioPromedio: r.avgPrice ?? 0,
+                    stockCanal: r.totalStock ?? 0,
+                    stockChorrillo: r.chorrilloStock ?? 0,
+                    stockOnOrder: r.onOrderStock ?? 0,
+                } as ProductoMenosRentable;
+            };
 
-            doc.save('productos_menos_rentables.pdf');
+            // mismos checks que fetchProductos
+            const canalCsv = toCsvLowerLocal(filters.canal);
+            const { periodo, fechaInicio, fechaFin } = filters;
+            const isYYYYMMDD = (d?: string) => !!d && /^\d{4}-\d{2}-\d{2}$/.test(d);
+            const hasValidRange = (a?: string, b?: string) => isYYYYMMDD(a) && isYYYYMMDD(b);
+            const tieneRango = hasValidRange(fechaInicio, fechaFin);
+            const tienePeriodo = !!periodo && !tieneRango;
+
+            if (!canalCsv || (!tienePeriodo && !tieneRango)) {
+                return;
+            }
+
+            // map de orden
+            const orderByMap: Record<
+                OrderBy,
+                "Rentabilidad_Total" | "Cantidad_Vendida" | "Precio_Venta_Promedio" | "Costo_Promedio" | "Margen_Porcentaje"
+            > = {
+                cantidadVendida: "Cantidad_Vendida",
+                facturasUnicas: "Cantidad_Vendida",
+                totalVentas: "Rentabilidad_Total",
+                margenBruto: "Rentabilidad_Total",
+                precioPromedio: "Precio_Venta_Promedio",
+            };
+
+            // params base
+            const base = new URLSearchParams();
+            base.append("canal", canalCsv);
+            if (tienePeriodo) base.append("periodo", String(periodo));
+            if (tieneRango) {
+                base.append("fechaInicio", String(fechaInicio));
+                base.append("fechaFin", String(fechaFin));
+            }
+            if (filters.proveedor) base.append("proveedor", filters.proveedor);
+            if (filters.primerNivel) base.append("primerNivel", filters.primerNivel);
+            if (filters.categoria) base.append("categoria", filters.categoria);
+            if (filters.subcategoria) base.append("subcategoria", filters.subcategoria);
+            base.append("orderBy", orderByMap[ordenPor] ?? "Rentabilidad_Total");
+            base.append("order", orden === "asc" ? "asc" : "desc");
+
+            // función para pedir una página
+            const fetchPage = async (pageNum: number, pageSize: number) => {
+                const params = new URLSearchParams(base);
+                params.append("page", String(pageNum));
+                params.append("pageSize", String(pageSize));
+                const res = await fetchWithToken(`${BACKEND_URL}/api/informes/productos-menos-rentables?${params.toString()}`);
+                const json = await res!.json();
+                const rows = Array.isArray(json?.data) ? json.data.map(mapRow) : [];
+                const totalApi = typeof json?.total === "number" ? json.total : undefined;
+                return { rows, totalApi };
+            };
+
+            // traer datos según límite (resiliente a límites de pageSize del backend)
+            const MAX_CHUNK = 1000; // muchas APIs ponen tope en 1000
+
+            let rows: ProductoMenosRentable[] = [];
+
+            if (exportLimit !== "all") {
+                const target = Math.max(0, Number(exportLimit));
+                let collected = 0;
+                let pageNum = 1;
+
+                while (collected < target) {
+                    const want = Math.min(MAX_CHUNK, target - collected);
+                    const { rows: r } = await fetchPage(pageNum, want);
+                    rows.push(...r);
+                    collected += r.length;
+
+                    // si el backend devolvió menos que lo pedido, no hay más datos
+                    if (r.length < want) break;
+
+                    pageNum++;
+                    if (pageNum > 5000) break; // guardrail absurdo por si las moscas
+                }
+
+                // recorta exacto por si algún tramo devolvió de más
+                if (rows.length > target) rows = rows.slice(0, target);
+
+            } else {
+                // “todos” → loop paginado grande hasta agotar
+                const pageSize = MAX_CHUNK;
+                let pageNum = 1;
+                while (true) {
+                    const { rows: r } = await fetchPage(pageNum, pageSize);
+                    rows.push(...r);
+                    if (r.length < pageSize) break; // ya no hay más
+                    pageNum++;
+                    if (pageNum > 5000) break; // guardrail
+                }
+            }
+
+            // salida
+            if (tipo === 'excel') {
+                const ws = XLSX.utils.json_to_sheet(
+                    rows.map((item, idx) => ({
+                        '#': idx + 1,
+                        SKU: item.sku,
+                        Nombre: item.nombre,
+                        'Primer Nivel': item.primerNivel,
+                        Categoría: item.categoria,
+                        'Cantidad Vendida': item.cantidadVendida,
+                        Transacciones: item.facturasUnicas,
+                        'Total Ventas': item.totalVentas,
+                        'Margen Bruto': item.margenBruto,
+                        '% Margen': item.margenPorcentaje,
+                        'Precio Promedio': item.precioPromedio,
+                        'Stock Canal': item.stockCanal,
+                        'Stock Chorrillo': item.stockChorrillo ?? 'N/A',
+                        'OC (On Order)': item.stockOnOrder ?? 'N/A',
+                    }))
+                );
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Productos menos rentables');
+                XLSX.writeFile(wb, 'productos_menos_rentables.xlsx');
+            } else {
+                // PDF: usar la función importada autoTable(doc, ...)
+                const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+                doc.setFontSize(16);
+                doc.text('Informe de Productos menos Rentables', 40, 40);
+
+                doc.setFontSize(10);
+                const canalLabel = Array.isArray(filters.canal)
+                    ? filters.canal.join(', ')
+                    : (filters.canal || 'Todos');
+
+                const info = [
+                    `Canal: ${canalLabel}`,
+                    `Período: ${filters.periodo}`,
+                    `Fecha: ${new Date().toLocaleString()}`
+                ];
+
+                let startY = 60;
+                const lineHeight = 14;
+                info.forEach((line) => {
+                    doc.text(line, 40, startY);
+                    startY += lineHeight;
+                });
+
+                doc.setDrawColor(200);
+                doc.setLineWidth(1);
+                const infoBlockBottom = startY + 6;
+                doc.line(40, infoBlockBottom, 800, infoBlockBottom);
+
+                autoTable(doc, {
+                    startY: infoBlockBottom + 12,
+                    head: [[
+                        '#', 'SKU', 'Nombre', 'Primer Nivel', 'Categoría', 'Cant.', 'Transac.',
+                        'Total', 'Margen', '%', 'Precio', 'Stock', 'Chorrillo', 'OC'
+                    ]],
+                    body: rows.map((item, idx) => [
+                        idx + 1,
+                        item.sku,
+                        item.nombre,
+                        item.primerNivel || '',
+                        item.categoria || '',
+                        item.cantidadVendida,
+                        item.facturasUnicas,
+                        item.totalVentas,
+                        item.margenBruto,
+                        `${(item.margenPorcentaje ?? 0).toFixed(2)}%`,
+                        item.precioPromedio,
+                        item.stockCanal,
+                        item.stockChorrillo ?? 'N/A',
+                        item.stockOnOrder ?? 'N/A',
+                    ]),
+                    headStyles: { fillColor: [93, 135, 255], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 10 },
+                    styles: { fontSize: 9, cellPadding: 4, valign: "middle", textColor: 20 },
+                    alternateRowStyles: { fillColor: [245, 245, 245] },
+                });
+
+                doc.save('productos_menos_rentables.pdf');
+            }
+
+        } catch (err) {
+            console.error('Error al exportar productos menos rentables:', err);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const exportToExcelConfirm = () => {
-        exportProductos('excel', exportCount === -1 ? 'all' : exportCount);
+    // --- helpers para PDF ---
+    const obtenerNombreUsuario = async () => {
+        try { return localStorage.getItem('userName') || 'Usuario'; } catch { return 'Usuario'; }
+    };
+
+    const canalToLabel = (canal?: string | string[]) => {
+        if (!canal) return 'Todos';
+        return Array.isArray(canal) ? canal.join(', ') : canal;
+    };
+
+    const rangoTexto = (periodo?: string, fi?: string, ff?: string) => {
+        const isYYYYMMDD = (d?: string) => !!d && /^\d{4}-\d{2}-\d{2}$/.test(d);
+        if (isYYYYMMDD(fi) && isYYYYMMDD(ff)) return `Rango: ${fi} a ${ff}`;
+        return `Período: ${periodo ?? '-'}`;
+    };
+
+    const exportToPDF = (productosData: ProductoMenosRentable[], usuario: string) => {
+        if (!Array.isArray(productosData) || productosData.length === 0) {
+            console.warn("No hay datos para exportar a PDF.");
+            return;
+        }
+
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+
+        // Título
+        doc.setFontSize(16);
+        doc.text('Informe de Productos menos Rentables', 40, 40);
+
+        // Bloque de información (similar a Ventas de Productos)
+        doc.setFontSize(10);
+        const info = [
+            `Generado por: ${usuario}`,
+            `Fecha: ${new Date().toLocaleString()}`,
+            `Canal: ${canalToLabel(filters.canal)}`,
+            rangoTexto(filters.periodo, filters.fechaInicio, filters.fechaFin),
+        ];
+
+        let startY = 60;
+        const lineHeight = 14;
+        info.forEach((line) => {
+            doc.text(line, 40, startY);
+            startY += lineHeight;
+        });
+
+        // Línea divisoria
+        doc.setDrawColor(200);
+        doc.setLineWidth(1);
+        const infoBlockBottom = startY + 6;
+        doc.line(40, infoBlockBottom, 800, infoBlockBottom);
+
+        // Columnas (basadas en las del PDF de ventas y en tu tabla actual)
+        const columnas = [
+            { key: "numero", label: "#" },
+            { key: "sku", label: "SKU" },
+            { key: "nombre", label: "Nombre" },
+            { key: "primerNivel", label: "Primer Nivel" },
+            { key: "categoria", label: "Categoría" },
+            { key: "cantidadVendida", label: "Cant." },
+            { key: "facturasUnicas", label: "Transac." },
+            { key: "totalVentas", label: "Total" },
+            { key: "margenBruto", label: "Margen" },
+            { key: "margenPorcentaje", label: "% Margen" },
+            { key: "precioPromedio", label: "Precio" },
+            { key: "stockCanal", label: "Stock" },
+            { key: "stockChorrillo", label: "Chorrillo" },
+            { key: "stockOnOrder", label: "OC (On Order)" },
+        ];
+
+        const headers = columnas.map(c => c.label);
+        const rows = productosData.map((item, index) =>
+            columnas.map(c => {
+                if (c.key === "numero") return String(index + 1);
+                if (c.key === "margenPorcentaje") return `${(item.margenPorcentaje ?? 0).toFixed(2)}%`;
+                const v = (item as any)[c.key];
+                return v === undefined || v === null ? 'N/A' : v;
+            })
+        );
+
+        // Tabla
+        autoTable(doc, {
+            head: [headers],
+            body: rows,
+            startY: infoBlockBottom + 12,
+            headStyles: { fillColor: [93, 135, 255], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 10 },
+            styles: { fontSize: 9, cellPadding: 4, valign: "middle", textColor: 20 },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
+        });
+
+        doc.save("productos_menos_rentables.pdf");
+    };
+
+    const exportConfirm = () => {
+        exportProductos(exportTarget, exportCount === -1 ? 'all' : exportCount);
         setOpenExportModal(false);
     };
 
@@ -325,11 +703,15 @@ const ProductosMenosRentablesPage: React.FC = () => {
                 </Typography>
             </Box>
             <Typography variant="body1" color="text.secondary" gutterBottom>
-                Revisa el detalle de productos vendidos por período, canal, proveedor y más.
+                Revisa el detalle de productos menos rentables por período, canal, proveedor y más.
             </Typography>
 
             {/* Filtros reutilizando el header existente */}
-            <HeaderVentasProductosDrawer onFilterChange={handleFilterChange} currentFilters={filters} />
+            <HeaderVentasProductosDrawer
+                onFilterChange={handleFilterChange}
+                currentFilters={filters}
+                multiCanal={true}   // <-- habilita selección múltiple de canal
+            />
             <Divider sx={{ my: 3 }} />
 
             {/* Barra con conteo + export */}
@@ -390,9 +772,9 @@ const ProductosMenosRentablesPage: React.FC = () => {
                 </Alert>
             </Snackbar>
 
-            {/* Modal para elegir cantidad a exportar */}
+            {/* Modal unificado para elegir cantidad (Excel/PDF) */}
             <Dialog open={openExportModal} onClose={() => setOpenExportModal(false)}>
-                <DialogTitle>Exportar a Excel</DialogTitle>
+                <DialogTitle>Exportar {exportTarget === 'excel' ? 'Excel' : 'PDF'}</DialogTitle>
                 <DialogContent>
                     <TextField
                         autoFocus
@@ -401,14 +783,16 @@ const ProductosMenosRentablesPage: React.FC = () => {
                         type="number"
                         fullWidth
                         value={exportCount}
-                        onChange={(e) => setExportCount(parseInt(e.target.value || '0', 10))}
+                        onChange={(e) => setExportCount(parseInt(e.target.value || "", 10))}
                     />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenExportModal(false)}>Cancelar</Button>
-                    <Button variant="contained" onClick={exportToExcelConfirm}>Exportar</Button>
+                    <Button variant="contained" onClick={exportConfirm}>Exportar</Button>
                 </DialogActions>
             </Dialog>
+
+
         </Box>
     );
 };
