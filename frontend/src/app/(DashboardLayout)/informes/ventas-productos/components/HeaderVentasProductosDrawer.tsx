@@ -14,7 +14,8 @@ import { BACKEND_URL } from "@/config";
 
 // Interfaces moved out for clarity
 interface FiltroVentas {
-  canal?: string;
+  // CAMBIO MC: permitir multiples canales sin romper llamadas actuales
+  canal?: string | string[];
   periodo: string;
   fechaInicio?: string;
   fechaFin?: string;
@@ -40,6 +41,8 @@ interface Proveedor {
 interface Props {
   onFilterChange: (filters: FiltroVentas) => void;
   currentFilters?: FiltroVentas;
+  // CAMBIO MC: opt-in para multiselección de canal, por defecto se mantiene simple
+  multiCanal?: boolean;
 }
 
 const canales = [
@@ -69,14 +72,15 @@ const tiposEnvioMeli = [
     { value: "colecta", label: "Colecta" }, // Cambiado a minúscula
 ];
 
-const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters }) => {
+const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters, multiCanal }) => {
   const [open, setOpen] = useState(false);
   // Inicializa tipoEnvio a 'todas' por defecto cuando el canal es Meli o si no hay un filtro actual
   const [filters, setFilters] = useState<FiltroVentas>(() => {
     const initialFilters = currentFilters || { periodo: "7D" };
     // Asegurarse de que tipoEnvio se inicialice a 'todas' si el canal es Meli
     // CAMBIO 3: Usar 'tipoEnvio' en lugar de 'tipoEnvioMeli' y 'todas' en minúscula
-    if (initialFilters.canal === "Meli" && !initialFilters.tipoEnvio) {
+    const canalActual = Array.isArray(initialFilters.canal) ? initialFilters.canal : [initialFilters.canal].filter(Boolean) as string[];
+    if (canalActual.includes("Meli") && !initialFilters.tipoEnvio) {
       return { ...initialFilters, tipoEnvio: "todas" };
     }
     return initialFilters;
@@ -129,17 +133,26 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
   }, [filters.primerNivel, filters.categoria, currentFilters, proveedores]); // Dependencias para re-ejecutar
 
 
-  const handleChange = async (key: keyof FiltroVentas, value: string) => {
+  const handleChange = async (key: keyof FiltroVentas, value: any) => {
     let updatedFilters: FiltroVentas = { ...filters, [key]: value };
 
     // Lógica para el nuevo filtro de tipo de envío
     if (key === "canal") {
-      if (value === "Meli") {
-        // Si se selecciona Mercado Libre, asegúrate de que tipoEnvio esté en 'todas' por defecto
-        // CAMBIO 4: Usar 'tipoEnvio' en lugar de 'tipoEnvioMeli' y 'todas' en minúscula
+      // CAMBIO MC: normalizar a array si multi, string si no
+      const canalesSeleccionados: string[] =
+        multiCanal
+          ? (value as string[] ?? []).filter(Boolean)
+          : value ? [value as string] : [];
+
+      // Si contiene "Todos" (value === ""), limpiamos canal
+      const incluyeTodos = canalesSeleccionados.includes("");
+      updatedFilters.canal = incluyeTodos ? undefined : (multiCanal ? canalesSeleccionados : (canalesSeleccionados[0] ?? ""));
+
+      // Si hay Meli en la selección -> tipoEnvio por defecto; si no, lo quitamos
+      const incluyeMeli = canalesSeleccionados.includes("Meli");
+      if (incluyeMeli) {
         updatedFilters.tipoEnvio = updatedFilters.tipoEnvio || "todas";
       } else {
-        // Si no es Mercado Libre, elimina el filtro de tipo de envío
         // CAMBIO 5: Eliminar 'tipoEnvio'
         delete updatedFilters.tipoEnvio;
       }
@@ -267,21 +280,35 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
     p.CardName.toLowerCase().includes(proveedorSearchInput.toLowerCase())
   );
 
+  // helper para mostrar chips de canal con multi
+  const canalChips = () => {
+    if (!filters.canal) return null;
+    const seleccion = Array.isArray(filters.canal) ? filters.canal : [filters.canal];
+    return seleccion.map((c) => {
+      const label = canales.find(k => k.value === c)?.label ?? c;
+      return (
+        <Chip
+          key={`chip-${c}`}
+          label={`Canal: ${label}`}
+          onDelete={() => handleChipDelete("canal")}
+        />
+      );
+    });
+  };
+
   return (
     <Box mb={2}>
       <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
         <Box display="flex" gap={1} flexWrap="wrap">
-          {filters.canal && (
-            <Chip
-                label={`Canal: ${canales.find(c => c.value === filters.canal)?.label}`}
-                onDelete={() => handleChipDelete("canal")}
-            />
-          )}
-          {filters.tipoEnvio && filters.canal === "Meli" && ( // Mostrar chip solo si canal es Meli
-            <Chip
+          {filters.canal && canalChips()}
+          {filters.tipoEnvio && (
+            // Mostrar chip solo si canal seleccionado contiene Meli
+            ((Array.isArray(filters.canal) ? filters.canal : [filters.canal]).includes("Meli")) && (
+              <Chip
                 label={`Envío Meli: ${tiposEnvioMeli.find(t => t.value === filters.tipoEnvio)?.label}`} // CAMBIO 8: Usar 'tipoEnvio'
                 onDelete={() => handleChipDelete("tipoEnvio")} // CAMBIO 9: Usar 'tipoEnvio'
-            />
+              />
+            )
           )}
           {filters.periodo && filters.periodo !== "RANGO" && (
             <Chip
@@ -333,14 +360,23 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
             <Grid item xs={12}>
               <FormControl fullWidth size="small">
                 <InputLabel>Canal</InputLabel>
-                <Select value={filters.canal || ""} onChange={(e) => handleChange("canal", e.target.value)}>
-                  {canales.map((c) => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
+                <Select
+                  // CAMBIO MC: cuando multi, habilitar multiple y usar array; si no, se mantiene igual
+                  multiple={!!multiCanal}
+                  value={
+                    multiCanal
+                      ? (Array.isArray(filters.canal) ? filters.canal : (filters.canal ? [filters.canal] : []))
+                      : (typeof filters.canal === "string" ? filters.canal : "")
+                  }
+                  onChange={(e) => handleChange("canal", e.target.value)}
+                >
+                  {canales.map((c) => <MenuItem key={c.value || "all"} value={c.value}>{c.label}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
 
             {/* Nuevo selector de Tipo de Envío para Mercado Libre */}
-            {filters.canal === "Meli" && (
+            {((Array.isArray(filters.canal) ? filters.canal : [filters.canal]).includes("Meli")) && (
               <Grid item xs={12}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Tipo de Envío Meli</InputLabel>
