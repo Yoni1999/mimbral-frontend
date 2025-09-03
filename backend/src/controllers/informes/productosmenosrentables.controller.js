@@ -1,10 +1,16 @@
 // controllers/reportesController.js
 const { obtenerProductosDetallado } = require('../../models/informes/productosmenosrentables.models');
 
+function parseDateMaybe(s) {
+  if (!s) return null;
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 async function getProductosDetallado(req, res) {
   try {
     const {
-      canal = null,
+      canal = null,              // ahora único param; puede venir "Meli, Chorrillo,Empresas"
       vendedor = null,
       periodo = null,
       fechaInicio = null,
@@ -20,24 +26,25 @@ async function getProductosDetallado(req, res) {
     } = req.query;
 
     // 🔎 Validaciones obligatorias
-    if (!canal) {
+    if (!canal || !String(canal).trim()) {
       return res.status(400).json({
-        error: "El parámetro 'canal' es obligatorio."
+        error: "Debe enviar 'canal'. Ej: ?canal=Meli o ?canal=Meli,Chorrillo,Empresas",
       });
     }
 
     if (!periodo && !(fechaInicio && fechaFin)) {
       return res.status(400).json({
-        error: "Debe enviar 'periodo' o el rango de fechas ('fechaInicio' y 'fechaFin')."
+        error: "Debe enviar 'periodo' o el rango de fechas ('fechaInicio' y 'fechaFin').",
       });
     }
 
+    // 👉 Pasamos 'canal' tal cual (puede ser CSV). El model ya lo convierte a CSV para SQL.
     const data = await obtenerProductosDetallado({
-      canal,
+      canal: String(canal),                        // puede ser "Meli,Chorrillo,Empresas"
       vendedor: vendedor ? Number(vendedor) : null,
       periodo,
-      fechaInicio,
-      fechaFin,
+      fechaInicio: parseDateMaybe(fechaInicio),
+      fechaFin: parseDateMaybe(fechaFin),
       proveedor,
       primerNivel,
       categoria,
@@ -47,7 +54,6 @@ async function getProductosDetallado(req, res) {
       orderBy,
       order,
     });
-
 
     const formatted = data.rows.map(item => ({
       product: `${item.Codigo_Producto} / ${item.Nombre_Producto}`,
@@ -73,10 +79,22 @@ async function getProductosDetallado(req, res) {
       pages: data.pages,
       orderBy,
       order: (String(order).toLowerCase() === 'asc') ? 'asc' : 'desc',
+      filters: {
+        canal: String(canal),   // aquí queda el CSV que se aplicó
+        periodo,
+        fechaInicio,
+        fechaFin,
+        proveedor,
+        primerNivel,
+        categoria,
+        subcategoria,
+        vendedor: vendedor ? Number(vendedor) : null,
+      }
     });
   } catch (err) {
     console.error('❌ Error getProductosDetallado:', err);
     res.status(500).json({ error: 'Error en el servidor.' });
   }
 }
+
 module.exports = { getProductosDetallado };
