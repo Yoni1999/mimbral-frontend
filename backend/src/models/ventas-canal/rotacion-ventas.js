@@ -20,8 +20,8 @@ const obtenerVentasPorMesYCanal = async (canalParam) => {
                 WHEN T1.WhsCode = '03' AND T0.SlpCode = 371 THEN 'Falabella'
                 WHEN T1.WhsCode = '07' THEN 'Balmaceda'
                 WHEN T1.WhsCode = '01' AND T0.SlpCode IN (401, 397) THEN 'Vitex'
-                WHEN T1.WhsCode = '01' AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212) THEN 'Chorrillo'
-                WHEN T1.WhsCode = '01' AND T1.SlpCode IN (227, 250, 205, 209, 228, 226, 137, 212, 225, 138) THEN 'Empresas'
+                WHEN T1.WhsCode = '01' AND T1.SlpCode NOT IN (401, 397, 355, 398, 225, 227, 250, 205, 138, 209, 228, 226, 137, 212) THEN 'Chorrillo'
+                WHEN T1.WhsCode = '01' AND T1.SlpCode IN (227, 250, 225, 205, 209, 228, 226, 137, 212, 225, 138) THEN 'Empresas'
                 ELSE 'Otro'
             END AS Canal,
             T1.LineTotal

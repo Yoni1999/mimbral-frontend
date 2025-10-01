@@ -168,9 +168,9 @@ const getVentasPorCategoria = async (req, res) => {
                           OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
                           OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
                           OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01' 
-                              AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
+                              AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 225, 250, 205, 138, 209, 228, 226, 137, 212))
                           OR (@CanalParam = 'Empresas' AND I.WhsCode = '01' 
-                              AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                              AND I.SlpCode IN (227, 250, 225, 205, 138, 209, 228, 226, 137, 212))
                       )
                   )
                   AND (@VendedorEmpresaParam IS NULL OR I.SlpCode = @VendedorEmpresaParam) -- 🔥 Filtro por vendedor empresa

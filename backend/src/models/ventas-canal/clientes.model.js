@@ -57,9 +57,9 @@ const obtenerTopClientesCompradoresDB = async ({ canal, vendedor, periodo, fecha
           OR (@CanalParam = 'Balmaceda' AND I.WhsCode = '07')
           OR (@CanalParam = 'Vitex' AND I.WhsCode = '01' AND T0.SlpCode IN (401, 397))
           OR (@CanalParam = 'Chorrillo' AND I.WhsCode = '01'
-              AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
+              AND I.SlpCode NOT IN (401, 397, 355, 398, 227,225, 250, 205, 138, 209, 228, 226, 137, 212))
           OR (@CanalParam = 'Empresas' AND I.WhsCode = '01'
-              AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+              AND I.SlpCode IN (227, 250, 205, 138, 225, 209, 228, 226, 137, 212))
         )
       )
       AND (@VendedorParam IS NULL OR I.SlpCode = @VendedorParam)

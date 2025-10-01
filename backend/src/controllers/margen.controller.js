@@ -63,9 +63,9 @@ const obtenerMargenBrutoPeriodo = async (req, res) => {
                       OR (@CanalParam = 'Balmaceda' AND T1.WhsCode = '07')
                       OR (@CanalParam = 'Vitex' AND T1.WhsCode = '01' AND T0.SlpCode IN (401, 397))
                       OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
-                          AND T0.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
+                          AND T0.SlpCode NOT IN (401, 397, 355, 225, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
                       OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
-                          AND T1.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
+                          AND T1.SlpCode IN (227, 250, 225, 205, 138, 209, 228, 226, 137, 212))
                   )
               )
               AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
