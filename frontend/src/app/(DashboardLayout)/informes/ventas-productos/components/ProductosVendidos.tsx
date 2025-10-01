@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { formatUnidades, formatVentas } from '@/utils/format';
+import { Snackbar, Alert } from '@mui/material';
 
 type ProductoVendido = {
   imagen: string;
@@ -68,6 +69,34 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
+///////////// Copiado robusto: usa Clipboard API si existe; si no, fallback con textarea + execCommand
+export const copyToClipboard = async (text: string): Promise<boolean> => {
+  try {
+    if (typeof navigator !== 'undefined' && (navigator as any).clipboard && window.isSecureContext) {
+      await (navigator as any).clipboard.writeText(text);
+      return true;
+    }
+  } catch (_e) {
+    // seguimos al fallback
+  }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch (_e) {
+    return false;
+  }
+};
+/////////////
+
 const ProductosVendidos = ({
   data,
   onSortChange,
@@ -76,10 +105,28 @@ const ProductosVendidos = ({
 }: Props) => {
   const [busqueda, setBusqueda] = useState('');
 
-  const filteredData = data.filter((producto) =>
+  // safeData evita errores si data viene undefined/null en el primer render
+  const safeData = Array.isArray(data) ? data : [];
+  const filteredData = safeData.filter((producto) =>
     producto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
     producto.sku.toLowerCase().includes(busqueda.toLowerCase())
   );
+
+  ///////////// para copiar sku
+  const [copiedSku, setCopiedSku] = useState<string | null>(null);
+  const [copyError, setCopyError] = useState<string | null>(null);
+
+  const handleCopySku = async (sku: string) => {
+    const ok = await copyToClipboard(sku);
+    if (ok) {
+      setCopyError(null);
+      setCopiedSku(sku);
+    } else {
+      setCopiedSku(null);
+      setCopyError('No se pudo copiar el SKU. Prueba manualmente con Ctrl/Cmd + C.');
+    }
+  };
+  /////////////
 
   return (
     <Box mt={3}>
@@ -166,8 +213,8 @@ const ProductosVendidos = ({
           </TableHead>
 
           <TableBody>
-            {filteredData.map((row, idx) => (
-              <StyledTableRow key={idx}>
+            {filteredData.map((row) => (
+              <StyledTableRow key={`${row.sku}-${row.nombre}`}>
                 <StyledTableCell>
                   <Avatar
                     src={
@@ -182,8 +229,21 @@ const ProductosVendidos = ({
                 </StyledTableCell>
 
                 <StyledTableCell>
-                  <Typography fontWeight={600}>{row.nombre}</Typography>
-                  <Typography variant="caption" color="text.secondary">{row.sku}</Typography>
+                  <Box
+                    onClick={() => handleCopySku(row.sku)}
+                    sx={{
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      '&:hover .skuCopy': { textDecoration: 'underline' },
+                    }}
+                    title="Copiar SKU"
+                    role="button"
+                  >
+                    <Typography fontWeight={600}>{row.nombre}</Typography>
+                    <Typography className="skuCopy" variant="caption" color="text.secondary">
+                      {row.sku}
+                    </Typography>
+                  </Box>
                 </StyledTableCell>
 
                 <StyledTableCell>
@@ -220,6 +280,28 @@ const ProductosVendidos = ({
           </TableBody>
         </Table>
       </TableContainer>
+      {/* sku copiado */}
+      <Snackbar
+        open={Boolean(copiedSku)}
+        autoHideDuration={1500}
+        onClose={() => setCopiedSku(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setCopiedSku(null)} severity="success" variant="filled">
+          SKU {copiedSku} copiado
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={Boolean(copyError)}
+        autoHideDuration={2500}
+        onClose={() => setCopyError(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setCopyError(null)} severity="error" variant="filled">
+          {copyError}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

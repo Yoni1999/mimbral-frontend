@@ -1,7 +1,8 @@
 // src/layout/Menuitems.ts
 import {IconLayoutDashboard,IconCreditCard, IconChartBar,IconChartDonut,IconChartPie,IconChartLine,
   IconBoxSeam,IconHierarchy3,IconTruckDelivery,IconClipboardCheck,IconTargetArrow,IconMessage2,IconUsersGroup,
-  IconChartBarOff,} from "@tabler/icons-react";
+  IconChartBarOff,
+  IconCashOff,} from "@tabler/icons-react";
 
 import { uniqueId } from "lodash";
 const Menuitems = [
@@ -127,6 +128,12 @@ const Menuitems = [
         title: "Productos menos rentables",
         icon: IconChartBarOff,
         href: "/informes/productos-menos-rentables",
+      },
+      {
+        id: uniqueId(),
+        title: "Productos sin ventas",
+        icon: IconCashOff,
+        href: "/informes/productos-sin-ventas",
       },
     ],
   },
