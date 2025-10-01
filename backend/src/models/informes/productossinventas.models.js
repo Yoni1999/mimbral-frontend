@@ -183,4 +183,54 @@ async function getProductosSinVentas(params = {}) {
   };
 }
 
-module.exports = { getProductosSinVentas };
+async function hasItemSales(itemCode) {
+  const pool = await poolPromise;
+  const req = pool.request();
+  req.input("ItemCode", sql.VarChar(50), itemCode);
+  const q = `
+    SELECT TOP 1 1 AS HasSales
+    FROM INV1 I
+    INNER JOIN OINV T0 ON I.DocEntry = T0.DocEntry
+    WHERE I.ItemCode = @ItemCode
+      AND I.Quantity > 0
+      AND ISNULL(T0.CANCELED,'N') = 'N';
+  `;
+  const r = await req.query(q);
+  return !!r.recordset?.[0]?.HasSales;
+}
+
+// Ventas de los últimos N meses (default 4)
+async function getItemSalesLastMonths(itemCode, months = 4) {
+  const pool = await poolPromise;
+  const req = pool.request();
+  req.input("ItemCode", sql.VarChar(50), itemCode);
+  req.input("Months",   sql.Int, months);
+
+  const q = `
+    DECLARE @Desde DATE = DATEADD(MONTH, -@Months, CAST(GETDATE() AS DATE));
+
+    SELECT
+      T0.DocNum,
+      T0.DocDate,
+      T0.CreateDate,
+      T0.CardCode,
+      T0.CardName,
+      I.Quantity,
+      I.Price,
+      I.Currency,
+      I.LineTotal
+    FROM INV1 I
+    INNER JOIN OINV T0 ON I.DocEntry = T0.DocEntry
+    WHERE I.ItemCode = @ItemCode
+      AND I.Quantity > 0
+      AND ISNULL(T0.CANCELED,'N') = 'N'
+      AND T0.DocDate >= @Desde
+    ORDER BY T0.DocDate DESC, T0.DocEntry DESC, I.LineNum DESC;
+  `;
+
+  const r = await req.query(q);
+  return r.recordset || [];
+}
+
+module.exports = { getProductosSinVentas, hasItemSales,
+  getItemSalesLastMonths };
