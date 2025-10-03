@@ -12,8 +12,9 @@ import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 
 export interface FiltroSinVentas {
-    minStock?: number;        // default 0
-    fechaInicio?: string;     // YYYY-MM-DD
+    sku?: string;           // filtro exclusivo por SKU
+    minStock?: number;      // default 0
+    fechaInicio?: string;   // YYYY-MM-DD
     primerNivel?: string;
     categoria?: string;
     subcategoria?: string;
@@ -38,7 +39,10 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     const [categorias, setCategorias] = useState<Categoria[]>([]);
     const [subcategorias, setSubcategorias] = useState<Categoria[]>([]);
 
-    // Carga inicial de primer nivel (igual que el otro header)
+    // modo SKU: si hay texto en sku, el resto de filtros se desactiva
+    const skuMode = Boolean((filters.sku || '').trim());
+
+    // Carga inicial de primer nivel
     useEffect(() => {
         (async () => {
             try {
@@ -51,7 +55,7 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
         })();
     }, []);
 
-    // Si vienen filtros iniciales con jerarquías, cargar cascadas (mismo patrón)
+    // Si vienen filtros iniciales con jerarquías, cargar cascadas
     useEffect(() => {
         if (filters.primerNivel && categorias.length === 0) fetchCategorias(filters.primerNivel);
         if (filters.categoria && subcategorias.length === 0) fetchSubcategorias(filters.categoria);
@@ -85,9 +89,34 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     };
 
     const handleChange = async (key: keyof FiltroSinVentas, value: any) => {
+        // Si se escribe en SKU, limpiar y desactivar el resto
+        if (key === "sku") {
+            const v = String(value || "").trim();
+            if (v.length > 0) {
+                const onlySku: FiltroSinVentas = {
+                    sku: v,
+                    // el resto queda limpio/inactivo por skuMode
+                    minStock: 0,
+                    fechaInicio: undefined,
+                    primerNivel: undefined,
+                    categoria: undefined,
+                    subcategoria: undefined,
+                };
+                setCategorias([]);
+                setSubcategorias([]);
+                setFilters(onlySku);
+                return;
+            } else {
+                // al vaciar SKU, solo quitamos sku y reactivamos los otros (sin setear nada extra)
+                setFilters(prev => ({ ...prev, sku: undefined }));
+                return;
+            }
+        }
+
+        // Si NO es sku: flujo normal (pero respetando skuMode con disabled en los inputs)
         let updated: FiltroSinVentas = { ...filters, [key]: value };
 
-        // Reset cascadas cuando corresponde (igual que el otro header)
+        // Reset cascadas cuando corresponde
         if (key === "primerNivel") {
             updated.categoria = undefined;
             updated.subcategoria = undefined;
@@ -106,12 +135,19 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     };
 
     const handleApply = () => {
+        // Si hay SKU, aplica SOLO SKU (el resto queda inactivo)
+        if (skuMode) {
+            const sku = (filters.sku || "").trim();
+            onFilterChange({ sku });
+            setOpen(false);
+            return;
+        }
         onFilterChange(filters);
         setOpen(false);
     };
 
     const handleClear = () => {
-        const cleared: FiltroSinVentas = { minStock: 0 };
+        const cleared: FiltroSinVentas = { minStock: 0, sku: undefined };
         setFilters(cleared);
         setCategorias([]);
         setSubcategorias([]);
@@ -128,25 +164,32 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
         });
     };
 
-
-    // Chips resumen (mismo look)
+    // Chips resumen
     const chips = (
         <Box display="flex" gap={1} flexWrap="wrap">
-            {(filters.minStock ?? 0) > 0 && (
+            {skuMode && (
+                <Chip
+                    color="primary"
+                    label={`SKU: ${(filters.sku || '').trim()}`}
+                    onDelete={() => applyAndUpdate(f => ({ ...f, sku: undefined }))} // al eliminar reactivas el resto
+                />
+            )}
+
+            {!skuMode && (filters.minStock ?? 0) > 0 && (
                 <Chip
                     label={`minStock: ${filters.minStock}`}
                     onDelete={() => applyAndUpdate(f => ({ ...f, minStock: 0 }))}
                 />
             )}
 
-            {filters.fechaInicio && (
+            {!skuMode && filters.fechaInicio && (
                 <Chip
                     label={`Desde: ${filters.fechaInicio}`}
                     onDelete={() => applyAndUpdate(f => ({ ...f, fechaInicio: undefined }))}
                 />
             )}
 
-            {filters.primerNivel && (
+            {!skuMode && filters.primerNivel && (
                 <Chip
                     label={`Primer Nivel: ${primerNiveles.find(p => p.codigo === filters.primerNivel)?.nombre || filters.primerNivel}`}
                     onDelete={() =>
@@ -160,7 +203,7 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
                 />
             )}
 
-            {filters.categoria && (
+            {!skuMode && filters.categoria && (
                 <Chip
                     label={`Categoría: ${categorias.find(c => c.codigo === filters.categoria)?.nombre || filters.categoria}`}
                     onDelete={() =>
@@ -173,13 +216,12 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
                 />
             )}
 
-            {filters.subcategoria && (
+            {!skuMode && filters.subcategoria && (
                 <Chip
                     label={`Subcategoría: ${subcategorias.find(s => s.codigo === filters.subcategoria)?.nombre || filters.subcategoria}`}
                     onDelete={() => applyAndUpdate(f => ({ ...f, subcategoria: undefined }))}
                 />
             )}
-
         </Box>
     );
 
@@ -200,6 +242,19 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
                     <Divider sx={{ my: 2 }} />
 
                     <Grid container spacing={2}>
+
+                        {/* filtro por SKU */}
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                label="SKU"
+                                placeholder="Ej: 083056176"
+                                value={filters.sku || ""}
+                                onChange={(e) => handleChange("sku", e.target.value)}
+                            />
+                        </Grid>
+
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
@@ -208,6 +263,7 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
                                 label="minStock"
                                 value={filters.minStock ?? 0}
                                 onChange={(e) => handleChange("minStock", Number(e.target.value || 0))}
+                                disabled={skuMode}
                             />
                         </Grid>
 
@@ -220,12 +276,13 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
                                 InputLabelProps={{ shrink: true }}
                                 value={filters.fechaInicio || ""}
                                 onChange={(e) => handleChange("fechaInicio", e.target.value)}
+                                disabled={skuMode}
                             />
                         </Grid>
 
                         {/* Primer Nivel */}
                         <Grid item xs={12}>
-                            <FormControl fullWidth size="small">
+                            <FormControl fullWidth size="small" disabled={skuMode}>
                                 <InputLabel>Primer Nivel</InputLabel>
                                 <Select
                                     value={filters.primerNivel || ""}
@@ -243,7 +300,7 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
                         </Grid>
 
                         {/* Categoría */}
-                        {filters.primerNivel && (
+                        {!skuMode && filters.primerNivel && (
                             <Grid item xs={12}>
                                 <FormControl fullWidth size="small">
                                     <InputLabel>Categoría</InputLabel>
@@ -264,7 +321,7 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
                         )}
 
                         {/* Subcategoría */}
-                        {filters.categoria && (
+                        {!skuMode && filters.categoria && (
                             <Grid item xs={12}>
                                 <FormControl fullWidth size="small">
                                     <InputLabel>Subcategoría</InputLabel>

@@ -4,7 +4,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
     Box, Typography, Divider, Snackbar, Alert, IconButton,
     Pagination, CircularProgress, Button, Menu, MenuItem, Dialog,
-    DialogTitle, DialogContent, DialogActions, TextField, Stack, Tooltip
+    DialogTitle, DialogContent, DialogActions, TextField,
+    Table, TableHead, TableRow, TableCell, TableBody, Paper
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -20,13 +21,14 @@ import { BACKEND_URL } from '@/config';
 
 import HeaderSinVentasDrawer from './components/HeaderSinVentasDrawer';
 
-// ---- Tipos (alineado al patrón de menos rentables) ----
+// ---- Tipos ----
 type Order = 'asc' | 'desc';
 type OrderBy = 'stockTotal' | 'createDate';
 
 interface FiltroSinVentas {
-    minStock?: number;          // default 0
-    fechaInicio?: string;       // YYYY-MM-DD
+    sku?: string;              // filtro exclusivo por SKU
+    minStock?: number;         // default 0
+    fechaInicio?: string;      // YYYY-MM-DD
     primerNivel?: string;
     categoria?: string;
     subcategoria?: string;
@@ -49,32 +51,49 @@ export interface ProductoSinVentas {
     ocCreadoPor?: string | null;
 }
 
-const limit = 20; // mismo patrón que el resto
-
-// Si el backend usa /api/reportes/... cambia acá:
+const limit = 20;
 const ENDPOINT = '/api/informes/productos-sin-ventas';
 
 const ProductosSinVentasPage: React.FC = () => {
-    // Estado
+    // Estado principal (tabla de sin ventas)
     const [filters, setFilters] = useState<FiltroSinVentas>({ minStock: 0 });
     const [data, setData] = useState<ProductoSinVentas[]>([]);
     const [total, setTotal] = useState<number>(0);
     const [page, setPage] = useState<number>(1);
     const [loading, setLoading] = useState<boolean>(false);
-    const [showMensaje, setShowMensaje] = useState<boolean>(true);
 
     const [orden, setOrden] = useState<Order>('desc');
     const [ordenPor, setOrdenPor] = useState<OrderBy>('stockTotal');
 
-    // Export unificado (idéntico al de menos rentables)
+    // Export
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [openExportModal, setOpenExportModal] = useState(false);
     const [exportCount, setExportCount] = useState<number>(100);
     const [exportTarget, setExportTarget] = useState<'excel' | 'pdf'>('excel');
 
+    // Snackbar informativo “fijo” (existente)
+    const [showMensaje, setShowMensaje] = useState<boolean>(true);
+
+    // Mensaje dinámico del endpoint (SKU con o sin ventas)
+    const [endpointMsg, setEndpointMsg] = useState<string>('');
+
+    // estado para vista de ventas por SKU ----
+    const [skuSalesMode, setSkuSalesMode] = useState<boolean>(false);
+    const [skuSalesItemCode, setSkuSalesItemCode] = useState<string>('');
+    const [skuSales, setSkuSales] = useState<Array<{
+        docNum: number;
+        docDate: string;
+        createDate: string;
+        customer: string;
+        quantity: number;
+        price: number;
+        currency: string;
+        lineTotal: number;
+    }>>([]);
+
     const totalPages = Math.ceil(Math.max(0, total) / limit);
 
-    // --- helpers locales (mismo patrón) ---
+    // Helpers
     const isYYYYMMDD = (d?: string) => !!d && /^\d{4}-\d{2}-\d{2}$/.test(d);
 
     const splitProduct = (s?: string | null) => {
@@ -110,7 +129,7 @@ const ProductosSinVentasPage: React.FC = () => {
         };
     };
 
-    // --- fetch principal (calcado al flujo del otro informe) ---
+    // Fetch principal
     const fetchSinVentas = async (
         filtros: FiltroSinVentas,
         pageNumber = 1,
@@ -121,6 +140,72 @@ const ProductosSinVentasPage: React.FC = () => {
         try {
             const ob: OrderBy = campoOrden ?? ordenPor;
             const od: Order = direccionOrden ?? orden;
+
+            // Rama SKU (exclusiva)
+            const skuTrim = (filtros.sku || '').trim();
+            if (skuTrim) {
+                // Siempre forzar order=desc al consultar por SKU
+                const res = await fetchWithToken(
+                    `${BACKEND_URL}${ENDPOINT}?order=desc&itemCode=${encodeURIComponent(skuTrim)}`
+                );
+                if (!res) {
+                    // reset vista ventas
+                    setSkuSalesMode(false);
+                    setSkuSales([]);
+                    setSkuSalesItemCode('');
+                    setData([]);
+                    setTotal(0);
+                    return;
+                }
+                const json = await res.json();
+
+                // Toaster con el message, si viene
+                if (json?.message) {
+                    setEndpointMsg(String(json.message));   // <<< lo guardamos para el snackbar info
+                    setShowMensaje(true);                   // forzamos a que se muestre
+                } else {
+                    setEndpointMsg('');
+                }
+
+
+                // si hay ventas, activamos vista de ventas y mostramos salesLast4Months ---
+                if (String(json?.mode) === 'lookupItemCodeWithSales' && Array.isArray(json?.salesLast4Months)) {
+                    setSkuSalesMode(true);
+                    setSkuSalesItemCode(String(json?.itemCode || skuTrim));
+                    setSkuSales(json.salesLast4Months as any[]);
+                    setData([]); // ocultamos tabla de sin ventas
+                    setTotal(json.salesLast4Months.length || 0);
+                    return;
+                }
+
+                // Si NO hay ventas: mostramos el producto igual (data != [])
+                if (String(json?.mode) === 'lookupItemCodeNoSales') {
+                    setSkuSalesMode(false);
+                    setSkuSales([]);
+                    setSkuSalesItemCode('');
+                    const rows = Array.isArray(json?.data) ? json.data.map(mapRow) : [];
+                    setData(rows);          // muestra el producto aunque no tenga ventas
+                    const totalApi = typeof json?.total === 'number' ? json.total : undefined;
+                    setTotal(totalApi ?? rows.length);
+                    return;
+                }
+
+
+                // Si NO hay ventas (lookupItemCodeNoSales): mantener tabla de sin ventas (data puede venir vacía)
+                setSkuSalesMode(false);
+                setSkuSales([]);
+                setSkuSalesItemCode('');
+                const rows = Array.isArray(json?.data) ? json.data.map(mapRow) : [];
+                setData(rows);
+                const totalApi = typeof json?.total === 'number' ? json.total : undefined;
+                setTotal(totalApi ?? rows.length);
+                return;
+            }
+
+            // Rama SIN SKU (flujo tradicional)
+            setSkuSalesMode(false);
+            setSkuSales([]);
+            setSkuSalesItemCode('');
 
             const params = new URLSearchParams();
             if (typeof filtros.minStock === 'number') params.append('minStock', String(filtros.minStock));
@@ -152,6 +237,10 @@ const ProductosSinVentasPage: React.FC = () => {
             console.error('Error al cargar productos sin ventas:', e);
             setData([]);
             setTotal(0);
+            // si hubo error, asegúrate de no quedar "pegado" en modo ventas
+            setSkuSalesMode(false);
+            setSkuSales([]);
+            setSkuSalesItemCode('');
         } finally {
             setLoading(false);
         }
@@ -174,7 +263,7 @@ const ProductosSinVentasPage: React.FC = () => {
         fetchSinVentas(filters, page, campo, nuevoOrden);
     };
 
-    // ---- Export (menú + modal unificado, igual que en menos rentables) ----
+    // Export (sin cambios de lógica respecto a lo existente)
     const handleOpenExportMenu = (e: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(e.currentTarget);
     const handleCloseExportMenu = () => setAnchorEl(null);
     const handleSelectExportFormat = (format: 'excel' | 'pdf') => {
@@ -206,10 +295,9 @@ const ProductosSinVentasPage: React.FC = () => {
                 return { rows, totalApi };
             };
 
-            // ---- traer datos según límite ----
-            const GUESS_MAX = 1000;              // intenta 1000 primero
-            let effectiveChunk = GUESS_MAX;      // si la 1ra página vuelve 500, adoptamos 500
-
+            // Traer datos según límite
+            const GUESS_MAX = 1000;
+            let effectiveChunk = GUESS_MAX;
             let rows: ProductoSinVentas[] = [];
 
             if (exportLimit !== 'all') {
@@ -223,49 +311,40 @@ const ProductosSinVentasPage: React.FC = () => {
 
                     const { rows: r } = await fetchPage(pageNum, want);
 
-                    // --- detección de tope real del backend en la 1ra página (ej: 500) ---
-                    let currentCap = effectiveChunk;
                     if (pageNum === 1 && r.length > 0 && r.length < want) {
-                        currentCap = effectiveChunk = r.length;
+                        effectiveChunk = r.length;
                     }
 
                     rows.push(...r);
                     collected += r.length;
 
-                    // lo que esperábamos para ESTA página (ya con cap ajustado)
-                    const expectedForThisPage = Math.min(currentCap, remainingBefore);
-
-                    // cortar solo si vino menos de lo que permite el cap para esta página
+                    const expectedForThisPage = Math.min(effectiveChunk, remainingBefore);
                     if (r.length < expectedForThisPage) break;
 
                     pageNum++;
-                    if (pageNum > 5000) break; // guardrail
+                    if (pageNum > 5000) break;
                 }
 
-                // recorte fino por seguridad
                 if (rows.length > target) rows = rows.slice(0, target);
 
             } else {
-                // “todos” → paginar hasta agotar, respetando el cap detectado
                 let pageNum = 1;
                 while (true) {
                     const want = effectiveChunk;
                     const { rows: r } = await fetchPage(pageNum, want);
 
                     if (pageNum === 1 && r.length > 0 && r.length < want) {
-                        effectiveChunk = r.length; // ej: 500
+                        effectiveChunk = r.length;
                     }
 
                     rows.push(...r);
 
-                    // si vino menos que el cap, no hay más
                     if (r.length < Math.min(effectiveChunk, want)) break;
 
                     pageNum++;
-                    if (pageNum > 5000) break; // guardrail
+                    if (pageNum > 5000) break;
                 }
             }
-
 
             if (tipo === 'excel') {
                 const ws = XLSX.utils.json_to_sheet(
@@ -342,23 +421,61 @@ const ProductosSinVentasPage: React.FC = () => {
         }
     };
 
+    // Texto de conteo / encabezado dinámico
     const productosCountText = useMemo(() => {
+        if (skuSalesMode) {
+            return (
+                <>Ventas últimos 4 meses para <strong>SKU {skuSalesItemCode}</strong>: <strong>{skuSales.length}</strong> movimientos</>
+            );
+        }
         if (total === 0) return 'Sin productos para mostrar';
         return <>Mostrando del <strong>{(page - 1) * limit + 1}</strong> al <strong>{Math.min(page * limit, total)}</strong> de <strong>{total}</strong> productos</>;
-    }, [page, total]);
+    }, [page, total, skuSalesMode, skuSales.length, skuSalesItemCode]);
 
-    // Handlers de filtros (inline, colocados ANTES del Divider para mantener estructura)
-    const handleFilterNumber =
-        (key: keyof FiltroSinVentas) => (e: React.ChangeEvent<HTMLInputElement>) =>
-            setFilters(prev => ({ ...prev, [key]: Number(e.target.value || 0) }));
+    // tabla de ventas por SKU (inline, sin tocar componentes existentes) ----
+    const SalesBySkuTable: React.FC<{
+        rows: typeof skuSales;
+    }> = ({ rows }) => {
+        const fmtDate = (d?: string) => (d ? new Date(d).toLocaleDateString() : '');
+        const fmtNumber = (n: number) => Intl.NumberFormat('es-CL').format(n);
+        const fmtMoney = (n: number, currency: string) =>
+            `${currency} ${Intl.NumberFormat('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n)}`;
 
-    const handleFilterText =
-        (key: keyof FiltroSinVentas) => (e: React.ChangeEvent<HTMLInputElement>) =>
-            setFilters(prev => ({ ...prev, [key]: e.target.value }));
-
-    const exportConfirm = () => {
-        exportSinVentas(exportTarget, exportCount === -1 ? 'all' : exportCount);
-        setOpenExportModal(false);
+        return (
+            <Paper variant="outlined" sx={{ width: '100%', overflowX: 'auto' }}>
+                <Table size="small">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell><strong>Doc N°</strong></TableCell>
+                            <TableCell><strong>Fecha</strong></TableCell>
+                            <TableCell><strong>Cliente</strong></TableCell>
+                            <TableCell align="right"><strong>Cantidad</strong></TableCell>
+                            <TableCell align="right"><strong>Precio</strong></TableCell>
+                            <TableCell align="right"><strong>Moneda</strong></TableCell>
+                            <TableCell align="right"><strong>Total línea</strong></TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {rows.map((r, idx) => (
+                            <TableRow key={`${r.docNum}-${idx}`} hover>
+                                <TableCell>{r.docNum}</TableCell>
+                                <TableCell>{fmtDate(r.docDate || r.createDate)}</TableCell>
+                                <TableCell>{r.customer}</TableCell>
+                                <TableCell align="right">{fmtNumber(r.quantity)}</TableCell>
+                                <TableCell align="right">{fmtMoney(r.price, r.currency)}</TableCell>
+                                <TableCell align="right">{r.currency}</TableCell>
+                                <TableCell align="right">{fmtMoney(r.lineTotal, r.currency)}</TableCell>
+                            </TableRow>
+                        ))}
+                        {rows.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={7} align="center">Sin ventas para mostrar</TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </Paper>
+        );
     };
 
     return (
@@ -373,8 +490,7 @@ const ProductosSinVentasPage: React.FC = () => {
                 Revisa el detalle de productos sin ventas desde un mínimo de stock, fecha mínima de creación, categoría, subcategoría y más. (excluye almacén 04)
             </Typography>
 
-            {/* Filtros (situados aquí como en el header de otros informes) */}
-            {/* Filtros (drawer consistente con “Menos rentables”) */}
+            {/* Filtros (drawer) */}
             <HeaderSinVentasDrawer
                 currentFilters={filters}
                 onFilterChange={(nf) => { setFilters(nf); setPage(1); }}
@@ -382,25 +498,30 @@ const ProductosSinVentasPage: React.FC = () => {
 
             <Divider sx={{ my: 3 }} />
 
-            {/* Barra con conteo + export (idéntica ubicación y estilo) */}
+            {/* Barra con conteo + export */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="subtitle2">{productosCountText}</Typography>
 
-                <Box>
-                    <Button variant="contained" onClick={handleOpenExportMenu} endIcon={<MoreVertIcon />}>
-                        Exportar
-                    </Button>
-                    <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseExportMenu}>
-                        <MenuItem onClick={() => handleSelectExportFormat('excel')}>Exportar a Excel</MenuItem>
-                        <MenuItem onClick={() => handleSelectExportFormat('pdf')}>Exportar a PDF</MenuItem>
-                    </Menu>
-                </Box>
+                {!skuSalesMode && (
+                    <Box>
+                        <Button variant="contained" onClick={handleOpenExportMenu} endIcon={<MoreVertIcon />}>
+                            Exportar
+                        </Button>
+                        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseExportMenu}>
+                            <MenuItem onClick={() => handleSelectExportFormat('excel')}>Exportar a Excel</MenuItem>
+                            <MenuItem onClick={() => handleSelectExportFormat('pdf')}>Exportar a PDF</MenuItem>
+                        </Menu>
+                    </Box>
+                )}
             </Box>
 
             {loading ? (
                 <Box display="flex" justifyContent="center" alignItems="center" height={200}>
                     <CircularProgress />
                 </Box>
+            ) : skuSalesMode ? (
+                // vista de ventas por SKU cuando la API trae salesLast4Months ----
+                <SalesBySkuTable rows={skuSales} />
             ) : (
                 <ProductosSinVentasTable
                     data={data}
@@ -410,7 +531,8 @@ const ProductosSinVentasPage: React.FC = () => {
                 />
             )}
 
-            {totalPages > 1 && !loading && (
+            {/* Paginación solo para la lista de sin ventas */}
+            {totalPages > 1 && !loading && !skuSalesMode && (
                 <Box display="flex" justifyContent="center" mt={3}>
                     <Pagination
                         count={totalPages}
@@ -424,23 +546,35 @@ const ProductosSinVentasPage: React.FC = () => {
                 </Box>
             )}
 
-            {/* Snackbar de “data freshness” (misma posición/estilo) */}
-            <Snackbar open={showMensaje} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} autoHideDuration={null} sx={{ maxWidth: '400px' }}>
+            {/* Snackbar info existente */}
+            <Snackbar
+                open={showMensaje}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                autoHideDuration={null}
+                sx={{ maxWidth: '400px' }}
+            >
                 <Alert
                     severity="warning"
                     variant="filled"
                     action={
-                        <IconButton aria-label="close" color="inherit" size="small" onClick={() => setShowMensaje(false)}>
+                        <IconButton
+                            aria-label="close"
+                            color="inherit"
+                            size="small"
+                            onClick={() => setShowMensaje(false)}
+                        >
                             <CloseIcon fontSize="inherit" />
                         </IconButton>
                     }
                     sx={{ display: 'flex', alignItems: 'center', p: 1.5, borderRadius: 3, fontSize: '0.9rem' }}
                 >
-                    Este informe se actualiza a diario. Si necesitas información más reciente, pide al usuario ADMIN que actualice la información.
+                    {endpointMsg
+                        ? endpointMsg
+                        : 'Este informe se actualiza a diario. Si necesitas información más reciente, pide al usuario ADMIN que actualice la información.'}
                 </Alert>
             </Snackbar>
 
-            {/* Modal unificado para elegir cantidad (Excel/PDF) */}
+            {/* Modal export */}
             <Dialog open={openExportModal} onClose={() => setOpenExportModal(false)}>
                 <DialogTitle>Exportar {exportTarget === 'excel' ? 'Excel' : 'PDF'}</DialogTitle>
                 <DialogContent>

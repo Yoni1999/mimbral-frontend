@@ -61,34 +61,34 @@ const Menuitems = [
     href: "/utilities/analisis-producto1.1",
   },
 
-  {
-    navlabel: true,
-    subheader: "Inventario & Abastecimiento",
-    divider: true,
-  },
-  {
-    id: uniqueId(),
-    title: "Supply Chain",
-    icon: IconTruckDelivery,
-    href: "/utilities/supplychain",
-  },
-  {
-    id: uniqueId(),
-    title: "Gestión de Compras",
-    icon: IconChartLine,
-    href: "/utilities/gestion-compras",
-  },
-  {
-    navlabel: true,
-    subheader: "Clientes",
-    divider: true,
-  },
-    {
-      id: uniqueId(),
-      title: "Línea de crédito",
-      icon: IconCreditCard,
-      href: "/utilities/linea-credito",
-    },
+  // {
+  //   navlabel: true,
+  //   subheader: "Inventario & Abastecimiento",
+  //   divider: true,
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: "Supply Chain",
+  //   icon: IconTruckDelivery,
+  //   href: "/utilities/supplychain",
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: "Gestión de Compras",
+  //   icon: IconChartLine,
+  //   href: "/utilities/gestion-compras",
+  // },
+  // {
+  //   navlabel: true,
+  //   subheader: "Clientes",
+  //   divider: true,
+  // },
+  //   {
+  //     id: uniqueId(),
+  //     title: "Línea de crédito",
+  //     icon: IconCreditCard,
+  //     href: "/utilities/linea-credito",
+  //   },
   {
     navlabel: true,
     subheader: "Informes & Metas",
@@ -134,6 +134,12 @@ const Menuitems = [
         title: "Productos sin ventas",
         icon: IconCashOff,
         href: "/informes/productos-sin-ventas",
+      },
+      {
+        id: uniqueId(),
+        title: "Ventas de productos por canal",
+        icon: IconCashOff,
+        href: "/informes/ventas-productos-por-canal",
       },
     ],
   },

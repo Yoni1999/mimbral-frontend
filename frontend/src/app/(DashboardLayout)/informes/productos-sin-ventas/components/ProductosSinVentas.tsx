@@ -254,7 +254,7 @@ const ProductosSinVentasTable: React.FC<Props> = ({ data, onSortChange, ordenAct
               <StyledTableRow>
                 <StyledTableCell colSpan={12} style={{ textAlign: 'center' }}>
                   <Typography variant="body2" color="text.secondary">
-                    {busqueda ? 'No se encontraron productos con ese filtro.' : 'Cargando datos...'}
+                    {busqueda ? 'No se encontraron productos con ese filtro.' : 'Sin datos disponibles...'}
                   </Typography>
                 </StyledTableCell>
               </StyledTableRow>
