@@ -665,9 +665,9 @@ async function obtenerProductosPorCanalMargenDB(params) {
       I.ItemCode                                 AS sku,
       O.U_Imagen                                 AS imagen,
       C.Canal                                    AS canal,
-      T0.DocNum                                  AS folioNum,          -- corregido
+      T0.folionum                                  AS folioNum,          
       CONVERT(date, T0.DocDate)                  AS fecha,
-      COALESCE(I.SlpCode, T0.SlpCode)            AS vendedorCodigo,    -- línea > encabezado
+      COALESCE(I.SlpCode, T0.SlpCode)            AS vendedorCodigo,    
       S.SlpName                                  AS vendedor,
       I.Quantity                                 AS cantidad,
       I.LineTotal                                AS venta,
@@ -732,7 +732,7 @@ async function obtenerProductosPorCanalMargenDB(params) {
           OR (@HasEmpresas=1 AND C.Canal='Empresas') )
       )
       AND (@VendedorParam IS NULL OR I.SlpCode = @VendedorParam)
-    ORDER BY I.ItemCode, C.Canal, T0.DocDate DESC, T0.DocNum DESC;  -- orden claro
+    ORDER BY I.ItemCode, C.Canal, T0.DocDate DESC, T0.folionum DESC;  -- orden claro
   `;
 
   const result = await request.query(query);
