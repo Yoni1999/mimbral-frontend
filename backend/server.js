@@ -34,6 +34,7 @@ const creditoRoutes = require("./src/routes/lineacredito/credito.routes")
 const renovarSesionRoutes = require("./src/routes/renovarSesion.routes");
 const productosmenosrentablesRoutes = require("./src/routes/informes/productosmenosrentables.routes");
 const sinventasRoutes = require("./src/routes/informes/productossinventas.routes");
+const informecanalRoutes = require("./src/routes/informes/informecanal.routes");
 
 const app = express();
 app.use(cors({
@@ -84,6 +85,7 @@ app.use("/api", creditoRoutes);
 app.use("/api", renovarSesionRoutes);
 app.use("/api/informes", productosmenosrentablesRoutes);
 app.use("/api/informes", sinventasRoutes);
+app.use("/api/informes", informecanalRoutes);
 
 // Obtener IP local
 function getLocalIP() {
@@ -110,3 +112,6 @@ app.listen(PORT, HOST, async () => {
   console.log(`Red local: http://${localIP}:${PORT}`);
 
 });
+
+
+

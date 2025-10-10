@@ -110,7 +110,6 @@ async function productosSinVentasController(req, res) {
       order = "asc",
     } = req.query;
 
-    // ¿Es un lookup puro por itemCode? (sin más filtros)
     const isPureItemLookup =
       !!itemCode &&
       !fechaInicio &&
@@ -141,22 +140,18 @@ async function productosSinVentasController(req, res) {
         });
       }
 
-      // No tuvo ventas → usa tu reporte (tal cual) y luego filtra por itemCode en memoria
       const result = await getProductosSinVentas({
-        // Forzamos minStock=0 para mantener el comportamiento actual (>0)
         minStock: 0,
         fechaInicio: null,
         primerNivel: null,
         categoria: null,
         subcategoria: null,
-        // No importa el paginado aquí; igual filtramos y devolvemos lo que haya
         page: "1",
         pageSize: "50",
         orderBy,
         order,
       });
 
-      // Formateo igual que tu flujo normal…
       const formattedAll = result.data.map(item => {
         const pn  = item.PrimerNivelName || "Sin Primer Nivel";
         const cat = item.CategoriaName || "Sin Categoria";
@@ -200,14 +195,13 @@ async function productosSinVentasController(req, res) {
         };
       });
 
-      // …pero nos quedamos SOLO con ese itemCode
       const filtered = formattedAll.filter(x => x.productDetail.itemCode === itemCode);
 
       return res.json({
         mode: "lookupItemCodeNoSales",
         message: `El producto ${itemCode} NO registra ventas.`,
         page: 1,
-        pageSize: filtered.length,  // 0 o 1 típicamente
+        pageSize: filtered.length, 
         total: filtered.length,
         pages: 1,
         orderBy,
@@ -216,8 +210,6 @@ async function productosSinVentasController(req, res) {
       });
     }
 
-    // ───────────────────────────────────────────────────────────
-    // Modo reporte normal (sin cambios)
     const result = await getProductosSinVentas({
       minStock:      minStock !== undefined ? Number(minStock) : undefined,
       fechaInicio:   fechaInicio || null,
