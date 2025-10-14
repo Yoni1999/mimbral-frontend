@@ -35,6 +35,7 @@ const renovarSesionRoutes = require("./src/routes/renovarSesion.routes");
 const productosmenosrentablesRoutes = require("./src/routes/informes/productosmenosrentables.routes");
 const sinventasRoutes = require("./src/routes/informes/productossinventas.routes");
 const informecanalRoutes = require("./src/routes/informes/informecanal.routes");
+const stockRoutes = require("./src/routes/pricing/stock.Routes");
 
 const app = express();
 app.use(cors({
@@ -47,7 +48,7 @@ app.use(express.json());
 
 // 🔐 Middleware de autenticación
 app.use((req, res, next) => {
-  const publicRoutes = ["/api/auth", "/api/entradas", "/api/templace"];
+  const publicRoutes = ["/api/auth", "/api/entradas", "/api/templace", "/api/pricing"];
   const isPublic = publicRoutes.some((route) => req.path.startsWith(route));
   if (isPublic) return next();
   authMiddleware(req, res, next);
@@ -56,6 +57,7 @@ app.use((req, res, next) => {
 // Rutas públicas
 app.use("/api/auth", authRoutes);
 app.use("/api/templace", omcRoutes);
+app.use("/api/pricing", stockRoutes);
 
 // Rutas protegidas
 app.use("/api", ventasRoutes);
@@ -112,6 +114,8 @@ app.listen(PORT, HOST, async () => {
   console.log(`Red local: http://${localIP}:${PORT}`);
 
 });
+
+
 
 
 

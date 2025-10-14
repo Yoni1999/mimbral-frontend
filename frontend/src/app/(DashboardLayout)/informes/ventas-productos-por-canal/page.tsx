@@ -318,31 +318,6 @@ const InformeVentasPorCanalPage: React.FC = () => {
         </Box>
       )}
 
-      {/* <Snackbar
-        open
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        sx={{ maxWidth: "400px" }}
-      >
-        <Alert
-          severity="warning"
-          variant="filled"
-          action={
-            <IconButton aria-label="close" color="inherit" size="small">
-              <CloseIcon fontSize="inherit" />
-            </IconButton>
-          }
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            p: 1.5,
-            borderRadius: 3,
-            fontSize: "0.9rem",
-          }}
-        >
-          Este informe se actualiza a diario con la información más reciente. Para datos en tiempo real, pide al usuario ADMIN actualizar la información.
-        </Alert>
-      </Snackbar> */}
-
       {/* ===== Modal Detalle de venta ===== */}
       <Dialog open={detalleOpen} onClose={() => setDetalleOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Detalle de venta · {detalleTitulo}</DialogTitle>

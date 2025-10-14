@@ -58,7 +58,7 @@ const Dashboard = () => {
         <DialogTitle>
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6" component="div">
-              🚀 ¡Nueva versión del software disponible!
+              🚀 ¡Nueva versión para el informe de Ventas por Canal disponible!
             </Typography>
             <IconButton onClick={() => setOpenModal(false)}>
               <CloseIcon />
@@ -67,44 +67,35 @@ const Dashboard = () => {
         </DialogTitle>
 
         <DialogContent dividers>
+          <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+            📅 Fecha de lanzamiento: 10-10-2025
+          </Typography>
+
           <Typography variant="body1" gutterBottom>
-            Hemos implementado mejoras clave en los siguientes informes:
+            Hemos lanzado una nueva versión del <strong>Informe de Ventas de Productos por Canal</strong>, con importantes mejoras para el análisis comercial.
           </Typography>
 
           <Box mb={2}>
             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-              📦 Informe de Productos Detenidos
+              📊 Informe de Ventas por Canal
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Ahora puedes obtener informes más precisos de productos detenidos para compras, con filtros por:
+              Este informe te permite visualizar todas las <strong>ventas agrupadas por canal</strong> para cada producto, facilitando la comparación del rendimiento entre diferentes canales.
+              <br />
+              <br />
+              Además, incluye nuevos filtros para un análisis más preciso:
               <ul style={{ paddingLeft: "1.2rem", margin: 0 }}>
                 <li>Período</li>
                 <li>Rango de fecha</li>
                 <li>Proveedor</li>
                 <li>Categorías</li>
               </ul>
-              Se incluyen productos <strong>activos</strong> y <strong>inactivos con stock</strong>.
-            </Typography>
-          </Box>
-
-          <Box mb={2}>
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-              📈 Informe de Ventas de Productos
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              El informe de ventas permite visualizar los productos vendidos, con filtros por:
-              <ul style={{ paddingLeft: "1.2rem", margin: 0 }}>
-                <li>Canal de ventas</li>
-                <li>Período</li>
-                <li>Rango de fecha</li>
-                <li>Proveedor</li>
-                <li>Categorías</li>
-              </ul>
+              Al seleccionar un producto, podrás ver el detalle de los <strong>vendedores que realizaron las ventas</strong>, junto con información de <strong>monto vendido</strong>, <strong>margen</strong> y otros indicadores clave.
             </Typography>
           </Box>
 
           <Typography variant="body2" color="text.secondary" mt={2}>
-            Puedes cerrar este mensaje para continuar navegando en el dashboard.
+            Puedes cerrar este mensaje para continuar explorando el dashboard y aprovechar las nuevas funcionalidades del informe.
           </Typography>
         </DialogContent>
       </Dialog>
