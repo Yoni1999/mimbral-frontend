@@ -4,6 +4,7 @@ const router = express.Router();
 const { getStock } = require("../../controllers/pricing/stockController");
 
 router.get("/stock", getStock);
+router.get("/stock/:itemCodes", getStock); 
 
 module.exports = router;
 
