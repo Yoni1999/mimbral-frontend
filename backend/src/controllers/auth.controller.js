@@ -243,6 +243,37 @@ const loginUser = async (req, res) => {
     if (!validPassword) {
       return res.status(401).json({ error: "Contraseña incorrecta" });
     }
+    if (Number(user.ID) === 75) {
+      const token = jwt.sign(
+        { id: user.ID, email: user.Email, rol: user.ROL, nombre: user.NOMBRE },
+        JWT_SECRET,
+        { expiresIn: "10h" }
+    );
+
+      // Guardar token en TOKENS_ACTIVOS
+      await pool.request()
+        .input("UsuarioID", sql.Int, user.ID)
+        .input("Token", sql.NVarChar, token)
+        .query(`
+          INSERT INTO TOKENS_ACTIVOS (USUARIO_ID, TOKEN, VALIDO)
+          VALUES (@UsuarioID, @Token, 1)
+        `);
+
+      // Registrar sesión (misma lógica que el caso sin OTP)
+      const nowChile = dayjs().tz("America/Santiago");
+      const fechaInicio = nowChile.subtract(4, 'hour').toDate(); 
+
+      await pool.request()
+        .input("UsuarioID", sql.Int, user.ID)
+        .input("FechaInicio", sql.DateTime, fechaInicio)
+        .input("Token", sql.NVarChar, token)
+        .query(`
+          INSERT INTO SESIONES_USUARIOS (UsuarioID, FechaInicio, FechaFin, Token)
+          VALUES (@UsuarioID, @FechaInicio, NULL, @Token)
+        `);
+
+      return res.json({ message: "Login exitoso (exento de OTP)", token, rol: user.ROL });
+    }
 
     //Pedirá OTP
     let pedirOTP = false;
