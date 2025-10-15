@@ -26,7 +26,18 @@ const ejecutarProcedimientos = async () => {
     await pool.request().query(`EXEC ${proc}`);
   }
 
-  console.log(" Procedimientos ejecutados");
+  console.log("✅ Procedimientos generales ejecutados");
 };
 
-module.exports = { ejecutarProcedimientos };
+const ejecutarProcedimientosIndividual = async (procedimientos) => {
+  const pool = await poolPromise;
+
+  for (const proc of procedimientos) {
+    console.log(`▶ Ejecutando (individual): ${proc}`);
+    await pool.request().query(`EXEC ${proc}`);
+  }
+
+  console.log("✅ Procedimientos individuales ejecutados");
+};
+
+module.exports = { ejecutarProcedimientos, ejecutarProcedimientosIndividual };
