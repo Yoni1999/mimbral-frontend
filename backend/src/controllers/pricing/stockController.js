@@ -1,14 +1,10 @@
+
 // src/controllers/stockController.js
 const { getStockValidFor } = require("../../models/pricing/stockModels");
 
 function parseItemCodesFromUrl(req) {
-  // 1) /api/pricing/stock?itemCodes=A,B,C
   const fromQueryCsv = (req.query.itemCodes || "").toString();
-
-  // 2) /api/pricing/stock/A,B,C  
   const fromParamsCsv = (req.params?.itemCodes || "").toString();
-
-  // 3) Repetidos: ?itemCode=A&itemCode=B&itemCode=C
   const repeated = req.query.itemCode; // string | string[] | undefined
   const repeatedArr = Array.isArray(repeated) ? repeated : repeated ? [repeated] : [];
 
@@ -17,7 +13,6 @@ function parseItemCodesFromUrl(req) {
     .concat(fromParamsCsv ? fromParamsCsv.split(",") : [])
     .concat(repeatedArr);
 
-  // Normaliza, limpia y quita duplicados
   const itemCodes = [...new Set(
     pieces
       .map(x => (x ?? "").toString().trim())
@@ -27,10 +22,19 @@ function parseItemCodesFromUrl(req) {
   return itemCodes;
 }
 
+// Formatea margen: 0.25 => "25%", 25 => "25%"; 2 decimales máx. sin ceros innecesarios
+function formatMarginPercent(value) {
+  if (value == null || isNaN(value)) return null;
+  const num = Number(value);
+  const pct = num <= 1 && num >= -1 ? num * 100 : num;
+  const rounded = Math.round(pct * 100) / 100;
+  const str = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2).replace(/\.?0+$/, "");
+  return `${str}%`;
+}
+
 async function getStock(req, res) {
   try {
     const { whs1, whs3 } = req.query;
-
     const itemCodes = parseItemCodesFromUrl(req);
 
     if (itemCodes.length === 0) {
@@ -41,11 +45,26 @@ async function getStock(req, res) {
 
     const data = await getStockValidFor({ whs1, whs3, itemCodes });
 
+    const items = data.map((it) => {
+      const precioCosto = it["Precio Costo"] ?? it.avgPrice ?? null;
+      const margen = it["Margen"] ?? it.margen_prod ?? null;
+
+      return {
+        sku: it.sku,
+        precio_costo: precioCosto != null ? Number(precioCosto) : null,
+        margen: margen != null ? Number(margen) : null,
+        margen_str: formatMarginPercent(margen),
+        stock_bodega_1: Number(it.stock_bodega_1 ?? 0),
+        stock_bodega_3: Number(it.stock_bodega_3 ?? 0),
+        stock_total: Number(it.stock_total ?? 0),
+      };
+    });
+
     return res.json({
       warehouses: { whs1: whs1 ?? "01", whs3: whs3 ?? "03" },
       filter: { itemCodes },
-      count: data.length,
-      items: data,
+      count: items.length,
+      items,
     });
   } catch (err) {
     console.error("Error en getStock:", err);
@@ -57,3 +76,4 @@ async function getStock(req, res) {
 }
 
 module.exports = { getStock };
+// src/models/pricing/stockModels.js
