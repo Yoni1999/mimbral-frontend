@@ -19,6 +19,8 @@ const ejecutarProcedimientos = async () => {
     "Actualizar_ORIN_RIN1",
     "ActualizarDatosTransacciones",
     "Actualizar_OUSR",
+    "ACTUALIZAR_OBCD",
+    "Actualizar_TABLA_CONVERSION",
   ];
 
   for (const proc of procedimientos) {
