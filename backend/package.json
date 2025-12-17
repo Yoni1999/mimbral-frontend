@@ -16,6 +16,7 @@
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "glob": "^11.0.3",
     "js-beautify": "^1.15.4",
     "jsonwebtoken": "^9.0.2",
     "localtunnel": "^2.0.2",
