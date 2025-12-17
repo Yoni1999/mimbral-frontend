@@ -163,7 +163,7 @@ export default function LoginPage() {
       </Card>
 
       🔹 Modal de mantenimiento
-      <Modal open={true}>
+      {/* <Modal open={true}>
         <Box
           sx={{
             position: "fixed",
@@ -180,7 +180,7 @@ export default function LoginPage() {
             p: 3,
           }}
         >
-          {/* <Typography
+          <Typography
             variant={isMobile ? "h5" : "h3"}
             color="white"
             fontWeight="bold"
@@ -190,9 +190,9 @@ export default function LoginPage() {
           </Typography>
           <Typography variant={isMobile ? "body1" : "h5"} color="white">
             Lamentamos las molestias
-          </Typography> */}
+          </Typography>
         </Box>
-      </Modal>
+      </Modal> */}
     </Box>
   );
 }
