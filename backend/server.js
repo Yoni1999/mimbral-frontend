@@ -53,6 +53,7 @@ app.use((req, res, next) => {
   if (isPublic) return next();
   authMiddleware(req, res, next);
 });
+//el joaaco prueba
 
 // Rutas públicas
 app.use("/api/auth", authRoutes);
