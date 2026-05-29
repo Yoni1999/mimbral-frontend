@@ -12,7 +12,6 @@ import VentasChart from "./components/VentasChart";
 import MetricCard from "./components/MetricCard";
 import CategoriasBarChart from "./components/CategoriasBarChart";
 import dynamic from "next/dynamic";
-import ProgressGauge from "./components/ProgressGauge";
 import SeccionTitulo from "./components/SeccionTitulo";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { IconCurrencyDollar, IconTrendingUp, IconCreditCard, IconShoppingCart, IconStack2, IconBox, } from "@tabler/icons-react";
@@ -314,28 +313,6 @@ const ResumenVentas = () => {
         <Grid item xs={12}> {/* Full width for detailed product table */}
           <ProductosVendidos data={detalleTransformado} />
         </Grid>
-        <Grid item xs={12}>
-          <SeccionTitulo
-            title="Metas por Canal"
-            infoRight="Se está mostrando el período actual de las metas."
-          />
-        </Grid>
-        <Grid item xs={12}> {/* Full width grid for the gauges */}
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}> {/* Responsive grid for gauges */}
-              <ProgressGauge value={720} total={1000} title="Empresas" />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <ProgressGauge value={550} total={1000} title="Chorrillo" />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <ProgressGauge value={300} total={1000} title="Meli" />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <ProgressGauge value={820} total={1000} title="Balmaceda" />
-            </Grid>
-          </Grid>
-        </Grid>
       </Grid>
   </Box>
 </PageContainer>
@@ -343,6 +320,7 @@ const ResumenVentas = () => {
   );
 };
 export default ResumenVentas;
+
 
 
 

@@ -8,6 +8,7 @@ import AdminBreadcrumb from "@/app/admin/opciones/components/AdminBreadcrumb";
 import { useVerificarExpiracionToken } from "@/hooks/useVerificarExpiracionToke";
 import { ModalRenovarSesion } from "@/components/ModalRenovarSesion";
 import { renovarSesion } from "@/utils/renovarSesion";
+import FloatingHelpAgent from "@/components/agent/FloatingHelpAgent";
 
 const MainWrapper = styled("div")(() => ({
   display: "flex",
@@ -64,6 +65,8 @@ export default function RootLayout({ children }: Props) {
           <Box sx={{ minHeight: "calc(100vh - 170px)" }}>{children}</Box>
         </Container>
       </PageWrapper>
+
+      <FloatingHelpAgent />
 
       {mostrarModal && (
         <ModalRenovarSesion

@@ -1,6 +1,6 @@
 // src/layout/Menuitems.ts
 import {IconLayoutDashboard,IconCreditCard, IconChartBar,IconChartDonut,IconChartPie,IconChartLine,
-  IconBoxSeam,IconHierarchy3,IconTruckDelivery,IconClipboardCheck,IconTargetArrow,IconMessage2,IconUsersGroup,
+  IconBoxSeam,IconHierarchy3,IconTruckDelivery,IconClipboardCheck,IconMessage2,IconUsersGroup,
   IconChartBarOff,
   IconCashOff,} from "@tabler/icons-react";
 
@@ -91,7 +91,7 @@ const Menuitems = [
   //   },
   {
     navlabel: true,
-    subheader: "Informes & Metas",
+    subheader: "Informes",
     divider: true,
   },
   {
@@ -143,13 +143,6 @@ const Menuitems = [
       },
     ],
   },
-  {
-    id: uniqueId(),
-    title: "Metas",
-    icon: IconTargetArrow,
-    href: "/metas-general",
-  },
-
   {
     navlabel: true,
     subheader: "Feedback",
