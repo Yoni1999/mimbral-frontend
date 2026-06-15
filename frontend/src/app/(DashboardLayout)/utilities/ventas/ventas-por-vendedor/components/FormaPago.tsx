@@ -1,10 +1,12 @@
 "use client";
 
 import React from "react";
-import Chart from "react-apexcharts";
+import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
 import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
 import { useTheme, useMediaQuery } from "@mui/material";
+
+const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 interface FormasPagoItem {
   PayDueMonth: string;

@@ -40,6 +40,7 @@ const FRONT_OPTIONS: AgentOption[] = [
   { label: "Ventas por Vendedor", route: "/utilities/ventas/ventas-por-vendedor" },
   { label: "Analisis por Categoria", route: "/utilities/analisis-categoria/resumen-categorias" },
   { label: "Analisis por Producto", route: "/utilities/analisis-producto1.1" },
+  { label: "Informe Ventas de Productos por Canal", route: "/informes/ventas-productos-por-canal" },
   { label: "Informe Ventas de Productos", route: "/informes/ventas-productos" },
   { label: "Informe Productos sin ventas", route: "/informes/productos-sin-ventas" },
   { label: "Informe Productos menos rentables", route: "/informes/productos-menos-rentables" },
@@ -47,6 +48,29 @@ const FRONT_OPTIONS: AgentOption[] = [
 ];
 
 const picks = (labels: string[]) => FRONT_OPTIONS.filter((x) => labels.includes(x.label));
+
+const PRODUCT_SEARCH_GUIDE = [
+  {
+    term: "sku",
+    text: "Para buscar por SKU puedes ir a Resumen Ventas, Ventas por Canal, Analisis por Producto, Informe Ventas de Productos por Canal y los informes de productos.",
+  },
+  {
+    term: "nombre",
+    text: "Para buscar por nombre de producto, revisa el Informe Ventas de Productos por Canal y los informes de productos, donde el nombre del producto aparece junto al SKU.",
+  },
+  {
+    term: "familia",
+    text: "Para familia, revisa Resumen Ventas, Analisis por Categoria e Informe Ventas de Productos por Canal.",
+  },
+  {
+    term: "subfamilia",
+    text: "Para subfamilia, revisa Resumen Ventas, Analisis por Categoria e Informe Ventas de Productos por Canal.",
+  },
+  {
+    term: "primer nivel",
+    text: "Para primer nivel, revisa Resumen Ventas, Analisis por Categoria e Informe Ventas de Productos por Canal.",
+  },
+];
 
 const normalize = (value: string) =>
   value
@@ -135,9 +159,25 @@ const getSuggestions = (query: string): { text: string; options: AgentOption[] }
       text: "Para analisis de producto, te recomiendo estas secciones:",
       options: picks([
         "Analisis por Producto",
+        "Informe Ventas de Productos por Canal",
         "Informe Productos sin ventas",
         "Informe Productos menos rentables",
         "Informe Productos detenidos",
+      ]),
+    };
+  }
+
+  if (q.includes("familia") || q.includes("subfamilia") || q.includes("primer nivel")) {
+    return {
+      text:
+        "Para familia, subfamilia o primer nivel puedes buscar en estas vistas:\n" +
+        "• Resumen Ventas\n" +
+        "• Analisis por Categoria\n" +
+        "• Informe Ventas de Productos por Canal",
+      options: picks([
+        "Resumen Ventas",
+        "Analisis por Categoria",
+        "Informe Ventas de Productos por Canal",
       ]),
     };
   }
@@ -150,12 +190,15 @@ const getSuggestions = (query: string): { text: string; options: AgentOption[] }
   }
 
   return {
-    text: "Puedo ayudarte a navegar por ventas, canales, vendedores, categorias, productos e informes. Elige una opcion:",
+    text:
+      "Puedo ayudarte a navegar por ventas, canales, vendedores, categorias, productos e informes.\n" +
+      "Tambien te puedo orientar por SKU, nombre, familia o subfamilia. Elige una opcion:",
     options: picks([
       "Resumen Ventas",
       "Ventas por Canal",
       "Ventas por Vendedor",
       "Analisis por Categoria",
+      "Informe Ventas de Productos por Canal",
       "Informe Ventas de Productos",
     ]),
   };
@@ -178,12 +221,15 @@ export default function FloatingHelpAgent() {
     () => [
       {
         role: "agent",
-        text: "Hola, soy tu Agente de Ayuda. Dime que necesitas ver y te sugiero a que apartado del sitio ir.",
+        text:
+          "Hola, soy tu Agente de Ayuda. Dime que necesitas ver y te sugiero a que apartado del sitio ir.\n" +
+          "Puedo orientarte por SKU, nombre, familia o subfamilia.",
         options: picks([
           "Resumen Ventas",
           "Ventas por Canal",
           "Ventas por Vendedor",
           "Analisis por Categoria",
+          "Informe Ventas de Productos por Canal",
         ]),
       },
     ],
@@ -252,6 +298,26 @@ export default function FloatingHelpAgent() {
     setInput("");
 
     const parsed = parseSkuQuery(trimmed);
+    const q = normalize(trimmed);
+
+    const searchHelp = PRODUCT_SEARCH_GUIDE.find((item) => q.includes(item.term));
+    if (searchHelp && !parsed.isSkuQuestion) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "agent",
+          text: searchHelp.text,
+          options: picks([
+            "Resumen Ventas",
+            "Ventas por Canal",
+            "Ventas por Vendedor",
+            "Analisis por Categoria",
+            "Informe Ventas de Productos por Canal",
+          ]),
+        },
+      ]);
+      return;
+    }
 
     if (parsed.isSkuQuestion) {
       setIsThinking(true);

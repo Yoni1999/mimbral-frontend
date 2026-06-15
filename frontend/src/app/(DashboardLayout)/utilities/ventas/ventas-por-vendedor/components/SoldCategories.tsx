@@ -41,8 +41,6 @@ interface Producto {
 
 interface Filters {
   vendedorEmpresa: string;
-  temporada: string;
-  periodo: string;
   fechaInicio: string;
   fechaFin: string;
   modoComparacion: string;
@@ -59,28 +57,12 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
   const [sortBy, setSortBy] = useState<"unidades" | "ventas" | "margen" | "">("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  const getPeriodoParam = (periodo: string) => {
-    switch (periodo) {
-      case "1D": return "1d";
-      case "7D": return "7d";
-      case "14D": return "14d";
-      case "1M": return "1m";
-      case "3M": return "3m";
-      case "6M": return "6m";
-      default: return "1d";
-    }
-  };
-
   useEffect(() => {
     const buildQuery = () => {
       const params = new URLSearchParams();
 
-      if (filtros.periodo) {
-        params.append("periodo", getPeriodoParam(filtros.periodo));
-      } else {
-        if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
-        if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
-      }
+      if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
+      if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
 
       if (filtros.modoComparacion) params.append("modoComparacion", filtros.modoComparacion);
       if (filtros.vendedorEmpresa) params.append("vendedorEmpresa", filtros.vendedorEmpresa);

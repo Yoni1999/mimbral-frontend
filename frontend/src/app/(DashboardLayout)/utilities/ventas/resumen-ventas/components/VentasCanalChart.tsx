@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
 import { fetchWithToken } from "@/utils/fetchWithToken";
@@ -12,9 +13,11 @@ import { formatVentas } from "@/utils/format";
 interface Props {
   filters: {
     temporada: string;
-    periodo: string;
     fechaInicio: string;
     fechaFin: string;
+    sku?: string;
+    familia?: string;
+    subfamilia?: string;
   };
 }
 
@@ -25,12 +28,11 @@ interface VentasCanalData {
 const VentasCanalChart: React.FC<Props> = ({ filters }) => {
   const [chartData, setChartData] = useState<number[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
-  const [rawKeys, setRawKeys] = useState<string[]>([]); // para mantener los keys reales
+  const [rawKeys, setRawKeys] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const router = useRouter();
 
-  // 🔁 Mapeo visual de nombres de canal
   const canalNameMap: Record<string, string> = {
     empresas: "Empresas",
     chorrillo: "Chorrillo",
@@ -44,17 +46,10 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
     const params = new URLSearchParams();
     if (filters.fechaInicio) params.append("fechaInicio", filters.fechaInicio);
     if (filters.fechaFin) params.append("fechaFin", filters.fechaFin);
-    if (filters.periodo) {
-      const mapPeriodo: any = {
-        "Hoy": "1d",
-        "Ultimos 7 días": "7d",
-        "Ultimos 14 días": "14d",
-        "Ultimo mes": "1m",
-        "3 meses": "3m",
-        "6 meses": "6m",
-      };
-      params.append("periodo", mapPeriodo[filters.periodo]);
-    }
+    if (filters.sku) params.append("sku", filters.sku);
+    if (filters.familia) params.append("familia", filters.familia);
+    if (filters.subfamilia) params.append("subfamilia", filters.subfamilia);
+    if (filters.temporada) params.append("temporada", filters.temporada);
     return params.toString();
   };
 
@@ -73,9 +68,9 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
 
         setLabels(newLabels);
         setChartData(newSeries);
-        setRawKeys(keys); // guardamos los nombres originales
+        setRawKeys(keys);
       } catch (error) {
-        console.error("❌ Error al obtener datos de ventas por canal:", error);
+        console.error("Error al obtener datos de ventas por canal:", error);
       } finally {
         setLoading(false);
       }
@@ -96,7 +91,7 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
         },
       },
     },
-    labels: labels,
+    labels,
     colors: ["#9583ff", "#ff914a", "#f0d45f", "#45914b", "#284270", "#d93a3a"],
     tooltip: {
       y: {

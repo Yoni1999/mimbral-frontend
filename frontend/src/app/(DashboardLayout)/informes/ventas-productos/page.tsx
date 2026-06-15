@@ -6,9 +6,6 @@ import {
   Typography,
   Divider,
   CircularProgress,
-  Snackbar,
-  Alert,
-  IconButton,
   Pagination,
   Menu,
   MenuItem,
@@ -24,7 +21,6 @@ import {
   DialogActions         // <-- agregado para botones del modal
 } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ProductosVendidosTable from "./components/ProductosVendidos";
 import HeaderVentasProductosDrawer from "./components/HeaderVentasProductosDrawer";
@@ -84,7 +80,6 @@ const InformeVentaPage = () => {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [showMensaje, setShowMensaje] = useState(true);
   const [orden, setOrden] = useState<Order>("desc");
   const [ordenPor, setOrdenPor] = useState<OrderBy>("cantidadVendida");
 
@@ -507,38 +502,6 @@ const InformeVentaPage = () => {
           />
         </Box>
       )}
-
-      <Snackbar
-        open={showMensaje}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        autoHideDuration={null}
-        sx={{ maxWidth: "400px" }}
-      >
-        <Alert
-          severity="warning"
-          variant="filled"
-          action={
-            <IconButton
-              aria-label="close"
-              color="inherit"
-              size="small"
-              onClick={() => setShowMensaje(false)}
-            >
-              <CloseIcon fontSize="inherit" />
-            </IconButton>
-          }
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            p: 1.5,
-            borderRadius: 3,
-            fontSize: "0.9rem",
-          }}
-        >
-          Este informe se actualiza a diario con la información de ventas más reciente. Si necesitas
-          información más actualizada, pide al usuario ADMIN que actualice la información.
-        </Alert>
-      </Snackbar>
 
       {/* CAMBIO: modal de exportación con input numérico */}
       <Dialog open={openExportModal} onClose={handleCloseExportModal}>

@@ -46,7 +46,6 @@ app.use(cors({
 
 app.use(express.json());
 
-// 🔐 Middleware de autenticación
 app.use((req, res, next) => {
   const publicRoutes = ["/api/auth", "/api/entradas", "/api/templace", "/api/pricing"];
   const isPublic = publicRoutes.some((route) => req.path.startsWith(route));
@@ -54,12 +53,10 @@ app.use((req, res, next) => {
   authMiddleware(req, res, next);
 });
 
-// Rutas públicas
 app.use("/api/auth", authRoutes);
 app.use("/api/templace", omcRoutes);
 app.use("/api/pricing", stockRoutes);
 
-// Rutas protegidas
 app.use("/api", ventasRoutes);
 app.use("/api/quiebres", quiebresRoutes);
 app.use("/api/margen", margenRoutes);
@@ -89,7 +86,6 @@ app.use("/api/informes", productosmenosrentablesRoutes);
 app.use("/api/informes", sinventasRoutes);
 app.use("/api/informes", informecanalRoutes);
 
-// Obtener IP local
 function getLocalIP() {
   const interfaces = os.networkInterfaces();
   for (const iface of Object.values(interfaces)) {

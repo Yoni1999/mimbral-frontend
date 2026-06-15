@@ -1,5 +1,11 @@
 const { poolPromise } = require("../models/db");
 
+const bindProductFilterParams = (request, { sku = null, familia = null, subfamilia = null }) => {
+  request.input("SkuParamInput", sku);
+  request.input("FamiliaParamInput", familia);
+  request.input("SubfamiliaParamInput", subfamilia);
+};
+
 //RESUMNE VENTAS 
   // OBTENER VENTAS POR CANAL
 const getVentascanal = async (req, res) => {
@@ -7,6 +13,9 @@ const getVentascanal = async (req, res) => {
     const pool = await poolPromise;
 
     const { periodo, itemCode } = req.query;
+    const sku = req.query.sku || null;
+    const familia = req.query.familia || null;
+    const subfamilia = req.query.subfamilia || null;
 
     let fechaFin = new Date();
     let fechaInicio;
@@ -59,6 +68,7 @@ const getVentascanal = async (req, res) => {
     if (itemCode) {
       request.input("ItemCode", itemCode);
     }
+    bindProductFilterParams(request, { sku, familia, subfamilia });
 
     const query = `
       SELECT 
@@ -82,11 +92,14 @@ const getVentascanal = async (req, res) => {
           END) AS Empresas
       FROM INV1 I
       INNER JOIN OINV OI ON I.DocEntry = OI.DocEntry
-      WHERE I.DocDate BETWEEN @FechaInicio AND @FechaFin
-      AND OI.CANCELED = 'N'AND OI.CANCELED = 'N'
+      INNER JOIN OITM O ON I.ItemCode = O.ItemCode
+      WHERE OI.DocDate BETWEEN @FechaInicio AND @FechaFin
         AND OI.CANCELED = 'N'
         AND I.ItemCode <> '701001008'
         ${itemCode ? "AND I.ItemCode = @ItemCode" : ""}
+        AND (@SkuParamInput IS NULL OR I.ItemCode = @SkuParamInput)
+        AND (@FamiliaParamInput IS NULL OR O.U_Nombre_Fam = @FamiliaParamInput)
+        AND (@SubfamiliaParamInput IS NULL OR O.U_Nombre_SubFam = @SubfamiliaParamInput)
     `;
 
     const result = await request.query(query);
@@ -110,6 +123,9 @@ const getMayorRentabilidad = async (req, res) => {
     const periodo = req.query.periodo || "1D";
     const fechaInicio = req.query.fechaInicio || null;
     const fechaFin = req.query.fechaFin || null;
+    const sku = req.query.sku || null;
+    const familia = req.query.familia || null;
+    const subfamilia = req.query.subfamilia || null;
 
     const query = `
       DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
@@ -117,6 +133,9 @@ const getMayorRentabilidad = async (req, res) => {
       DECLARE @Periodo VARCHAR(10) = @PeriodoParam;
       DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
       DECLARE @FechaFinCustom DATE = @FechaFinInput;
+      DECLARE @SkuParam VARCHAR(50) = @SkuParamInput;
+      DECLARE @FamiliaParam VARCHAR(100) = @FamiliaParamInput;
+      DECLARE @SubfamiliaParam VARCHAR(100) = @SubfamiliaParamInput;
 
       DECLARE @FechaInicio DATE, @FechaFin DATE;
       IF (@FechaInicioCustom IS NOT NULL AND @FechaFinCustom IS NOT NULL)
@@ -159,6 +178,9 @@ const getMayorRentabilidad = async (req, res) => {
           AND T0.CANCELED = 'N'
           AND I.ItemCode <> '701001008'
           AND I.StockPrice > 0
+          AND (@SkuParam IS NULL OR I.ItemCode = @SkuParam)
+          AND (@FamiliaParam IS NULL OR O.U_Nombre_Fam = @FamiliaParam)
+          AND (@SubfamiliaParam IS NULL OR O.U_Nombre_SubFam = @SubfamiliaParam)
           AND (
               @CanalParam IS NULL
               OR (
@@ -184,6 +206,7 @@ const getMayorRentabilidad = async (req, res) => {
     request.input("PeriodoParam", periodo);
     request.input("FechaInicioInput", fechaInicio);
     request.input("FechaFinInput", fechaFin);
+    bindProductFilterParams(request, { sku, familia, subfamilia });
 
     const result = await request.query(query);
     res.json(result.recordset);
@@ -202,6 +225,9 @@ const getMenorRentabilidad = async (req, res) => {
     const periodo = req.query.periodo || "1D";
     const fechaInicio = req.query.fechaInicio || null;
     const fechaFin = req.query.fechaFin || null;
+    const sku = req.query.sku || null;
+    const familia = req.query.familia || null;
+    const subfamilia = req.query.subfamilia || null;
 
     const query = `
       DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
@@ -209,6 +235,9 @@ const getMenorRentabilidad = async (req, res) => {
       DECLARE @Periodo VARCHAR(10) = @PeriodoParam;
       DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
       DECLARE @FechaFinCustom DATE = @FechaFinInput;
+      DECLARE @SkuParam VARCHAR(50) = @SkuParamInput;
+      DECLARE @FamiliaParam VARCHAR(100) = @FamiliaParamInput;
+      DECLARE @SubfamiliaParam VARCHAR(100) = @SubfamiliaParamInput;
 
       DECLARE @FechaInicio DATE, @FechaFin DATE;
       IF (@FechaInicioCustom IS NOT NULL AND @FechaFinCustom IS NOT NULL)
@@ -252,6 +281,9 @@ const getMenorRentabilidad = async (req, res) => {
           AND I.Quantity > 0
           AND I.ItemCode <> '701001008'
           AND I.StockPrice > 0
+          AND (@SkuParam IS NULL OR I.ItemCode = @SkuParam)
+          AND (@FamiliaParam IS NULL OR O.U_Nombre_Fam = @FamiliaParam)
+          AND (@SubfamiliaParam IS NULL OR O.U_Nombre_SubFam = @SubfamiliaParam)
           AND (
               @CanalParam IS NULL
               OR (
@@ -277,6 +309,7 @@ const getMenorRentabilidad = async (req, res) => {
     request.input("PeriodoParam", periodo);
     request.input("FechaInicioInput", fechaInicio);
     request.input("FechaFinInput", fechaFin);
+    bindProductFilterParams(request, { sku, familia, subfamilia });
 
     const result = await request.query(query);
     res.json(result.recordset);

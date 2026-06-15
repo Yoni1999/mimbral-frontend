@@ -18,8 +18,6 @@ interface ProductoMasVendido {
 
 interface Filters {
   vendedorEmpresa: string;
-  temporada: string;
-  periodo: string;
   fechaInicio: string;
   fechaFin: string;
   modoComparacion: string;
@@ -32,25 +30,6 @@ interface Props {
 
 const TopVentasComparadoChart: React.FC<Props> = ({ filtros }) => {
   const [data, setData] = useState<ProductoMasVendido[]>([]);
-
-  const getPeriodoParam = (periodo: string) => {
-    switch (periodo) {
-      case "1D":
-        return "1d";
-      case "7D":
-        return "7d";
-      case "14D":
-        return "14d";
-      case "1M":
-        return "1m";
-      case "3M":
-        return "3m";
-      case "6M":
-        return "6m";
-      default:
-        return "1d";
-    }
-  };
 
   const getComparacionTexto = () => {
     switch (filtros.modoComparacion) {
@@ -66,12 +45,8 @@ const TopVentasComparadoChart: React.FC<Props> = ({ filtros }) => {
   const buildQuery = () => {
     const params = new URLSearchParams();
 
-    if (filtros.periodo) {
-      params.append("periodo", getPeriodoParam(filtros.periodo));
-    } else {
-      if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
-      if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
-    }
+    if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
+    if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
 
     if (filtros.modoComparacion) {
       params.append("modoComparacion", filtros.modoComparacion);

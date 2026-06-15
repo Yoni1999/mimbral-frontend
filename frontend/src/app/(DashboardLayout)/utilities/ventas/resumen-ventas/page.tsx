@@ -17,7 +17,7 @@ import { fetchWithToken } from "@/utils/fetchWithToken";
 import { IconCurrencyDollar, IconTrendingUp, IconCreditCard, IconShoppingCart, IconStack2, IconBox, } from "@tabler/icons-react";
 import TopRentabilidadMinima from "./components/Top10RentabilidadMinima";
 import NivelNavigation from "../components/NivelNavigation";
-import FotoDelDiaHeader, { Filters } from "./components/FotoDelDiaHeader.tsx";
+import FotoDelDiaHeader, { Filters } from "./components/FotoDelDiaHeader";
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades } from "@/utils/format";
 import ProductosVendidos from "./components/ProductosVendidos";
@@ -35,12 +35,15 @@ const RentabilidadChart = dynamic(() => import("./components/Top10RentabilidadCh
 
 const ResumenVentas = () => {
   const [loading, setLoading] = useState(true);
-  const [filtros, setFiltros] = useState<Omit<Filters, "vendedor">>({
+  const [filtros, setFiltros] = useState<Filters>({
     canal: "", 
     temporada: "",
-    periodo: "",
     fechaInicio: "",
     fechaFin: "",
+    sku: "",
+    familia: "",
+    subfamilia: "",
+    comparacion: "",
   });
 
 
@@ -120,24 +123,16 @@ const ResumenVentas = () => {
     }
   };
   useEffect(() => {
-    const getPeriodoParam = () => {
-      switch (filtros.periodo) {
-        case "Hoy": return "1D";
-        case "Ultimos 7 días": return "7D";
-        case "Ultimos 14 días": return "14D";
-        case "Ultimo mes": return "1M";
-        case "3 meses": return "3M";
-        case "6 meses": return "6M";
-        default: return "1D";
-      }
-    };
     const buildQuery = () => {
       const params = new URLSearchParams();
       if (filtros.canal) params.append("canal", filtros.canal);
       if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
       if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
-      if (filtros.periodo) params.append("periodo", getPeriodoParam());
       if (filtros.temporada) params.append("temporada", filtros.temporada);
+      if (filtros.sku) params.append("sku", filtros.sku);
+      if (filtros.familia) params.append("familia", filtros.familia);
+      if (filtros.subfamilia) params.append("subfamilia", filtros.subfamilia);
+      if (filtros.comparacion) params.append("comparacion", filtros.comparacion);
       return params.toString();
     };
     const query = buildQuery();

@@ -184,6 +184,8 @@ const obtenerProductosPorCanalMargen = async (req, res) => {
 
       // filtros extra
       sku = null,
+      familia = null,
+      subfamilia = null,
     } = req.query;
 
     // ====== normalizaciones ======
@@ -202,6 +204,11 @@ const obtenerProductosPorCanalMargen = async (req, res) => {
     primerNivel  = normalizeNullable(primerNivel);
     categoria    = normalizeNullable(categoria);
     subcategoria = normalizeNullable(subcategoria);
+    familia      = normalizeNullable(familia);
+    subfamilia   = normalizeNullable(subfamilia);
+    sku          = normalizeNullable(sku);
+    periodo      = normalizeNullable(periodo);
+    periodo      = periodo ? String(periodo).toUpperCase() : null;
 
     const aplicarPaginacion = sinPaginacion !== "true";
 
@@ -217,11 +224,10 @@ const obtenerProductosPorCanalMargen = async (req, res) => {
       : (typeof canal === "string" && canal.trim() !== "" ? canal.split(",").map(s => s.trim().toLowerCase()) : []);
     const canalesCsv = canalArr.map(c => CANAL_MAP[c]).filter(Boolean).join(",") || null;
 
-    // skus CSV
-    const skuArr = Array.isArray(sku)
-      ? sku.map(s => String(s).trim()).filter(Boolean)
-      : (typeof sku === "string" && sku.trim() !== "" ? sku.split(",").map(s => s.trim()).filter(Boolean) : []);
-    const skuCsv = skuArr.length ? skuArr.join(",") : null;
+    // Para este informe dejamos la búsqueda de producto totalmente flexible.
+    // El LIKE sobre ItemCode/ItemName resuelve SKU exacto, parcial y nombre.
+    const skuCsv = null;
+    const skuParam = typeof sku === "string" && sku.trim() !== "" ? sku.trim() : null;
 
     // page/pageSize → limit/offset
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
@@ -233,9 +239,10 @@ const obtenerProductosPorCanalMargen = async (req, res) => {
     const vendedorNum = vendedor ? Number(vendedor) : null;
 
     // ====== DB ======
-    const { rows, breakdown, total, detalles } = await obtenerProductosPorCanalMargenDB({
+    const { rows, breakdown, total, detalles, stock } = await obtenerProductosPorCanalMargenDB({
       canalesCsv,
       skuCsv,
+      sku: skuParam,
       vendedor: vendedorNum,
       periodo,
       fechaInicio,
@@ -244,6 +251,8 @@ const obtenerProductosPorCanalMargen = async (req, res) => {
       primerNivel,
       categoria,
       subcategoria,
+      familia,
+      subfamilia,
       tipoEnvio,
       limit,
       offset,
@@ -254,6 +263,19 @@ const obtenerProductosPorCanalMargen = async (req, res) => {
 
     // ====== merge por SKU y Canal ======
     const bySku = new Map();
+    const stockBySku = new Map();
+
+    (stock || []).forEach((item) => {
+      const skuKey = item.sku;
+      if (!stockBySku.has(skuKey)) {
+        stockBySku.set(skuKey, []);
+      }
+
+      stockBySku.get(skuKey).push({
+        bodega: item.bodega,
+        stock: Number(item.stock) || 0,
+      });
+    });
 
     // 1) Totales por SKU
     rows.forEach(r => {
@@ -270,6 +292,7 @@ const obtenerProductosPorCanalMargen = async (req, res) => {
         margenBruto: Number(margenBruto.toFixed(2)),
         margenPorcentaje: Number(margenPorcentaje.toFixed(2)),
         costoTotal: Number(costoTotal.toFixed(2)),
+        stock: (stockBySku.get(r.sku) || []).sort((a, b) => a.bodega.localeCompare(b.bodega)),
         _canales: new Map(), // mapa temporal canal -> objeto canal
       });
     });

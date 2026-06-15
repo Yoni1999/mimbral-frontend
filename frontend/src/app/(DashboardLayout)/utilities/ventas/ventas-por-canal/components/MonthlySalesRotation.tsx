@@ -9,7 +9,6 @@ import { BACKEND_URL } from '@/config';
 // --- INTERFACES ---
 interface Filters {
   canal: string;
-  periodo: string;
   fechaInicio: string;
   fechaFin: string;
   vendedor?: number | null;

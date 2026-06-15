@@ -3,6 +3,18 @@ const { poolPromise } = require("../models/db");
 const { getCachedData } = require("../utils/cache");
 const axios = require('axios');
 
+const buildProductFilterSql = (itemAlias, productAlias) => `
+        AND (@SkuParam IS NULL OR ${itemAlias}.ItemCode = @SkuParam)
+        AND (@FamiliaParam IS NULL OR ${productAlias}.U_Nombre_Fam = @FamiliaParam)
+        AND (@SubfamiliaParam IS NULL OR ${productAlias}.U_Nombre_SubFam = @SubfamiliaParam)
+`;
+
+const bindProductFilterParams = (request, { sku = null, familia = null, subfamilia = null }) => {
+  request.input("SkuParamInput", sql.VarChar, sku);
+  request.input("FamiliaParamInput", sql.VarChar, familia);
+  request.input("SubfamiliaParamInput", sql.VarChar, subfamilia);
+};
+
 
 //RESUMEN DE VENTAS
    //Top 10 productos más vendidos
@@ -93,7 +105,7 @@ const obtenerTopProductos = async (req, res) => {
   };
 //RESUMEN DE VENTAS
    //Top 10 categorias con mayor margen.
-   const obtenerMargenCategoriasComparado = async (req, res) => {
+const obtenerMargenCategoriasComparado = async (req, res) => {
     try {
       const pool = await poolPromise;
   
@@ -103,6 +115,9 @@ const obtenerTopProductos = async (req, res) => {
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
       const modoComparacion = req.query.modo || "anio_anterior"; 
+      const sku = req.query.sku || null;
+      const familia = req.query.familia || null;
+      const subfamilia = req.query.subfamilia || null;
   
       const query = `
         -- Declaración de parámetros
@@ -112,6 +127,9 @@ const obtenerTopProductos = async (req, res) => {
         DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
         DECLARE @FechaFinCustom DATE = @FechaFinInput;
         DECLARE @ModoComparacion VARCHAR(20) = @ModoComparacionInput;
+        DECLARE @SkuParam VARCHAR(50) = @SkuParamInput;
+        DECLARE @FamiliaParam VARCHAR(100) = @FamiliaParamInput;
+        DECLARE @SubfamiliaParam VARCHAR(100) = @SubfamiliaParamInput;
   
         -- Fechas de análisis
         DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
@@ -165,6 +183,9 @@ const obtenerTopProductos = async (req, res) => {
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
                 AND T0.CANCELED = 'N'
+                AND (@SkuParam IS NULL OR I.ItemCode = @SkuParam)
+                AND (@FamiliaParam IS NULL OR O.U_Nombre_Fam = @FamiliaParam)
+                AND (@SubfamiliaParam IS NULL OR O.U_Nombre_SubFam = @SubfamiliaParam)
                 AND (
                     @CanalParam IS NULL
                     OR (
@@ -197,6 +218,9 @@ const obtenerTopProductos = async (req, res) => {
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioComparacion AND @FechaFinComparacion
                 AND T0.CANCELED = 'N'
+                AND (@SkuParam IS NULL OR I.ItemCode = @SkuParam)
+                AND (@FamiliaParam IS NULL OR O.U_Nombre_Fam = @FamiliaParam)
+                AND (@SubfamiliaParam IS NULL OR O.U_Nombre_SubFam = @SubfamiliaParam)
                 AND (
                     @CanalParam IS NULL
                     OR (
@@ -239,6 +263,7 @@ const obtenerTopProductos = async (req, res) => {
       request.input("FechaInicioInput", sql.Date, fechaInicio);
       request.input("FechaFinInput", sql.Date, fechaFin);
       request.input("ModoComparacionInput", sql.VarChar, modoComparacion);
+      bindProductFilterParams(request, { sku, familia, subfamilia });
   
       const result = await request.query(query);
       res.json(result.recordset);
@@ -258,6 +283,9 @@ const obtenerVentasPeriodo = async (req, res) => {
       const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
+      const sku = req.query.sku || null;
+      const familia = req.query.familia || null;
+      const subfamilia = req.query.subfamilia || null;
   
       const query = `
         DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
@@ -265,6 +293,9 @@ const obtenerVentasPeriodo = async (req, res) => {
         DECLARE @Periodo VARCHAR(10) = @PeriodoParam;
         DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
         DECLARE @FechaFinCustom DATE = @FechaFinInput;
+        DECLARE @SkuParam VARCHAR(50) = @SkuParamInput;
+        DECLARE @FamiliaParam VARCHAR(100) = @FamiliaParamInput;
+        DECLARE @SubfamiliaParam VARCHAR(100) = @SubfamiliaParamInput;
   
         DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
         DECLARE @FechaInicioAnterior DATE, @FechaFinAnterior DATE;
@@ -293,14 +324,15 @@ const obtenerVentasPeriodo = async (req, res) => {
         SET @FechaFinAnterior = DATEADD(DAY, -1, @FechaInicioActual);
         SET @FechaInicioAnterior = DATEADD(DAY, -@Dias, @FechaInicioActual);
   
-        WITH VentasPeriodo AS (
-            SELECT 
-                CAST(SUM(T1.LineTotal) AS DECIMAL(18, 2)) AS TotalVentasPeriodo
+        WITH VentasBase AS (
+            SELECT
+                T0.DocDate,
+                T1.LineTotal
             FROM [dbo].[OINV] T0
             INNER JOIN [dbo].[INV1] T1 ON T0.DocEntry = T1.DocEntry
-            WHERE 
-                T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
-                AND T0.CANCELED = 'N'
+            LEFT JOIN [dbo].[OITM] I ON I.ItemCode = T1.ItemCode
+            WHERE
+                T0.CANCELED = 'N'
                 AND T1.ItemCode <> '701001008'
                 AND (
                     @CanalParam IS NULL
@@ -317,31 +349,23 @@ const obtenerVentasPeriodo = async (req, res) => {
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
+                AND (@SkuParam IS NULL OR T1.ItemCode = @SkuParam)
+                AND (@FamiliaParam IS NULL OR I.U_Nombre_Fam = @FamiliaParam)
+                AND (@SubfamiliaParam IS NULL OR I.U_Nombre_SubFam = @SubfamiliaParam)
+        ),
+        VentasPeriodo AS (
+            SELECT 
+                CAST(SUM(T1.LineTotal) AS DECIMAL(18, 2)) AS TotalVentasPeriodo
+            FROM VentasBase T1
+            WHERE 
+                T1.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
         ),
         VentasAnterior AS (
             SELECT 
                 CAST(SUM(T1.LineTotal) AS DECIMAL(18, 2)) AS TotalVentasAnterior
-            FROM [dbo].[OINV] T0
-            INNER JOIN [dbo].[INV1] T1 ON T0.DocEntry = T1.DocEntry
+            FROM VentasBase T1
             WHERE 
-                T0.DocDate BETWEEN @FechaInicioAnterior AND @FechaFinAnterior
-                AND T0.CANCELED = 'N'
-                AND T1.ItemCode <> '701001008'
-                AND (
-                    @CanalParam IS NULL
-                    OR (
-                        (@CanalParam = 'Meli' AND ((T1.WhsCode IN ('03', '05') AND T1.SlpCode IN (426, 364, 355))
-                            OR (T1.WhsCode = '01' AND T1.SlpCode IN (355, 398)) ))
-                        OR (@CanalParam = 'Falabella' AND T1.WhsCode = '03' AND T1.SlpCode = 371)
-                        OR (@CanalParam = 'Balmaceda' AND T1.WhsCode = '07')
-                        OR (@CanalParam = 'Vitex' AND T1.WhsCode = '01' AND T1.SlpCode IN (401, 397))
-                        OR (@CanalParam = 'Chorrillo' AND T1.WhsCode = '01' 
-                            AND T1.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212))
-                        OR (@CanalParam = 'Empresas' AND T1.WhsCode = '01' 
-                            AND T1.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212))
-                    )
-                )
-                AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
+                T1.DocDate BETWEEN @FechaInicioAnterior AND @FechaFinAnterior
         )
         SELECT 
             VP.TotalVentasPeriodo, 
@@ -359,6 +383,9 @@ const obtenerVentasPeriodo = async (req, res) => {
       request.input("PeriodoParam", sql.VarChar, periodo);
       request.input("FechaInicioInput", sql.Date, fechaInicio);
       request.input("FechaFinInput", sql.Date, fechaFin);
+      request.input("SkuParamInput", sql.VarChar, sku);
+      request.input("FamiliaParamInput", sql.VarChar, familia);
+      request.input("SubfamiliaParamInput", sql.VarChar, subfamilia);
   
       const result = await request.query(query);
       res.json(result.recordset[0]);
@@ -380,6 +407,9 @@ const obtenerTransaccionesPeriodo = async (req, res) => {
       const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
+      const sku = req.query.sku || null;
+      const familia = req.query.familia || null;
+      const subfamilia = req.query.subfamilia || null;
   
       const query = `
         DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
@@ -387,6 +417,9 @@ const obtenerTransaccionesPeriodo = async (req, res) => {
         DECLARE @Periodo VARCHAR(10) = @PeriodoParam;
         DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
         DECLARE @FechaFinCustom DATE = @FechaFinInput;
+        DECLARE @SkuParam VARCHAR(50) = @SkuParamInput;
+        DECLARE @FamiliaParam VARCHAR(100) = @FamiliaParamInput;
+        DECLARE @SubfamiliaParam VARCHAR(100) = @SubfamiliaParamInput;
   
         DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
         DECLARE @FechaInicioAnterior DATE, @FechaFinAnterior DATE;
@@ -419,6 +452,7 @@ const obtenerTransaccionesPeriodo = async (req, res) => {
             SELECT COUNT(DISTINCT T0.DocEntry) AS CantidadTransacciones
             FROM [dbo].[OINV] T0
             INNER JOIN [dbo].[INV1] T1 ON T0.DocEntry = T1.DocEntry
+            LEFT JOIN [dbo].[OITM] I ON I.ItemCode = T1.ItemCode
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
                 AND T0.CANCELED = 'N'
@@ -438,11 +472,15 @@ const obtenerTransaccionesPeriodo = async (req, res) => {
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
+                AND (@SkuParam IS NULL OR T1.ItemCode = @SkuParam)
+                AND (@FamiliaParam IS NULL OR I.U_Nombre_Fam = @FamiliaParam)
+                AND (@SubfamiliaParam IS NULL OR I.U_Nombre_SubFam = @SubfamiliaParam)
         ),
         TransaccionesAnterior AS (
             SELECT COUNT(DISTINCT T0.DocEntry) AS CantidadTransacciones
             FROM [dbo].[OINV] T0
             INNER JOIN [dbo].[INV1] T1 ON T0.DocEntry = T1.DocEntry
+            LEFT JOIN [dbo].[OITM] I ON I.ItemCode = T1.ItemCode
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioAnterior AND @FechaFinAnterior
                 AND T0.CANCELED = 'N'
@@ -462,6 +500,9 @@ const obtenerTransaccionesPeriodo = async (req, res) => {
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
+                AND (@SkuParam IS NULL OR T1.ItemCode = @SkuParam)
+                AND (@FamiliaParam IS NULL OR I.U_Nombre_Fam = @FamiliaParam)
+                AND (@SubfamiliaParam IS NULL OR I.U_Nombre_SubFam = @SubfamiliaParam)
         )
         SELECT 
             TP.CantidadTransacciones AS CantidadTransaccionesPeriodo, 
@@ -479,6 +520,7 @@ const obtenerTransaccionesPeriodo = async (req, res) => {
       request.input("PeriodoParam", sql.VarChar, periodo);
       request.input("FechaInicioInput", sql.Date, fechaInicio);
       request.input("FechaFinInput", sql.Date, fechaFin);
+      bindProductFilterParams(request, { sku, familia, subfamilia });
   
       const result = await request.query(query);
       res.json(result.recordset[0]);
@@ -496,6 +538,9 @@ const obtenerUnidadesVendidasPeriodo = async (req, res) => {
       const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
+      const sku = req.query.sku || null;
+      const familia = req.query.familia || null;
+      const subfamilia = req.query.subfamilia || null;
   
       const query = `
         DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
@@ -503,6 +548,9 @@ const obtenerUnidadesVendidasPeriodo = async (req, res) => {
         DECLARE @Periodo VARCHAR(10) = @PeriodoParam;
         DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
         DECLARE @FechaFinCustom DATE = @FechaFinInput;
+        DECLARE @SkuParam VARCHAR(50) = @SkuParamInput;
+        DECLARE @FamiliaParam VARCHAR(100) = @FamiliaParamInput;
+        DECLARE @SubfamiliaParam VARCHAR(100) = @SubfamiliaParamInput;
   
         DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
         DECLARE @FechaInicioAnterior DATE, @FechaFinAnterior DATE;
@@ -536,6 +584,7 @@ const obtenerUnidadesVendidasPeriodo = async (req, res) => {
                 CAST(SUM(T1.Quantity) AS INT) AS CantidadVendida
             FROM [dbo].[OINV] T0
             INNER JOIN [dbo].[INV1] T1 ON T0.DocEntry = T1.DocEntry
+            LEFT JOIN [dbo].[OITM] I ON I.ItemCode = T1.ItemCode
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
                 AND T0.CANCELED = 'N'
@@ -555,12 +604,16 @@ const obtenerUnidadesVendidasPeriodo = async (req, res) => {
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
+                AND (@SkuParam IS NULL OR T1.ItemCode = @SkuParam)
+                AND (@FamiliaParam IS NULL OR I.U_Nombre_Fam = @FamiliaParam)
+                AND (@SubfamiliaParam IS NULL OR I.U_Nombre_SubFam = @SubfamiliaParam)
         ),
         UnidadesVendidasAnterior AS (
             SELECT 
                 CAST(SUM(T1.Quantity) AS INT) AS CantidadVendidaAnterior
             FROM [dbo].[OINV] T0
             INNER JOIN [dbo].[INV1] T1 ON T0.DocEntry = T1.DocEntry
+            LEFT JOIN [dbo].[OITM] I ON I.ItemCode = T1.ItemCode
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioAnterior AND @FechaFinAnterior
                 AND T0.CANCELED = 'N'
@@ -580,6 +633,9 @@ const obtenerUnidadesVendidasPeriodo = async (req, res) => {
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam)
+                AND (@SkuParam IS NULL OR T1.ItemCode = @SkuParam)
+                AND (@FamiliaParam IS NULL OR I.U_Nombre_Fam = @FamiliaParam)
+                AND (@SubfamiliaParam IS NULL OR I.U_Nombre_SubFam = @SubfamiliaParam)
         )
         SELECT 
             UVP.CantidadVendida,
@@ -597,6 +653,7 @@ const obtenerUnidadesVendidasPeriodo = async (req, res) => {
       request.input("PeriodoParam", sql.VarChar, periodo);
       request.input("FechaInicioInput", sql.Date, fechaInicio);
       request.input("FechaFinInput", sql.Date, fechaFin);
+      bindProductFilterParams(request, { sku, familia, subfamilia });
   
       const result = await request.query(query);
       res.json(result.recordset[0]);
@@ -614,14 +671,21 @@ const obtenerNotascredito = async (req, res) => {
       const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
+      const sku = req.query.sku || null;
+      const familia = req.query.familia || null;
+      const subfamilia = req.query.subfamilia || null;
   
       const request = pool.request();
       request.input("PeriodoParam", sql.VarChar, periodo);
       request.input("FechaInicioInput", sql.Date, fechaInicio);
       request.input("FechaFinInput", sql.Date, fechaFin);
+      bindProductFilterParams(request, { sku, familia, subfamilia });
   
       const query = `
         DECLARE @Periodo VARCHAR(10) = @PeriodoParam;
+        DECLARE @SkuParam VARCHAR(50) = @SkuParamInput;
+        DECLARE @FamiliaParam VARCHAR(100) = @FamiliaParamInput;
+        DECLARE @SubfamiliaParam VARCHAR(100) = @SubfamiliaParamInput;
         DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
         DECLARE @FechaInicioAnterior DATE, @FechaFinAnterior DATE;
   
@@ -655,7 +719,11 @@ const obtenerNotascredito = async (req, res) => {
             CAST(SUM(T1.Quantity) AS DECIMAL(18, 2)) AS CantidadProductosDevueltosPeriodo
           FROM [dbo].[ORIN] T0
           INNER JOIN [dbo].[RIN1] T1 ON T0.DocEntry = T1.DocEntry
+          LEFT JOIN [dbo].[OITM] I ON I.ItemCode = T1.ItemCode
           WHERE T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
+            AND (@SkuParam IS NULL OR T1.ItemCode = @SkuParam)
+            AND (@FamiliaParam IS NULL OR I.U_Nombre_Fam = @FamiliaParam)
+            AND (@SubfamiliaParam IS NULL OR I.U_Nombre_SubFam = @SubfamiliaParam)
         ),
         NC_PeriodoAnterior AS (
           SELECT 
@@ -663,7 +731,11 @@ const obtenerNotascredito = async (req, res) => {
             CAST(SUM(T1.Quantity) AS DECIMAL(18, 2)) AS CantidadProductosDevueltosAnterior
           FROM [dbo].[ORIN] T0
           INNER JOIN [dbo].[RIN1] T1 ON T0.DocEntry = T1.DocEntry
+          LEFT JOIN [dbo].[OITM] I ON I.ItemCode = T1.ItemCode
           WHERE T0.DocDate BETWEEN @FechaInicioAnterior AND @FechaFinAnterior
+            AND (@SkuParam IS NULL OR T1.ItemCode = @SkuParam)
+            AND (@FamiliaParam IS NULL OR I.U_Nombre_Fam = @FamiliaParam)
+            AND (@SubfamiliaParam IS NULL OR I.U_Nombre_SubFam = @SubfamiliaParam)
         )
         SELECT 
           P.CantidadNotasCreditoPeriodo,
@@ -699,14 +771,21 @@ const obtenerMargenVentas = async (req, res) => {
       const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
+      const sku = req.query.sku || null;
+      const familia = req.query.familia || null;
+      const subfamilia = req.query.subfamilia || null;
   
       const request = pool.request();
       request.input("PeriodoParam", sql.VarChar, periodo);
       request.input("FechaInicioInput", sql.Date, fechaInicio);
       request.input("FechaFinInput", sql.Date, fechaFin);
+      bindProductFilterParams(request, { sku, familia, subfamilia });
   
       const query = `
         DECLARE @Periodo VARCHAR(10) = @PeriodoParam;
+        DECLARE @SkuParam VARCHAR(50) = @SkuParamInput;
+        DECLARE @FamiliaParam VARCHAR(100) = @FamiliaParamInput;
+        DECLARE @SubfamiliaParam VARCHAR(100) = @SubfamiliaParamInput;
         DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
         DECLARE @FechaInicioAnterior DATE, @FechaFinAnterior DATE;
   
@@ -734,7 +813,7 @@ const obtenerMargenVentas = async (req, res) => {
         SET @FechaFinAnterior = DATEADD(DAY, -1, @FechaInicioActual);
         SET @FechaInicioAnterior = DATEADD(DAY, -@Dias, @FechaInicioActual);
   
-        WITH PeriodoActual AS (
+      WITH PeriodoActual AS (
           SELECT
             CAST(SUM(I.LineTotal) AS DECIMAL(18, 2)) AS TotalVentas,
             CAST(SUM(I.Quantity * ISNULL(M.AvgPrice, 0)) AS DECIMAL(18, 2)) AS TotalCostos
@@ -745,6 +824,9 @@ const obtenerMargenVentas = async (req, res) => {
             O.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
             AND O.CANCELED = 'N'
             AND I.ItemCode <> '701001008'
+            AND (@SkuParam IS NULL OR I.ItemCode = @SkuParam)
+            AND (@FamiliaParam IS NULL OR M.U_Nombre_Fam = @FamiliaParam)
+            AND (@SubfamiliaParam IS NULL OR M.U_Nombre_SubFam = @SubfamiliaParam)
         ),
         PeriodoAnterior AS (
           SELECT
@@ -757,6 +839,9 @@ const obtenerMargenVentas = async (req, res) => {
             O.DocDate BETWEEN @FechaInicioAnterior AND @FechaFinAnterior
             AND O.CANCELED = 'N'
             AND I.ItemCode <> '701001008'
+            AND (@SkuParam IS NULL OR I.ItemCode = @SkuParam)
+            AND (@FamiliaParam IS NULL OR M.U_Nombre_Fam = @FamiliaParam)
+            AND (@SubfamiliaParam IS NULL OR M.U_Nombre_SubFam = @SubfamiliaParam)
         )
   
         SELECT
@@ -794,6 +879,9 @@ const obtenerProductosDistintosPeriodo = async (req, res) => {
       const periodo = req.query.periodo || "1D"; // Por defecto, "hoy"
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
+      const sku = req.query.sku || null;
+      const familia = req.query.familia || null;
+      const subfamilia = req.query.subfamilia || null;
   
       const query = `
         DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
@@ -801,6 +889,9 @@ const obtenerProductosDistintosPeriodo = async (req, res) => {
         DECLARE @Periodo VARCHAR(10) = @PeriodoParam;
         DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
         DECLARE @FechaFinCustom DATE = @FechaFinInput;
+        DECLARE @SkuParam VARCHAR(50) = @SkuParamInput;
+        DECLARE @FamiliaParam VARCHAR(100) = @FamiliaParamInput;
+        DECLARE @SubfamiliaParam VARCHAR(100) = @SubfamiliaParamInput;
   
         DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
         DECLARE @FechaInicioAnterior DATE, @FechaFinAnterior DATE;
@@ -839,6 +930,7 @@ const obtenerProductosDistintosPeriodo = async (req, res) => {
                 COUNT(DISTINCT T1.ItemCode) AS ProductosDistintosVendidos
             FROM [dbo].[OINV] T0
             INNER JOIN [dbo].[INV1] T1 ON T0.DocEntry = T1.DocEntry
+            LEFT JOIN [dbo].[OITM] I ON I.ItemCode = T1.ItemCode
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
                 AND T0.CANCELED = 'N'
@@ -858,12 +950,16 @@ const obtenerProductosDistintosPeriodo = async (req, res) => {
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam) -- Filtro por vendedor empresa
+                AND (@SkuParam IS NULL OR T1.ItemCode = @SkuParam)
+                AND (@FamiliaParam IS NULL OR I.U_Nombre_Fam = @FamiliaParam)
+                AND (@SubfamiliaParam IS NULL OR I.U_Nombre_SubFam = @SubfamiliaParam)
         ),
         ProductosAnterior AS (
             SELECT 
                 COUNT(DISTINCT T1.ItemCode) AS ProductosDistintosVendidosAnterior
             FROM [dbo].[OINV] T0
             INNER JOIN [dbo].[INV1] T1 ON T0.DocEntry = T1.DocEntry
+            LEFT JOIN [dbo].[OITM] I ON I.ItemCode = T1.ItemCode
             WHERE 
                 T0.DocDate BETWEEN @FechaInicioAnterior AND @FechaFinAnterior
                 AND T0.CANCELED = 'N'
@@ -883,6 +979,9 @@ const obtenerProductosDistintosPeriodo = async (req, res) => {
                     )
                 )
                 AND (@VendedorEmpresaParam IS NULL OR T1.SlpCode = @VendedorEmpresaParam) -- Filtro por vendedor empresa
+                AND (@SkuParam IS NULL OR T1.ItemCode = @SkuParam)
+                AND (@FamiliaParam IS NULL OR I.U_Nombre_Fam = @FamiliaParam)
+                AND (@SubfamiliaParam IS NULL OR I.U_Nombre_SubFam = @SubfamiliaParam)
         )
         SELECT 
             PP.ProductosDistintosVendidos AS ProductosPeriodoActual,
@@ -900,6 +999,7 @@ const obtenerProductosDistintosPeriodo = async (req, res) => {
       request.input("PeriodoParam", sql.VarChar, periodo);
       request.input("FechaInicioInput", sql.Date, fechaInicio);
       request.input("FechaFinInput", sql.Date, fechaFin);
+      bindProductFilterParams(request, { sku, familia, subfamilia });
   
       const result = await request.query(query);
       res.json(result.recordset[0]);
@@ -917,6 +1017,9 @@ const obtenerTopProductosDetallado = async (req, res) => {
     const periodo = req.query.periodo || null;
     const fechaInicio = req.query.fechaInicio || null;
     const fechaFin = req.query.fechaFin || null;
+    const sku = req.query.sku || null;
+    const familia = req.query.familia || null;
+    const subfamilia = req.query.subfamilia || null;
 
     const query = `
       DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
@@ -924,6 +1027,9 @@ const obtenerTopProductosDetallado = async (req, res) => {
       DECLARE @Periodo VARCHAR(10) = @PeriodoParam;
       DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
       DECLARE @FechaFinCustom DATE = @FechaFinInput;
+      DECLARE @SkuParam VARCHAR(50) = @SkuParamInput;
+      DECLARE @FamiliaParam VARCHAR(100) = @FamiliaParamInput;
+      DECLARE @SubfamiliaParam VARCHAR(100) = @SubfamiliaParamInput;
 
       DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
       IF (@FechaInicioCustom IS NOT NULL AND @FechaFinCustom IS NOT NULL)
@@ -976,6 +1082,9 @@ const obtenerTopProductosDetallado = async (req, res) => {
           T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
           AND T0.CANCELED = 'N'
           AND I.StockPrice > 0
+          AND (@SkuParam IS NULL OR I.ItemCode = @SkuParam)
+          AND (@FamiliaParam IS NULL OR O.U_Nombre_Fam = @FamiliaParam)
+          AND (@SubfamiliaParam IS NULL OR O.U_Nombre_SubFam = @SubfamiliaParam)
           AND (
               @CanalParam IS NULL
               OR (
@@ -1003,6 +1112,7 @@ const obtenerTopProductosDetallado = async (req, res) => {
     request.input("PeriodoParam", sql.VarChar, periodo);
     request.input("FechaInicioInput", sql.Date, fechaInicio);
     request.input("FechaFinInput", sql.Date, fechaFin);
+    bindProductFilterParams(request, { sku, familia, subfamilia });
 
     const result = await request.query(query);
     res.json(result.recordset);
@@ -1269,12 +1379,18 @@ const obtenerTopVendedores = async (req, res) => {
     const periodo = req.query.periodo || null;
     const fechaInicio = req.query.fechaInicio || null;
     const fechaFin = req.query.fechaFin || null;
+    const sku = req.query.sku || null;
+    const familia = req.query.familia || null;
+    const subfamilia = req.query.subfamilia || null;
 
     const query = `
       DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
       DECLARE @Periodo VARCHAR(10) = @PeriodoInput;
       DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
       DECLARE @FechaFinCustom DATE = @FechaFinInput;
+      DECLARE @SkuParam VARCHAR(50) = @SkuParamInput;
+      DECLARE @FamiliaParam VARCHAR(100) = @FamiliaParamInput;
+      DECLARE @SubfamiliaParam VARCHAR(100) = @SubfamiliaParamInput;
 
       DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
 
@@ -1314,11 +1430,15 @@ const obtenerTopVendedores = async (req, res) => {
           ) AS MargenPorcentaje
       FROM OINV T0
       INNER JOIN INV1 T1 ON T0.DocEntry = T1.DocEntry
+      LEFT JOIN OITM O ON T1.ItemCode = O.ItemCode
       INNER JOIN OSLP V ON T1.SlpCode = V.SlpCode
       WHERE
           T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
           AND T0.CANCELED = 'N'
           AND T1.ItemCode <> '701001008'
+          AND (@SkuParam IS NULL OR T1.ItemCode = @SkuParam)
+          AND (@FamiliaParam IS NULL OR O.U_Nombre_Fam = @FamiliaParam)
+          AND (@SubfamiliaParam IS NULL OR O.U_Nombre_SubFam = @SubfamiliaParam)
           AND (
               @CanalParam IS NULL OR (
                   (@CanalParam = 'Meli' AND ((T1.WhsCode IN ('03', '05') AND T1.SlpCode IN (426, 364, 355, 398))
@@ -1341,6 +1461,7 @@ const obtenerTopVendedores = async (req, res) => {
     request.input("PeriodoInput", sql.VarChar, periodo);
     request.input("FechaInicioInput", sql.Date, fechaInicio);
     request.input("FechaFinInput", sql.Date, fechaFin);
+    bindProductFilterParams(request, { sku, familia, subfamilia });
 
     const result = await request.query(query);
     res.json(result.recordset || []);
@@ -1360,6 +1481,9 @@ const obtenerTopProductosEstancados = async (req, res) => {
     const subcategoria = req.query.subcategoria || null;
     const fechaInicioInput = req.query.fechaInicio || null;
     const fechaFinInput = req.query.fechaFin || null;
+    const sku = req.query.sku || null;
+    const familia = req.query.familia || null;
+    const subfamilia = req.query.subfamilia || null;
 
     const query = `
       DECLARE @Periodo NVARCHAR(10) = @PeriodoParam;
@@ -1367,6 +1491,9 @@ const obtenerTopProductosEstancados = async (req, res) => {
       DECLARE @PrimerNivel NVARCHAR(100) = @PrimerNivelParam;
       DECLARE @Categoria NVARCHAR(100) = @CategoriaParam;
       DECLARE @Subcategoria NVARCHAR(100) = @SubcategoriaParam;
+      DECLARE @SkuParam NVARCHAR(50) = @SkuParamInput;
+      DECLARE @FamiliaParam NVARCHAR(100) = @FamiliaParamInput;
+      DECLARE @SubfamiliaParam NVARCHAR(100) = @SubfamiliaParamInput;
       DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
       DECLARE @FechaFinCustom DATE = @FechaFinInput;
       DECLARE @FechaInicio DATE, @FechaFin DATE;
@@ -1466,6 +1593,9 @@ const obtenerTopProductosEstancados = async (req, res) => {
         AND (@PrimerNivel IS NULL OR OITM.U_Primer_Nivel = @PrimerNivel)
         AND (@Categoria IS NULL OR OITM.U_Categoria = @Categoria)
         AND (@Subcategoria IS NULL OR OITM.U_Subcategoria = @Subcategoria)
+        AND (@SkuParam IS NULL OR OITM.ItemCode = @SkuParam)
+        AND (@FamiliaParam IS NULL OR OITM.U_Nombre_Fam = @FamiliaParam)
+        AND (@SubfamiliaParam IS NULL OR OITM.U_Nombre_SubFam = @SubfamiliaParam)
       GROUP BY
         OITM.ItemCode, OITM.ItemName, OITM.U_Primer_Nivel, OITM.U_Categoria, OITM.U_Subcategoria,
         OITM.U_Imagen, UV.UltimaFechaVenta, UC.UltimaFechaCompra,
@@ -1483,6 +1613,7 @@ const obtenerTopProductosEstancados = async (req, res) => {
     request.input('PrimerNivelParam', sql.NVarChar(100), primerNivel);
     request.input('CategoriaParam', sql.NVarChar(100), categoria);
     request.input('SubcategoriaParam', sql.NVarChar(100), subcategoria);
+    bindProductFilterParams(request, { sku, familia, subfamilia });
     request.input('FechaInicioInput', sql.Date, fechaInicioInput);
     request.input('FechaFinInput', sql.Date, fechaFinInput);
 

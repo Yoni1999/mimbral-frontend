@@ -27,21 +27,19 @@ const SidebarItems = ({ toggleMobileSidebar }: any) => {
     <Box sx={{ px: 3 }}>
       <List sx={{ pt: 0 }} className="sidebarNav" component="div">
         {Menuitems.map((item) => {
-          
           if (item.subheader) {
             return <NavGroup item={item} key={item.subheader || "default-subheader"} />;
-          } else {
-          
-            return (
-              <NavItem
-                item={item}
-                key={item.id || "default-id"}
-                pathDirect={pathDirect}
-                onClick={() => toggleSubMenu(item.id || "default-id")}
-                isOpen={openSubMenus.includes(item.id || "default-id")} 
-              />
-            );
           }
+
+          return (
+            <NavItem
+              item={item}
+              key={item.id || "default-id"}
+              pathDirect={pathDirect}
+              onClick={() => toggleSubMenu(item.id || "default-id")}
+              isOpen={openSubMenus.includes(item.id || "default-id")}
+            />
+          );
         })}
       </List>
     </Box>

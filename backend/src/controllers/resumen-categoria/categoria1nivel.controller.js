@@ -792,6 +792,9 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
   
       const periodo = req.query.periodo || "1D";
       const primerNivel = req.query.primerNivel || null;
+      const sku = req.query.sku || null;
+      const familia = req.query.familia || null;
+      const subfamilia = req.query.subfamilia || null;
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
   
@@ -800,6 +803,9 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
         DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
         DECLARE @FechaFinCustom DATE = @FechaFinInput;
         DECLARE @PrimerNivelParam NVARCHAR(50) = @PrimerNivelInput;
+        DECLARE @SkuParam NVARCHAR(50) = @SkuParamInput;
+        DECLARE @FamiliaParam NVARCHAR(100) = @FamiliaParamInput;
+        DECLARE @SubfamiliaParam NVARCHAR(100) = @SubfamiliaParamInput;
   
         DECLARE @FechaInicio DATE;
         DECLARE @FechaFin DATE;
@@ -823,55 +829,68 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
                 END;
         END;
   
+        WITH LineasFiltradas AS (
+          SELECT
+              OI.DocDate AS Fecha,
+              I.LineTotal,
+              I.ItemCode,
+              I.WhsCode,
+              I.SlpCode,
+              ITM.U_PRIMER_NIVEL,
+              ITM.U_Nombre_Fam,
+              ITM.U_Nombre_SubFam
+          FROM INV1 I
+          INNER JOIN OINV OI ON I.DocEntry = OI.DocEntry
+          INNER JOIN OITM ITM ON I.ItemCode = ITM.ItemCode  
+          LEFT JOIN [@PRIMER_NIVEL] PN ON ITM.U_PRIMER_NIVEL = PN.Code
+          WHERE 
+              OI.DocDate BETWEEN @FechaInicio AND @FechaFin
+              AND OI.CANCELED = 'N'
+              AND I.ItemCode <> '701001008'
+              AND (@PrimerNivelParam IS NULL OR ITM.U_PRIMER_NIVEL = @PrimerNivelParam)
+              AND (@SkuParam IS NULL OR LTRIM(RTRIM(I.ItemCode)) = LTRIM(RTRIM(@SkuParam)))
+              AND (@FamiliaParam IS NULL OR ITM.U_Nombre_Fam = @FamiliaParam)
+              AND (@SubfamiliaParam IS NULL OR ITM.U_Nombre_SubFam = @SubfamiliaParam)
+        )
         SELECT 
-            OI.DocDate AS Fecha,
+            Fecha,
   
             SUM(CASE 
-                WHEN (I.WhsCode IN ('03', '05') AND OI.SlpCode IN (426, 364, 355)) 
-                  OR (I.WhsCode = '01' AND OI.SlpCode IN (355, 398)) 
-                THEN I.LineTotal ELSE 0 
+                WHEN (WhsCode IN ('03', '05') AND SlpCode IN (426, 364, 355)) 
+                  OR (WhsCode = '01' AND SlpCode IN (355, 398)) 
+                THEN LineTotal ELSE 0 
             END) AS Meli,
   
             SUM(CASE 
-                WHEN I.WhsCode = '03' AND OI.SlpCode = 371 
-                THEN I.LineTotal ELSE 0 
+                WHEN WhsCode = '03' AND SlpCode = 371 
+                THEN LineTotal ELSE 0 
             END) AS Falabella,
   
             SUM(CASE 
-                WHEN I.WhsCode = '07' 
-                THEN I.LineTotal ELSE 0 
+                WHEN WhsCode = '07' 
+                THEN LineTotal ELSE 0 
             END) AS Balmaceda,
   
             SUM(CASE 
-                WHEN I.WhsCode = '01' AND OI.SlpCode IN (401, 397) 
-                THEN I.LineTotal ELSE 0 
+                WHEN WhsCode = '01' AND SlpCode IN (401, 397) 
+                THEN LineTotal ELSE 0 
             END) AS Vitex,
   
             SUM(CASE 
-                WHEN I.WhsCode = '01' 
-                 AND I.SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212) 
-                THEN I.LineTotal ELSE 0 
+                WHEN WhsCode = '01' 
+                 AND SlpCode NOT IN (401, 397, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212) 
+                THEN LineTotal ELSE 0 
             END) AS Chorrillo,
   
             SUM(CASE 
-                WHEN I.WhsCode = '01' 
-                 AND I.SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212) 
-                THEN I.LineTotal ELSE 0 
+                WHEN WhsCode = '01' 
+                 AND SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212) 
+                THEN LineTotal ELSE 0 
             END) AS Empresas
-  
-        FROM INV1 I
-        INNER JOIN OINV OI ON I.DocEntry = OI.DocEntry
-        INNER JOIN OITM ITM ON I.ItemCode = ITM.ItemCode  
-        LEFT JOIN [@PRIMER_NIVEL] PN ON ITM.U_PRIMER_NIVEL = PN.Code
-        WHERE 
-            OI.DocDate BETWEEN @FechaInicio AND @FechaFin
-            AND OI.CANCELED = 'N'
-            AND I.ItemCode <> '701001008'
-            AND (@PrimerNivelParam IS NULL OR ITM.U_PRIMER_NIVEL = @PrimerNivelParam)
         GROUP BY 
-            OI.DocDate
+            Fecha
         ORDER BY 
-            OI.DocDate ASC;
+            Fecha ASC;
       `;
   
       const request = pool.request();
@@ -879,7 +898,10 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
       request.input("FechaInicioInput", sql.Date, fechaInicio);
       request.input("FechaFinInput", sql.Date, fechaFin);
       request.input("PrimerNivelInput", sql.NVarChar, primerNivel);
-  
+      request.input("SkuParamInput", sql.NVarChar, sku);
+      request.input("FamiliaParamInput", sql.NVarChar, familia);
+      request.input("SubfamiliaParamInput", sql.NVarChar, subfamilia);
+
       const result = await request.query(query);
       res.json(result.recordset);
     } catch (error) {
@@ -892,12 +914,18 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
       const pool = await poolPromise;
   
       const primerNivel = req.query.primerNivel || null;
+      const sku = req.query.sku || null;
+      const familia = req.query.familia || null;
+      const subfamilia = req.query.subfamilia || null;
       const periodo = req.query.periodo || "1D";
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
   
       const query = `
         DECLARE @PrimerNivelParam NVARCHAR(50) = @PrimerNivelInput;
+        DECLARE @SkuParam NVARCHAR(50) = @SkuParamInput;
+        DECLARE @FamiliaParam NVARCHAR(100) = @FamiliaParamInput;
+        DECLARE @SubfamiliaParam NVARCHAR(100) = @SubfamiliaParamInput;
         DECLARE @Periodo VARCHAR(10) = @PeriodoParam;
         DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
         DECLARE @FechaFinCustom DATE = @FechaFinInput;
@@ -924,52 +952,69 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
                 END;
         END
   
+        WITH LineasFiltradas AS (
+          SELECT
+              OI.DocDate AS Fecha,
+              I.LineTotal,
+              I.ItemCode,
+              I.WhsCode,
+              I.SlpCode,
+              ITM.U_PRIMER_NIVEL,
+              ITM.U_Nombre_Fam,
+              ITM.U_Nombre_SubFam
+          FROM INV1 I
+          INNER JOIN OINV OI ON I.DocEntry = OI.DocEntry
+          INNER JOIN OITM ITM ON I.ItemCode = ITM.ItemCode
+          LEFT JOIN [@PRIMER_NIVEL] PN ON ITM.U_PRIMER_NIVEL = PN.Code
+          WHERE 
+              OI.DocDate BETWEEN @FechaInicio AND @FechaFin
+              AND OI.CANCELED = 'N'
+              AND (@PrimerNivelParam IS NULL OR ITM.U_PRIMER_NIVEL = @PrimerNivelParam)
+              AND (@SkuParam IS NULL OR LTRIM(RTRIM(I.ItemCode)) = LTRIM(RTRIM(@SkuParam)))
+              AND (@FamiliaParam IS NULL OR ITM.U_Nombre_Fam = @FamiliaParam)
+              AND (@SubfamiliaParam IS NULL OR ITM.U_Nombre_SubFam = @SubfamiliaParam)
+        )
         SELECT 
             SUM(CASE 
-                WHEN (I.WhsCode IN ('03', '05') AND OI.SlpCode IN (426, 364, 355)) 
-                  OR (I.WhsCode = '01' AND OI.SlpCode IN (355, 398)) 
-                THEN I.LineTotal ELSE 0 
+                WHEN (WhsCode IN ('03', '05') AND SlpCode IN (426, 364, 355)) 
+                  OR (WhsCode = '01' AND SlpCode IN (355, 398)) 
+                THEN LineTotal ELSE 0 
             END) AS Meli,
   
             SUM(CASE 
-                WHEN I.WhsCode = '03' AND OI.SlpCode = 371 
-                THEN I.LineTotal ELSE 0 
+                WHEN WhsCode = '03' AND SlpCode = 371 
+                THEN LineTotal ELSE 0 
             END) AS Falabella,
   
             SUM(CASE 
-                WHEN I.WhsCode = '07' 
-                THEN I.LineTotal ELSE 0 
+                WHEN WhsCode = '07' 
+                THEN LineTotal ELSE 0 
             END) AS Balmaceda,
   
             SUM(CASE 
-                WHEN I.WhsCode = '01' AND OI.SlpCode IN (401, 397) 
-                THEN I.LineTotal ELSE 0 
+                WHEN WhsCode = '01' AND SlpCode IN (401, 397) 
+                THEN LineTotal ELSE 0 
             END) AS Vitex,
   
             SUM(CASE 
-                WHEN I.WhsCode = '01' 
-                 AND I.SlpCode NOT IN (401, 397, 225, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212) 
-                THEN I.LineTotal ELSE 0 
+                WHEN WhsCode = '01' 
+                 AND SlpCode NOT IN (401, 397, 225, 355, 398, 227, 250, 205, 138, 209, 228, 226, 137, 212) 
+                THEN LineTotal ELSE 0 
             END) AS Chorrillo,
   
             SUM(CASE 
-                WHEN I.WhsCode = '01' 
-                 AND I.SlpCode IN (227, 250, 225,205, 138, 209, 228, 226, 137, 212) 
-                THEN I.LineTotal ELSE 0 
+                WHEN WhsCode = '01' 
+                 AND SlpCode IN (227, 250, 225,205, 138, 209, 228, 226, 137, 212) 
+                THEN LineTotal ELSE 0 
             END) AS Empresas
-  
-        FROM INV1 I
-        INNER JOIN OINV OI ON I.DocEntry = OI.DocEntry
-        INNER JOIN OITM ITM ON I.ItemCode = ITM.ItemCode
-        LEFT JOIN [@PRIMER_NIVEL] PN ON ITM.U_PRIMER_NIVEL = PN.Code
-        WHERE 
-            OI.DocDate BETWEEN @FechaInicio AND @FechaFin
-            AND OI.CANCELED = 'N'
-            AND (@PrimerNivelParam IS NULL OR ITM.U_PRIMER_NIVEL = @PrimerNivelParam);
+        FROM LineasFiltradas;
       `;
   
       const request = pool.request();
       request.input("PrimerNivelInput", sql.NVarChar, primerNivel);
+      request.input("SkuParamInput", sql.NVarChar, sku);
+      request.input("FamiliaParamInput", sql.NVarChar, familia);
+      request.input("SubfamiliaParamInput", sql.NVarChar, subfamilia);
       request.input("PeriodoParam", sql.VarChar, periodo);
       request.input("FechaInicioInput", sql.Date, fechaInicio);
       request.input("FechaFinInput", sql.Date, fechaFin);

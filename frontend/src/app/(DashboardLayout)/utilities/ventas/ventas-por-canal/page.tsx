@@ -48,7 +48,6 @@ const VentasPorCanal = () => {
           return {
             ...parsed,
             canal: canalParam || parsed.canal || "",
-            periodo: parsed.periodo || "1D", // Asegura que siempre haya un periodo por defecto si no está en storage
             fechaInicio: parsed.fechaInicio || "",
             fechaFin: parsed.fechaFin || "",
           };
@@ -60,7 +59,6 @@ const VentasPorCanal = () => {
     // Si no hay filtros guardados o hubo un error, retorna el estado inicial por defecto
     return {
       canal: canalParam, // Canal de la URL o vacío
-      periodo: "1D", // Por defecto si no hay nada
       fechaInicio: "",
       fechaFin: "",
     };
@@ -158,15 +156,6 @@ const VentasPorCanal = () => {
       localStorage.setItem("filtrosVentasCanal", JSON.stringify(newFilters));
     }
   };
-
-  const periodoLabels: { [key: string]: string } = {
-    "1D": "Hoy",
-    "7D": "Últimos 7 días",
-    "14D": "Últimos 14 días",
-    "1M": "Último mes",
-    "3M": "Últimos 3 meses",
-    "6M": "Últimos 6 meses",
-  };
   const [mostrarProductos, setMostrarProductos] = useState(false);
 
   return (
@@ -179,11 +168,7 @@ const VentasPorCanal = () => {
         <Box sx={{ p: 0 }}>
           <Box sx={{ mb: 1, display: "flex", justifyContent: "flex-end", px: 2 }}>
             <Typography variant="body2" color="text.secondary">
-              {filters.periodo && periodoLabels[filters.periodo]
-                ? `Filtrando por período de: ${periodoLabels[filters.periodo]}`
-                : filters.fechaInicio && filters.fechaFin
-                ? `Filtrando por rango: ${filters.fechaInicio} al ${filters.fechaFin}`
-                : "Sin período seleccionado"}
+              {filters.fechaInicio && filters.fechaFin ? `Filtrando por rango: ${filters.fechaInicio} al ${filters.fechaFin}` : "Viendo datos de hoy"}
             </Typography>
           </Box>
 
@@ -341,7 +326,6 @@ const VentasPorCanal = () => {
                   {/* Este componente (VentasCanalChart) también debe manejar su estado de carga internamente */}
                   <VentasCanalChart
                     canal={filters.canal}
-                    periodo={filters.periodo}
                     fechaInicio={filters.fechaInicio}
                     fechaFin={filters.fechaFin}
                     onVendedorSeleccionado={(vendedor) =>

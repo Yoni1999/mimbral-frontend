@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   Box,
   Typography,
@@ -11,91 +11,39 @@ import {
   IconButton,
   InputAdornment,
   Alert,
-  AlertColor,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import Link from "next/link";
-import {
-  Visibility,
-  VisibilityOff,
-  EmailOutlined,
-} from "@mui/icons-material";
+import { Visibility, VisibilityOff, EmailOutlined } from "@mui/icons-material";
 
 import CustomTextField from "@/app/(DashboardLayout)/components/forms/theme-elements/CustomTextField";
 import OtpVerification from "../login/otpVerification";
-import { BACKEND_URL } from "@/config";
-import { fetchSafe } from "@/utils/fetchSafe";
+import { useAuthLogin } from "@/modules/auth/hooks/useAuthLogin";
 
-interface loginType {
-  title?: string;
+interface LoginProps {
+  title?: JSX.Element | string;
   subtitle?: JSX.Element | JSX.Element[];
   subtext?: JSX.Element | JSX.Element[];
 }
 
-const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<"login" | "otp">("login");
-
-  const [mensajeVisible, setMensajeVisible] = useState(false);
-  const [mensajeTexto, setMensajeTexto] = useState("");
-  const [mensajeTipo, setMensajeTipo] = useState<AlertColor>("info");
-
-  useEffect(() => {
-    const savedEmail = localStorage.getItem("rememberedEmail");
-    if (savedEmail) {
-      setEmail(savedEmail);
-      setRememberMe(true);
-    }
-  }, []);
-
-  const handleTogglePassword = () => {
-    setShowPassword((prev) => !prev);
-  };
-
-  const handleLogin = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchSafe("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (rememberMe) {
-        localStorage.setItem("rememberedEmail", email);
-      } else {
-        localStorage.removeItem("rememberedEmail");
-      }
-
-      if (data.requiresOtp) {
-        setMensajeTexto(" Se ha enviado un código de verificación a tu correo");
-        setMensajeTipo("success");
-        setMensajeVisible(true);
-        setStep("otp");
-      } else if (data.token) {
-        setMensajeTexto("Login Correcto");
-        setMensajeTipo("success");
-        setMensajeVisible(true);
-
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("rol", data.rol);
-
-        window.location.href = "/inicio";
-      }
-    } catch (err: any) {
-      setMensajeTexto(err.message || "Error de conexión");
-      setMensajeTipo("error");
-      setMensajeVisible(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+const AuthLogin = ({ title, subtitle, subtext }: LoginProps) => {
+  const {
+    showPassword,
+    email,
+    password,
+    rememberMe,
+    loading,
+    step,
+    mensajeVisible,
+    mensajeTexto,
+    mensajeTipo,
+    setEmail,
+    setPassword,
+    setRememberMe,
+    setMensajeVisible,
+    togglePassword,
+    handleLogin,
+  } = useAuthLogin();
 
   if (step === "otp") {
     return <OtpVerification email={email} />;
@@ -112,7 +60,6 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       {subtext}
 
       <Stack>
-        {/* Correo */}
         <Box>
           <Typography variant="subtitle1" fontWeight={600} mb="5px">
             Correo
@@ -132,10 +79,9 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
           />
         </Box>
 
-        {/* Contraseña */}
         <Box mt="25px">
           <Typography variant="subtitle1" fontWeight={600} mb="5px">
-            Contraseña
+            Contrasena
           </Typography>
           <CustomTextField
             type={showPassword ? "text" : "password"}
@@ -146,7 +92,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton onClick={handleTogglePassword} edge="end">
+                  <IconButton onClick={togglePassword} edge="end">
                     {showPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
@@ -155,7 +101,6 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
           />
         </Box>
 
-        {/* Recordar sesión */}
         <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
           <FormGroup>
             <FormControlLabel
@@ -165,7 +110,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
                   onChange={(e) => setRememberMe(e.target.checked)}
                 />
               }
-              label="Recordar mi sesión"
+              label="Recordar mi sesion"
             />
           </FormGroup>
           <Typography
@@ -174,12 +119,11 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
             fontWeight="500"
             sx={{ textDecoration: "none", color: "primary.main" }}
           >
-            ¿Olvidaste tu contraseña?
+            Olvidaste tu contrasena?
           </Typography>
         </Stack>
       </Stack>
 
-      {/* Mensaje justo encima del botón */}
       {mensajeVisible && (
         <Box mt={2}>
           <Alert
@@ -202,7 +146,6 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         </Box>
       )}
 
-      {/* Botón de Iniciar */}
       <Box mt={2}>
         <Button
           color="primary"

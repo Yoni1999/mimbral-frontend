@@ -30,7 +30,6 @@ interface ClienteFrecuente {
 interface ClientesFrecuentesTableProps {
   filters: {
     canal: string;
-    periodo: string;
     fechaInicio: string;
     fechaFin: string;
     vendedor?: number | null;
