@@ -39,10 +39,10 @@ import autoTable from "jspdf-autotable";
 import HeaderVentasPorCanalDrawer, { FiltrosPorCanal } from "./components/HeaderVentasPorCanalDrawer";
 import VentasPorCanalTable, {
   ProductoPorCanal,
-  ResumenCanalItem,
   Order,
   OrderBy,
   DetalleVenta,
+  StockBodegaItem,
 } from "./components/VentasPorCanalTable";
 
 const defaultPageSize = 60;
@@ -54,6 +54,60 @@ const money = (n?: number) =>
   typeof n === "number"
     ? n.toLocaleString("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 })
     : "-";
+
+const getStockTotalProducto = (stock?: { bodega: string; stock: number }[]) =>
+  (stock || [])
+    .filter((item) => item.bodega === "01" || item.bodega === "03")
+    .reduce((sum, item) => sum + (item.stock || 0), 0);
+
+const getStockRestoProducto = (stock?: { bodega: string; stock: number }[]) =>
+  (stock || [])
+    .filter((item) => item.bodega !== "01" && item.bodega !== "03")
+    .reduce((sum, item) => sum + (item.stock || 0), 0);
+
+const formatChannelLabel = (channel: string) =>
+  channel?.toLowerCase() === "vitex" ? "VTEX" : channel;
+
+const toDateOnly = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getPeriodoFechasLabel = (filters: FiltrosPorCanal) => {
+  if (filters.fechaInicio && filters.fechaFin) {
+    return `Ventas desde ${filters.fechaInicio} hasta ${filters.fechaFin}`;
+  }
+
+  const end = new Date();
+  const start = new Date(end);
+  const periodo = filters.periodo?.toLowerCase();
+
+  switch (periodo) {
+    case "1d":
+      break;
+    case "7d":
+      start.setDate(end.getDate() - 6);
+      break;
+    case "14d":
+      start.setDate(end.getDate() - 13);
+      break;
+    case "1m":
+      start.setMonth(end.getMonth() - 1);
+      break;
+    case "3m":
+      start.setMonth(end.getMonth() - 3);
+      break;
+    case "6m":
+      start.setMonth(end.getMonth() - 6);
+      break;
+    default:
+      break;
+  }
+
+  return `Ventas desde ${toDateOnly(start)} hasta ${toDateOnly(end)}`;
+};
 
 const InformeVentasPorCanalPage: React.FC = () => {
   const [filters, setFilters] = useState<FiltrosPorCanal>({ periodo: "7d" });
@@ -77,6 +131,9 @@ const InformeVentasPorCanalPage: React.FC = () => {
   const [detalleTitulo, setDetalleTitulo] = useState("");
   const [detalleData, setDetalleData] = useState<DetalleVenta[]>([]);
   const [detalleSearch, setDetalleSearch] = useState("");
+  const [stockOpen, setStockOpen] = useState(false);
+  const [stockTitulo, setStockTitulo] = useState("");
+  const [stockData, setStockData] = useState<StockBodegaItem[]>([]);
 
   const detalleFiltrado = useMemo(() => {
     if (!detalleSearch) return detalleData;
@@ -105,6 +162,9 @@ const InformeVentasPorCanalPage: React.FC = () => {
         if (filters.fechaFin) params.append("fechaFin", filters.fechaFin);
       }
       if (filters.proveedor) params.append("proveedor", filters.proveedor);
+      if (filters.sku) params.append("sku", filters.sku);
+      if (filters.familia) params.append("familia", filters.familia);
+      if (filters.subfamilia) params.append("subfamilia", filters.subfamilia);
       if (filters.primerNivel) params.append("primerNivel", filters.primerNivel);
       if (filters.categoria) params.append("categoria", filters.categoria);
       if (filters.subcategoria) params.append("subcategoria", filters.subcategoria);
@@ -121,7 +181,12 @@ const InformeVentasPorCanalPage: React.FC = () => {
       const data = await res!.json();
 
       setRows(Array.isArray(data?.data) ? data.data : []);
-      setTotal(Number(data?.total || data?.count || 0));
+      setTotal(
+        Number(data?.meta?.total ?? data?.total ?? data?.count ?? 0)
+      );
+      if (data?.meta?.page) {
+        setPage(Number(data.meta.page));
+      }
     } catch (e) {
       console.error("Error fetch productos-por-canal:", e);
       setRows([]);
@@ -152,6 +217,9 @@ const InformeVentasPorCanalPage: React.FC = () => {
       if (filters.fechaFin) params.append("fechaFin", filters.fechaFin);
     }
     if (filters.proveedor) params.append("proveedor", filters.proveedor);
+    if (filters.sku) params.append("sku", filters.sku);
+    if (filters.familia) params.append("familia", filters.familia);
+    if (filters.subfamilia) params.append("subfamilia", filters.subfamilia);
     if (filters.primerNivel) params.append("primerNivel", filters.primerNivel);
     if (filters.categoria) params.append("categoria", filters.categoria);
     if (filters.subcategoria) params.append("subcategoria", filters.subcategoria);
@@ -178,10 +246,13 @@ const InformeVentasPorCanalPage: React.FC = () => {
         : Array.from(new Set(items.flatMap((r) => r.porCanal?.map((c) => c.canal) || [])));
 
     const rowsExcel = items.map((item) => {
+      const stockTotal = getStockTotalProducto(item.stock);
       const base: any = {
         SKU: item.sku,
         Producto: item.nombre,
         "Cant. Total": item.cantidadVendida,
+        "Stock Bodega 01+03": stockTotal,
+        "Stock Resto Almacenes": getStockRestoProducto(item.stock),
         "Margen Bruto": item.margenBruto,
         "% Margen": item.margenPorcentaje,
       };
@@ -192,7 +263,19 @@ const InformeVentasPorCanalPage: React.FC = () => {
       return base;
     });
 
-    const ws = XLSX.utils.json_to_sheet(rowsExcel);
+    const periodoLabel = getPeriodoFechasLabel(filters);
+    const ws = XLSX.utils.aoa_to_sheet([[periodoLabel], []]);
+    XLSX.utils.sheet_add_json(ws, rowsExcel, { origin: "A3", skipHeader: false });
+    const totalColumns = Object.keys(rowsExcel[0] || {
+      SKU: "",
+      Producto: "",
+      "Cant. Total": "",
+      "Stock Bodega 01+03": "",
+      "Stock Resto Almacenes": "",
+      "Margen Bruto": "",
+      "% Margen": "",
+    }).length;
+    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: Math.max(0, totalColumns - 1) } }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Ventas por Canal");
     XLSX.writeFile(wb, "informe_ventas_por_canal.xlsx");
@@ -208,11 +291,20 @@ const InformeVentasPorCanalPage: React.FC = () => {
         ? canalesUnion
         : Array.from(new Set(items.flatMap((r) => r.porCanal?.map((c) => c.canal) || [])));
 
-    const head = ["SKU", "Producto", "Cant. Total", "Margen Bruto", "% Margen", ...channels];
+    const head = [
+      "SKU",
+      "Producto",
+      "Cant. Total",
+      "Stock",
+      "Margen Bruto",
+      "% Margen",
+      ...channels.map(formatChannelLabel),
+    ];
     const body = items.map((it) => [
       it.sku,
       it.nombre,
       it.cantidadVendida,
+      getStockTotalProducto(it.stock),
       it.margenBruto,
       it.margenPorcentaje,
       ...channels.map((ch) => it.porCanal?.find((x) => x.canal === ch)?.cantidadVendida || 0),
@@ -298,6 +390,11 @@ const InformeVentasPorCanalPage: React.FC = () => {
             setDetalleSearch("");
             setDetalleOpen(true);
           }}
+          onOpenStock={(titulo, stock) => {
+            setStockTitulo(titulo);
+            setStockData(stock || []);
+            setStockOpen(true);
+          }}
         />
       )}
 
@@ -372,6 +469,55 @@ const InformeVentasPorCanalPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDetalleOpen(false)} startIcon={<CloseIcon />}>
+            Cerrar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={stockOpen}
+        onClose={() => setStockOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            maxWidth: 420,
+          },
+        }}
+      >
+        <DialogTitle sx={{ py: 1.5, px: 2.2, fontSize: "1rem", fontWeight: 700 }}>
+          {stockTitulo}
+        </DialogTitle>
+        <DialogContent sx={{ px: 2.2, pb: 1.5 }}>
+          <TableContainer component={Paper} sx={{ mt: 0.5, boxShadow: "none", border: "1px solid #e9eef6", borderRadius: 2 }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ py: 1, fontWeight: 700 }}>Bodega</TableCell>
+                  <TableCell align="right" sx={{ py: 1, fontWeight: 700 }}>Stock</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {stockData.map((item) => (
+                  <TableRow key={`${item.bodega}-${item.stock}`}>
+                    <TableCell sx={{ py: 0.9 }}>{item.bodega}</TableCell>
+                    <TableCell align="right" sx={{ py: 0.9 }}>{formatNumber(item.stock)}</TableCell>
+                  </TableRow>
+                ))}
+                {stockData.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={2} align="center" sx={{ py: 1.5 }}>
+                      Sin stock disponible
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+        <DialogActions sx={{ px: 2, pb: 1.5 }}>
+          <Button onClick={() => setStockOpen(false)} startIcon={<CloseIcon />} size="small">
             Cerrar
           </Button>
         </DialogActions>

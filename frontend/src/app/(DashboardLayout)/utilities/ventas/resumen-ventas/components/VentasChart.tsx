@@ -2,23 +2,27 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, CartesianGrid, Legend,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Legend,
 } from "recharts";
-import {
-  Paper,
-  Box,
-  Typography,
-} from "@mui/material";
+import { Paper, Typography } from "@mui/material";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
-import { formatVentas } from "@/utils/format"; // ✅ Tu función de formato
+import { formatVentas } from "@/utils/format";
 
 export interface Filters {
-  periodo: string;
   fechaInicio: string;
   fechaFin: string;
   temporada: string;
+  sku?: string;
+  familia?: string;
+  subfamilia?: string;
 }
 
 interface Props {
@@ -29,23 +33,13 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const getPeriodoParam = () => {
-    switch (filtros.periodo) {
-      case "Hoy": return "1D";
-      case "Ultimos 7 días": return "7D";
-      case "Ultimos 14 días": return "14D";
-      case "Ultimo mes": return "1M";
-      case "3 meses": return "3M";
-      case "6 meses": return "6M";
-      default: return "1D";
-    }
-  };
-
   const buildQuery = () => {
     const params = new URLSearchParams();
     if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
     if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
-    if (filtros.periodo) params.append("periodo", getPeriodoParam());
+    if (filtros.sku) params.append("sku", filtros.sku);
+    if (filtros.familia) params.append("familia", filtros.familia);
+    if (filtros.subfamilia) params.append("subfamilia", filtros.subfamilia);
     if (filtros.temporada) params.append("temporada", filtros.temporada);
     return params.toString();
   };
@@ -54,7 +48,9 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetchWithToken(`${BACKEND_URL}/api/primer-nivel/ventas-fecha-primer-nivel?${buildQuery()}`);
+        const response = await fetchWithToken(
+          `${BACKEND_URL}/api/primer-nivel/ventas-fecha-primer-nivel?${buildQuery()}`
+        );
         if (!response) throw new Error("No se pudo cargar el gráfico de ventas");
         const raw = await response.json();
 
@@ -86,12 +82,13 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
         procesado.sort((a: ProcesadoItem, b: ProcesadoItem) => a.orden - b.orden);
         setData(procesado);
       } catch (error) {
-        console.error("❌ Error al cargar ventas por canal:", error);
+        console.error("Error al cargar ventas por canal:", error);
       } finally {
         setLoading(false);
       }
     };
-      fetchData();
+
+    fetchData();
   }, [filtros]);
 
   return (

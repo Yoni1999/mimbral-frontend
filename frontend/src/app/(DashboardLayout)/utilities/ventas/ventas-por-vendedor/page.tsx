@@ -7,7 +7,8 @@ import MetricCard from "./components/Cards";
 import ProgressGauge from "./components/Goals";
 import dynamic from "next/dynamic";
 import TopProductosChart from "./components/SoldCategories";
-import {IconCurrencyDollar,IconTrendingUp,IconBox,IconStack2,IconShoppingCart,IconCreditCard,IconReceipt,IconCash} from "@tabler/icons-react";
+import VentasCanalChart from "./components/FormaPago";
+import {IconCurrencyDollar,IconTrendingUp,IconBox,IconStack2,IconShoppingCart,IconCreditCard} from "@tabler/icons-react";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
 import { useSearchParams } from "next/navigation";
@@ -19,9 +20,6 @@ const TopVentasComparadoChart = dynamic(
   () => import("./components/TopSalesComparison"),
   { ssr: false }
 );
-const VentasCanalChart = dynamic(() => import("./components/FormaPago"), {
-  ssr: false,
-});
 const TopRentableVendedor = dynamic(
   () => import("./components/Top10MostProfitable"),
   { ssr: false }
@@ -31,8 +29,6 @@ const VentasVendedorPage: React.FC = () => {
   // --- Estados de Filtros y Carga ---
   const [filtros, setFiltros] = useState<Filters>({
     vendedorEmpresa: "",
-    temporada: "",
-    periodo: "",
     fechaInicio: "",
     fechaFin: "",
     modoComparacion: "",
@@ -86,39 +82,13 @@ const VentasVendedorPage: React.FC = () => {
       TotalVentas: number;
     }[]
   >([]);
-
-  // --- Función para mapear periodos de label a código de API ---
-  const getPeriodoParam = (periodo: string) => {
-    switch (periodo) {
-      case "1D":
-        return "1d";
-      case "7D":
-        return "7d";
-      case "14D":
-        return "14d";
-      case "1M":
-        return "1m";
-      case "3M":
-        return "3m";
-      case "6M":
-        return "6m";
-      default:
-        return "1d"; // Fallback por defecto
-    }
-  };
-
   // --- Función para construir la query string de la API ---
   const buildQuery = (currentFiltros: Filters) => {
     const params = new URLSearchParams();
-
-    if (currentFiltros.periodo) {
-      params.append("periodo", getPeriodoParam(currentFiltros.periodo));
-    } else {
-      if (currentFiltros.fechaInicio)
-        params.append("fechaInicio", currentFiltros.fechaInicio);
-      if (currentFiltros.fechaFin)
-        params.append("fechaFin", currentFiltros.fechaFin);
-    }
+    if (currentFiltros.fechaInicio)
+      params.append("fechaInicio", currentFiltros.fechaInicio);
+    if (currentFiltros.fechaFin)
+      params.append("fechaFin", currentFiltros.fechaFin);
 
     if (currentFiltros.modoComparacion) {
       params.append("modoComparacion", currentFiltros.modoComparacion);
@@ -291,24 +261,10 @@ const VentasVendedorPage: React.FC = () => {
 
   const searchParams = useSearchParams();
 
-    const mapPeriodoToLabel = (code: string): string => {
-    const map: Record<string, string> = {
-        "1d": "Hoy",
-        "7d": "Ultimos 7 días",
-        "14d": "Ultimos 14 días",
-        "1m": "Ultimo mes",
-        "3m": "3 meses",
-        "6m": "6 meses",
-    };
-    return map[code] || "";
-  };
-
   // --- Efecto para inicializar filtros desde URL y cargar datos iniciales ---
   useEffect(() => {
     setCargandoFiltros(true);
     const filtrosIniciales: Filters = {
-      periodo: mapPeriodoToLabel(searchParams.get("periodo") || ""),
-      temporada: searchParams.get("temporada") || "",
       fechaInicio: searchParams.get("fechaInicio") || "",
       fechaFin: searchParams.get("fechaFin") || "",
       vendedorEmpresa: searchParams.get("vendedor") || "",
@@ -499,6 +455,8 @@ return (
           </Grid>
         </Grid>
 
+        {false && (
+        <>
         {/* --- Sección de Metas --- */}
         <Grid container spacing={2} mt={2}>
           <Grid item xs={12}>
@@ -550,6 +508,8 @@ return (
             </Grid>
 
         </Grid>
+        </>
+        )}
       </Box>
     </>
   );
@@ -557,3 +517,4 @@ return (
 
 
 export default VentasVendedorPage;
+

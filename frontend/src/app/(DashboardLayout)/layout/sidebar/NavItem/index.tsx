@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Box,
   ListItemIcon,
   ListItem,
   List,
@@ -59,8 +60,6 @@ const NavItem = ({ item, pathDirect, onClick, isOpen }: ItemType) => {
   }));
 
 
-  console.log("isOpen for", item.title, isOpen);
-
   return (
     <>
       <List component="div" disablePadding key={item.id}>
@@ -86,7 +85,7 @@ const NavItem = ({ item, pathDirect, onClick, isOpen }: ItemType) => {
       {item.subMenu && item.subMenu.length > 0 && (
         <Collapse in={isOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            {item.subMenu.map((child) => (
+            {item.subMenu.map((child, index) => (
               <ListItemButton key={child.id} component={Link} href={child.href || "#"} sx={{ pl: 4 }}>
                 <ListItemIcon sx={{ minWidth: "36px", p: "3px 0", color: "inherit" }}>
                   {child.icon && <child.icon size={16} />}
@@ -101,4 +100,3 @@ const NavItem = ({ item, pathDirect, onClick, isOpen }: ItemType) => {
   );
 };
 export default NavItem;
-

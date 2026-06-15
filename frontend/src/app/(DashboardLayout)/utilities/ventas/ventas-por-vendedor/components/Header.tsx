@@ -6,21 +6,20 @@ import {
   Grid,
   Typography,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
-  TextField,
   Button,
   Dialog,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { fetchWithToken } from "@/utils/fetchWithToken";
 import { BACKEND_URL } from "@/config";
+import DateRangeFilter, {
+  DateRangeValue,
+} from "../../components/DateRangeFilter";
 
 export interface Filters {
   vendedorEmpresa: string;
-  temporada: string;
-  periodo: string;
   fechaInicio: string;
   fechaFin: string;
   modoComparacion: string;
@@ -59,15 +58,6 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
     setFiltros((prev) => {
       let nuevoEstado = { ...prev, [key]: value };
 
-      if (key === "periodo") {
-        nuevoEstado.fechaInicio = "";
-        nuevoEstado.fechaFin = "";
-      }
-
-      if (key === "fechaInicio" || key === "fechaFin") {
-        nuevoEstado.periodo = "";
-      }
-
       if (key === "canal") {
         const url = `${BACKEND_URL}/api/oc/obvc?canal=${value}`;
         fetchWithToken(url)
@@ -88,6 +78,14 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
 
       return nuevoEstado;
     });
+  };
+
+  const handleDateChange = (range: DateRangeValue | null) => {
+    setFiltros((prev) => ({
+      ...prev,
+      fechaInicio: range?.start || "",
+      fechaFin: range?.end || "",
+    }));
   };
 
   React.useEffect(() => {
@@ -114,8 +112,6 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
   const handleClear = () => {
     setFiltros({
       vendedorEmpresa: "",
-      temporada: "",
-      periodo: "",
       fechaInicio: "",
       fechaFin: "",
       modoComparacion: "",
@@ -125,9 +121,42 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
     setVendedoresDisponibles([]);
   };
 
+  const selectSx = {
+    mt: 0.6,
+    height: 42,
+    bgcolor: "#fff",
+    borderRadius: 1.75,
+    fontSize: "0.94rem",
+    color: "#334155",
+    "& .MuiSelect-select": {
+      display: "flex",
+      alignItems: "center",
+      py: 0,
+      px: 1.5,
+    },
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#cbd5e1",
+    },
+    "&:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#94a3b8",
+    },
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#2563eb",
+    },
+    "& .MuiSelect-icon": {
+      color: "#64748b",
+    },
+  } as const;
+
+  const fieldLabelSx = {
+    color: "#475569",
+    fontWeight: 700,
+    ml: 0.2,
+    letterSpacing: 0.2,
+  } as const;
+
   return (
     <>
-      {/* Modal selección de canal */}
       <Dialog open={showCanalWarning}>
         <Box p={3} textAlign="center" minWidth={360}>
           <Typography variant="h6" fontWeight={600} mb={2}>
@@ -172,7 +201,6 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
         </Box>
       </Dialog>
 
-      {/* Modal selección de vendedor */}
       <Dialog open={showVendedorModal} onClose={() => setShowVendedorModal(false)}>
         <Box p={3}>
           <Typography variant="h6" fontWeight={600} mb={2}>
@@ -217,7 +245,6 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
         </Box>
       </Dialog>
 
-      {/* 🔸 Modal imagen ampliada */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md">
         <Box
           p={2}
@@ -242,7 +269,6 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
         </Box>
       </Dialog>
 
-      {/* 🔸 Header con filtros */}
       <Box
         sx={{
           mb: 2,
@@ -285,20 +311,22 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
             </Box>
           </Grid>
 
-          {/* Filtros */}
           <Grid item xs={12} md={9}>
             <Grid container spacing={1.5} justifyContent="flex-end">
-              {/* Canal */}
-              <Grid item xs={7} sm={3} md={1.5}>
+              <Grid item xs={12} sm={4} md={2.4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Canal</InputLabel>
+                  <Typography variant="caption" sx={fieldLabelSx}>
+                    Canal
+                  </Typography>
                   <Select
                     value={filtros.canal || ""}
                     onChange={(e) => handleChange("canal", e.target.value)}
-                    label="Canal"
-                    sx={{ fontSize: "0.75rem", height: 36 }}
+                    displayEmpty
+                    sx={selectSx}
                   >
-                    <MenuItem value="">Todos</MenuItem>
+                    <MenuItem value="">
+                      <em>Todos</em>
+                    </MenuItem>
                     <MenuItem value="chorrillo">Chorrillo</MenuItem>
                     <MenuItem value="empresas">Empresas</MenuItem>
                     <MenuItem value="balmaceda">Balmaceda</MenuItem>
@@ -306,19 +334,22 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
                 </FormControl>
               </Grid>
 
-              {/* Vendedor */}
-              <Grid item xs={6} sm={3} md={1.5}>
+              <Grid item xs={12} sm={5} md={2.4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Vendedor</InputLabel>
+                  <Typography variant="caption" sx={fieldLabelSx}>
+                    Vendedor
+                  </Typography>
                   <Select
                     value={filtros.vendedorEmpresa}
                     onChange={(e) =>
                       handleChange("vendedorEmpresa", e.target.value)
                     }
-                    label="Vendedor"
-                    sx={{ fontSize: "0.75rem", height: 36 }}
+                    displayEmpty
+                    sx={selectSx}
                   >
-                    <MenuItem value="">Todos</MenuItem>
+                    <MenuItem value="">
+                      <em>Todos</em>
+                    </MenuItem>
                     {Array.isArray(vendedoresDisponibles) &&
                       vendedoresDisponibles.map((vendedor) => (
                         <MenuItem
@@ -332,92 +363,41 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
                 </FormControl>
               </Grid>
 
-              {/* Temporada */}
-              <Grid item xs={6} sm={3} md={1.5}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Temporada</InputLabel>
-                  <Select
-                    value={filtros.temporada}
-                    onChange={(e) =>
-                      handleChange("temporada", e.target.value)
-                    }
-                    label="Temporada"
-                    sx={{ fontSize: "0.75rem", height: 36 }}
-                  >
-                    <MenuItem value="">Todas</MenuItem>
-                    <MenuItem value="verano">Verano</MenuItem>
-                    <MenuItem value="invierno">Invierno</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* Período */}
-              <Grid item xs={6} sm={3} md={1.5}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Período</InputLabel>
-                  <Select
-                    value={filtros.periodo}
-                    onChange={(e) => handleChange("periodo", e.target.value)}
-                    label="Período"
-                    sx={{ fontSize: "0.75rem", height: 36 }}
-                  >
-                    <MenuItem value="1D">Hoy</MenuItem>
-                    <MenuItem value="7D">Últimos 7 días</MenuItem>
-                    <MenuItem value="14D">Últimos 14 días</MenuItem>
-                    <MenuItem value="1M">Mes actual</MenuItem>
-                    <MenuItem value="3M">3 meses</MenuItem>
-                    <MenuItem value="6M">6 meses</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* Fecha Inicio */}
-              <Grid item xs={6} sm={3} md={1.5}>
-                <TextField
-                  label="Inicio"
-                  type="date"
-                  size="small"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  value={filtros.fechaInicio}
-                  onChange={(e) =>
-                    handleChange("fechaInicio", e.target.value)
+              <Grid item xs={12} sm={4} md={2.4}>
+                <DateRangeFilter
+                  value={
+                    filtros.fechaInicio && filtros.fechaFin
+                      ? { start: filtros.fechaInicio, end: filtros.fechaFin }
+                      : null
                   }
-                  inputProps={{ style: { fontSize: "0.75rem", height: 16 } }}
+                  onChange={handleDateChange}
+                  label="Rango de Fecha"
                 />
               </Grid>
 
-              {/* Fecha Fin */}
-              <Grid item xs={6} sm={3} md={1.5}>
-                <TextField
-                  label="Fin"
-                  type="date"
-                  size="small"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  value={filtros.fechaFin}
-                  onChange={(e) =>
-                    handleChange("fechaFin", e.target.value)
-                  }
-                  inputProps={{ style: { fontSize: "0.75rem", height: 16 } }}
-                />
-              </Grid>
-              {/* Modo Comparación */}
               <Grid item xs={6} sm={3} md={1.5}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Comparar con</InputLabel>
+                  <Typography variant="caption" sx={fieldLabelSx}>
+                    Comparar con
+                  </Typography>
                   <Select
                     value={filtros.modoComparacion}
-                    onChange={(e) => handleChange("modoComparacion", e.target.value)}
-                    label="Comparar con"
-                    sx={{ fontSize: "0.75rem", height: 36 }}
+                    onChange={(e) =>
+                      handleChange("modoComparacion", e.target.value)
+                    }
+                    displayEmpty
+                    sx={selectSx}
                   >
+                    <MenuItem value="">
+                      <em>Seleccionar</em>
+                    </MenuItem>
                     <MenuItem value="PeriodoAnterior">Periodo anterior</MenuItem>
-                    <MenuItem value="MismoPeriodoAnoAnterior">Mismo período año anterior</MenuItem>
+                    <MenuItem value="MismoPeriodoAnoAnterior">
+                      Mismo período año anterior
+                    </MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-
 
               <Grid item xs={6} sm={3} md={1.5}>
                 <Button
@@ -427,11 +407,11 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
                   fullWidth
                   onClick={handleClear}
                   startIcon={<DeleteOutlineIcon />}
+                  sx={{ height: 42, borderRadius: 1.75, textTransform: "none" }}
                 >
                   Limpiar
                 </Button>
               </Grid>
-
             </Grid>
           </Grid>
         </Grid>

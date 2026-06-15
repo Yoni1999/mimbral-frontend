@@ -27,8 +27,12 @@ export interface ResumenCanalItem {
   margenBruto: number;
   margenPorcentaje: number;
   costoTotal: number;
-  stock?: number; // si viene
   detalles: DetalleVenta[];
+}
+
+export interface StockBodegaItem {
+  bodega: string;
+  stock: number;
 }
 
 export interface ProductoPorCanal {
@@ -39,6 +43,7 @@ export interface ProductoPorCanal {
   margenBruto: number;
   margenPorcentaje: number;
   costoTotal: number;
+  stock?: StockBodegaItem[];
   porCanal: ResumenCanalItem[];
 }
 
@@ -49,6 +54,7 @@ interface Props {
   ordenActual: Order;
   ordenPorActual: OrderBy;
   onOpenDetalle: (titulo: string, detalles: DetalleVenta[]) => void;
+  onOpenStock: (titulo: string, stock: StockBodegaItem[]) => void;
 }
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -70,6 +76,14 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 
 const formatNumber = (n?: number) =>
   typeof n === "number" ? n.toLocaleString("es-CL") : "-";
+
+const getStockTotalProducto = (stock?: StockBodegaItem[]) =>
+  (stock || [])
+    .filter((item) => item.bodega === "01" || item.bodega === "03")
+    .reduce((sum, item) => sum + (item.stock || 0), 0);
+
+const formatChannelLabel = (channel: string) =>
+  channel?.toLowerCase() === "vitex" ? "VTEX" : channel;
 
 /* ===== Copiado robusto al portapapeles (mismo patrón del informe original) ===== */
 /* Basado en ProductosVendidos.tsx: usa Clipboard API y fallback con textarea:contentReference[oaicite:1]{index=1} */
@@ -104,6 +118,7 @@ const VentasPorCanalTable: React.FC<Props> = ({
   ordenActual,
   ordenPorActual,
   onOpenDetalle,
+  onOpenStock,
 }) => {
   const safe = Array.isArray(data) ? data : [];
 
@@ -138,10 +153,10 @@ const VentasPorCanalTable: React.FC<Props> = ({
               </TableSortLabel>
             </StyledTableCell>
 
-            {/* OJO: Se QUITÓ la columna de Margen Bruto/% solicitada */}
+            <StyledTableCell>Stock</StyledTableCell>
 
             {canales.map((c) => (
-              <StyledTableCell key={`head-${c}`}>{c}</StyledTableCell>
+              <StyledTableCell key={`head-${c}`}>{formatChannelLabel(c)}</StyledTableCell>
             ))}
           </TableRow>
         </TableHead>
@@ -192,6 +207,22 @@ const VentasPorCanalTable: React.FC<Props> = ({
                 </Box>
               </StyledTableCell>
 
+              <StyledTableCell>
+                {(row.stock || []).length > 0 ? (
+                  <Button
+                    variant="text"
+                    onClick={() => onOpenStock(`${row.nombre} · Stock por bodega`, row.stock || [])}
+                    sx={{ p: 0, minWidth: 0, textAlign: "left" }}
+                  >
+                    <Typography sx={{ textDecoration: "underline" }}>
+                      {formatNumber(getStockTotalProducto(row.stock))}
+                    </Typography>
+                  </Button>
+                ) : (
+                  <Typography>{formatNumber(getStockTotalProducto(row.stock))}</Typography>
+                )}
+              </StyledTableCell>
+
               {canales.map((canalNombre) => {
                 const canal = row.porCanal?.find((c) => c.canal === canalNombre);
                 const cantidad = canal?.cantidadVendida || 0;
@@ -206,24 +237,12 @@ const VentasPorCanalTable: React.FC<Props> = ({
                         sx={{ p: 0, minWidth: 0, textAlign: "left" }}
                       >
                         <Box textAlign="left">
-                          <Typography sx={{ textDecoration: "underline" }}>
-                            {formatNumber(cantidad)}
-                          </Typography>
-                          {typeof canal?.stock === "number" && (
-                            <Typography variant="caption" color="text.secondary">
-                              stock: {formatNumber(canal.stock)}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Button>
-                    ) : (
+                        <Typography sx={{ textDecoration: "underline" }}>{formatNumber(cantidad)}</Typography>
+                      </Box>
+                    </Button>
+                  ) : (
                       <Box>
                         <Typography>{formatNumber(cantidad)}</Typography>
-                        {typeof canal?.stock === "number" && (
-                          <Typography variant="caption" color="text.secondary">
-                            stock: {formatNumber(canal.stock)}
-                          </Typography>
-                        )}
                       </Box>
                     )}
                   </StyledTableCell>
@@ -234,7 +253,7 @@ const VentasPorCanalTable: React.FC<Props> = ({
 
           {safe.length === 0 && (
             <StyledTableRow>
-              <StyledTableCell colSpan={2 + canales.length} align="center">
+              <StyledTableCell colSpan={3 + canales.length} align="center">
                 <Typography variant="body2" color="text.secondary">
                   No hay datos
                 </Typography>

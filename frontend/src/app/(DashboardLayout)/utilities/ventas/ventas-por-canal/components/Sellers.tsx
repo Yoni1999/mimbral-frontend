@@ -10,7 +10,6 @@ import { BACKEND_URL } from "@/config";
 
 interface VentasCanalChartProps {
   canal: string;
-  periodo: string;
   fechaInicio?: string;
   fechaFin?: string;
   onVendedorSeleccionado: (vendedor: number | null) => void;
@@ -18,7 +17,6 @@ interface VentasCanalChartProps {
 
 const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
   canal,
-  periodo,
   fechaInicio,
   fechaFin,
   onVendedorSeleccionado,
@@ -45,7 +43,6 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
         const params = new URLSearchParams();
 
         if (canal) params.append("canal", canal);
-        if (periodo) params.append("periodo", periodo);
         if (fechaInicio && fechaFin) {
           params.append("fechaInicio", fechaInicio);
           params.append("fechaFin", fechaFin);
@@ -83,7 +80,7 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
     };
 
     fetchData();
-  }, [canal, periodo, fechaInicio, fechaFin]);
+  }, [canal, fechaInicio, fechaFin]);
 
   const options: ApexOptions = {
     chart: {

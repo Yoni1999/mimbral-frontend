@@ -96,7 +96,26 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: "Informes",
+    title: "Ventas",
+    icon: IconClipboardCheck,
+    subMenu: [
+      {
+        id: uniqueId(),
+        title: "Ventas de Productos",
+        icon: IconChartBar,
+        href: "/informes/ventas-productos",
+      },
+      {
+        id: uniqueId(),
+        title: "Ventas de productos por canal",
+        icon: IconCashOff,
+        href: "/informes/ventas-productos-por-canal",
+      },
+    ],
+  },
+  {
+    id: uniqueId(),
+    title: "Inventario",
     icon: IconClipboardCheck,
     subMenu: [
       {
@@ -105,12 +124,7 @@ const Menuitems = [
         icon: IconBoxSeam,
         href: "/informes/productos-detenidos",
       },
-      {
-        id: uniqueId(),
-        title: "Ventas de Productos",
-        icon: IconChartBar,
-        href: "/informes/ventas-productos",
-      },
+
       // {
       //   id: uniqueId(),
       //   title: "Reporte Vendedores",
@@ -134,12 +148,6 @@ const Menuitems = [
         title: "Productos sin ventas",
         icon: IconCashOff,
         href: "/informes/productos-sin-ventas",
-      },
-      {
-        id: uniqueId(),
-        title: "Ventas de productos por canal",
-        icon: IconCashOff,
-        href: "/informes/ventas-productos-por-canal",
       },
     ],
   },

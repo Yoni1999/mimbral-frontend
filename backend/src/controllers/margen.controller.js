@@ -1,5 +1,11 @@
 const { sql, poolPromise } = require("../models/db");
 
+const bindProductFilterParams = (request, { sku = null, familia = null, subfamilia = null }) => {
+  request.input("SkuParamInput", sku);
+  request.input("FamiliaParamInput", familia);
+  request.input("SubfamiliaParamInput", subfamilia);
+};
+
 
 const obtenerMargenBrutoPeriodo = async (req, res) => {
   try {
@@ -129,15 +135,21 @@ const obtenerMargenBrutoPorCategoria = async (req, res) => {
   try {
     const pool = await poolPromise;
     const canal = req.query.canal || null;
-    const periodo = req.query.periodo || "1D"; 
+    const periodo = req.query.periodo || "1D";
     const fechaInicio = req.query.fechaInicio || null;
     const fechaFin = req.query.fechaFin || null;
+    const sku = req.query.sku || null;
+    const familia = req.query.familia || null;
+    const subfamilia = req.query.subfamilia || null;
 
     const query = `
       DECLARE @CanalParam VARCHAR(50) = @CanalParamInput;
       DECLARE @Periodo VARCHAR(10) = @PeriodoParam;
       DECLARE @FechaInicioCustom DATE = @FechaInicioInput;
       DECLARE @FechaFinCustom DATE = @FechaFinInput;
+      DECLARE @SkuParam VARCHAR(50) = @SkuParamInput;
+      DECLARE @FamiliaParam VARCHAR(100) = @FamiliaParamInput;
+      DECLARE @SubfamiliaParam VARCHAR(100) = @SubfamiliaParamInput;
 
       DECLARE @FechaInicioActual DATE, @FechaFinActual DATE;
 
@@ -181,6 +193,9 @@ const obtenerMargenBrutoPorCategoria = async (req, res) => {
       WHERE 
           T0.DocDate BETWEEN @FechaInicioActual AND @FechaFinActual
           AND T0.CANCELED = 'N'
+          AND (@SkuParam IS NULL OR I.ItemCode = @SkuParam)
+          AND (@FamiliaParam IS NULL OR O.U_Nombre_Fam = @FamiliaParam)
+          AND (@SubfamiliaParam IS NULL OR O.U_Nombre_SubFam = @SubfamiliaParam)
           AND (
               @CanalParam IS NULL
               OR (
@@ -204,6 +219,7 @@ const obtenerMargenBrutoPorCategoria = async (req, res) => {
     request.input("PeriodoParam", sql.VarChar, periodo);
     request.input("FechaInicioInput", sql.Date, fechaInicio);
     request.input("FechaFinInput", sql.Date, fechaFin);
+    bindProductFilterParams(request, { sku, familia, subfamilia });
 
     const result = await request.query(query);
     res.json(result.recordset);
