@@ -1,0 +1,66 @@
+const authRoutes = require("./auth.routes");
+const quiebresRoutes = require("./quiebres.routes");
+const margenRoutes = require("./margen.routes");
+const categoriasRoutes = require("./categorias.routes");
+const ventasHoyRoutes = require("./ventashoy.routes");
+const actualizarDatosRoutes = require("./actualizarDatos.routes");
+const vendedoresRoutes = require("./vendedores.routes");
+const canalVendedorRoutes = require("./canalVendedor.routes");
+const usuariosAdminRoutes = require("./usuarios.routes");
+const adminRoutes = require("./admin.routes");
+const sugerenciasRoutes = require("./sugerencias.routes");
+const periodosRoutes = require("./metas/periodos.routes");
+const metasRoutes = require("./metas/metas.routes");
+const filtrosmetasRoutes = require("./metas/filtrosmetas.routes");
+const resumenCategoriaRoutes = require("./resumen-categoria/resumenCategoria.routes");
+const categoria3nivelRoutes = require("./resumen-categoria/categoria3nivel.routes");
+const categoria1nivelRoutes = require("./resumen-categoria/categoria1nivel.routes");
+const productosvendedorRoutes = require("./productosvendedor/productosvendedor.routes");
+const obtenervendedorescanalRoutes = require("./productosvendedor/obtenervendedorescanal.routes");
+const obtenerProductosDetenidos = require("./informes/productosdetenidos.routes");
+const obtenerproveedoresRoutes = require("./informes/filtrosdetenidos.routes");
+const productoRoutes = require("./productos/producto.routes");
+const top10clientesRoutes = require("./ventas-canal/ventascanal.routes");
+const omcRoutes = require("./OMC/templace.routes");
+const creditoRoutes = require("./lineacredito/credito.routes");
+const renovarSesionRoutes = require("./renovarSesion.routes");
+const productosmenosrentablesRoutes = require("./informes/productosmenosrentables.routes");
+const sinventasRoutes = require("./informes/productossinventas.routes");
+const informecanalRoutes = require("./informes/informecanal.routes");
+const stockRoutes = require("./pricing/stock.Routes");
+
+function registerRoutes(app) {
+  app.use("/api/auth", authRoutes);
+  app.use("/api/templace", omcRoutes);
+  app.use("/api/pricing", stockRoutes);
+
+  app.use("/api", ventasHoyRoutes);
+  app.use("/api/quiebres", quiebresRoutes);
+  app.use("/api/margen", margenRoutes);
+  app.use("/api/categorias", categoriasRoutes);
+  app.use("/api", actualizarDatosRoutes);
+  app.use("/api", vendedoresRoutes);
+  app.use("/api", canalVendedorRoutes);
+  app.use("/api/admin/usuarios", usuariosAdminRoutes);
+  app.use("/api/admin", adminRoutes);
+  app.use("/api/sugerencias", sugerenciasRoutes);
+  app.use("/api/periodos", periodosRoutes);
+  app.use("/api/metas", metasRoutes);
+  app.use("/api/metas", filtrosmetasRoutes);
+  app.use("/api/resumen-categoria", resumenCategoriaRoutes);
+  app.use("/api/tercer-nivel", categoria3nivelRoutes);
+  app.use("/api/primer-nivel", categoria1nivelRoutes);
+  app.use("/api/pv", productosvendedorRoutes);
+  app.use("/api/oc", obtenervendedorescanalRoutes);
+  app.use("/api", obtenerProductosDetenidos);
+  app.use("/api", obtenerproveedoresRoutes);
+  app.use("/api", productoRoutes);
+  app.use("/api", top10clientesRoutes);
+  app.use("/api", creditoRoutes);
+  app.use("/api", renovarSesionRoutes);
+  app.use("/api/informes", productosmenosrentablesRoutes);
+  app.use("/api/informes", sinventasRoutes);
+  app.use("/api/informes", informecanalRoutes);
+}
+
+module.exports = registerRoutes;
