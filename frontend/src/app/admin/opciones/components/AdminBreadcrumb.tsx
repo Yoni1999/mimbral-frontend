@@ -58,7 +58,7 @@ const StyledBreadcrumb = styled(Chip)(({ theme }) => ({
 })) as typeof Chip;
 
 const AdminBreadcrumb = () => {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const router = useRouter();
   const pathSegments = pathname.split("/").filter(Boolean);
 

@@ -17,7 +17,7 @@ import MenuIcon from "@mui/icons-material/Menu"; // Ícono para el modo colapsad
 
 const MetasSidebar = () => {
   const [isHovered, setIsHovered] = useState(false);
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
 
   return (
     <Box
