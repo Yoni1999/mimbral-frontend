@@ -953,28 +953,6 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
                 END;
         END
   
-        WITH LineasFiltradas AS (
-          SELECT
-              OI.DocDate AS Fecha,
-              I.LineTotal,
-              I.ItemCode,
-              I.WhsCode,
-              I.SlpCode,
-              ITM.U_PRIMER_NIVEL,
-              ITM.U_Nombre_Fam,
-              ITM.U_Nombre_SubFam
-          FROM INV1 I
-          INNER JOIN OINV OI ON I.DocEntry = OI.DocEntry
-          INNER JOIN OITM ITM ON I.ItemCode = ITM.ItemCode
-          LEFT JOIN [@PRIMER_NIVEL] PN ON ITM.U_PRIMER_NIVEL = PN.Code
-          WHERE 
-              OI.DocDate BETWEEN @FechaInicio AND @FechaFin
-              AND OI.CANCELED = 'N'
-              AND (@PrimerNivelParam IS NULL OR ITM.U_PRIMER_NIVEL = @PrimerNivelParam)
-              AND (@SkuParam IS NULL OR LTRIM(RTRIM(I.ItemCode)) = LTRIM(RTRIM(@SkuParam)))
-              AND (@FamiliaParam IS NULL OR ITM.U_Nombre_Fam = @FamiliaParam)
-              AND (@SubfamiliaParam IS NULL OR ITM.U_Nombre_SubFam = @SubfamiliaParam)
-        )
         SELECT 
             SUM(CASE 
                 WHEN (WhsCode IN ('03', '05') AND SlpCode IN (426, 364, 355)) 
@@ -1008,7 +986,28 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
                  AND SlpCode IN (227, 250, 225,205, 138, 209, 228, 226, 137, 212) 
                 THEN LineTotal ELSE 0 
             END) AS Empresas
-        FROM LineasFiltradas;
+        FROM (
+          SELECT
+              OI.DocDate AS Fecha,
+              I.LineTotal,
+              I.ItemCode,
+              I.WhsCode,
+              I.SlpCode,
+              ITM.U_PRIMER_NIVEL,
+              ITM.U_Nombre_Fam,
+              ITM.U_Nombre_SubFam
+          FROM INV1 I
+          INNER JOIN OINV OI ON I.DocEntry = OI.DocEntry
+          INNER JOIN OITM ITM ON I.ItemCode = ITM.ItemCode
+          LEFT JOIN [@PRIMER_NIVEL] PN ON ITM.U_PRIMER_NIVEL = PN.Code
+          WHERE 
+              OI.DocDate BETWEEN @FechaInicio AND @FechaFin
+              AND OI.CANCELED = 'N'
+              AND (@PrimerNivelParam IS NULL OR ITM.U_PRIMER_NIVEL = @PrimerNivelParam)
+              AND (@SkuParam IS NULL OR LTRIM(RTRIM(I.ItemCode)) = LTRIM(RTRIM(@SkuParam)))
+              AND (@FamiliaParam IS NULL OR ITM.U_Nombre_Fam = @FamiliaParam)
+              AND (@SubfamiliaParam IS NULL OR ITM.U_Nombre_SubFam = @SubfamiliaParam)
+        ) AS LineasFiltradas;
       `;
   
       const request = pool.request();
