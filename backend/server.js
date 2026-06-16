@@ -1,4 +1,5 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 const os = require("os");
 const createApp = require("./src/app/createApp");
 const { port: PORT, host: HOST } = require("./src/config/env");
