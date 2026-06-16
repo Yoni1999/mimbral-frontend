@@ -27,7 +27,7 @@ function createApp() {
     authMiddleware(req, res, next);
   });
 
-  registerRoutes(app);
+  app.use("/v1", registerRoutes);
 
   return app;
 }

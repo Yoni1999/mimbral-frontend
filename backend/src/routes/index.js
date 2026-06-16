@@ -1,3 +1,4 @@
+const express = require("express");
 const authRoutes = require("./auth.routes");
 const quiebresRoutes = require("./quiebres.routes");
 const margenRoutes = require("./margen.routes");
@@ -29,38 +30,38 @@ const sinventasRoutes = require("./informes/productossinventas.routes");
 const informecanalRoutes = require("./informes/informecanal.routes");
 const stockRoutes = require("./pricing/stock.Routes");
 
-function registerRoutes(app) {
-  app.use("/api/auth", authRoutes);
-  app.use("/api/templace", omcRoutes);
-  app.use("/api/pricing", stockRoutes);
+const router = express.Router();
 
-  app.use("/api", ventasHoyRoutes);
-  app.use("/api/quiebres", quiebresRoutes);
-  app.use("/api/margen", margenRoutes);
-  app.use("/api/categorias", categoriasRoutes);
-  app.use("/api", actualizarDatosRoutes);
-  app.use("/api", vendedoresRoutes);
-  app.use("/api", canalVendedorRoutes);
-  app.use("/api/admin/usuarios", usuariosAdminRoutes);
-  app.use("/api/admin", adminRoutes);
-  app.use("/api/sugerencias", sugerenciasRoutes);
-  app.use("/api/periodos", periodosRoutes);
-  app.use("/api/metas", metasRoutes);
-  app.use("/api/metas", filtrosmetasRoutes);
-  app.use("/api/resumen-categoria", resumenCategoriaRoutes);
-  app.use("/api/tercer-nivel", categoria3nivelRoutes);
-  app.use("/api/primer-nivel", categoria1nivelRoutes);
-  app.use("/api/pv", productosvendedorRoutes);
-  app.use("/api/oc", obtenervendedorescanalRoutes);
-  app.use("/api", obtenerProductosDetenidos);
-  app.use("/api", obtenerproveedoresRoutes);
-  app.use("/api", productoRoutes);
-  app.use("/api", top10clientesRoutes);
-  app.use("/api", creditoRoutes);
-  app.use("/api", renovarSesionRoutes);
-  app.use("/api/informes", productosmenosrentablesRoutes);
-  app.use("/api/informes", sinventasRoutes);
-  app.use("/api/informes", informecanalRoutes);
-}
+router.use("/api/auth", authRoutes);
+router.use("/api/templace", omcRoutes);
+router.use("/api/pricing", stockRoutes);
 
-module.exports = registerRoutes;
+router.use("/api", ventasHoyRoutes);
+router.use("/api/quiebres", quiebresRoutes);
+router.use("/api/margen", margenRoutes);
+router.use("/api/categorias", categoriasRoutes);
+router.use("/api", actualizarDatosRoutes);
+router.use("/api", vendedoresRoutes);
+router.use("/api", canalVendedorRoutes);
+router.use("/api/admin/usuarios", usuariosAdminRoutes);
+router.use("/api/admin", adminRoutes);
+router.use("/api/sugerencias", sugerenciasRoutes);
+router.use("/api/periodos", periodosRoutes);
+router.use("/api/metas", metasRoutes);
+router.use("/api/metas", filtrosmetasRoutes);
+router.use("/api/resumen-categoria", resumenCategoriaRoutes);
+router.use("/api/tercer-nivel", categoria3nivelRoutes);
+router.use("/api/primer-nivel", categoria1nivelRoutes);
+router.use("/api/pv", productosvendedorRoutes);
+router.use("/api/oc", obtenervendedorescanalRoutes);
+router.use("/api", obtenerProductosDetenidos);
+router.use("/api", obtenerproveedoresRoutes);
+router.use("/api", productoRoutes);
+router.use("/api", top10clientesRoutes);
+router.use("/api", creditoRoutes);
+router.use("/api", renovarSesionRoutes);
+router.use("/api/informes", productosmenosrentablesRoutes);
+router.use("/api/informes", sinventasRoutes);
+router.use("/api/informes", informecanalRoutes);
+
+module.exports = router;
