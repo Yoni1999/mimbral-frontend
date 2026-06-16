@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import CloseIcon from "@mui/icons-material/Close";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 export interface MetaFilters {
@@ -75,7 +75,7 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
 
   useEffect(() => {
     const fetchPeriodos = async () => {
-      const res = await fetchWithToken(`${BACKEND_URL}/api/periodos`);
+      const res = await apiJson(`${BACKEND_URL}/api/periodos`);
       const data = await res!.json();
 
       const hoy = new Date();
@@ -111,7 +111,7 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
 
   useEffect(() => {
     const fetchPrimerNivel = async () => {
-      const res = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
+      const res = await apiJson(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
       const data = await res!.json();
       setPrimerNiveles(data);
     };
@@ -126,7 +126,7 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
         return;
       }
 
-      const res = await fetchWithToken(`${BACKEND_URL}/api/metas/vendedores?id_canal=${idCanal}`);
+      const res = await apiJson(`${BACKEND_URL}/api/metas/vendedores?id_canal=${idCanal}`);
       const data = await res!.json();
       setVendedores(data.map((v: any) => ({ id: v.id, nombre: v.NOMBRE })));
     };
@@ -140,7 +140,7 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
     if (key === "categoria") {
       updated.subcategoria = "";
       updated.subsubcategoria = "";
-      const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getcat?primerNivel=${value}`);
+      const res = await apiJson(`${BACKEND_URL}/api/metas/getcat?primerNivel=${value}`);
       const data = await res!.json();
       setCategorias(data.map((cat: any) => ({
         codigo: cat.codigo_categoria,
@@ -152,7 +152,7 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
 
     if (key === "subcategoria") {
       updated.subsubcategoria = "";
-      const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getsub?categoria=${value}`);
+      const res = await apiJson(`${BACKEND_URL}/api/metas/getsub?categoria=${value}`);
       const data = await res!.json();
       setSubcategorias(data.map((sub: any) => ({
         codigo: sub.codigo_subcategoria,
@@ -462,3 +462,4 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
 };
 
 export default HeaderMetasDrawer;
+

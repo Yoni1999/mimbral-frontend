@@ -13,7 +13,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import HeaderMetas, { MetaFilters } from "./components/HeaderMetas";
 import TablaMetas from "./components/TableMetas";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 // 👇 Mapeo nombre → código
@@ -70,8 +70,7 @@ export default function MetasPage() {
 
       setLoading(true);
       try {
-        const res = await fetchWithToken(fullURL);
-        const data = await res!.json();
+        const data = await apiJson<any[]>(fullURL);
 
         if (tipoMeta === "sku") {
           setMetasData(data);

@@ -25,7 +25,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import DateRangeFilter, { DateRangeValue } from "../../../utilities/ventas/components/DateRangeFilter";
 import SubmitOnEnter from "../../../components/SubmitOnEnter";
@@ -154,10 +154,10 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
       try {
         setLoadingProveedores(true);
         const [pn, prov] = await Promise.all([
-          fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`).then(
+          apiJson(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`).then(
             (res) => res!.json()
           ),
-          fetchWithToken(`${BACKEND_URL}/api/obtenerproveedores`).then((res) =>
+          apiJson(`${BACKEND_URL}/api/obtenerproveedores`).then((res) =>
             res!.json()
           ),
         ]);
@@ -183,7 +183,7 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
 
   const fetchCategorias = async (primerNivel: string) => {
     try {
-      const res = await fetchWithToken(
+      const res = await apiJson(
         `${BACKEND_URL}/api/metas/getcat?primerNivel=${primerNivel}`
       );
       const data = await res!.json();
@@ -202,7 +202,7 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
 
   const fetchSubcategorias = async (categoria: string) => {
     try {
-      const res = await fetchWithToken(
+      const res = await apiJson(
         `${BACKEND_URL}/api/metas/getsub?categoria=${categoria}`
       );
       const data = await res!.json();
@@ -756,3 +756,4 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
 };
 
 export default HeaderVentasPorCanalDrawer;
+

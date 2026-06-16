@@ -19,8 +19,7 @@ import PublicIcon from "@mui/icons-material/Public";
 import LanIcon from "@mui/icons-material/Lan";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import { useEffect, useState } from "react";
-import { fetchWithToken } from "@/utils/fetchWithToken";
-import { BACKEND_URL } from "@/config";
+import { apiJson } from "@/utils/apiClient";
 import EditarPasswordModal from "./components/EditarPasswordModal"; // ajusta la ruta si es necesario
 
 export default function PerfilPage() {
@@ -31,8 +30,7 @@ export default function PerfilPage() {
   useEffect(() => {
     const obtenerUsuario = async () => {
       try {
-        const response = await fetchWithToken(`${BACKEND_URL}/api/auth/usuario`);
-        const data = await response!.json(); 
+        const data = await apiJson<any>("/api/auth/usuario");
 
         setUser({
           nombre: data.nombre,

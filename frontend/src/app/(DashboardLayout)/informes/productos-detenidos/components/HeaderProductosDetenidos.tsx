@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import CloseIcon from "@mui/icons-material/Close";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 // --- INTERFACES (Moved out from within the component for clarity) ---
@@ -109,7 +109,7 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
   useEffect(() => {
     const fetchPrimerNivel = async () => {
       try {
-        const res = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
+        const res = await apiJson(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
         const data = await res!.json();
         setPrimerNiveles(data);
       } catch (error) {
@@ -124,7 +124,7 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     if (allProveedores.length === 0 && openDrawer) { // Only fetch if not already fetched and drawer is open
       setLoadingProveedores(true);
       try {
-        const res = await fetchWithToken(`${BACKEND_URL}/api/obtenerproveedores`);
+        const res = await apiJson(`${BACKEND_URL}/api/obtenerproveedores`);
         const data = await res!.json();
         setAllProveedores(data);
       } catch (error) {
@@ -149,7 +149,7 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
       updated.categoria = undefined; // Use undefined to explicitly clear
       updated.subcategoria = undefined; // Use undefined to explicitly clear
       try {
-        const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getcat?primerNivel=${value}`);
+        const res = await apiJson(`${BACKEND_URL}/api/metas/getcat?primerNivel=${value}`);
         const data = await res!.json();
         setCategorias(data.map((cat: any) => ({
           codigo: cat.codigo_categoria,
@@ -165,7 +165,7 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     if (key === "categoria") {
       updated.subcategoria = undefined; // Use undefined to explicitly clear
       try {
-        const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getsub?categoria=${value}`);
+        const res = await apiJson(`${BACKEND_URL}/api/metas/getsub?categoria=${value}`);
         const data = await res!.json();
         setSubcategorias(data.map((sub: any) => ({
           codigo: sub.codigo_subcategoria,

@@ -18,7 +18,7 @@ import {
   ArrowDropUp as ArrowDropUpIcon,
   ArrowDropDown as ArrowDropDownIcon,
 } from "@mui/icons-material";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades } from "@/utils/format";
 
@@ -75,7 +75,7 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
       try {
         const query = buildQuery();
         const url = `${BACKEND_URL}/api/pv/ventascategoria?${query}`;
-        const res = await fetchWithToken(url);
+        const res = await apiJson(url);
         const json = await res!.json();
 
         const mapped: Producto[] = json.map((item: any) => ({
@@ -298,3 +298,4 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
 };
 
 export default TopProductosChart;
+

@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 interface Props {
@@ -70,8 +70,8 @@ const HeaderDrawerSupply: React.FC<Props> = ({ open, onClose, onApply }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const resCat = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
-        const resProv = await fetchWithToken(`${BACKEND_URL}/api/proveedores/listado`);
+        const resCat = await apiJson(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
+        const resProv = await apiJson(`${BACKEND_URL}/api/proveedores/listado`);
         const dataCat = await resCat!.json();
         const dataProv = await resProv!.json();
         setCategorias(dataCat.map((c: any) => c.name));

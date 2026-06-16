@@ -7,7 +7,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import * as XLSX from 'xlsx';
-import { fetchWithToken } from '@/utils/fetchWithToken';
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from '@/config';
 
 type Producto = {
@@ -46,7 +46,7 @@ const MetaFormModal = ({ open, onClose, onMetaGuardada }: Props) => {
   useEffect(() => {
     const fetchPeriodos = async () => {
       try {
-        const res = await fetchWithToken(`${BACKEND_URL}/api/periodos`);
+        const res = await apiJson(`${BACKEND_URL}/api/periodos`);
         const data = await res!.json();
         const parsed = data.map((p: any) => ({ id: p.ID_PERIODO, nombre: p.NOMBRE }));
         setPeriodos(parsed);
@@ -61,7 +61,7 @@ const MetaFormModal = ({ open, onClose, onMetaGuardada }: Props) => {
   const fetchSKUs = async (query: string) => {
     try {
       setLoadingSku(true);
-      const response = await fetchWithToken(
+      const response = await apiJson(
         `${BACKEND_URL}/api/pv/SKU?query=${encodeURIComponent(query)}`
       );
       if (!response || !response.ok) throw new Error(`Error HTTP: ${response?.status}`);
@@ -105,7 +105,7 @@ const MetaFormModal = ({ open, onClose, onMetaGuardada }: Props) => {
 
     try {
       const endpoint = isMasivo ? 'carga-masiva' : 'insert';
-      const res = await fetchWithToken(`${BACKEND_URL}/api/metas/${endpoint}`, {
+      const res = await apiJson(`${BACKEND_URL}/api/metas/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -337,3 +337,4 @@ const MetaFormModal = ({ open, onClose, onMetaGuardada }: Props) => {
 };
 
 export default MetaFormModal;
+

@@ -1,14 +1,10 @@
-// utils/auth/renovarSesion.ts
-import { fetchWithToken } from "@/utils/fetchWithToken";
-import { BACKEND_URL } from "@/config";
+import { apiRequest } from "@/utils/apiClient";
 
 export async function renovarSesion(password: string): Promise<boolean> {
   try {
-    const response = await fetchWithToken(`${BACKEND_URL}/api/renovar-sesion`, {
+    const response = await apiRequest("/api/renovar-sesion", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      auth: "required",
       body: JSON.stringify({ password }),
     });
 

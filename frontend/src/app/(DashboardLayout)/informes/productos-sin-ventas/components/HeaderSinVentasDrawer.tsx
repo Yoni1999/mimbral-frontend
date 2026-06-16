@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import CloseIcon from "@mui/icons-material/Close";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 export interface FiltroSinVentas {
@@ -46,7 +46,7 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     useEffect(() => {
         (async () => {
             try {
-                const res = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
+                const res = await apiJson(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
                 const data = await res!.json();
                 setPrimerNiveles(data);
             } catch (e) {
@@ -64,7 +64,7 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
 
     const fetchCategorias = async (primerNivel: string) => {
         try {
-            const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getcat?primerNivel=${primerNivel}`);
+            const res = await apiJson(`${BACKEND_URL}/api/metas/getcat?primerNivel=${primerNivel}`);
             const data = await res!.json();
             setCategorias(
                 data.map((cat: any) => ({ codigo: cat.codigo_categoria, nombre: cat.nombre_categoria, imagen: cat.IMAGEN }))
@@ -77,7 +77,7 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
 
     const fetchSubcategorias = async (categoria: string) => {
         try {
-            const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getsub?categoria=${categoria}`);
+            const res = await apiJson(`${BACKEND_URL}/api/metas/getsub?categoria=${categoria}`);
             const data = await res!.json();
             setSubcategorias(
                 data.map((sub: any) => ({ codigo: sub.codigo_subcategoria, nombre: sub.nombre_subcategoria, imagen: sub.IMAGEN }))
@@ -353,3 +353,4 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
 };
 
 export default HeaderSinVentasDrawer;
+

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material';
 import { formatVentas } from '@/utils/format';
-import { fetchWithToken } from '@/utils/fetchWithToken';
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from '@/config';
 
 // --- INTERFACES ---
@@ -71,7 +71,7 @@ const ProductoAnalisisChart: React.FC<Props> = ({ filters }) => {
         }
 
         const url = `${BACKEND_URL}/api/ventas-mensuales-por-canal?${queryParams.toString()}`;
-        const res = await fetchWithToken(url);
+        const res = await apiJson(url);
 
         if (!res?.ok) {
           console.error(`Error HTTP: ${res?.status} ${res?.statusText}`);
@@ -186,3 +186,4 @@ const ProductoAnalisisChart: React.FC<Props> = ({ filters }) => {
 };
 
 export default ProductoAnalisisChart;
+

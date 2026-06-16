@@ -9,7 +9,7 @@ import dynamic from "next/dynamic";
 import TopProductosChart from "./components/SoldCategories";
 import VentasCanalChart from "./components/FormaPago";
 import {IconCurrencyDollar,IconTrendingUp,IconBox,IconStack2,IconShoppingCart,IconCreditCard} from "@tabler/icons-react";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import { useSearchParams } from "next/navigation";
 import SeccionTitulo from "@/app/(DashboardLayout)/utilities/ventas/resumen-ventas/components/SeccionTitulo";
@@ -117,7 +117,7 @@ const VentasVendedorPage: React.FC = () => {
     const fullUrl = `${BACKEND_URL}/api/pv/ventastotal?${query}`;
     console.log("🌐 URL Ventas Totales:", fullUrl);
     try {
-      const response = await fetchWithToken(fullUrl);
+      const response = await apiJson(fullUrl);
       if (response) {
         const datos = await extractFirstOrEmpty(response);
         setVentasTotal({
@@ -136,7 +136,7 @@ const VentasVendedorPage: React.FC = () => {
     const fullUrl = `${BACKEND_URL}/api/pv/margentotal?${query}`;
     console.log("🌐 URL Margen Total:", fullUrl);
     try {
-      const response = await fetchWithToken(fullUrl);
+      const response = await apiJson(fullUrl);
       if (response) {
         const datos = await extractFirstOrEmpty(response);
         setMargenTotal({
@@ -156,7 +156,7 @@ const VentasVendedorPage: React.FC = () => {
     const fullUrl = `${BACKEND_URL}/api/pv/productosdistintos?${query}`;
     console.log("🌐 URL Productos Distintos:", fullUrl);
     try {
-      const response = await fetchWithToken(fullUrl);
+      const response = await apiJson(fullUrl);
       if (response) {
         const data = await extractFirstOrEmpty(response);
         setProductosDistintos({
@@ -175,7 +175,7 @@ const VentasVendedorPage: React.FC = () => {
     const fullUrl = `${BACKEND_URL}/api/pv/unidadesvendidas?${query}`;
     console.log("🌐 URL Unidades Vendidas:", fullUrl);
     try {
-      const response = await fetchWithToken(fullUrl);
+      const response = await apiJson(fullUrl);
       if (response) {
         const data = await extractFirstOrEmpty(response);
         setUnidadesTotal({
@@ -194,7 +194,7 @@ const VentasVendedorPage: React.FC = () => {
     const fullUrl = `${BACKEND_URL}/api/pv/transacciones?${query}`;
     console.log("🌐 URL Transacciones:", fullUrl);
     try {
-      const response = await fetchWithToken(fullUrl);
+      const response = await apiJson(fullUrl);
       if (response) {
         const datos = await extractFirstOrEmpty(response);
         setNTransacciones({
@@ -213,7 +213,7 @@ const VentasVendedorPage: React.FC = () => {
     const fullUrl = `${BACKEND_URL}/api/pv/notascreditopv?${query}`;
     console.log("🌐 URL Notas de Crédito:", fullUrl);
     try {
-      const response = await fetchWithToken(fullUrl);
+      const response = await apiJson(fullUrl);
       if (response) {
         const data = await response.json(); // asumo que esta API podría devolver un array o un objeto
         // Si Notas de Crédito devuelve un objeto directamente, no un array de 1 elemento,
@@ -239,7 +239,7 @@ const VentasVendedorPage: React.FC = () => {
     const fullUrl = `${BACKEND_URL}/api/oc/formas-pago?${query}`;
     console.log("🌐 URL Formas de Pago:", fullUrl);
     try {
-      const response = await fetchWithToken(fullUrl);
+      const response = await apiJson(fullUrl);
       if (response) {
         const data = await response.json();
         // Esperamos un array de objetos
@@ -517,4 +517,5 @@ return (
 
 
 export default VentasVendedorPage;
+
 

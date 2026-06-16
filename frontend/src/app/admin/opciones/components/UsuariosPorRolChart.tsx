@@ -1,11 +1,10 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import Chart from 'react-apexcharts';
-import { fetchWithToken } from '@/utils/fetchWithToken';
+import { apiJson } from '@/utils/apiClient';
 import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCard';
 import { Typography, Box } from '@mui/material';
 import { ApexOptions } from 'apexcharts';
-import { BACKEND_URL } from '@/config';
 
 const UsuariosPorRolChart: React.FC = () => {
   const [series, setSeries] = useState<number[]>([]);
@@ -14,9 +13,7 @@ const UsuariosPorRolChart: React.FC = () => {
   useEffect(() => {
     const fetchUsuarios = async () => {
       try {
-        const res = await fetchWithToken(`${BACKEND_URL}/api/admin/usuarios`);
-        if (!res?.ok) throw new Error('Error al obtener usuarios');
-        const data = await res.json();
+        const data = await apiJson<any[]>('/api/admin/usuarios');
         const admins = data.filter((u: any) => u.ROL === 'admin').length;
         const usuarios = data.filter((u: any) => u.ROL === 'usuario').length;
         setSeries([admins, usuarios]);

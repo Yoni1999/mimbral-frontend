@@ -13,7 +13,7 @@ import MetricCard from "./components/MetricCard";
 import CategoriasBarChart from "./components/CategoriasBarChart";
 import dynamic from "next/dynamic";
 import SeccionTitulo from "./components/SeccionTitulo";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { IconCurrencyDollar, IconTrendingUp, IconCreditCard, IconShoppingCart, IconStack2, IconBox, } from "@tabler/icons-react";
 import TopRentabilidadMinima from "./components/Top10RentabilidadMinima";
 import NivelNavigation from "../components/NivelNavigation";
@@ -111,7 +111,7 @@ const ResumenVentas = () => {
     postProcessor?: (data: any) => any
   ) => {
     try {
-      const response = await fetchWithToken(
+      const response = await apiJson(
         `${BACKEND_URL}/api/${endpoint}`
       );
       if (response) {
@@ -315,6 +315,7 @@ const ResumenVentas = () => {
   );
 };
 export default ResumenVentas;
+
 
 
 

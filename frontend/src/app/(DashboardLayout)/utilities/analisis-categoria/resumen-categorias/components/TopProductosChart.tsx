@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import ExpandIcon from "@mui/icons-material/ZoomOutMap";
 import CloseIcon from "@mui/icons-material/Close";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 interface Filters {
@@ -56,14 +56,14 @@ const TopProductosChart: React.FC<Props> = ({ filters, onCategorySelect, nombreP
 
     if (filters.periodo) {
       const mapPeriodo: Record<string, string> = {
-        "Hoy": "1d",
-        "Ultimos 7 días": "7d",
-        "Ultimos 14 días": "14d",
-        "Ultimo mes": "1m",
-        "3 meses": "3m",
-        "6 meses": "6m",
+        "Hoy": "1D",
+        "Ultimos 7 días": "7D",
+        "Ultimos 14 días": "14D",
+        "Ultimo mes": "1M",
+        "3 meses": "3M",
+        "6 meses": "6M",
       };
-      params.append("periodo", mapPeriodo[filters.periodo] || "7d");
+      params.append("periodo", mapPeriodo[filters.periodo] || "7D");
     }
 
     if (filters.primer_nivel) params.append("primerNivel", filters.primer_nivel);
@@ -76,7 +76,7 @@ const TopProductosChart: React.FC<Props> = ({ filters, onCategorySelect, nombreP
       try {
         setLoading(true);
         const query = buildQuery();
-        const response = await fetchWithToken(
+        const response = await apiJson(
           `${BACKEND_URL}/api/primer-nivel/categorias-mas-vendidas-primer-nivel?${query}`
         );
 
@@ -88,7 +88,7 @@ const TopProductosChart: React.FC<Props> = ({ filters, onCategorySelect, nombreP
         const datosFiltrados = Array.isArray(result)
           ? result.filter(
               (item) =>
-                item.Nombre_SubCategoria !== null &&
+                item.Nombre_Categoria !== null &&
                 item.Cantidad_Vendida !== null &&
                 item.Total_Ventas !== null &&
                 item.Codigo_Categoria !== null 
@@ -263,3 +263,4 @@ const TopProductosChart: React.FC<Props> = ({ filters, onCategorySelect, nombreP
 };
 
 export default TopProductosChart;
+

@@ -17,7 +17,7 @@ import {
   IconButton,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 export interface Filters {
@@ -67,7 +67,7 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange }) => {
   useEffect(() => {
     const fetchPrimerNiveles = async () => {
       try {
-        const response = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
+        const response = await apiJson(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
         const data = await response!.json();
         setPrimerNiveles(data);
         if (data.length > 0 && !filters.primer_nivel) {
@@ -424,3 +424,4 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange }) => {
 };
 
 export default HeaderCategoria;
+

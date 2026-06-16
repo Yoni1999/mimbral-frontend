@@ -14,7 +14,7 @@ import {
   CircularProgress,
   Typography
 } from "@mui/material";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 export interface ClienteCredito {
@@ -68,7 +68,7 @@ const TablaLineaCredito: React.FC<Props> = ({ filters }) => {
         const url = `${BACKEND_URL}/api/lineacredito/clientes?${params.toString()}`;
         console.log("🔗 Consultando:", url);
 
-        const res = await fetchWithToken(url);
+        const res = await apiJson(url);
         if (!res) {
           console.error("❌ La respuesta de la API es null.");
           setData([]);
@@ -166,3 +166,4 @@ const TablaLineaCredito: React.FC<Props> = ({ filters }) => {
 };
 
 export default TablaLineaCredito;
+

@@ -21,7 +21,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 type Filters = {
@@ -67,7 +67,7 @@ const VentasChart: React.FC<Props> = ({ filters }) => {
       try {
         setLoading(true);
         const query = buildQuery();
-        const response = await fetchWithToken(`${BACKEND_URL}/api/tercer-nivel/ventas-lineas-subcategoria?${query}`);
+        const response = await apiJson(`${BACKEND_URL}/api/tercer-nivel/ventas-lineas-subcategoria?${query}`);
         if (!response) throw new Error("Error al cargar datos del servidor");
 
         const raw = await response.json();
@@ -221,3 +221,4 @@ const VentasChart: React.FC<Props> = ({ filters }) => {
 };
 
 export default VentasChart;
+

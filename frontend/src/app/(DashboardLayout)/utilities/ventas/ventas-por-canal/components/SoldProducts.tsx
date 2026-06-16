@@ -11,7 +11,7 @@ import {
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { formatVentas } from "@/utils/format";
 import { BACKEND_URL } from "@/config";
 
@@ -150,7 +150,7 @@ const ProductosVendidos: React.FC<Props> = ({ filters }) => {
             .map(([k, v]) => [k, String(v)])
         ).toString();
 
-        const res = await fetchWithToken(`${BACKEND_URL}/api/obtener-productos-detallado?${query}`);
+        const res = await apiJson(`${BACKEND_URL}/api/obtener-productos-detallado?${query}`);
         const result = await res!.json();
         setProductos(result.data || []);
         setTotalProductos(result.total || 0);
@@ -219,3 +219,4 @@ const ProductosVendidos: React.FC<Props> = ({ filters }) => {
 };
 
 export default ProductosVendidos;
+

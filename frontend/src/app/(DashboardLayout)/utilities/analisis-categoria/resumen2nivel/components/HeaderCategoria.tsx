@@ -13,7 +13,7 @@ import {
   Typography,
   Autocomplete,
 } from "@mui/material";
-import { fetchWithToken } from "@/utils/fetchWithToken"; // Asegúrate que esto esté correctamente importado
+import { apiJson } from "@/utils/apiClient"; // Asegúrate que esto esté correctamente importado
 import { BACKEND_URL } from "@/config"; // Usa tu archivo de config si tienes una constante global
 
 export interface Filters {
@@ -64,7 +64,7 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
-        const response = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/mostrar-categorias`);
+        const response = await apiJson(`${BACKEND_URL}/api/resumen-categoria/mostrar-categorias`);
         if (!response) {
           console.error("No se recibió respuesta del servidor.");
           return;

@@ -5,7 +5,7 @@ import Chart from "react-apexcharts";
 import { Box, CircularProgress } from "@mui/material";
 import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
 import { ApexOptions } from "apexcharts";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 interface VentasCanalChartProps {
@@ -49,7 +49,7 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
         }
 
         const url = `${BACKEND_URL}/api/canal-vendedor?${params.toString()}`;
-        const response = await fetchWithToken(url);
+        const response = await apiJson(url);
         const data = await response?.json();
 
         if (!Array.isArray(data) || data.length === 0) {
@@ -180,3 +180,4 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
 };
 
 export default VentasCanalChart;
+

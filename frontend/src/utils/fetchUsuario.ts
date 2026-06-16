@@ -1,30 +1,16 @@
-// utils/fetchUsuario.ts
-import { fetchWithToken } from "@/utils/fetchWithToken";
-import { BACKEND_URL } from "@/config";
+import { apiJson } from "@/utils/apiClient";
 
 export const fetchUsuario = async () => {
   try {
-    const response = await fetchWithToken(`${BACKEND_URL}/api/auth/usuario`);
+    const data = await apiJson<Record<string, any>>("/api/auth/usuario", {
+      auth: "required",
+    });
 
-    if (!response || !response.ok) {
-      return null;
-    }
-
-    // utils/fetchUsuario.ts
-    // ...
-    const data = await response.json();
-    if (data?.ROL) {
-    data.ROL = data.ROL.toLowerCase();
-    }
-    console.log("Usuario obtenido:", data); // ✅ Agrega esto para depurar
-    return data;
-    // ...
-
-    // ✅ normaliza el rol a minúsculas si existe
     if (data?.ROL) {
       data.ROL = data.ROL.toLowerCase();
     }
 
+    console.log("Usuario obtenido:", data);
     return data;
   } catch (error) {
     console.error("Error al obtener usuario:", error);

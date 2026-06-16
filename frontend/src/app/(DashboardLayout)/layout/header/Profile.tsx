@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import {
   Avatar,
   Box,
@@ -19,7 +18,7 @@ import {
 import LoadingButton from "@mui/lab/LoadingButton";
 import { IconUser, IconListCheck } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { BACKEND_URL } from "@/config";
+import { apiRequest, clearStoredToken } from "@/utils/apiClient";
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);
@@ -47,22 +46,18 @@ const Profile = () => {
   };
 
   const handleConfirmLogout = async () => {
-    const token = localStorage.getItem("token");
     setIsLoggingOut(true);
 
     try {
-      await fetch(`${BACKEND_URL}/api/auth/logout`, {
+      await apiRequest("/api/auth/logout", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        auth: "required",
       });
     } catch (error) {
-      console.error("❌ Error al invalidar token en backend:", error);
+      console.error("Error al invalidar token en backend:", error);
     }
 
-    localStorage.removeItem("token");
+    clearStoredToken();
     localStorage.removeItem("rol");
     sessionStorage.clear();
     setIsLoggingOut(false);
@@ -105,8 +100,8 @@ const Profile = () => {
       >
         <MenuItem
           onClick={() => {
-            handleClose2(); // cierra el menú
-            router.push("/perfil"); // redirige a la página de perfil
+            handleClose2();
+            router.push("/perfil");
           }}
         >
           <ListItemIcon>
@@ -114,7 +109,6 @@ const Profile = () => {
           </ListItemIcon>
           <ListItemText>Mi Perfil</ListItemText>
         </MenuItem>
-
 
         {isAdmin && (
           <>
@@ -152,7 +146,6 @@ const Profile = () => {
         </Box>
       </Menu>
 
-      {/* Diálogo de confirmación */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
         <DialogTitle>¿Cerrar sesión?</DialogTitle>
         <DialogContent>
@@ -173,7 +166,6 @@ const Profile = () => {
             Cerrar sesión
           </LoadingButton>
         </DialogActions>
-
       </Dialog>
     </Box>
   );

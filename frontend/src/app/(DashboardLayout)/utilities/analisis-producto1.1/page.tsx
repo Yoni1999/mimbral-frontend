@@ -33,7 +33,7 @@ import VentasChart from "./components/VentasChart";
 import TopVendedoresChart from "./components/TopVendedoresChart";
 import ModalProveedor from './components/ModalProveedor'; 
 import FechaRotacion from "./components/FechaRotacion";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades, calcularVariacion  } from "@/utils/format";
 
@@ -260,7 +260,7 @@ useEffect(() => {
   const fetchUnidadesVendidas = async () => {
     try {
       const query = buildQueryFromFiltros(filtros);
-      const response = await fetchWithToken(`${BACKEND_URL}/api/pv/unidadesvendidas?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/pv/unidadesvendidas?${query}`);
       if (!response) throw new Error("Error al obtener unidades vendidas");
       const data = await response.json();
 
@@ -292,7 +292,7 @@ useEffect(() => {
     const fetchMargenTotal = async () => {
     try {
         const query = buildQueryFromFiltros(filtros);
-        const response = await fetchWithToken(`${BACKEND_URL}/api/pv/margentotal?${query}`);
+        const response = await apiJson(`${BACKEND_URL}/api/pv/margentotal?${query}`);
 
         if (!response) throw new Error("Error al obtener margen total");
 
@@ -323,7 +323,7 @@ useEffect(() => {
   const fetchVentasTotal = async () => {
     try {
       const query = buildQueryFromFiltros(filtros);
-      const response = await fetchWithToken(`${BACKEND_URL}/api/pv/ventastotal?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/pv/ventastotal?${query}`);
       if (!response) throw new Error("Error al obtener ventas total");
       const data = await response.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -353,7 +353,7 @@ useEffect(() => {
   const fetchPromedioTicket = async () => {
     try {
       const query = buildQueryFromFiltros(filtros);
-      const response = await fetchWithToken(`${BACKEND_URL}/api/pv/ticketpromedio?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/pv/ticketpromedio?${query}`);
       if (!response) throw new Error("Error al obtener ticket promedio");
       const data = await response.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -392,7 +392,7 @@ useEffect(() => {
         modoComparacion: filtros.modoComparacion || ''
       }).toString();
 
-      const res = await fetchWithToken(`${BACKEND_URL}/api/pv/transacciones?${params}`);
+      const res = await apiJson(`${BACKEND_URL}/api/pv/transacciones?${params}`);
       const data = await res!.json();
       console.log("🔍 Transacciones:", data);
 
@@ -424,7 +424,7 @@ useEffect(() => {
 useEffect(() => {
   const fetchResumenProducto = async () => {
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/resumen-producto?itemCode=${filtros.itemCode}`);
+      const response = await apiJson(`${BACKEND_URL}/api/resumen-producto?itemCode=${filtros.itemCode}`);
       if (!response) throw new Error("Error al obtener el resumen del producto");
 
       const data = await response.json();
@@ -441,7 +441,7 @@ useEffect(() => {
 useEffect(() => {
   const fetchDetalleStock = async () => {
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/detalle-stock?itemCode=${filtros.itemCode}`);
+      const response = await apiJson(`${BACKEND_URL}/api/detalle-stock?itemCode=${filtros.itemCode}`);
       if (!response) throw new Error("Error al obtener el detalle de stock");
 
       const data = await response.json();
@@ -457,7 +457,7 @@ useEffect(() => {
 }, [filtros.itemCode]);
   const handleOpenModal = async () => {
     try {
-      const response = await fetchWithToken(
+      const response = await apiJson(
         `${BACKEND_URL}/api/ventas-mensuales?itemCode=${filtros.itemCode}`
       );
       if (!response) throw new Error('Error al obtener las ventas mensuales');
@@ -470,7 +470,7 @@ useEffect(() => {
   };
   const handleOpenOrdenesCompra = async () => {
   try {
-    const response = await fetchWithToken(`${BACKEND_URL}/api/historico-ordenes-compra?itemCode=${filtros.itemCode}`);
+    const response = await apiJson(`${BACKEND_URL}/api/historico-ordenes-compra?itemCode=${filtros.itemCode}`);
     if (!response) throw new Error("Error al obtener órdenes de compra");
     const data = await response.json();
     setOrdenesCompra(data);
@@ -485,7 +485,7 @@ useEffect(() => {
 
     try {
       const url = `${BACKEND_URL}/api/stock-por-almacen?itemCode=${filtros.itemCode}`;
-      const res = await fetchWithToken(url);
+      const res = await apiJson(url);
 
       if (!res || !res.ok) {
         const text = res ? await res.text() : "No response";
@@ -529,7 +529,7 @@ useEffect(() => {
 useEffect(() => {
   const fetchProveedores = async () => {
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/tiempo-entrega-proveedores?itemCode=${filtros.itemCode}`);
+      const response = await apiJson(`${BACKEND_URL}/api/tiempo-entrega-proveedores?itemCode=${filtros.itemCode}`);
       if (!response) throw new Error("Error al obtener proveedores");
       const data = await response.json();
 
@@ -560,7 +560,7 @@ useEffect(() => {
     try {
       // Reutiliza la función buildQueryFromFiltros para construir la URL
       const query = buildQueryFromFiltros(filtros);
-      const response = await fetchWithToken(`${BACKEND_URL}/api/unidades-vendidas?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/unidades-vendidas?${query}`);
 
       if (!response || !response.ok) {
         throw new Error("Error al obtener unidades vendidas por mes");
@@ -1088,3 +1088,4 @@ useEffect(() => {
 };
 
 export default AnalisisProductoPage;
+

@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SugerenciaCard from "./components/SugerenciaCard";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 const API_URL = `${BACKEND_URL}/api/sugerencias`;
@@ -48,10 +48,7 @@ const Page = () => {
   useEffect(() => {
     const cargarDatos = async () => {
       try {
-        const res = await fetchWithToken(API_URL);
-        if (!res) return;
-
-        const data = await res.json();
+        const data = await apiJson<any[]>(API_URL);
         setSugerencias(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("❌ Error en GET:", err);
@@ -74,23 +71,15 @@ const Page = () => {
     };
 
     try {
-      const res = await fetchWithToken(API_URL, {
+      const data = await apiJson<any>(API_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json", // importante
-        },
         body: JSON.stringify(nueva),
       });
-
-      if (!res || !res.ok) throw new Error("Error al enviar sugerencia");
-
-      const data = await res.json();
 
       if (data.ID) {
         setSugerencias((prev) => [data, ...prev]);
       } else {
-        const refresh = await fetchWithToken(API_URL);
-        const actualizadas = await refresh?.json();
+        const actualizadas = await apiJson<any[]>(API_URL);
         setSugerencias(Array.isArray(actualizadas) ? actualizadas : []);
       }
 

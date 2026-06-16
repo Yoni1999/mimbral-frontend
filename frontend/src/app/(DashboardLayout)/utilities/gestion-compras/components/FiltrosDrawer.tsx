@@ -9,7 +9,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import dayjs, { Dayjs } from 'dayjs';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { fetchWithToken } from '@/utils/fetchWithToken';
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from '@/config';
 
 interface Categoria {
@@ -57,8 +57,8 @@ const FiltrosDrawer = () => {
   useEffect(() => {
     const fetchData = async () => {
       const [primerNivelData, proveedoresData] = await Promise.all([
-        fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`).then(res => res!.json()),
-        fetchWithToken(`${BACKEND_URL}/api/obtenerproveedores`).then(res => res!.json())
+        apiJson(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`).then(res => res!.json()),
+        apiJson(`${BACKEND_URL}/api/obtenerproveedores`).then(res => res!.json())
       ]);
       setPrimerNiveles(primerNivelData);
       setProveedores(proveedoresData);
@@ -72,7 +72,7 @@ const FiltrosDrawer = () => {
     if (key === "primerNivel") {
       updated.categoria = '';
       updated.subcategoria = '';
-      const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getcat?primerNivel=${value}`);
+      const res = await apiJson(`${BACKEND_URL}/api/metas/getcat?primerNivel=${value}`);
       const data = await res!.json();
       setCategorias(data.map((c: any) => ({ codigo: c.codigo_categoria, nombre: c.nombre_categoria, imagen: c.IMAGEN })));
       setSubcategorias([]);
@@ -80,7 +80,7 @@ const FiltrosDrawer = () => {
 
     if (key === "categoria") {
       updated.subcategoria = '';
-      const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getsub?categoria=${value}`);
+      const res = await apiJson(`${BACKEND_URL}/api/metas/getsub?categoria=${value}`);
       const data = await res!.json();
       setSubcategorias(data.map((s: any) => ({ codigo: s.codigo_subcategoria, nombre: s.nombre_subcategoria, imagen: s.IMAGEN })));
     }
@@ -313,3 +313,4 @@ const FiltrosDrawer = () => {
 };
 
 export default FiltrosDrawer;
+

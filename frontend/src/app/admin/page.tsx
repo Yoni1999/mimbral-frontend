@@ -16,8 +16,7 @@ import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
 import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
 import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
 
-import { fetchWithToken } from "@/utils/fetchWithToken";
-import { BACKEND_URL } from "@/config";
+import { apiJson } from "@/utils/apiClient";
 
 const AdminPage = () => {
   const router = useRouter();
@@ -37,9 +36,7 @@ const AdminPage = () => {
 
   const fetchUltimaActualizacion = async () => {
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/ultima-actualizacion`);
-      if (!response) return;
-      const data = await response.json();
+      const data = await apiJson<{ ultimaFecha: string; ultimaHora: string }>("/api/ultima-actualizacion");
       setUltimaFecha(data.ultimaFecha);
       setUltimaHora(data.ultimaHora);
     } catch (error) {
@@ -50,10 +47,9 @@ const AdminPage = () => {
   const handleActualizarDatos = async () => {
     setLoading(true);
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/actualizar-datos`, {
+      await apiJson("/api/actualizar-datos", {
         method: "POST",
       });
-      if (!response) return;
       await fetchUltimaActualizacion();
     } catch (error) {
       console.error("❌ Error al actualizar los datos:", error);

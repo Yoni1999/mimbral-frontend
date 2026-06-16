@@ -22,7 +22,7 @@ import {
   IconStack2,
   IconBox,
 } from "@tabler/icons-react";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { formatVentas, formatUnidades } from "@/utils/format";
 import { useSearchParams } from "next/navigation";
 const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
@@ -73,14 +73,34 @@ const ResumenCategoriasPage: React.FC = () => {
   });
 
   const getPeriodoParam = (periodo: string) => {
-    switch (periodo) {
-      case "Hoy": return "1d";
-      case "Ultimos 7 días": return "7d";
-      case "Ultimos 14 días": return "14d";
-      case "Ultimo mes": return "1m";
-      case "3 meses": return "3m";
-      case "6 meses": return "6m";
-      default: return "1d";
+    const normalizedPeriodo = periodo.trim();
+    switch (normalizedPeriodo) {
+      case "Hoy":
+      case "1d":
+      case "1D":
+        return "1D";
+      case "Ultimos 7 días":
+      case "7d":
+      case "7D":
+        return "7D";
+      case "Ultimos 14 días":
+      case "14d":
+      case "14D":
+        return "14D";
+      case "Ultimo mes":
+      case "1m":
+      case "1M":
+        return "1M";
+      case "3 meses":
+      case "3m":
+      case "3M":
+        return "3M";
+      case "6 meses":
+      case "6m":
+      case "6M":
+        return "6M";
+      default:
+        return normalizedPeriodo || "1D";
     }
   };
 
@@ -101,7 +121,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchUnidadesVendidas = async (currentFiltros: Filters) => {
     const query = buildQuery(currentFiltros);
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/tercer-nivel/unidades-vendidas-subcategoria?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/tercer-nivel/unidades-vendidas-subcategoria?${query}`);
       if (response) {
         const data = await response.json();
         setUnidadesVendidas({
@@ -118,7 +138,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchProductosDistintos = async (currentFiltros: Filters) => {
     const query = buildQuery(currentFiltros);
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/tercer-nivel/items-vendidos-subcategoria?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/tercer-nivel/items-vendidos-subcategoria?${query}`);
       if (response) {
         const data = await response.json();
         setProductosDistintos({
@@ -134,7 +154,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchNotasCredito = async (currentFiltros: Filters) => {
     const query = buildQuery(currentFiltros);
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/tercer-nivel/notas-credito-subcategoria?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/tercer-nivel/notas-credito-subcategoria?${query}`);
       if (response) {
         const data = await response.json();
         setNotasCredito({
@@ -150,7 +170,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchTransaccionesPeriodo = async (currentFiltros: Filters) => {
     const query = buildQuery(currentFiltros);
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/tercer-nivel/cantidad-ventas-subcategoria?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/tercer-nivel/cantidad-ventas-subcategoria?${query}`);
       if (response) {
         const data = await response.json();
         console.log("🟢 Datos de transacciones:", data);
@@ -167,7 +187,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchMargenVentasPeriodo = async (currentFiltros: Filters) => {
     const query = buildQuery(currentFiltros);
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/tercer-nivel/margen-subcategoria?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/tercer-nivel/margen-subcategoria?${query}`);
       if (response) {
         const data = await response.json();
         console.log("🟢 Margen ventas:", data);
@@ -183,7 +203,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchVentasPeriodo = async (currentFiltros: Filters) => {
     const query = buildQuery(currentFiltros);
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/tercer-nivel/ventas-subcategoria?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/tercer-nivel/ventas-subcategoria?${query}`);
       if (response) {
         const data = await response.json();
         console.log("🟢 Datos de ventas:", data);
@@ -201,11 +221,17 @@ const ResumenCategoriasPage: React.FC = () => {
 
   const mapPeriodoToLabel = (code: string): string => {
     const map: Record<string, string> = {
+      "1D": "Hoy",
       "1d": "Hoy",
+      "7D": "Ultimos 7 días",
       "7d": "Ultimos 7 días",
+      "14D": "Ultimos 14 días",
       "14d": "Ultimos 14 días",
+      "1M": "Ultimo mes",
       "1m": "Ultimo mes",
+      "3M": "3 meses",
       "3m": "3 meses",
+      "6M": "6 meses",
       "6m": "6 meses",
     };
     return map[code] || "";

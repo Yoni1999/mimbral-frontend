@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import { Filters } from "./HeaderDrawerProducto";
 import { formatVentas} from "@/utils/format";
@@ -47,7 +47,7 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
       setLoading(true);
       try {
         const query = buildQuery();
-        const response = await fetchWithToken(`${BACKEND_URL}/api/pv/historico?${query}`);
+        const response = await apiJson(`${BACKEND_URL}/api/pv/historico?${query}`);
         if (!response) throw new Error("Error al cargar datos");
   
         const raw = await response.json();
@@ -185,3 +185,4 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
 };
 
 export default VentasChart;
+

@@ -4,8 +4,7 @@ import {
   Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, TableSortLabel, Typography
 } from "@mui/material";
-import { fetchWithToken } from "@/utils/fetchWithToken";
-import { BACKEND_URL } from "@/config";
+import { apiJson } from "@/utils/apiClient";
 import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
 
 interface SessionData {
@@ -45,9 +44,7 @@ const UserSessionTable = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetchWithToken(`${BACKEND_URL}/api/admin/session-stats`);
-        if (!res?.ok) throw new Error("Error al obtener sesiones");
-        const json = await res.json();
+        const json = await apiJson<SessionData[]>("/api/admin/session-stats");
         setData(json);
       } catch (error) {
         console.error("❌ Error al obtener datos:", error);
