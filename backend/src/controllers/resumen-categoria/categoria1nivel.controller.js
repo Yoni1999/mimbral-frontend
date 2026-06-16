@@ -8,7 +8,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
       const canal = req.query.canal || null;
       const vendedorEmpresa = req.query.vendedorEmpresa || null;
       const primerNivel = req.query.primerNivel || null;
-      const periodo = req.query.periodo || "1D";
+      const periodo = String(req.query.periodo || "1D").toUpperCase();
       const fechaInicio = req.query.fechaInicio || null;
       const fechaFin = req.query.fechaFin || null;
   
@@ -829,7 +829,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
                 END;
         END;
   
-        WITH LineasFiltradas AS (
+        ;WITH LineasFiltradas AS (
           SELECT
               OI.DocDate AS Fecha,
               I.LineTotal,
