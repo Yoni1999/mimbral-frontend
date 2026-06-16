@@ -12,7 +12,7 @@ import HeaderFilters, { Filters } from "./components/Header";
 import ClientesFrecuentesTable from "./components/FrequentCustomers";
 import dynamic from "next/dynamic";
 import { formatUnidades, formatVentas } from "@/utils/format";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import { IconCurrencyDollar, IconTrendingUp, IconStack2, IconBox, IconShoppingCart, } from "@tabler/icons-react";
 import ProductosVendidos from "./components/SoldProducts";
@@ -113,7 +113,7 @@ const VentasPorCanal = () => {
 
       const responses = await Promise.all(
         endpoints.map((endpoint) =>
-          fetchWithToken(`${baseUrl}${endpoint}?${query}`).then((res) => res?.json())
+          apiJson(`${baseUrl}${endpoint}?${query}`).then((res) => res?.json())
         )
       );
 
@@ -371,3 +371,4 @@ const VentasPorCanal = () => {
 };
 
 export default VentasPorCanal;
+

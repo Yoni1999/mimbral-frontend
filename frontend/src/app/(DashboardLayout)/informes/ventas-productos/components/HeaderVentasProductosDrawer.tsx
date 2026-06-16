@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import CloseIcon from "@mui/icons-material/Close";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 // Interfaces moved out for clarity
@@ -100,8 +100,8 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
       setLoadingProveedores(true); // Set loading true for proveedores
       try {
         const [primerNivelData, proveedoresData] = await Promise.all([
-          fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`).then(res => res!.json()),
-          fetchWithToken(`${BACKEND_URL}/api/obtenerproveedores`).then(res => res!.json())
+          apiJson(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`).then(res => res!.json()),
+          apiJson(`${BACKEND_URL}/api/obtenerproveedores`).then(res => res!.json())
         ]);
         setPrimerNiveles(primerNivelData);
         setProveedores(proveedoresData);
@@ -184,7 +184,7 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
 
   const fetchCategorias = async (primerNivel: string) => {
     try {
-      const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getcat?primerNivel=${primerNivel}`);
+      const res = await apiJson(`${BACKEND_URL}/api/metas/getcat?primerNivel=${primerNivel}`);
       const data = await res!.json();
       setCategorias(data.map((cat: any) => ({ codigo: cat.codigo_categoria, nombre: cat.nombre_categoria, imagen: cat.IMAGEN })));
     } catch (error) {
@@ -195,7 +195,7 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
 
   const fetchSubcategorias = async (categoria: string) => {
     try {
-      const res = await fetchWithToken(`${BACKEND_URL}/api/metas/getsub?categoria=${categoria}`);
+      const res = await apiJson(`${BACKEND_URL}/api/metas/getsub?categoria=${categoria}`);
       const data = await res!.json();
       setSubcategorias(data.map((sub: any) => ({ codigo: sub.codigo_subcategoria, nombre: sub.nombre_subcategoria, imagen: sub.IMAGEN })));
     } catch (error) {
@@ -515,3 +515,4 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
 };
 
 export default HeaderVentasProductosDrawer;
+

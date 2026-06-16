@@ -17,7 +17,7 @@ import {
   IconStack2,
   IconBox,
 } from "@tabler/icons-react";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { useRouter } from "next/navigation"; // ✅ Mantener router para abrir nuevas páginas
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades } from "@/utils/format";
@@ -46,7 +46,7 @@ const ResumenCategoriasPage: React.FC = () => {
 
   const [filtros, setFiltros] = useState<Filters>({
     temporada: "",
-    periodo: "",
+    periodo: "Ultimos 7 días",
     fechaInicio: "",
     fechaFin: "",
     comparacion: "",
@@ -115,7 +115,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchUnidadesVendidas = async () => {
     const query = buildQuery();
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/primer-nivel/unidades-vendidas-primer-nivel?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/primer-nivel/unidades-vendidas-primer-nivel?${query}`);
       if (response) {
         const data = await response.json();
         setUnidadesVendidas({
@@ -132,7 +132,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchProductosDistintos = async () => {
     const query = buildQuery();
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/primer-nivel/items-vendidos-primer-nivel?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/primer-nivel/items-vendidos-primer-nivel?${query}`);
       if (response) {
         const data = await response.json();
         setProductosDistintos({
@@ -149,7 +149,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchNotasCredito = async () => {
     const query = buildQuery();
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/primer-nivel/notas-credito-primer-nivel?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/primer-nivel/notas-credito-primer-nivel?${query}`);
       if (response) {
         const data = await response.json();
         setNotasCredito({
@@ -166,7 +166,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchTransaccionesPeriodo = async () => {
     const query = buildQuery();
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/primer-nivel/cantidad-ventas-primer-nivel?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/primer-nivel/cantidad-ventas-primer-nivel?${query}`);
       if (response) {
         const data = await response.json();
         setTransaccionesPeriodo({
@@ -183,7 +183,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchMargenVentasPeriodo = async () => {
     const query = buildQuery();
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/primer-nivel/margen-primer-nivel?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/primer-nivel/margen-primer-nivel?${query}`);
       if (response) {
         const data = await response.json();
         setMargenVentas({
@@ -199,7 +199,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchVentasPeriodo = async () => {
     const query = buildQuery();
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/primer-nivel/ventas-primer-nivel?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/primer-nivel/ventas-primer-nivel?${query}`);
       if (response) {
         const data = await response.json();
         setVentasPeriodo({
@@ -316,3 +316,4 @@ const ResumenCategoriasPage: React.FC = () => {
 };
 
 export default ResumenCategoriasPage;
+

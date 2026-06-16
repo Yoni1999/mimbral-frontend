@@ -13,7 +13,7 @@ import {
   Typography,
   Autocomplete,
 } from "@mui/material";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 export interface Filters {
@@ -64,7 +64,7 @@ const HeaderSubcategoria: React.FC<Props> = ({ onFilterChange, initialFilters })
   useEffect(() => {
     const fetchSubcategorias = async () => {
       try {
-        const response = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/tercer-nivel`);
+        const response = await apiJson(`${BACKEND_URL}/api/resumen-categoria/tercer-nivel`);
         if (!response) {
           console.error("No se recibió respuesta del servidor.");
           return;
@@ -376,3 +376,4 @@ const HeaderSubcategoria: React.FC<Props> = ({ onFilterChange, initialFilters })
 };
 
 export default HeaderSubcategoria;
+

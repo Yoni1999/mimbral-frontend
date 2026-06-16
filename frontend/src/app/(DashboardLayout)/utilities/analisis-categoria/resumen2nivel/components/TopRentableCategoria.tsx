@@ -21,7 +21,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 interface Producto {
@@ -65,18 +65,18 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
   const buildQuery = () => {
     const params = new URLSearchParams();
     const mapPeriodo: Record<string, string> = {
-      "Hoy": "1d",
-      "Ultimos 7 días": "7d",
-      "Ultimos 14 días": "14d",
-      "Ultimo mes": "1m",
-      "3 meses": "3m",
-      "6 meses": "6m",
-      "1D": "1d",
-      "7D": "7d",
-      "14D": "14d",
-      "1M": "1m",
-      "3M": "3m",
-      "6M": "6m",
+      "Hoy": "1D",
+      "Ultimos 7 días": "7D",
+      "Ultimos 14 días": "14D",
+      "Ultimo mes": "1M",
+      "3 meses": "3M",
+      "6 meses": "6M",
+      "1D": "1D",
+      "7D": "7D",
+      "14D": "14D",
+      "1M": "1M",
+      "3M": "3M",
+      "6M": "6M",
     };
     if (filters.periodo) {
       const mapped = mapPeriodo[filters.periodo] || filters.periodo;
@@ -93,18 +93,18 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
   const params = new URLSearchParams();
 
   const mapPeriodo: Record<string, string> = {
-    "Hoy": "1d",
-    "Ultimos 7 días": "7d",
-    "Ultimos 14 días": "14d",
-    "Ultimo mes": "1m",
-    "3 meses": "3m",
-    "6 meses": "6m",
-    "1D": "1d",
-    "7D": "7d",
-    "14D": "14d",
-    "1M": "1m",
-    "3M": "3m",
-    "6M": "6m",
+    "Hoy": "1D",
+    "Ultimos 7 días": "7D",
+    "Ultimos 14 días": "14D",
+    "Ultimo mes": "1M",
+    "3 meses": "3M",
+    "6 meses": "6M",
+    "1D": "1D",
+    "7D": "7D",
+    "14D": "14D",
+    "1M": "1M",
+    "3M": "3M",
+    "6M": "6M",
   };
 
   const periodo = filters.periodo ? mapPeriodo[filters.periodo] || filters.periodo : "";
@@ -121,7 +121,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
 
   const fetchCategorias = async () => {
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
+      const response = await apiJson(`${BACKEND_URL}/api/resumen-categoria/primer-nivel`);
       if (response && response.ok) {
         const result: Categoria[] = await response.json();
         setCategorias(result);
@@ -140,7 +140,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
       try {
         setLoading(true);
         const query = buildQuery();
-        const response = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/top-rentables?${query}`);
+        const response = await apiJson(`${BACKEND_URL}/api/resumen-categoria/top-rentables?${query}`);
         if (response && response.ok) {
           const result: Producto[] = await response.json();
           setData(result);
@@ -336,3 +336,4 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
 };
 
 export default TopRentableCategoria;
+

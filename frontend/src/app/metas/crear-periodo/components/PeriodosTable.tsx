@@ -8,8 +8,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import PeriodoFormModal from '../../crear-meta/components/PeriodoFormModal';
-import { fetchWithToken } from '@/utils/fetchWithToken';
-import { BACKEND_URL } from "@/config";
+import { apiJson } from '@/utils/apiClient';
 
 // Tipado
 type Periodo = {
@@ -29,9 +28,7 @@ const PeriodosTable = () => {
 
   const fetchPeriodos = async () => {
     try {
-      const res = await fetchWithToken(`${BACKEND_URL}/api/periodos`);
-      if (!res || !res.ok) throw new Error('Error en la respuesta de la API');
-      const data = await res.json();
+      const data = await apiJson<any[]>(`/api/periodos`);
       const adaptados: Periodo[] = data.map((p: any) => ({
         idPeriodo: p.ID_PERIODO.toString(),
         nombre: p.NOMBRE,
@@ -57,8 +54,7 @@ const PeriodosTable = () => {
   const handleConfirmarEliminar = async () => {
     if (!periodoAEliminar) return;
     try {
-      const res = await fetchWithToken(`${BACKEND_URL}/api/periodos/${periodoAEliminar.idPeriodo}`, { method: 'DELETE' });
-      if (!res || !res.ok) return;
+      await apiJson(`/api/periodos/${periodoAEliminar.idPeriodo}`, { method: 'DELETE' });
       await fetchPeriodos();
     } catch (error) {
       console.error('Error al eliminar el periodo:', error);
@@ -74,12 +70,10 @@ const PeriodosTable = () => {
   const handleGuardar = async (id: string) => {
     if (!periodoEditado) return;
     try {
-      const res = await fetchWithToken(`${BACKEND_URL}/api/periodos/${id}`, {
+      await apiJson(`/api/periodos/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(periodoEditado),
       });
-      if (!res || !res.ok) return;
       await fetchPeriodos();
     } catch (error) {
       console.error('Error al actualizar el periodo:', error);

@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { BACKEND_URL } from "@/config";
 import type { Filters } from "./HeaderCategoria";
 import CloseIcon from "@mui/icons-material/Close";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 
 // ✅ Mapeo para mostrar nombres legibles
@@ -76,7 +76,7 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
         setLoading(true);
         const query = buildQuery();
 
-        const response = await fetchWithToken(
+        const response = await apiJson(
           `${BACKEND_URL}/api/resumen-categoria/ventas-canal-chart?${query}`
         );
 
@@ -223,3 +223,4 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
 };
 
 export default VentasCanalChart;
+

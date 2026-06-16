@@ -16,7 +16,7 @@ import 'jspdf-autotable';
 import autoTable from 'jspdf-autotable';
 
 import ProductosSinVentasTable from './components/ProductosSinVentas';
-import { fetchWithToken } from '@/utils/fetchWithToken';
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from '@/config';
 
 import HeaderSinVentasDrawer from './components/HeaderSinVentasDrawer';
@@ -145,7 +145,7 @@ const ProductosSinVentasPage: React.FC = () => {
             const skuTrim = (filtros.sku || '').trim();
             if (skuTrim) {
                 // Siempre forzar order=desc al consultar por SKU
-                const res = await fetchWithToken(
+                const res = await apiJson(
                     `${BACKEND_URL}${ENDPOINT}?order=desc&itemCode=${encodeURIComponent(skuTrim)}`
                 );
                 if (!res) {
@@ -219,7 +219,7 @@ const ProductosSinVentasPage: React.FC = () => {
             params.append('orderBy', ob);
             params.append('order', od);
 
-            const res = await fetchWithToken(`${BACKEND_URL}${ENDPOINT}?${params.toString()}`);
+            const res = await apiJson(`${BACKEND_URL}${ENDPOINT}?${params.toString()}`);
             if (!res) {
                 setData([]);
                 setTotal(0);
@@ -288,7 +288,7 @@ const ProductosSinVentasPage: React.FC = () => {
                 const p = new URLSearchParams(paramsBase);
                 p.append('page', String(pageNum));
                 p.append('pageSize', String(pageSize));
-                const res = await fetchWithToken(`${BACKEND_URL}${ENDPOINT}?${p.toString()}`);
+                const res = await apiJson(`${BACKEND_URL}${ENDPOINT}?${p.toString()}`);
                 const json = await res!.json();
                 const rows = Array.isArray(json?.data) ? json.data.map(mapRow) : [];
                 const totalApi = typeof json?.total === 'number' ? json.total : undefined;
@@ -601,3 +601,4 @@ const ProductosSinVentasPage: React.FC = () => {
 };
 
 export default ProductosSinVentasPage;
+

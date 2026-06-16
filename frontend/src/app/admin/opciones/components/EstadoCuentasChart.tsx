@@ -1,11 +1,10 @@
 'use client';
 import React, { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
 import { Typography } from "@mui/material";
 import { ApexOptions } from "apexcharts";
-import { BACKEND_URL } from "@/config";
 
 interface EstadoCuentasChartProps {
   sx?: Record<string, any>; 
@@ -25,10 +24,7 @@ const EstadoCuentasChart: React.FC<EstadoCuentasChartProps> = ({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetchWithToken(`${BACKEND_URL}/api/admin/usuarios`);
-        if (!res?.ok) throw new Error("Error al obtener usuarios");
-
-        const usuarios = await res.json();
+        const usuarios = await apiJson<any[]>("/api/admin/usuarios");
         const activos = usuarios.filter((u: any) => u.ESTADO === true).length;
         const inactivos = usuarios.filter((u: any) => u.ESTADO === false).length;
 
@@ -81,7 +77,7 @@ const EstadoCuentasChart: React.FC<EstadoCuentasChartProps> = ({
           options={options}
           series={chartData}
           type="donut"
-          width={width}yy
+          width={width}
           height={height}
         />
       )}

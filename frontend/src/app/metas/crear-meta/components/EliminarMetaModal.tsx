@@ -3,7 +3,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Typography
 } from '@mui/material';
-import { fetchWithToken } from '@/utils/fetchWithToken';
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from '@/config';
 import { useState } from 'react';
 
@@ -19,7 +19,7 @@ const EliminarMetaModal = ({ open, onClose, idMeta, onMetaEliminada }: EliminarM
 
   const handleEliminar = async (forzar = false) => {
     try {
-      const res = await fetchWithToken(
+      const res = await apiJson(
         `${BACKEND_URL}/api/metas/eliminar/${idMeta}${forzar ? '?force=true' : ''}`,
         {
           method: 'DELETE',
@@ -93,3 +93,4 @@ const EliminarMetaModal = ({ open, onClose, idMeta, onMetaEliminada }: EliminarM
 };
 
 export default EliminarMetaModal;
+

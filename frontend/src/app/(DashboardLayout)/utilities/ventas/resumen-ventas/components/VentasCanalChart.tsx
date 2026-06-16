@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { Typography } from "@mui/material";
 import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
 import { ApexOptions } from "apexcharts";
@@ -57,7 +57,7 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
     const fetchData = async () => {
       try {
         const query = buildQuery();
-        const response = await fetchWithToken(`${BACKEND_URL}/api/ventas-canal?${query}`);
+        const response = await apiJson(`${BACKEND_URL}/api/ventas-canal?${query}`);
         if (!response) return;
 
         const data: VentasCanalData = (await response.json())[0];
@@ -125,3 +125,4 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
 };
 
 export default VentasCanalChart;
+

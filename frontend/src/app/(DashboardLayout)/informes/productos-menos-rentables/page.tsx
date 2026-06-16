@@ -17,7 +17,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import autoTable from 'jspdf-autotable';
 
-import { fetchWithToken } from '@/utils/fetchWithToken';
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 // ---- Tipos (siguen el estilo de ventas-productos) ----
@@ -168,7 +168,7 @@ const ProductosMenosRentablesPage: React.FC = () => {
             params.append("order", od === "asc" ? "asc" : "desc");
 
             // --- llamada con token ---
-            const res = await fetchWithToken(
+            const res = await apiJson(
                 `${BACKEND_URL}/api/informes/productos-menos-rentables?${params.toString()}`
             );
             if (!res) {
@@ -341,7 +341,7 @@ const ProductosMenosRentablesPage: React.FC = () => {
                 const params = new URLSearchParams(base);
                 params.append("page", String(pageNum));
                 params.append("pageSize", String(pageSize));
-                const res = await fetchWithToken(`${BACKEND_URL}/api/informes/productos-menos-rentables?${params.toString()}`);
+                const res = await apiJson(`${BACKEND_URL}/api/informes/productos-menos-rentables?${params.toString()}`);
                 const json = await res!.json();
                 const rows = Array.isArray(json?.data) ? json.data.map(mapRow) : [];
                 const totalApi = typeof json?.total === "number" ? json.total : undefined;
@@ -681,3 +681,4 @@ const ProductosMenosRentablesPage: React.FC = () => {
 };
 
 export default ProductosMenosRentablesPage;
+

@@ -24,7 +24,7 @@ import {
   DialogActions,
   Chip,
 } from "@mui/material";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 
 import {
   Edit as EditIcon,
@@ -53,7 +53,7 @@ const UsuariosPage = () => {
   useEffect(() => {
     const fetchUsuarios = async () => {
       try {
-        const response = await fetchWithToken(`${BACKEND_URL}/api/admin/usuarios`);
+        const response = await apiJson(`${BACKEND_URL}/api/admin/usuarios`);
         if (!response) return;
         const data = await response.json();
         if (Array.isArray(data)) {
@@ -100,7 +100,7 @@ const UsuariosPage = () => {
         estado: editedData.ESTADO,
       };
 
-      const res = await fetchWithToken(`${BACKEND_URL}/api/admin/usuarios/${id}`, {
+      const res = await apiJson(`${BACKEND_URL}/api/admin/usuarios/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataToSend),
@@ -121,7 +121,7 @@ const UsuariosPage = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetchWithToken(`${BACKEND_URL}/api/admin/usuarios/${id}`, {
+      const res = await apiJson(`${BACKEND_URL}/api/admin/usuarios/${id}`, {
         method: "DELETE",
       });
 

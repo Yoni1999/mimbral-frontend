@@ -16,7 +16,7 @@ import {
   CircularProgress,
   Fade,
 } from "@mui/material";
-import { BACKEND_URL } from "@/config";
+import { apiJson } from "@/utils/apiClient";
 
 const CrearUsuarioForm = () => {
   const [formData, setFormData] = useState({
@@ -67,14 +67,10 @@ const CrearUsuarioForm = () => {
     setLoading(true);
 
     try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/crearusuarioadmin`, {
+      const data = await apiJson("/api/auth/crearusuarioadmin", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre, email, password, telefono, direccion, rol, estado }),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Error al registrar usuario");
 
       setMensaje("✅ Usuario creado exitosamente");
       setFormData({

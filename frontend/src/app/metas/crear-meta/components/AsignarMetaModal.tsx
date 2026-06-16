@@ -15,7 +15,7 @@ import {
   IconButton,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { fetchWithToken } from '@/utils/fetchWithToken';
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from '@/config';
 
 const Alert = React.forwardRef<HTMLDivElement, any>(function Alert(props, ref) {
@@ -64,8 +64,8 @@ const AsignarMetaModal: React.FC<Props> = ({
     const fetchDatosIniciales = async () => {
       try {
         const [resVendedores, resAsignadas] = await Promise.all([
-          fetchWithToken(`${BACKEND_URL}/api/metas/vendedores?id_canal=${idCanal}`),
-          fetchWithToken(`${BACKEND_URL}/api/metas/metaasig/${idMeta}`),
+          apiJson(`${BACKEND_URL}/api/metas/vendedores?id_canal=${idCanal}`),
+          apiJson(`${BACKEND_URL}/api/metas/metaasig/${idMeta}`),
         ]);
 
         const vendedoresData = await resVendedores!.json();
@@ -127,7 +127,7 @@ const AsignarMetaModal: React.FC<Props> = ({
 
     setLoading(true);
     try {
-      const res = await fetchWithToken(`${BACKEND_URL}/api/metas/asignar`, {
+      const res = await apiJson(`${BACKEND_URL}/api/metas/asignar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_meta: idMeta, asignaciones }),
@@ -231,3 +231,4 @@ const AsignarMetaModal: React.FC<Props> = ({
 };
 
 export default AsignarMetaModal;
+

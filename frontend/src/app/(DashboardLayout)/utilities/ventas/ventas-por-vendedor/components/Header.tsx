@@ -12,7 +12,7 @@ import {
   Dialog,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import DateRangeFilter, {
   DateRangeValue,
@@ -60,7 +60,7 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
 
       if (key === "canal") {
         const url = `${BACKEND_URL}/api/oc/obvc?canal=${value}`;
-        fetchWithToken(url)
+        apiJson(url)
           .then((res) => res?.json())
           .then((data) => {
             if (Array.isArray(data)) {
@@ -421,3 +421,4 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
 };
 
 export default HeaderVendedor;
+

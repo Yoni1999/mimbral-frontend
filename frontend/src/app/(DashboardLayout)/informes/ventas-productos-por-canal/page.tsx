@@ -31,11 +31,12 @@ import {
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import LaunchIcon from "@mui/icons-material/Launch";
 import HeaderVentasPorCanalDrawer, { FiltrosPorCanal } from "./components/HeaderVentasPorCanalDrawer";
 import VentasPorCanalTable, {
   ProductoPorCanal,
@@ -110,7 +111,8 @@ const getPeriodoFechasLabel = (filters: FiltrosPorCanal) => {
 };
 
 const InformeVentasPorCanalPage: React.FC = () => {
-  const [filters, setFilters] = useState<FiltrosPorCanal>({ periodo: "7d" });
+  const [filters, setFilters] = useState<FiltrosPorCanal>({});
+  const [appliedFilters, setAppliedFilters] = useState<FiltrosPorCanal | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(defaultPageSize);
   const [orderBy, setOrderBy] = useState<OrderBy>("cantidadVendida");
@@ -151,23 +153,37 @@ const InformeVentasPorCanalPage: React.FC = () => {
     return Array.from(set);
   }, [rows]);
 
+  const hasAppliedFilters = Boolean(
+    appliedFilters?.periodo ||
+      appliedFilters?.fechaInicio ||
+      appliedFilters?.fechaFin ||
+      appliedFilters?.sku ||
+      appliedFilters?.familia ||
+      appliedFilters?.subfamilia ||
+      appliedFilters?.proveedor ||
+      appliedFilters?.primerNivel ||
+      appliedFilters?.categoria ||
+      appliedFilters?.subcategoria
+  );
+
   const fetchData = async (pageToLoad = page) => {
     setLoading(true);
     try {
+      const sourceFilters = appliedFilters || filters;
       const params = new URLSearchParams();
       // filtros
-      if (filters.periodo && filters.periodo !== "RANGO") params.append("periodo", filters.periodo);
-      if (filters.periodo === "RANGO") {
-        if (filters.fechaInicio) params.append("fechaInicio", filters.fechaInicio);
-        if (filters.fechaFin) params.append("fechaFin", filters.fechaFin);
+      if (sourceFilters.periodo && sourceFilters.periodo !== "RANGO") params.append("periodo", sourceFilters.periodo);
+      if (sourceFilters.periodo === "RANGO") {
+        if (sourceFilters.fechaInicio) params.append("fechaInicio", sourceFilters.fechaInicio);
+        if (sourceFilters.fechaFin) params.append("fechaFin", sourceFilters.fechaFin);
       }
-      if (filters.proveedor) params.append("proveedor", filters.proveedor);
-      if (filters.sku) params.append("sku", filters.sku);
-      if (filters.familia) params.append("familia", filters.familia);
-      if (filters.subfamilia) params.append("subfamilia", filters.subfamilia);
-      if (filters.primerNivel) params.append("primerNivel", filters.primerNivel);
-      if (filters.categoria) params.append("categoria", filters.categoria);
-      if (filters.subcategoria) params.append("subcategoria", filters.subcategoria);
+      if (sourceFilters.proveedor) params.append("proveedor", sourceFilters.proveedor);
+      if (sourceFilters.sku) params.append("sku", sourceFilters.sku);
+      if (sourceFilters.familia) params.append("familia", sourceFilters.familia);
+      if (sourceFilters.subfamilia) params.append("subfamilia", sourceFilters.subfamilia);
+      if (sourceFilters.primerNivel) params.append("primerNivel", sourceFilters.primerNivel);
+      if (sourceFilters.categoria) params.append("categoria", sourceFilters.categoria);
+      if (sourceFilters.subcategoria) params.append("subcategoria", sourceFilters.subcategoria);
 
       // paginación + orden
       params.append("page", String(pageToLoad));
@@ -175,7 +191,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
       params.append("orderBy", orderBy);
       params.append("order", order);
 
-      const res = await fetchWithToken(
+      const res = await apiJson(
         `${BACKEND_URL}/api/informes/productos-por-canal-margen?${params.toString()}`
       );
       const data = await res!.json();
@@ -197,10 +213,32 @@ const InformeVentasPorCanalPage: React.FC = () => {
   };
 
   useEffect(() => {
+    if (!hasAppliedFilters) return;
     fetchData(1);
     setPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(filters), orderBy, order, pageSize]);
+  }, [JSON.stringify(appliedFilters), orderBy, order, pageSize, hasAppliedFilters]);
+
+  const buildDashboardUrl = () => {
+    const sourceFilters = appliedFilters || filters;
+    const params = new URLSearchParams();
+    if (sourceFilters.periodo) params.set("periodo", sourceFilters.periodo);
+    if (sourceFilters.fechaInicio) params.set("fechaInicio", sourceFilters.fechaInicio);
+    if (sourceFilters.fechaFin) params.set("fechaFin", sourceFilters.fechaFin);
+    if (sourceFilters.sku) params.set("sku", sourceFilters.sku);
+    if (sourceFilters.familia) params.set("familia", sourceFilters.familia);
+    if (sourceFilters.subfamilia) params.set("subfamilia", sourceFilters.subfamilia);
+    if (sourceFilters.proveedor) params.set("proveedor", sourceFilters.proveedor);
+    if (sourceFilters.primerNivel) params.set("primerNivel", sourceFilters.primerNivel);
+    if (sourceFilters.categoria) params.set("categoria", sourceFilters.categoria);
+    if (sourceFilters.subcategoria) params.set("subcategoria", sourceFilters.subcategoria);
+    return `/informes/ventas-productos-por-canal/dashboard?${params.toString()}`;
+  };
+
+  const handleAppliedFiltersChange = (nextFilters: FiltrosPorCanal) => {
+    setFilters(nextFilters);
+    setAppliedFilters(nextFilters);
+  };
 
   // ===== Exportaciones =====
   const openExport = (format: "excel" | "pdf") => {
@@ -210,6 +248,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
   };
 
   const doExport = async () => {
+    if (!hasAppliedFilters) return;
     const params = new URLSearchParams();
     if (filters.periodo && filters.periodo !== "RANGO") params.append("periodo", filters.periodo);
     if (filters.periodo === "RANGO") {
@@ -229,7 +268,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
     params.append("orderBy", orderBy);
     params.append("order", order);
 
-    const res = await fetchWithToken(
+    const res = await apiJson(
       `${BACKEND_URL}/api/informes/productos-por-canal-margen?${params.toString()}`
     );
     const data = await res!.json();
@@ -334,7 +373,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
       </Typography>
 
       <HeaderVentasPorCanalDrawer
-        onFilterChange={(f) => setFilters(f)}
+        onFilterChange={handleAppliedFiltersChange}
         currentFilters={filters}
       />
 
@@ -342,7 +381,9 @@ const InformeVentasPorCanalPage: React.FC = () => {
 
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="subtitle2">
-          {total === 0 ? (
+          {!hasAppliedFilters ? (
+            "Sin filtros aplicados"
+          ) : total === 0 ? (
             "Sin resultados"
           ) : (
             <>
@@ -354,6 +395,15 @@ const InformeVentasPorCanalPage: React.FC = () => {
         </Typography>
 
         <Box>
+          <Button
+            variant="outlined"
+            startIcon={<LaunchIcon />}
+            disabled={!hasAppliedFilters}
+            onClick={() => window.open(buildDashboardUrl(), "_blank", "noopener,noreferrer")}
+            sx={{ mr: 1.5 }}
+          >
+            Dashboard
+          </Button>
           <Button
             variant="contained"
             onClick={(e) => setAnchorEl(e.currentTarget)}
@@ -374,8 +424,9 @@ const InformeVentasPorCanalPage: React.FC = () => {
         </Box>
       ) : (
         <VentasPorCanalTable
-          data={rows}
-          canales={canalesUnion}
+          data={hasAppliedFilters ? rows : []}
+          canales={hasAppliedFilters ? canalesUnion : []}
+          emptyMessage={hasAppliedFilters ? "No hay datos" : "Sin filtros aplicados"}
           ordenActual={order}
           ordenPorActual={orderBy}
           onSortChange={(campo) => {
@@ -555,3 +606,4 @@ const InformeVentasPorCanalPage: React.FC = () => {
 };
 
 export default InformeVentasPorCanalPage;
+

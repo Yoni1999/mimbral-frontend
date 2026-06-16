@@ -15,7 +15,7 @@ import {
   Stack,
   TableSortLabel,
 } from "@mui/material";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import { formatVentas } from "@/utils/format";
 
@@ -79,7 +79,7 @@ const TopVendedoresChart: React.FC<Props> = ({ filters }) => {
         if (filters.fechaFin) params.append("fechaFin", filters.fechaFin);
 
         const url = `${BACKEND_URL}/api/canal-vendedor?${params.toString()}`;
-        const response = await fetchWithToken(url);
+        const response = await apiJson(url);
 
         if (!response) throw new Error("Error al obtener datos de vendedores");
 
@@ -190,3 +190,4 @@ return (
 };
 
 export default TopVendedoresChart;
+

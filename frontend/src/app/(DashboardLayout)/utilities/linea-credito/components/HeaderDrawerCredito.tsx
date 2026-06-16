@@ -22,7 +22,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { formatVentas } from "@/utils/format";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 interface Props {
@@ -71,7 +71,7 @@ const HeaderDrawerLineaCredito: React.FC<Props> = ({ open, onClose, onApply }) =
   useEffect(() => {
     const fetchTiposCliente = async () => {
       try {
-        const res = await fetchWithToken(`${BACKEND_URL}/api/tiposcliente`);
+        const res = await apiJson(`${BACKEND_URL}/api/tiposcliente`);
         const data = await res!.json();
         const formatted = data.map((item: any) => ({
           label: item.GroupName,
@@ -93,7 +93,7 @@ const HeaderDrawerLineaCredito: React.FC<Props> = ({ open, onClose, onApply }) =
     }
     setLoadingRut(true);
     try {
-      const res = await fetchWithToken(`${BACKEND_URL}/api/buscar-rut?query=${encodeURIComponent(value)}`);
+      const res = await apiJson(`${BACKEND_URL}/api/buscar-rut?query=${encodeURIComponent(value)}`);
       const data = await res!.json();
       setRutOptions(data);
     } catch (error) {
@@ -263,3 +263,4 @@ const HeaderDrawerLineaCredito: React.FC<Props> = ({ open, onClose, onApply }) =
 };
 
 export default HeaderDrawerLineaCredito;
+

@@ -23,7 +23,7 @@ import {
   IconStack2,
   IconBox,
 } from "@tabler/icons-react";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { formatVentas, formatUnidades } from "@/utils/format";
 import { useSearchParams } from "next/navigation";
 const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
@@ -35,6 +35,12 @@ const ResumenCategoriasPage: React.FC = () => {
   const categoriaFromUrl = searchParams.get("categoria") || "";
   const mapPeriodoToLabel = (codigo: string): string => {
     const reverseMap: Record<string, string> = {
+      "1d": "Hoy",
+      "7d": "Ultimos 7 días",
+      "14d": "Ultimos 14 días",
+      "1m": "Ultimo mes",
+      "3m": "3 meses",
+      "6m": "6 meses",
       "1D": "Hoy",
       "7D": "Ultimos 7 días",
       "14D": "Ultimos 14 días",
@@ -130,7 +136,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchUnidadesVendidas = async () => {
     const query = buildQuery();
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/unidades-vendidas-categoria?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/resumen-categoria/unidades-vendidas-categoria?${query}`);
       if (response) {
         const data = await response.json();
         setUnidadesVendidas({
@@ -147,7 +153,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchProductosDistintos = async () => {
     const query = buildQuery();
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/productos-distintos-categoria?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/resumen-categoria/productos-distintos-categoria?${query}`);
       if (response) {
         const data = await response.json();
         setProductosDistintos({
@@ -163,7 +169,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchNotasCredito = async () => {
     const query = buildQuery();
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/notas-credito-categoria?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/resumen-categoria/notas-credito-categoria?${query}`);
       if (response) {
         const data = await response.json();
         setNotasCredito({
@@ -179,7 +185,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchTransaccionesPeriodo = async () => {
     const query = buildQuery(); // ⚠️ este query debe incluir categoría
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/transacciones-categoria?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/resumen-categoria/transacciones-categoria?${query}`);
       if (response) {
         const data = await response.json();
         console.log("🟢 Datos de transacciones:", data);
@@ -196,7 +202,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchMargenVentasPeriodo = async () => {
     const query = buildQuery();
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/margen-categoria?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/resumen-categoria/margen-categoria?${query}`);
       if (response) {
         const data = await response.json();
         console.log("🟢 Margen ventas:", data);
@@ -212,7 +218,7 @@ const ResumenCategoriasPage: React.FC = () => {
   const fetchVentasPeriodo = async () => {
     const query = buildQuery();
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/ventas-categoria?${query}`);
+      const response = await apiJson(`${BACKEND_URL}/api/resumen-categoria/ventas-categoria?${query}`);
       if (response) {
         const data = await response.json();
         console.log("🟢 Datos de ventas:", data);

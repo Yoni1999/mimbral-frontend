@@ -12,7 +12,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { IconSparkles, IconX, IconSend } from "@tabler/icons-react";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 type AgentOption = {
@@ -245,7 +245,7 @@ export default function FloatingHelpAgent() {
     if (parsed.canal) params.append("canal", parsed.canal);
 
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/top-productos?${params.toString()}`);
+      const response = await apiJson(`${BACKEND_URL}/api/top-productos?${params.toString()}`);
       if (!response) {
         return {
           role: "agent",
@@ -489,3 +489,4 @@ export default function FloatingHelpAgent() {
     </Box>
   );
 }
+

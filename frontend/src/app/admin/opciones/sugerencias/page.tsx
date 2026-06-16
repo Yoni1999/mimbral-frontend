@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useEffect, useState } from "react";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 const API_URL = `${BACKEND_URL}/api/sugerencias`;
@@ -37,10 +37,7 @@ const AdminSugerenciasPage = () => {
   useEffect(() => {
     const fetchSugerencias = async () => {
       try {
-        const res = await fetchWithToken(API_URL);
-        if (!res) return;
-
-        const data = await res.json();
+        const data = await apiJson<any[]>(API_URL);
         setSugerencias(data);
       } catch (err) {
         console.error("❌ Error en GET sugerencias:", err);
@@ -55,13 +52,10 @@ const AdminSugerenciasPage = () => {
 
   const handleEstadoChange = async (id: number, nuevoEstado: string) => {
     try {
-      const res = await fetchWithToken(`${API_URL}/${id}`, {
+      await apiJson(`${API_URL}/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado: nuevoEstado }),
       });
-
-      if (!res || !res.ok) throw new Error("Error al actualizar estado");
 
       setSugerencias((prev) =>
         prev.map((s) => (s.ID === id ? { ...s, ESTADO: nuevoEstado } : s))
@@ -76,11 +70,9 @@ const AdminSugerenciasPage = () => {
 
   const eliminarSugerencia = async (id: number) => {
     try {
-      const res = await fetchWithToken(`${API_URL}/${id}`, {
+      await apiJson(`${API_URL}/${id}`, {
         method: "DELETE",
       });
-
-      if (!res || !res.ok) throw new Error("Error al eliminar sugerencia");
 
       setSugerencias((prev) => prev.filter((s) => s.ID !== id));
       setSuccess(true);

@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import ExpandIcon from "@mui/icons-material/ZoomOutMap";
 import CloseIcon from "@mui/icons-material/Close";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 interface Filters {
@@ -52,14 +52,20 @@ const TopProductosChart: React.FC<Props> = ({ filters }) => {
 
     if (filters.periodo) {
       const mapPeriodo: Record<string, string> = {
-        "Hoy": "1d",
-        "Ultimos 7 días": "7d",
-        "Ultimos 14 días": "14d",
-        "Ultimo mes": "1m",
-        "3 meses": "3m",
-        "6 meses": "6m",
+        "Hoy": "1D",
+        "Ultimos 7 días": "7D",
+        "Ultimos 14 días": "14D",
+        "Ultimo mes": "1M",
+        "3 meses": "3M",
+        "6 meses": "6M",
+        "1D": "1D",
+        "7D": "7D",
+        "14D": "14D",
+        "1M": "1M",
+        "3M": "3M",
+        "6M": "6M",
       };
-      params.append("periodo", mapPeriodo[filters.periodo] || "7d");
+      params.append("periodo", mapPeriodo[filters.periodo] || "7D");
     }
 
     return params.toString();
@@ -70,7 +76,7 @@ const TopProductosChart: React.FC<Props> = ({ filters }) => {
       try {
         setLoading(true);
         const query = buildQuery();
-        const response = await fetchWithToken(
+        const response = await apiJson(
           `${BACKEND_URL}/api/tercer-nivel/top-productos-subcategoria?${query}`
         );
 
@@ -246,3 +252,4 @@ const TopProductosChart: React.FC<Props> = ({ filters }) => {
 };
 
 export default TopProductosChart;
+

@@ -50,6 +50,7 @@ export interface ProductoPorCanal {
 interface Props {
   data: ProductoPorCanal[];
   canales: string[];
+  emptyMessage?: string;
   onSortChange: (campo: OrderBy) => void;
   ordenActual: Order;
   ordenPorActual: OrderBy;
@@ -85,6 +86,15 @@ const getStockTotalProducto = (stock?: StockBodegaItem[]) =>
 const formatChannelLabel = (channel: string) =>
   channel?.toLowerCase() === "vitex" ? "VTEX" : channel;
 
+const highlightCellSx = {
+  backgroundColor: "rgba(76, 110, 219, 0.10)",
+  borderRadius: 1,
+  px: 0.75,
+  py: 0.25,
+  display: "inline-flex",
+  alignItems: "center",
+};
+
 /* ===== Copiado robusto al portapapeles (mismo patrón del informe original) ===== */
 /* Basado en ProductosVendidos.tsx: usa Clipboard API y fallback con textarea:contentReference[oaicite:1]{index=1} */
 export const copyToClipboard = async (text: string): Promise<boolean> => {
@@ -114,6 +124,7 @@ export const copyToClipboard = async (text: string): Promise<boolean> => {
 const VentasPorCanalTable: React.FC<Props> = ({
   data,
   canales,
+  emptyMessage = "No hay datos",
   onSortChange,
   ordenActual,
   ordenPorActual,
@@ -125,6 +136,19 @@ const VentasPorCanalTable: React.FC<Props> = ({
   // Snackbars para copiado de SKU (mismo UX que informe original):contentReference[oaicite:2]{index=2}
   const [copiedSku, setCopiedSku] = useState<string | null>(null);
   const [copyError, setCopyError] = useState<string | null>(null);
+
+  const getTopChannels = (row: ProductoPorCanal) => {
+    return (row.porCanal || [])
+      .map((item) => ({
+        canal: item.canal,
+        cantidad: Number(item.cantidadVendida) || 0,
+      }))
+      .filter((item) => item.cantidad > 0)
+      .sort((a, b) => b.cantidad - a.cantidad)
+      .slice(0, 2)
+      .map((item) => item.canal);
+  };
+
   const handleCopySku = async (sku: string) => {
     const ok = await copyToClipboard(sku);
     if (ok) {
@@ -137,7 +161,14 @@ const VentasPorCanalTable: React.FC<Props> = ({
   };
 
   return (
-    <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+    <TableContainer
+      component={Paper}
+      sx={{
+        borderRadius: 2,
+        maxHeight: "calc(100vh - 240px)",
+        overflow: "auto",
+      }}
+    >
       <Table stickyHeader>
         <TableHead>
           <TableRow>
@@ -164,6 +195,10 @@ const VentasPorCanalTable: React.FC<Props> = ({
         <TableBody>
           {safe.map((row) => (
             <StyledTableRow key={row.sku}>
+              {(() => {
+                const topChannels = getTopChannels(row);
+                return (
+                  <>
               <StyledTableCell>
                 <Box
                   onClick={() => handleCopySku(row.sku)}
@@ -227,6 +262,7 @@ const VentasPorCanalTable: React.FC<Props> = ({
                 const canal = row.porCanal?.find((c) => c.canal === canalNombre);
                 const cantidad = canal?.cantidadVendida || 0;
                 const tieneDetalle = (canal?.detalles || []).length > 0;
+                const isTopChannel = topChannels.includes(canalNombre);
 
                 return (
                   <StyledTableCell key={`${row.sku}-${canalNombre}`}>
@@ -234,20 +270,28 @@ const VentasPorCanalTable: React.FC<Props> = ({
                       <Button
                         variant="text"
                         onClick={() => onOpenDetalle(`${row.nombre} · ${canalNombre}`, canal!.detalles)}
-                        sx={{ p: 0, minWidth: 0, textAlign: "left" }}
+                        sx={{
+                          p: 0,
+                          minWidth: 0,
+                          textAlign: "left",
+                          ...(isTopChannel ? { borderRadius: 1, px: 0.75, py: 0.25, backgroundColor: "rgba(76, 110, 219, 0.10)" } : {}),
+                        }}
                       >
                         <Box textAlign="left">
-                        <Typography sx={{ textDecoration: "underline" }}>{formatNumber(cantidad)}</Typography>
-                      </Box>
-                    </Button>
-                  ) : (
-                      <Box>
+                          <Typography sx={{ textDecoration: "underline" }}>{formatNumber(cantidad)}</Typography>
+                        </Box>
+                      </Button>
+                    ) : (
+                      <Box sx={isTopChannel ? highlightCellSx : undefined}>
                         <Typography>{formatNumber(cantidad)}</Typography>
                       </Box>
                     )}
                   </StyledTableCell>
                 );
               })}
+                  </>
+                );
+              })()}
             </StyledTableRow>
           ))}
 
@@ -255,7 +299,7 @@ const VentasPorCanalTable: React.FC<Props> = ({
             <StyledTableRow>
               <StyledTableCell colSpan={3 + canales.length} align="center">
                 <Typography variant="body2" color="text.secondary">
-                  No hay datos
+                  {emptyMessage}
                 </Typography>
               </StyledTableCell>
             </StyledTableRow>

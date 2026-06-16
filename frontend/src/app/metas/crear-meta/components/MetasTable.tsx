@@ -13,8 +13,7 @@ import {
   Typography,
   Button
 } from '@mui/material';
-import { fetchWithToken } from '@/utils/fetchWithToken';
-import { BACKEND_URL } from "@/config";
+import { apiJson } from '@/utils/apiClient';
 import MetaFormModal from './MetaFormModal';
 import PeriodoFormModal from './PeriodoFormModal';
 import AsignarMetaModal from './AsignarMetaModal';
@@ -69,8 +68,7 @@ const MetasTable = () => {
 
   const fetchPeriodos = async () => {
     try {
-      const res = await fetchWithToken(`${BACKEND_URL}/api/periodos`);
-      const data = await res!.json();
+      const data = await apiJson<any[]>(`/api/periodos`);
       const formateados: Periodo[] = data.map((p: any) => ({
         id: p.ID_PERIODO,
         nombre: p.NOMBRE,
@@ -99,11 +97,9 @@ const MetasTable = () => {
     if (!canal || !periodo) return;
     try {
       const canalId = canalSlpMap[canal];
-      const res = await fetchWithToken(
-        `${BACKEND_URL}/api/metas?idPeriodo=${periodo}&idCanal=${canalId}`
+      const data = await apiJson<any[]>(
+        `/api/metas?idPeriodo=${periodo}&idCanal=${canalId}`
       );
-      if (!res || !res.ok) throw new Error('Error al obtener las metas');
-      const data = await res.json();
 
       const metasAdaptadas: Meta[] = data.map((m: any) => {
         const completado =

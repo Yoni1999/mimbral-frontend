@@ -4,8 +4,7 @@ import {
   TextField, Button, Box, MenuItem
 } from '@mui/material';
 import { useState, useEffect } from 'react';
-import { fetchWithToken } from '@/utils/fetchWithToken';
-import { BACKEND_URL } from '@/config';
+import { apiJson } from '@/utils/apiClient';
 
 type EditarMetaModalProps = {
   open: boolean;
@@ -31,9 +30,8 @@ const EditarMetaModal = ({ open, onClose, meta, onMetaActualizada }: EditarMetaM
   }, [meta]);
 
   const handleGuardar = async () => {
-    const res = await fetchWithToken(`${BACKEND_URL}/api/metas/editar`, {
+    const data = await apiJson<{ success?: boolean }>(`/api/metas/editar`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: meta.id_meta,
         metaCantidad: cantidad,
@@ -42,7 +40,6 @@ const EditarMetaModal = ({ open, onClose, meta, onMetaActualizada }: EditarMetaM
       }),
     });
 
-    const data = await res?.json();
     if (data?.success) {
       onMetaActualizada();
       onClose();

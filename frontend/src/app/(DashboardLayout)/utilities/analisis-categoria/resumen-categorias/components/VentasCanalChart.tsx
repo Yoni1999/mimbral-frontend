@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { BACKEND_URL } from "@/config";
 import type { Filters } from "./HeaderCategoria";
 import CloseIcon from "@mui/icons-material/Close";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 
 // ✅ Mapeo visual de nombre de canales
@@ -53,14 +53,14 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
 
     if (filters.periodo) {
       const mapPeriodo: Record<string, string> = {
-        "Hoy": "1d",
-        "Ultimos 7 días": "7d",
-        "Ultimos 14 días": "14d",
-        "Ultimo mes": "1m",
-        "3 meses": "3m",
-        "6 meses": "6m",
+        "Hoy": "1D",
+        "Ultimos 7 días": "7D",
+        "Ultimos 14 días": "14D",
+        "Ultimo mes": "1M",
+        "3 meses": "3M",
+        "6 meses": "6M",
       };
-      params.append("periodo", mapPeriodo[filters.periodo] || "1d");
+      params.append("periodo", mapPeriodo[filters.periodo] || "1D");
     }
 
     if (filters.primer_nivel) {
@@ -76,7 +76,7 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
         setLoading(true);
         const query = buildQuery();
 
-        const response = await fetchWithToken(
+        const response = await apiJson(
           `${BACKEND_URL}/api/primer-nivel/ventas-canal-primer-nivel?${query}`
         );
 
@@ -226,3 +226,4 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
 };
 
 export default VentasCanalChart;
+

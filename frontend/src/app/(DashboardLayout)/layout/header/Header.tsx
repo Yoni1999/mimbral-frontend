@@ -15,12 +15,18 @@ import {
 import PropTypes from "prop-types";
 import Profile from "./Profile";
 import { IconRefresh, IconBellRinging, IconMenu } from "@tabler/icons-react";
-import { fetchWithToken } from "@/utils/fetchWithToken";
-import { BACKEND_URL } from "@/config";
+import { apiJson } from "@/utils/apiClient";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 interface ItemType {
   toggleMobileSidebar: (event: React.MouseEvent<HTMLElement>) => void;
+}
+
+interface Usuario {
+  id: number;
+  nombre: string;
+  email: string;
+  rol: string;
 }
 
 const Header = ({ toggleMobileSidebar }: ItemType) => {
@@ -28,14 +34,6 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
   const [ultimaHora, setUltimaHora] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const refreshButtonRef = useRef<HTMLButtonElement | null>(null);
-
-  interface Usuario {
-    id: number;
-    nombre: string;
-    email: string;
-    rol: string;
-  }
-
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [indicadoresData, setIndicadoresData] = useState<any>(null);
   const [anchorIndicador, setAnchorIndicador] = useState<null | HTMLElement>(null);
@@ -43,26 +41,22 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
 
   const handleRefreshClick = async () => {
     try {
-      const response = await fetchWithToken(`${BACKEND_URL}/api/ultima-actualizacion`);
-      if (!response) return;
-      const data = await response.json();
+      const data = await apiJson<{ ultimaFecha: string; ultimaHora: string }>("/api/ultima-actualizacion");
       setUltimaFecha(data.ultimaFecha);
       setUltimaHora(data.ultimaHora);
       setAnchorEl(refreshButtonRef.current);
     } catch (error) {
-      console.error("❌ Error al obtener la última actualización:", error);
+      console.error("Error al obtener la ultima actualizacion:", error);
     }
   };
 
   useEffect(() => {
     const obtenerUsuario = async () => {
       try {
-        const response = await fetchWithToken(`${BACKEND_URL}/api/auth/usuario`);
-        if (!response) throw new Error("Error al obtener el usuario");
-        const data = await response.json();
+        const data = await apiJson<Usuario>("/api/auth/usuario");
         setUsuario(data);
       } catch (err) {
-        console.error("❌ Error al obtener datos del usuario:", err);
+        console.error("Error al obtener datos del usuario:", err);
       }
     };
 
@@ -72,7 +66,7 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
         const data = await res.json();
         setIndicadoresData(data);
       } catch (error) {
-        console.error("❌ Error al obtener indicadores:", error);
+        console.error("Error al obtener indicadores:", error);
       }
     };
 
@@ -108,11 +102,10 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
 
           <Box flexGrow={1} display="flex" justifyContent="center">
             <Typography variant="h4" fontWeight={500} color="primary" sx={{ letterSpacing: 3 }}>
-              ANÁLISIS DE DATOS
+              ANALISIS DE DATOS
             </Typography>
           </Box>
 
-          {/* Indicadores Económicos con separadores */}
           <Stack
             direction="row"
             spacing={0.5}
@@ -128,9 +121,10 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
               { key: "euro", label: "EURO", color: "info.main" },
             ].map((item) => {
               const indicador = indicadoresData?.[item.key];
-              const valor = item.key === "ipc"
-                ? `${indicador?.valor ?? "-"}%`
-                : `$${indicador?.valor?.toLocaleString("es-CL") ?? "-"}`;
+              const valor =
+                item.key === "ipc"
+                  ? `${indicador?.valor ?? "-"}%`
+                  : `$${indicador?.valor?.toLocaleString("es-CL") ?? "-"}`;
 
               return (
                 <IconButton
@@ -140,7 +134,9 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
                   onClick={(e) => abrirPopoverIndicador(e, indicador)}
                   sx={{ flexDirection: "column", px: 1.5 }}
                 >
-                  <Typography variant="caption" color="text.secondary">{item.label}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {item.label}
+                  </Typography>
                   <Typography variant="body2" fontWeight={600} sx={{ color: item.color }}>
                     {valor}
                   </Typography>
@@ -195,7 +191,6 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
         </Toolbar>
       </AppBar>
 
-      {/* Popover Última Actualización */}
       <Popover
         open={open}
         anchorEl={anchorEl}
@@ -217,7 +212,7 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
           <Box display="flex" alignItems="center" mb={1}>
             <IconRefresh size="18" color="#1976d2" style={{ marginRight: 8 }} />
             <Typography variant="subtitle1" fontWeight="bold" color="primary.main">
-              Última Actualización
+              Ultima Actualizacion
             </Typography>
           </Box>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
@@ -229,7 +224,6 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
         </Box>
       </Popover>
 
-      {/* Popover individual de indicador */}
       <Popover
         open={Boolean(anchorIndicador)}
         anchorEl={anchorIndicador}
@@ -253,7 +247,7 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
               <Typography variant="subtitle1" fontWeight="bold" color="primary.main">
                 {indicadorSeleccionado.nombre}
               </Typography>
-              <Tooltip title="Esta información está obtenida desde el Banco Central de Chile" arrow>
+              <Tooltip title="Esta informacion esta obtenida desde el Banco Central de Chile" arrow>
                 <IconButton size="small" sx={{ color: "text.secondary" }}>
                   <InfoOutlinedIcon fontSize="small" />
                 </IconButton>

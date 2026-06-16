@@ -12,7 +12,7 @@ import {
   Legend,
 } from "recharts";
 import { Paper, Typography } from "@mui/material";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import { formatVentas } from "@/utils/format";
 
@@ -48,7 +48,7 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetchWithToken(
+        const response = await apiJson(
           `${BACKEND_URL}/api/primer-nivel/ventas-fecha-primer-nivel?${buildQuery()}`
         );
         if (!response) throw new Error("No se pudo cargar el gráfico de ventas");
@@ -147,3 +147,4 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
 };
 
 export default VentasChart;
+

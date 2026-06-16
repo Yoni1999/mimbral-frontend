@@ -24,7 +24,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ProductosVendidosTable from "./components/ProductosVendidos";
 import HeaderVentasProductosDrawer from "./components/HeaderVentasProductosDrawer";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -94,8 +94,7 @@ const InformeVentaPage = () => {
 
   const obtenerNombreUsuario = async (): Promise<string> => {
     try {
-      const res = await fetchWithToken(`${BACKEND_URL}/api/auth/usuario`);
-      const data = await res!.json();
+      const data = await apiJson<any>("/api/auth/usuario");
       return data?.nombre ?? "Usuario";
     } catch (error) {
       console.error("Error al obtener usuario:", error);
@@ -147,8 +146,7 @@ const InformeVentaPage = () => {
       params.append("orderBy", campoOrden);
       params.append("order", direccionOrden);
 
-      const res = await fetchWithToken(`${BACKEND_URL}/api/obtener-productos-detallado?${params.toString()}`);
-      const data = await res!.json();
+      const data = await apiJson<any>(`${BACKEND_URL}/api/obtener-productos-detallado?${params.toString()}`);
 
       const rows = Array.isArray(data?.data) ? data.data.map(mapApiRowToTable) : [];
       setProductos(rows);
@@ -210,8 +208,7 @@ const InformeVentaPage = () => {
       params.append("orderBy", ordenPor);
       params.append("order", orden);
 
-      const res = await fetchWithToken(`${BACKEND_URL}/api/obtener-productos-detallado?${params.toString()}`);
-      const data = await res!.json();
+      const data = await apiJson<any>(`${BACKEND_URL}/api/obtener-productos-detallado?${params.toString()}`);
 
       if (Array.isArray(data?.data)) {
         const rows = data.data.map(mapApiRowToTable);

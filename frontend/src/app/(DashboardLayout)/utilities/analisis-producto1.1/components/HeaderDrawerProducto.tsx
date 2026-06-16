@@ -8,7 +8,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import Autocomplete from "@mui/material/Autocomplete";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 
 interface Props {
@@ -123,7 +123,7 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
   const fetchSKUs = async (query: string) => {
     try {
       setLoadingSku(true);
-      const response = await fetchWithToken(`${BACKEND_URL}/api/pv/SKU?query=${encodeURIComponent(query)}`);
+      const response = await apiJson(`${BACKEND_URL}/api/pv/SKU?query=${encodeURIComponent(query)}`);
       if (!response || !response.ok) throw new Error(`Error HTTP: ${response?.status}`);
       const data: Producto[] = await response.json();
       setSkuOptions(data);
@@ -322,3 +322,4 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
 };
 
 export default HeaderDrawerProducto;
+

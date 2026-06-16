@@ -6,7 +6,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableRow,
   Stack, TableSortLabel, CircularProgress
 } from "@mui/material";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { formatearRUTDesdeSAP } from "@/utils/formatearRUTDesdeSAP";
 import { formatVentas } from "@/utils/format";
 import { BACKEND_URL } from "@/config";
@@ -52,7 +52,7 @@ const ClientesFrecuentesTable: React.FC<ClientesFrecuentesTableProps> = ({ filte
             .map(([k, v]) => [k, String(v)])
         ).toString();
 
-        const res = await fetchWithToken(`${BACKEND_URL}/api/top10clientes?${query}`);
+        const res = await apiJson(`${BACKEND_URL}/api/top10clientes?${query}`);
         
         if (!res?.ok) { // Manejo básico de errores HTTP
             console.error(`Error al obtener clientes frecuentes: ${res?.status} ${res?.statusText}`);
@@ -248,3 +248,4 @@ return (
 };
 
 export default ClientesFrecuentesTable;
+

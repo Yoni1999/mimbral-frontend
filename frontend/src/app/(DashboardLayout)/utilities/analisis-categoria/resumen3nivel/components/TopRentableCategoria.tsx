@@ -20,7 +20,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import { useRouter } from "next/navigation";
 
@@ -119,7 +119,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
   useEffect(() => {
     const fetchSubcategorias = async () => {
       try {
-        const res = await fetchWithToken(`${BACKEND_URL}/api/resumen-categoria/tercer-nivel`);
+        const res = await apiJson(`${BACKEND_URL}/api/resumen-categoria/tercer-nivel`);
         if (res?.ok) {
           const json = await res.json();
           setSubcategorias(json);
@@ -136,7 +136,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
       try {
         setLoading(true);
         const query = buildQuery();
-        const res = await fetchWithToken(`${BACKEND_URL}/api/tercer-nivel/top-rentables-subcategoria?${query}`);
+        const res = await apiJson(`${BACKEND_URL}/api/tercer-nivel/top-rentables-subcategoria?${query}`);
         if (res?.ok) {
           const json = await res.json();
           setData(json);
@@ -326,3 +326,4 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
 };
 
 export default TopRentableCategoria;
+

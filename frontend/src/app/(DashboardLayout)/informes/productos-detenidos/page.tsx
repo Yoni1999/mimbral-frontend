@@ -8,7 +8,7 @@ import {
 import { TrendingDown, Close as CloseIcon } from "@mui/icons-material";
 import ProductosEstancadosTable from "./components/ProductosEstancadosTable";
 import HeaderProductosDetenidos from "./components/HeaderProductosDetenidos";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import CustomTabs from "../components/CustomTabs";
 import * as XLSX from "xlsx";
@@ -65,8 +65,7 @@ const ProductosDetenidosPage = () => {
       params.append("offset", offset.toString());
       params.append("limit", limit.toString());
 
-      const res = await fetchWithToken(`${BACKEND_URL}/api/productos-detenidos?${params}`);
-      const data = await res!.json();
+      const data = await apiJson<any>(`${BACKEND_URL}/api/productos-detenidos?${params}`);
 
       setProductos(Array.isArray(data.data) ? data.data : []);
       setTotal(typeof data.total === "number" ? data.total : 0);
@@ -85,8 +84,7 @@ const ProductosDetenidosPage = () => {
         if (value) params.append(key, value);
       });
 
-      const res = await fetchWithToken(`${BACKEND_URL}/api/stock-detenido-ventas?${params}`);
-      const data = await res!.json();
+      const data = await apiJson<any>(`${BACKEND_URL}/api/stock-detenido-ventas?${params}`);
 
       const adaptados: ProductoEstancado[] = data.data.map((item: any) => ({
         SKU: item.ItemCode,
@@ -119,8 +117,7 @@ const ProductosDetenidosPage = () => {
       });
       params.append("sinPaginacion", "true");
 
-      const res = await fetchWithToken(`${BACKEND_URL}/api/productos-detenidos?${params}`);
-      const data = await res!.json();
+      const data = await apiJson<any>(`${BACKEND_URL}/api/productos-detenidos?${params}`);
 
       const worksheet = XLSX.utils.json_to_sheet(data.data);
       const workbook = XLSX.utils.book_new();
@@ -139,8 +136,7 @@ const ProductosDetenidosPage = () => {
       });
       params.append("sinPaginacion", "true");
 
-      const res = await fetchWithToken(`${BACKEND_URL}/api/stock-detenido-ventas?${params}`);
-      const data = await res!.json();
+      const data = await apiJson<any>(`${BACKEND_URL}/api/stock-detenido-ventas?${params}`);
 
       const worksheet = XLSX.utils.json_to_sheet(data.data);
       const workbook = XLSX.utils.book_new();

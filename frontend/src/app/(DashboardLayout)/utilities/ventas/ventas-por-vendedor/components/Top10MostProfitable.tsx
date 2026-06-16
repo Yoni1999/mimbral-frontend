@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import ReactApexChart from "react-apexcharts";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import { formatVentas } from "@/utils/format";
 
@@ -53,7 +53,7 @@ const TopRentableVendedor: React.FC<Props> = ({ filtros }) => {
     const fetchData = async () => {
       try {
         const url = `${BACKEND_URL}/api/pv/toprentables?${buildQuery()}`;
-        const res = await fetchWithToken(url);
+        const res = await apiJson(url);
         const json = await res!.json();
 
         const mapped: ProductoRentable[] = json.map((item: any) => ({
@@ -153,3 +153,4 @@ const TopRentableVendedor: React.FC<Props> = ({ filtros }) => {
 };
 
 export default TopRentableVendedor;
+

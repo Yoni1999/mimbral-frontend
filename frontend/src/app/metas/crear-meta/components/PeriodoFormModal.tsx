@@ -11,7 +11,7 @@ import {
   Typography,
   IconButton,
 } from '@mui/material';
-import { fetchWithToken } from '@/utils/fetchWithToken';
+import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from '@/config';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -39,7 +39,7 @@ const PeriodoFormModal = ({ open, onClose, onPeriodoCreado }: Props) => {
       const payload = { nombre, fechaInicio, fechaFin };
       console.log('📤 Enviando período:', payload); // Verifica lo que se envía
 
-      const res = await fetchWithToken(`${BACKEND_URL}/api/periodos`, {
+      const res = await apiJson(`${BACKEND_URL}/api/periodos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -139,3 +139,4 @@ const PeriodoFormModal = ({ open, onClose, onPeriodoCreado }: Props) => {
 };
 
 export default PeriodoFormModal;
+

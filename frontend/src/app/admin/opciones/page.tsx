@@ -20,7 +20,7 @@ const UsuariosPorRolChart = dynamic(() => import("./components/UsuariosPorRolCha
 
 import UsuarioKpiCard from "./components/UsuarioKpiCard";
 import UserSessionTable from "./components/UserSessionTable";
-import { fetchWithToken } from "@/utils/fetchWithToken";
+import { apiJson } from "@/utils/apiClient";
 
 // Iconos
 import PeopleIcon from "@mui/icons-material/People";
@@ -28,7 +28,6 @@ import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import AddIcon from "@mui/icons-material/Add";
-import { BACKEND_URL } from "@/config";
 
 const OpcionesAdminPage = () => {
   const router = useRouter();
@@ -51,9 +50,7 @@ const OpcionesAdminPage = () => {
 
     const fetchResumen = async () => {
       try {
-        const res = await fetchWithToken(`${BACKEND_URL}/api/admin/usuarios`);
-        if (!res) throw new Error("Respuesta nula del servidor");
-        const data = await res.json();
+        const data = await apiJson<any[]>("/api/admin/usuarios");
         const total = data.length;
         const activos = data.filter((u: any) => u.ESTADO == 1 || u.ESTADO === true).length;
         const inactivos = total - activos;
