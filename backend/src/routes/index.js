@@ -29,6 +29,7 @@ const productosmenosrentablesRoutes = require("./informes/productosmenosrentable
 const sinventasRoutes = require("./informes/productossinventas.routes");
 const informecanalRoutes = require("./informes/informecanal.routes");
 const stockRoutes = require("./pricing/stock.Routes");
+const ventasCanalRoutes = require("./ventascanal.routes");
 
 const router = express.Router();
 
@@ -58,6 +59,7 @@ router.use("/api", obtenerProductosDetenidos);
 router.use("/api", obtenerproveedoresRoutes);
 router.use("/api", productoRoutes);
 router.use("/api", top10clientesRoutes);
+router.use("/api", ventasCanalRoutes);
 router.use("/api", creditoRoutes);
 router.use("/api", renovarSesionRoutes);
 router.use("/api/informes", productosmenosrentablesRoutes);
