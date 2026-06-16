@@ -25,7 +25,7 @@ const NivelNavigation = () => {
       }}
     >
       {niveles.map((nivel) => {
-        const isActive = pathname.includes(nivel.path);
+        const isActive = pathname?.includes(nivel.path) ?? false;
         return (
           <Link href={nivel.path} key={nivel.label} passHref>
             <Chip

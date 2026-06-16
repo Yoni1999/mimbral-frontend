@@ -10,7 +10,7 @@ import NavGroup from "./NavGroup/NavGroup";
 // SidebarItems.tsx
 const SidebarItems = ({ toggleMobileSidebar }: any) => {
   const pathname = usePathname();
-  const pathDirect = pathname;
+  const pathDirect = pathname ?? "";
 
   // Estado para manejar la apertura de submenús
   const [openSubMenus, setOpenSubMenus] = useState<string[]>([]);

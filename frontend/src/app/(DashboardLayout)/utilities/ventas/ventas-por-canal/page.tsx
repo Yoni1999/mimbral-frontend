@@ -38,7 +38,7 @@ const VentasPorCanal = () => {
   const router = useRouter();
 
   const [filters, setFilters] = useState<Filters>(() => {
-    const canalParam = searchParams.get("canal") || "";
+    const canalParam = searchParams?.get("canal") || "";
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("filtrosVentasCanal");
       if (stored) {

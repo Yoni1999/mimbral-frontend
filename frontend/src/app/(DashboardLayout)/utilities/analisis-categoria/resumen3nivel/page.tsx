@@ -241,11 +241,11 @@ const ResumenCategoriasPage: React.FC = () => {
   useEffect(() => {
     setCargandoFiltros(true);
     const filtrosIniciales: Filters = {
-      subcategoria: searchParams.get("subcategoria") || "",
-      periodo: mapPeriodoToLabel(searchParams.get("periodo") || ""),
-      temporada: searchParams.get("temporada") || "",
-      fechaInicio: searchParams.get("fechaInicio") || "",
-      fechaFin: searchParams.get("fechaFin") || "",
+      subcategoria: searchParams?.get("subcategoria") || "",
+      periodo: mapPeriodoToLabel(searchParams?.get("periodo") || ""),
+      temporada: searchParams?.get("temporada") || "",
+      fechaInicio: searchParams?.get("fechaInicio") || "",
+      fechaFin: searchParams?.get("fechaFin") || "",
       comparacion: "",
     };
 

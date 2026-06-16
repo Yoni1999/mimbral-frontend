@@ -265,13 +265,13 @@ const VentasVendedorPage: React.FC = () => {
   useEffect(() => {
     setCargandoFiltros(true);
     const filtrosIniciales: Filters = {
-      fechaInicio: searchParams.get("fechaInicio") || "",
-      fechaFin: searchParams.get("fechaFin") || "",
-      vendedorEmpresa: searchParams.get("vendedor") || "",
-      modoComparacion: searchParams.get("modoComparacion") as
+      fechaInicio: searchParams?.get("fechaInicio") || "",
+      fechaFin: searchParams?.get("fechaFin") || "",
+      vendedorEmpresa: searchParams?.get("vendedor") || "",
+      modoComparacion: searchParams?.get("modoComparacion") as
         | Filters["modoComparacion"]
         | "",
-      canal: searchParams.get("canal") || "",
+      canal: searchParams?.get("canal") || "",
     };
 
     setFiltros(filtrosIniciales);

@@ -270,7 +270,7 @@ const DashboardVentasPorCanalPage: React.FC = () => {
   const [selectedChannel, setSelectedChannel] = useState<string>("");
   const [stockDetailProduct, setStockDetailProduct] = useState<StockDetailProduct>(null);
 
-  const queryString = useMemo(() => searchParams.toString(), [searchParams]);
+  const queryString = useMemo(() => searchParams?.toString() ?? "", [searchParams]);
 
   useEffect(() => {
     const run = async () => {
@@ -488,7 +488,7 @@ const DashboardVentasPorCanalPage: React.FC = () => {
       </Box>
 
       <Box mb={2} display="flex" flexWrap="wrap" gap={1}>
-        {searchParams.toString() ? (
+        {searchParams?.toString() ? (
           Array.from(searchParams.entries()).map(([key, value]) => (
             <Chip key={`${key}-${value}`} label={`${key}: ${value}`} variant="outlined" />
           ))
