@@ -32,7 +32,7 @@ const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), 
 
 const ResumenCategoriasPage: React.FC = () => {
   const searchParams = useSearchParams();
-  const categoriaFromUrl = searchParams.get("categoria") || "";
+  const categoriaFromUrl = searchParams?.get("categoria") || "";
   const mapPeriodoToLabel = (codigo: string): string => {
     const reverseMap: Record<string, string> = {
       "1d": "Hoy",
@@ -50,11 +50,11 @@ const ResumenCategoriasPage: React.FC = () => {
     };
     return reverseMap[codigo] || codigo;
   };
-  const periodoFromUrl = mapPeriodoToLabel(searchParams.get("periodo") || "");
-  const temporadaFromUrl = searchParams.get("temporada") || "";
-  const fechaInicioFromUrl = searchParams.get("fechaInicio") || "";
-  const fechaFinFromUrl = searchParams.get("fechaFin") || "";
-  const comparacionFromUrl = searchParams.get("comparacion") || "";
+  const periodoFromUrl = mapPeriodoToLabel(searchParams?.get("periodo") || "");
+  const temporadaFromUrl = searchParams?.get("temporada") || "";
+  const fechaInicioFromUrl = searchParams?.get("fechaInicio") || "";
+  const fechaFinFromUrl = searchParams?.get("fechaFin") || "";
+  const comparacionFromUrl = searchParams?.get("comparacion") || "";
 
   
 

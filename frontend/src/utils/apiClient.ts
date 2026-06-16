@@ -1,5 +1,5 @@
 import { BACKEND_URL } from "@/config";
-
+// export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://
 type ApiAuthMode = "none" | "optional" | "required";
 
 type ApiResponseLike = {
