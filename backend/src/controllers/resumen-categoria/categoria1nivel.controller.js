@@ -887,6 +887,7 @@ const obtenerVentasPorPrimerNivel = async (req, res) => {
                  AND SlpCode IN (227, 250, 205, 138, 209, 228, 226, 137, 212) 
                 THEN LineTotal ELSE 0 
             END) AS Empresas
+        FROM LineasFiltradas
         GROUP BY 
             Fecha
         ORDER BY 
