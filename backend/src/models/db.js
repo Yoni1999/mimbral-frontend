@@ -19,15 +19,14 @@ const config = {
   connectionTimeout: 30000,
 };
 
-const poolPromise = new sql.ConnectionPool(config)
-  .connect()
-  .then((pool) => {
+const poolPromise = new sql.ConnectionPool(config).connect();
+
+poolPromise
+  .then(() => {
     console.log(" Conectado a SQL Server correctamente");
-    return pool;
   })
   .catch((err) => {
     console.error(" Error de conexión a SQL Server:", err);
-    process.exit(1);
   });
 
 module.exports = { sql, poolPromise };

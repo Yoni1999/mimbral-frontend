@@ -17,13 +17,17 @@ function createApp() {
   app.use(express.json());
 
   app.use((req, res, next) => {
+    if (req.method === "OPTIONS") {
+      return next();
+    }
+
     const publicRoutes = ["/v1/api/auth", "/v1/api/entradas", "/v1/api/templace", "/v1/api/pricing"];
     const isPublic = publicRoutes.some((route) => req.path.startsWith(route));
     if (isPublic) return next();
     authMiddleware(req, res, next);
   });
 
-  app.use("/v1", registerRoutes);
+  registerRoutes(app);
 
   return app;
 }
