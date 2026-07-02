@@ -2,12 +2,25 @@ const { poolPromise } = require("../models/db");
 const { ejecutarProcedimientos } = require("../services/actualizar.service");
 
 const actualizarDatos = async (req, res) => {
+  req.setTimeout(0);
+  res.setTimeout(0);
+
   try {
     await ejecutarProcedimientos();
     res.json({ success: true, message: "Datos actualizados correctamente." });
   } catch (error) {
-    console.error(" Error al actualizar los datos:", error);
-    res.status(500).json({ success: false, message: "Error en el servidor al actualizar los datos." });
+    console.error("Error al actualizar los datos:", {
+      procedimiento: error.procedimiento,
+      durationMs: error.durationMs,
+      message: error.message,
+      code: error.code,
+    });
+
+    res.status(500).json({
+      success: false,
+      message: "Error en el servidor al actualizar los datos.",
+      procedimiento: error.procedimiento || null,
+    });
   }
 };
 

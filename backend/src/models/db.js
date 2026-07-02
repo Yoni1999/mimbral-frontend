@@ -1,5 +1,14 @@
 const sql = require("mssql");
-const { dbUser, dbPass, dbServer, dbDatabase } = require("../config/env");
+const {
+  dbUser,
+  dbPass,
+  dbServer,
+  dbDatabase,
+  dbRequestTimeout,
+} = require("../config/env");
+
+const requestTimeout = Number(process.env.DB_REQUEST_TIMEOUT_MS || 1800000);
+const connectionTimeout = Number(process.env.DB_CONNECTION_TIMEOUT_MS || 60000);
 
 const config = {
   user: dbUser,
@@ -13,20 +22,20 @@ const config = {
   pool: {
     max: 10,
     min: 2,
-    idleTimeoutMillis: 30000,
+    idleTimeoutMillis: 60000,
   },
-  requestTimeout: 300000,
-  connectionTimeout: 30000,
+  requestTimeout,
+  connectionTimeout,
 };
 
 const poolPromise = new sql.ConnectionPool(config).connect();
 
 poolPromise
   .then(() => {
-    console.log(" Conectado a SQL Server correctamente");
+    console.log("Conectado a SQL Server correctamente");
   })
   .catch((err) => {
-    console.error(" Error de conexión a SQL Server:", err);
+    console.error("Error de conexion a SQL Server:", err);
   });
 
 module.exports = { sql, poolPromise };
