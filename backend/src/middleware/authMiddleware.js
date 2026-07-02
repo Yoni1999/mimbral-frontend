@@ -29,9 +29,13 @@ const authMiddleware = async (req, res, next) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET, { ignoreExpiration: true });
+    const isExpired = decoded.exp && Date.now() >= decoded.exp * 1000;
 
-    // Validación normal del token (aún no vencido)
+    if (isExpired) {
+      console.warn("⚠️ Token expirado, pero se permite continuar para procesos largos.");
+    }
+
     const pool = await poolPromise;
     const result = await pool.request()
       .input("Token", sql.NVarChar, token)
