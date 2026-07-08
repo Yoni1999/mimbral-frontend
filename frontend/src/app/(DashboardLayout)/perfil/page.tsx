@@ -54,7 +54,7 @@ export default function PerfilPage() {
   if (!user) return <div>Cargando perfil...</div>;
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: "#ffffff", minHeight: "100vh" }}>
+    <Box sx={{ p: { xs: 1.5, md: 4 }, bgcolor: "#ffffff", minHeight: "100vh" }}>
       <Chip
         label="Mi Perfil"
         icon={
@@ -70,11 +70,11 @@ export default function PerfilPage() {
           </Avatar>
         }
         sx={{
-          fontSize: "1rem",
+          fontSize: { xs: "0.85rem", md: "1rem" },
           fontWeight: "bold",
-          px: 2,
-          py: 1.2,
-          mb: 3,
+          px: { xs: 1, md: 2 },
+          py: { xs: 0.5, md: 1.2 },
+          mb: { xs: 1.5, md: 3 },
           borderRadius: "999px",
           backgroundColor: theme.palette.primary.main,
           color: "#fff",
@@ -88,25 +88,29 @@ export default function PerfilPage() {
         <Box
           sx={{
             bgcolor: theme.palette.primary.light,
-            p: { xs: 2.5, md: 4 },
+            p: { xs: 1.5, md: 4 },
             display: "flex",
             alignItems: "center",
             flexDirection: { xs: "column", md: "row" },
-            gap: 3,
+            gap: { xs: 1, md: 3 },
           }}
         >
           <Avatar
             alt={user.nombre}
             src={user.foto}
             sx={{
-              width: 120,
-              height: 120,
+              width: { xs: 72, md: 120 },
+              height: { xs: 72, md: 120 },
               border: "4px solid white",
               boxShadow: 3,
             }}
           />
           <Box textAlign={{ xs: "center", md: "left" }}>
-            <Typography variant="h5" fontWeight={700}>
+            <Typography
+              variant="h5"
+              fontWeight={700}
+              sx={{ fontSize: { xs: "1.05rem", md: "h5.fontSize" } }}
+            >
               {user.nombre}
             </Typography>
             <Typography variant="subtitle1" color="text.secondary">
@@ -199,7 +203,7 @@ export default function PerfilPage() {
       </Paper>
 
       {/* Historial de conexiones */}
-      <Paper elevation={1} sx={{ borderRadius: 4, overflow: "hidden", mt: 4 }}>
+      <Paper elevation={1} sx={{ borderRadius: 4, overflow: "hidden", mt: { xs: 2, md: 4 } }}>
         <Box sx={{ p: { xs: 2, md: 4 } }}>
           <Typography variant="h6" fontWeight={700} gutterBottom>
             Historial de conexiones

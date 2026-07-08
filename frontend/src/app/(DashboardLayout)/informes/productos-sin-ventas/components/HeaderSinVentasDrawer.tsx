@@ -166,9 +166,10 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
 
     // Chips resumen
     const chips = (
-        <Box display="flex" gap={1} flexWrap="wrap">
+        <Box display="flex" sx={{ gap: { xs: 0.5, md: 1 } }} flexWrap="wrap">
             {skuMode && (
                 <Chip
+                    size="small"
                     color="primary"
                     label={`SKU: ${(filters.sku || '').trim()}`}
                     onDelete={() => applyAndUpdate(f => ({ ...f, sku: undefined }))} // al eliminar reactivas el resto
@@ -177,6 +178,7 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
 
             {!skuMode && (filters.minStock ?? 0) > 0 && (
                 <Chip
+                    size="small"
                     label={`minStock: ${filters.minStock}`}
                     onDelete={() => applyAndUpdate(f => ({ ...f, minStock: 0 }))}
                 />
@@ -184,6 +186,7 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
 
             {!skuMode && filters.fechaInicio && (
                 <Chip
+                    size="small"
                     label={`Desde: ${filters.fechaInicio}`}
                     onDelete={() => applyAndUpdate(f => ({ ...f, fechaInicio: undefined }))}
                 />
@@ -191,6 +194,7 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
 
             {!skuMode && filters.primerNivel && (
                 <Chip
+                    size="small"
                     label={`Primer Nivel: ${primerNiveles.find(p => p.codigo === filters.primerNivel)?.nombre || filters.primerNivel}`}
                     onDelete={() =>
                         applyAndUpdate(f => ({
@@ -205,6 +209,7 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
 
             {!skuMode && filters.categoria && (
                 <Chip
+                    size="small"
                     label={`Categoría: ${categorias.find(c => c.codigo === filters.categoria)?.nombre || filters.categoria}`}
                     onDelete={() =>
                         applyAndUpdate(f => ({
@@ -218,6 +223,7 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
 
             {!skuMode && filters.subcategoria && (
                 <Chip
+                    size="small"
                     label={`Subcategoría: ${subcategorias.find(s => s.codigo === filters.subcategoria)?.nombre || filters.subcategoria}`}
                     onDelete={() => applyAndUpdate(f => ({ ...f, subcategoria: undefined }))}
                 />
@@ -226,10 +232,17 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     );
 
     return (
-        <Box mb={2}>
-            <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+        <Box sx={{ mb: { xs: 1, md: 2 } }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1} sx={{ mt: { xs: 0.5, md: 1 } }}>
                 {chips}
-                <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setOpen(true)}>Filtros</Button>
+                <Button
+                    variant="outlined"
+                    startIcon={<FilterListIcon />}
+                    onClick={() => setOpen(true)}
+                    sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, py: { xs: 0.4, sm: 0.75 } }}
+                >
+                    Filtros
+                </Button>
             </Box>
 
             <Drawer anchor="right" open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { width: { xs: '100vw', sm: 360 }, p: { xs: 2, sm: 3 } } }}>

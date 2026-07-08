@@ -30,7 +30,7 @@ const MetricCard: React.FC<Props> = ({ icon, label, value, variation, variationC
         {icon}
         <Typography fontWeight={600} sx={{ fontSize: { xs: 12, md: 13 } }}>{label}</Typography>
       </Box>
-      <Typography variant="h6" fontWeight={700} sx={{ fontSize: { xs: "1rem", md: "1.25rem" } }}>{value}</Typography>
+      <Typography variant="h6" fontWeight={700} sx={{ fontSize: { xs: "0.9rem", md: "1rem" } }}>{value}</Typography>
       {variation && (
         <Typography variant="caption" color={variationColor}>
           {variation}

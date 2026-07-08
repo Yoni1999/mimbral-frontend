@@ -30,7 +30,7 @@ const CrearUsuarioPage = () => {
   if (!isAuthorized) return null;
 
   return (
-    <Container maxWidth="md" sx={{ py: { xs: 3, md: 6 }, px: { xs: 1.5, md: 3 } }}>
+    <Container maxWidth="md" sx={{ py: { xs: 1.5, md: 6 }, px: { xs: 1.5, md: 3 } }}>
       <Paper
         elevation={1}
         sx={{
@@ -39,21 +39,29 @@ const CrearUsuarioPage = () => {
           backgroundColor: theme.palette.background.paper,
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={2} mb={2}>
+        <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: { xs: 1, md: 2 } }}>
           <Avatar sx={{ bgcolor: "primary.main" }}>
             <PersonAddAlt1Icon />
           </Avatar>
           <div>
-            <Typography variant="h5" fontWeight="bold">
+            <Typography
+              variant="h5"
+              fontWeight="bold"
+              sx={{ fontSize: { xs: "1.05rem", md: "h5.fontSize" } }}
+            >
               Crear nuevo usuario
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ display: { xs: "none", md: "block" } }}
+            >
               Completa los campos para registrar un nuevo usuario en el sistema.
             </Typography>
           </div>
         </Stack>
 
-        <Divider sx={{ my: 3 }} />
+        <Divider sx={{ my: { xs: 1.5, md: 3 } }} />
 
         <CrearUsuarioForm />
       </Paper>

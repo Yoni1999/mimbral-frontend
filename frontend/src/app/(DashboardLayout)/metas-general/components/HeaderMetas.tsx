@@ -212,12 +212,22 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
   };
 
   return (
-    <Box mb={2}>
+    <Box sx={{ mb: { xs: 1, md: 2 } }}>
 
 
-    <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+    <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" sx={{ mt: { xs: 0.5, md: 1 }, gap: { xs: 0.75, md: 1 } }}>
       {/* Chips alineados a la izquierda */}
-      <Box display="flex" gap={1} flexWrap="wrap">
+      <Box
+        display="flex"
+        flexWrap="wrap"
+        sx={{
+          gap: { xs: 0.75, md: 1 },
+          "& .MuiChip-root": {
+            height: { xs: 26, md: 32 },
+            fontSize: { xs: "0.75rem", md: "0.8125rem" },
+          },
+        }}
+      >
         {filters.periodo && (
           <Chip
             label={`Período: ${
@@ -272,7 +282,14 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
         color="primary"
         startIcon={<FilterListIcon />}
         onClick={() => setOpenDrawer(true)}
-        sx={{ whiteSpace: "nowrap" }}
+        sx={(theme) => ({
+          whiteSpace: "nowrap",
+          [theme.breakpoints.down("md")]: {
+            py: "3px",
+            px: "10px",
+            fontSize: "0.78rem",
+          },
+        })}
       >
         Filtros
       </Button>

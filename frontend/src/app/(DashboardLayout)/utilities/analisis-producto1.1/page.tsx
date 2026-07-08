@@ -658,7 +658,7 @@ useEffect(() => {
           variant="h5"
           fontWeight={700}
           color="text.primary"
-          sx={{ fontSize: { xs: "1.05rem", md: "1.5rem" } }}
+          sx={{ fontSize: { xs: "1.05rem", md: "1.125rem" } }}
         >
           ANÁLISIS DE PRODUCTO
         </Typography>
@@ -717,13 +717,12 @@ useEffect(() => {
           <Typography
             variant="h6"
             fontWeight={700}
-            sx={{ fontSize: { xs: "0.95rem", md: "1.25rem" } }}
+            sx={{ fontSize: { xs: "0.9rem", md: "1rem" } }}
           >{productoSeleccionado?.itemname || "Debes seleccionar un producto"}</Typography>
           <Typography
             variant="body2"
             color="text.secondary"
             mb={{ xs: 0.5, md: 1 }}
-            sx={{ fontSize: { xs: "0.75rem", md: "0.875rem" } }}
           >Canal: {filtros.canal}</Typography>
 
           <Box display="flex" gap={{ xs: 1, md: 1.5 }} flexWrap="wrap">

@@ -480,13 +480,13 @@ const ProductosSinVentasPage: React.FC = () => {
 
     return (
         <Box p={0}>
-            <Box display="flex" alignItems="center" gap={1} mb={1} flexWrap="wrap">
-                <RemoveShoppingCartIcon color="primary" fontSize="large" />
-                <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
+            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap" sx={{ mb: { xs: 0.5, md: 1 } }}>
+                <RemoveShoppingCartIcon color="primary" fontSize="large" sx={{ fontSize: { xs: '1.4rem', md: '2.1875rem' } }} />
+                <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ fontSize: { xs: '1.05rem', sm: '2.125rem' }, mb: { xs: 0.5, md: 1 } }}>
                     Productos sin Ventas
                 </Typography>
             </Box>
-            <Typography variant="body1" color="text.secondary" gutterBottom>
+            <Typography variant="body1" color="text.secondary" gutterBottom sx={{ display: { xs: 'none', md: 'block' } }}>
                 Revisa el detalle de productos sin ventas desde un mínimo de stock, fecha mínima de creación, categoría, subcategoría y más. (excluye almacén 04)
             </Typography>
 
@@ -496,24 +496,30 @@ const ProductosSinVentasPage: React.FC = () => {
                 onFilterChange={(nf) => { setFilters(nf); setPage(1); }}
             />
 
-            <Divider sx={{ my: 3 }} />
+            <Divider sx={{ my: { xs: 1, md: 3 } }} />
 
             {/* Barra con conteo + export */}
             <Box
                 display="flex"
                 justifyContent="space-between"
-                mb={2}
                 sx={{
-                    flexDirection: { xs: 'column', sm: 'row' },
-                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    mb: { xs: 1, md: 2 },
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
                     gap: 1,
                 }}
             >
-                <Typography variant="subtitle2">{productosCountText}</Typography>
+                <Typography variant="subtitle2" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{productosCountText}</Typography>
 
                 {!skuSalesMode && (
                     <Box>
-                        <Button variant="contained" onClick={handleOpenExportMenu} endIcon={<MoreVertIcon />}>
+                        <Button
+                            variant="contained"
+                            onClick={handleOpenExportMenu}
+                            endIcon={<MoreVertIcon />}
+                            sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, py: { xs: 0.4, sm: 0.75 } }}
+                        >
                             Exportar
                         </Button>
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseExportMenu}>

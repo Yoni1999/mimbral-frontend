@@ -289,6 +289,7 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
       return (
         <Chip
           key={`chip-${c}`}
+          size="small"
           label={`Canal: ${label}`}
           onDelete={() => handleChipDelete("canal")}
         />
@@ -297,14 +298,15 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
   };
 
   return (
-    <Box mb={2}>
-      <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
-        <Box display="flex" gap={1} flexWrap="wrap">
+    <Box sx={{ mb: { xs: 1, md: 2 } }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1} sx={{ mt: { xs: 0.5, md: 1 } }}>
+        <Box display="flex" sx={{ gap: { xs: 0.5, md: 1 } }} flexWrap="wrap">
           {filters.canal && canalChips()}
           {filters.tipoEnvio && (
             // Mostrar chip solo si canal seleccionado contiene Meli
             ((Array.isArray(filters.canal) ? filters.canal : [filters.canal]).includes("Meli")) && (
               <Chip
+                size="small"
                 label={`Envío Meli: ${tiposEnvioMeli.find(t => t.value === filters.tipoEnvio)?.label}`} // CAMBIO 8: Usar 'tipoEnvio'
                 onDelete={() => handleChipDelete("tipoEnvio")} // CAMBIO 9: Usar 'tipoEnvio'
               />
@@ -312,39 +314,51 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
           )}
           {filters.periodo && filters.periodo !== "RANGO" && (
             <Chip
+                size="small"
                 label={`Período: ${periodos.find(p => p.value === filters.periodo)?.label}`}
                 onDelete={() => handleChipDelete("periodo")}
             />
           )}
           {filters.proveedor && (
             <Chip
+                size="small"
                 label={`Proveedor: ${proveedores.find(p => p.CardCode === filters.proveedor)?.CardName || filters.proveedor}`}
                 onDelete={() => handleChipDelete("proveedor")}
             />
           )}
           {filters.primerNivel && (
             <Chip
+                size="small"
                 label={`Primer Nivel: ${primerNiveles.find(pn => pn.codigo === filters.primerNivel)?.nombre || filters.primerNivel}`}
                 onDelete={() => handleChipDelete("primerNivel")}
             />
           )}
           {filters.categoria && (
             <Chip
+                size="small"
                 label={`Categoría: ${categorias.find(c => c.codigo === filters.categoria)?.nombre || filters.categoria}`}
                 onDelete={() => handleChipDelete("categoria")}
             />
           )}
           {filters.subcategoria && (
             <Chip
+                size="small"
                 label={`Subcategoría: ${subcategorias.find(sc => sc.codigo === filters.subcategoria)?.nombre || filters.subcategoria}`}
                 onDelete={() => handleChipDelete("subcategoria")}
             />
           )}
           {filters.periodo === "RANGO" && filters.fechaInicio && filters.fechaFin && (
-            <Chip label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`} onDelete={() => handleChipDelete("fechaInicio")} />
+            <Chip size="small" label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`} onDelete={() => handleChipDelete("fechaInicio")} />
           )}
         </Box>
-        <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setOpen(true)}>Filtros</Button>
+        <Button
+          variant="outlined"
+          startIcon={<FilterListIcon />}
+          onClick={() => setOpen(true)}
+          sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" }, py: { xs: 0.4, sm: 0.75 } }}
+        >
+          Filtros
+        </Button>
       </Box>
 
       <Drawer anchor="right" open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { width: { xs: "100vw", sm: 360 }, p: { xs: 2, sm: 3 } } }}>

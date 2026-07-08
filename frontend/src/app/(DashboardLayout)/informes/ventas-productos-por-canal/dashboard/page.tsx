@@ -485,7 +485,7 @@ const DashboardVentasPorCanalPage: React.FC = () => {
 
   return (
     <Box sx={{ p: { xs: 1.5, md: 3 } }}>
-      <Box mb={2}>
+      <Box sx={{ mb: { xs: 1, md: 2 } }}>
         <Typography
           variant="h4"
           fontWeight={800}
@@ -493,26 +493,31 @@ const DashboardVentasPorCanalPage: React.FC = () => {
           display="flex"
           alignItems="center"
           gap={1}
-          sx={{ flexWrap: "wrap", fontSize: { xs: "1.4rem", sm: "2.125rem" } }}
+          sx={{
+            flexWrap: "wrap",
+            fontSize: { xs: "1.05rem", sm: "2.125rem" },
+            mb: { xs: 0.5, md: 1 },
+          }}
         >
-          <TrendingUpIcon />
+          <TrendingUpIcon sx={{ fontSize: { xs: "1.2rem", sm: "1.5rem" } }} />
           Dashboard de ventas por canal
         </Typography>
-        <Typography color="text.secondary">
+        <Typography color="text.secondary" sx={{ display: { xs: "none", md: "block" } }}>
           Vista resumida con los mismos filtros aplicados desde la tabla.
         </Typography>
       </Box>
 
-      <Box mb={2} display="flex" flexWrap="wrap" gap={1}>
+      <Box display="flex" flexWrap="wrap" sx={{ mb: { xs: 1, md: 2 }, gap: { xs: 0.5, md: 1 } }}>
         {searchParams?.toString() ? (
           Array.from(searchParams.entries()).map(([key, value]) => (
-            <Chip key={`${key}-${value}`} label={`${key}: ${value}`} variant="outlined" />
+            <Chip key={`${key}-${value}`} size="small" label={`${key}: ${value}`} variant="outlined" />
           ))
         ) : (
-          <Chip label="Sin filtros" />
+          <Chip size="small" label="Sin filtros" />
         )}
         {selectedChannel && (
           <Chip
+            size="small"
             color="primary"
             label={`Canal: ${selectedChannelLabel}`}
             onDelete={() => setSelectedChannel("")}

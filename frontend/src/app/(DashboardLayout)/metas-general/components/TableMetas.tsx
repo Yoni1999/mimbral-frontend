@@ -136,8 +136,8 @@ const TablaMetas: React.FC<TablaMetasProps> = ({ data, dataMonto = [], tipoMeta,
   );
 
   return (
-    <Box sx={{ mt: 2, width: "100%" }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} gap={2} flexWrap="wrap">
+    <Box sx={{ mt: { xs: 1, md: 2 }, width: "100%" }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" sx={{ mb: { xs: 1, md: 2 }, gap: { xs: 1, md: 2 } }}>
         <TextField
           size="small"
           label="Buscar producto o SKU"

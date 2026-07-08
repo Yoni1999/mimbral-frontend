@@ -430,13 +430,22 @@ const InformeVentaPage = () => {
         gutterBottom
         display="flex"
         alignItems="center"
-        sx={{ flexWrap: "wrap", fontSize: { xs: "1.4rem", sm: "2.125rem" } }}
+        sx={{
+          flexWrap: "wrap",
+          fontSize: { xs: "1.05rem", sm: "2.125rem" },
+          mb: { xs: 0.5, md: 1 },
+        }}
       >
-        <TrendingUpIcon sx={{ mr: 1 }} />
+        <TrendingUpIcon sx={{ mr: 1, fontSize: { xs: "1.2rem", sm: "1.5rem" } }} />
         Informe de Venta de productos
       </Typography>
 
-      <Typography variant="body1" color="text.secondary" gutterBottom>
+      <Typography
+        variant="body1"
+        color="text.secondary"
+        gutterBottom
+        sx={{ display: { xs: "none", md: "block" } }}
+      >
         Revisa el detalle de productos vendidos por período, canal, proveedor y más.
       </Typography>
 
@@ -446,19 +455,20 @@ const InformeVentaPage = () => {
         multiCanal={true}   // <-- habilita multi-selección de canales en el header
       />
 
-      <Divider sx={{ my: 2 }} />
+      <Divider sx={{ my: { xs: 1, md: 2 } }} />
 
       <Box
         display="flex"
         justifyContent="space-between"
-        mb={2}
         sx={{
-          flexDirection: { xs: "column", sm: "row" },
-          alignItems: { xs: "flex-start", sm: "center" },
+          mb: { xs: 1, md: 2 },
+          flexDirection: "row",
+          flexWrap: "wrap",
+          alignItems: "center",
           gap: 1,
         }}
       >
-        <Typography variant="subtitle2">
+        <Typography variant="subtitle2" sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
           {total === 0 ? (
             "Sin productos para mostrar"
           ) : (
@@ -475,6 +485,7 @@ const InformeVentaPage = () => {
             variant="contained"
             onClick={handleOpenExportMenu}
             endIcon={<MoreVertIcon />}
+            sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" }, py: { xs: 0.4, sm: 0.75 } }}
           >
             Exportar
           </Button>
