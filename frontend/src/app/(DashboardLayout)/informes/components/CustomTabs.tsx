@@ -52,9 +52,19 @@ export default function CustomTabs({ tabLabels, tabContents }: CustomTabsProps) 
           variant="scrollable"
           scrollButtons="auto"
           allowScrollButtonsMobile
+          sx={{ minHeight: { xs: 36, md: 48 } }}
         >
           {tabLabels.map((label, index) => (
-            <Tab key={index} label={label} {...a11yProps(index)} />
+            <Tab
+              key={index}
+              label={label}
+              {...a11yProps(index)}
+              sx={{
+                minHeight: { xs: 36, md: 48 },
+                py: { xs: 0.5, md: 1.5 },
+                fontSize: { xs: "0.8rem", md: "0.875rem" },
+              }}
+            />
           ))}
         </Tabs>
       </Box>

@@ -123,7 +123,7 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
 
   const selectSx = {
     mt: 0.6,
-    height: 42,
+    height: { xs: 38, md: 42 },
     bgcolor: "#fff",
     borderRadius: 1.75,
     fontSize: "0.94rem",
@@ -271,9 +271,9 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
 
       <Box
         sx={{
-          mb: 2,
-          px: 2,
-          py: 2,
+          mb: { xs: 1, md: 2 },
+          px: { xs: 1.25, md: 2 },
+          py: { xs: 1.25, md: 2 },
           backgroundColor: "rgba(255, 255, 255, 0.5)",
           borderRadius: 1,
           boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
@@ -281,19 +281,20 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
           border: "1px solid rgba(255, 255, 255, 0.3)",
         }}
       >
-        <Grid container alignItems="center" spacing={2}>
+        <Grid container alignItems="center" spacing={{ xs: 1, md: 2 }}>
           <Grid item xs={12} md={3}>
-            <Box display="flex" alignItems="center" gap={1.5}>
-              <img
+            <Box display="flex" alignItems="center" gap={{ xs: 1, md: 1.5 }}>
+              <Box
+                component="img"
                 src={
                   vendedorSeleccionado?.imagen ||
                   "https://res.cloudinary.com/dhzahos7u/image/upload/v1747075685/sin_imagen_hz1c4d.jpg"
                 }
                 alt="Foto del vendedor"
                 onClick={() => setOpenDialog(true)}
-                style={{
-                  width: 66,
-                  height: 66,
+                sx={{
+                  width: { xs: 44, md: 66 },
+                  height: { xs: 44, md: 66 },
                   borderRadius: "50%",
                   objectFit: "cover",
                   border: "1px solid #ccc",
@@ -301,10 +302,18 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
                 }}
               />
               <Box>
-                <Typography variant="h6" fontWeight={700}>
+                <Typography
+                  variant="h6"
+                  fontWeight={700}
+                  sx={{ fontSize: { xs: "1rem", md: "1.25rem" } }}
+                >
                   {vendedorSeleccionado?.nombre || "Todos los vendedores"}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ display: { xs: "none", md: "block" } }}
+                >
                   {vendedorSeleccionado?.memo || "Vendedores"}
                 </Typography>
               </Box>
@@ -312,7 +321,7 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
           </Grid>
 
           <Grid item xs={12} md={9}>
-            <Grid container spacing={1.5} justifyContent="flex-end">
+            <Grid container spacing={{ xs: 1, md: 1.5 }} justifyContent="flex-end">
               <Grid item xs={12} sm={4} md={2.4}>
                 <FormControl fullWidth size="small">
                   <Typography variant="caption" sx={fieldLabelSx}>
@@ -407,7 +416,13 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
                   fullWidth
                   onClick={handleClear}
                   startIcon={<DeleteOutlineIcon />}
-                  sx={{ height: 42, borderRadius: 1.75, textTransform: "none" }}
+                  sx={{
+                    height: { xs: 36, md: 42 },
+                    borderRadius: 1.75,
+                    textTransform: "none",
+                    fontSize: { xs: "0.78rem", md: "0.8125rem" },
+                    py: { xs: 0.3, md: 0.5 },
+                  }}
                 >
                   Limpiar
                 </Button>

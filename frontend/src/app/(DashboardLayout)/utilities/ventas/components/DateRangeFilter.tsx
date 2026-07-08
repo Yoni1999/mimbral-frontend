@@ -387,7 +387,7 @@ export default function DateRangeFilter({
             </IconButton>
           ) : null,
           sx: {
-            height: 42,
+            height: { xs: 38, md: 42 },
             cursor: "pointer",
             bgcolor: "#fff",
             borderRadius: 1.75,

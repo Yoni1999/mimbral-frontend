@@ -65,7 +65,7 @@ export default function LineaCreditoPage() {
   ];
 
   return (
-    <Box p={2}>
+    <Box sx={{ p: { xs: 1, md: 2 } }}>
       {/* Header de filtros */}
       <HeaderLineaCredito
         descripcionPeriodo={descripcionPeriodo}
@@ -73,7 +73,7 @@ export default function LineaCreditoPage() {
       />
 
       {/* Tarjeta de detalle cliente + KPIs */}
-      <Box mt={3}>
+      <Box mt={{ xs: 1.5, md: 3 }}>
         <Grid container spacing={2} alignItems="stretch">
           {/* Columna derecha: tarjeta de detalle */}
           <Grid item xs={12} md={4.4}>
@@ -138,7 +138,7 @@ export default function LineaCreditoPage() {
         </Grid>
       </Box>
       {/* Segunda fila: gráfico de crédito */}
-      <Grid container spacing={2} mt={4}>
+      <Grid container spacing={2} mt={{ xs: 2, md: 4 }}>
         {/* Gráfico de línea */}
         <Grid item xs={12} sm={6}>
           <Typography variant="h6" mb={2}>
@@ -164,7 +164,7 @@ export default function LineaCreditoPage() {
         </Grid>
       </Grid>
       {/* Fila 3: Tabla de Facturas */}
-      <Grid container spacing={2} mt={4}>
+      <Grid container spacing={2} mt={{ xs: 2, md: 4 }}>
         <Grid item xs={12}>
           <Typography variant="h6" mb={2}>
             Facturas

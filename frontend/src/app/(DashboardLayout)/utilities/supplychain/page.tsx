@@ -57,7 +57,7 @@ const PageFiltrosAvanzados = () => {
       />
 
       {/* Métricas principales */}
-      <Grid container spacing={2} mt={4}>
+      <Grid container spacing={2} mt={{ xs: 1, md: 4 }}>
         <Grid item xs={12} sm={6} md={2.4}>
           <MetricCard
             title="Valor inventario"
@@ -106,12 +106,12 @@ const PageFiltrosAvanzados = () => {
       </Grid>
 
       {/* Selector de almacenes */}
-      <Box mt={4}>
+      <Box mt={{ xs: 2, md: 4 }}>
         <AlmacenesSelector />
       </Box>
 
       {/* 📊 Categorías por tienda */}
-      <Box mt={4}>
+      <Box mt={{ xs: 2, md: 4 }}>
         <CategoriasPorTiendaChart />
       </Box>
 

@@ -184,9 +184,9 @@ const ResumenVentas = () => {
     <PageContainer title="Resumen Ventas" description="Resumen de las ventas">
       <Box sx={{ p: 0}}>
         <FotoDelDiaHeader onFilterChange={(f) => setFiltros(f)} />
-        <Grid container spacing={2}>
+        <Grid container spacing={{ xs: 1.5, md: 2 }}>
       <Grid item xs={12}>
-        <Grid container spacing={2}>
+        <Grid container spacing={{ xs: 1.5, md: 2 }}>
           {[
             {
               title: "Ventas",

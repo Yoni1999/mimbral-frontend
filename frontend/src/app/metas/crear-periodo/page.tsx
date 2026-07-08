@@ -7,9 +7,13 @@ import { Box, Tooltip, Typography } from '@mui/material';
 
 const CrearPeriodoPage = () => {
   return (
-    <Box position="relative" sx={{ p: { xs: 2, md: 4 } }}>
+    <Box position="relative" sx={{ p: { xs: 1.5, md: 4 } }}>
       <Box display="flex" alignItems="center" gap={1} mb={0}>
-        <Typography variant="h5" fontWeight="bold">
+        <Typography
+          variant="h5"
+          fontWeight="bold"
+          sx={{ fontSize: { xs: "1.05rem", md: "h5.fontSize" } }}
+        >
           Administra tus Periodos
         </Typography>
         <Tooltip

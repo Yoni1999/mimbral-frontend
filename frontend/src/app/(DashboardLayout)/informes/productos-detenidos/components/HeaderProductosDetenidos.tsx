@@ -257,27 +257,28 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
   );
 
   return (
-    <Box mb={2}>
+    <Box sx={{ mb: { xs: 1, md: 2 } }}>
       {/* Chips + Button */}
-      <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
-        <Box display="flex" gap={1} flexWrap="wrap">
+      <Box sx={{ mt: { xs: 0.5, md: 1 } }} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+        <Box display="flex" sx={{ gap: { xs: 0.5, md: 1 } }} flexWrap="wrap">
           {filters.periodo && (
-            <Chip label={`Período: ${periodos.find(p => p.value === filters.periodo)?.label}`} onDelete={() => handleChipDelete("periodo")} />
+            <Chip size="small" label={`Período: ${periodos.find(p => p.value === filters.periodo)?.label}`} onDelete={() => handleChipDelete("periodo")} />
           )}
           {filters.proveedor && (
             <Chip
+              size="small"
               label={`Proveedor: ${allProveedores.find(p => p.CardCode === filters.proveedor)?.CardName || filters.proveedor}`}
               onDelete={() => handleChipDelete("proveedor")}
             />
           )}
           {filters.primerNivel && (
-            <Chip label={`Primer Nivel: ${primerNiveles.find(p => p.codigo === filters.primerNivel)?.nombre}`} onDelete={() => handleChipDelete("primerNivel")} />
+            <Chip size="small" label={`Primer Nivel: ${primerNiveles.find(p => p.codigo === filters.primerNivel)?.nombre}`} onDelete={() => handleChipDelete("primerNivel")} />
           )}
           {filters.categoria && (
-            <Chip label={`Categoría: ${categorias.find(p => p.codigo === filters.categoria)?.nombre}`} onDelete={() => handleChipDelete("categoria")} />
+            <Chip size="small" label={`Categoría: ${categorias.find(p => p.codigo === filters.categoria)?.nombre}`} onDelete={() => handleChipDelete("categoria")} />
           )}
           {filters.subcategoria && (
-            <Chip label={`Subcategoría: ${subcategorias.find(p => p.codigo === filters.subcategoria)?.nombre}`} onDelete={() => handleChipDelete("subcategoria")} />
+            <Chip size="small" label={`Subcategoría: ${subcategorias.find(p => p.codigo === filters.subcategoria)?.nombre}`} onDelete={() => handleChipDelete("subcategoria")} />
           )}
           {filters.almacenes && filters.almacenes.length > 0 && (
             // Render a chip for each selected almacen
@@ -286,6 +287,7 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
               return (
                 <Chip
                   key={almacenCode}
+                  size="small"
                   label={`Almacén: ${almacen?.label || almacenCode}`}
                   onDelete={() => handleAlmacenChipDelete(almacenCode)}
                 />
@@ -293,10 +295,15 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
             })
           )}
           {filters.periodo === "RANGO" && filters.fechaInicio && filters.fechaFin && (
-            <Chip label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`} onDelete={() => handleChipDelete("fechaRango")} />
+            <Chip size="small" label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`} onDelete={() => handleChipDelete("fechaRango")} />
           )}
         </Box>
-        <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setOpenDrawer(true)}>
+        <Button
+          variant="outlined"
+          startIcon={<FilterListIcon />}
+          onClick={() => setOpenDrawer(true)}
+          sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" }, py: { xs: 0.4, sm: 0.75 } }}
+        >
           Filtros
         </Button>
       </Box>

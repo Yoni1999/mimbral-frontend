@@ -14,12 +14,21 @@ const TituloSupply: React.FC<Props> = ({
   handleOpenDrawer,
 }) => {
   return (
-    <Stack spacing={1}>
+    <Stack spacing={{ xs: 0.5, md: 1 }}>
       {/* Línea superior: período activo */}
       <Box display="flex" justifyContent="flex-end">
-        <Typography variant="subtitle2" color="text.secondary">
+        <Typography
+          variant="subtitle2"
+          color="text.secondary"
+          sx={{ fontSize: { xs: "0.7rem", md: "0.875rem" }, lineHeight: { xs: 1.3, md: 1.57 } }}
+        >
           Estás viendo el periodo:{" "}
-          <Typography component="span" fontWeight={600} color="text.primary">
+          <Typography
+            component="span"
+            fontWeight={600}
+            color="text.primary"
+            sx={{ fontSize: "inherit" }}
+          >
             {obtenerDescripcionPeriodo()}
           </Typography>
         </Typography>
@@ -29,7 +38,7 @@ const TituloSupply: React.FC<Props> = ({
       <Paper
         elevation={1}
         sx={{
-          p: 3,
+          p: { xs: 1.5, md: 3 },
           borderRadius: 3,
           display: "flex",
           justifyContent: "space-between",
@@ -38,10 +47,15 @@ const TituloSupply: React.FC<Props> = ({
           border: "1px solid",
           borderColor: "divider",
           flexWrap: "wrap",
-          gap: 2,
+          gap: { xs: 1, md: 2 },
         }}
       >
-        <Typography variant="h5" fontWeight={700} color="text.primary">
+        <Typography
+          variant="h5"
+          fontWeight={700}
+          color="text.primary"
+          sx={{ fontSize: { xs: "1.05rem", md: "1.5rem" } }}
+        >
           SUPPLY CHAIN DASHBOARD
         </Typography>
 
@@ -52,8 +66,9 @@ const TituloSupply: React.FC<Props> = ({
           sx={{
             textTransform: "none",
             fontWeight: 500,
-            px: 2.5,
-            py: 1,
+            px: { xs: 1.25, md: 2.5 },
+            py: { xs: 0.4, md: 1 },
+            fontSize: { xs: "0.78rem", md: "0.875rem" },
           }}
         >
           Filtros Avanzados

@@ -66,15 +66,24 @@ const AdminPage = () => {
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
-      <Typography variant="h4" fontWeight="bold" gutterBottom>
+      <Typography
+        variant="h4"
+        fontWeight="bold"
+        gutterBottom
+        sx={{ fontSize: { xs: "1.05rem", md: "h4.fontSize" }, mb: { xs: 0.5, md: 1 } }}
+      >
         Panel de Administrador
       </Typography>
 
-      <Typography variant="subtitle1" color="text.secondary" mb={4}>
+      <Typography
+        variant="subtitle1"
+        color="text.secondary"
+        sx={{ display: { xs: "none", md: "block" }, mb: 4 }}
+      >
         Bienvenido al centro de control. Accede a la gestión de usuarios, roles y permisos.
       </Typography>
 
-      <Divider sx={{ mb: 4 }} />
+      <Divider sx={{ mb: { xs: 2, md: 4 } }} />
 
       <Grid container spacing={3}>
         {/* Dashboard Usuarios */}

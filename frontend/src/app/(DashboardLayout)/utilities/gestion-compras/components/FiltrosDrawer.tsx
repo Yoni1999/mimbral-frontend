@@ -135,8 +135,8 @@ const FiltrosDrawer = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box mb={2}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+      <Box mb={{ xs: 1, md: 2 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={{ xs: 0.5, md: 1 }}>
           <Box display="flex" gap={1} flexWrap="wrap">
             {filtros.canal && <Chip label={`Canal: ${canales.find(c => c.value === filtros.canal)?.label}`} onDelete={() => handleChipDelete("canal")} />}
             {filtros.proveedor && <Chip label={`Proveedor`} onDelete={() => handleChipDelete("proveedor")} />}
@@ -158,6 +158,9 @@ const FiltrosDrawer = () => {
               fontWeight: 600,
               borderColor: '#6c63ff',
               color: '#6c63ff',
+              fontSize: { xs: '0.8rem', md: '0.875rem' },
+              py: { xs: 0.4, md: 0.75 },
+              px: { xs: 1.25, md: 2 },
               '&:hover': { backgroundColor: '#f0efff', borderColor: '#5a52d4' },
             }}
           >

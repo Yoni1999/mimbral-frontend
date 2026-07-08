@@ -85,7 +85,7 @@ const PeriodosTable = () => {
 
   return (
     <div className="p-6 space-y-8">
-      <Box display="flex" justifyContent="flex-end" mb={2}>
+      <Box display="flex" justifyContent="flex-end" sx={{ mb: { xs: 1, md: 2 }, mt: { xs: 1, md: 0 } }}>
         <Button
           variant="contained"
           color="secondary"

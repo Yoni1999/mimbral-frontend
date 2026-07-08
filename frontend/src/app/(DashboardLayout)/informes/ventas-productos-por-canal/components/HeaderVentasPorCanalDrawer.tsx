@@ -340,6 +340,7 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
         <Box display="flex" gap={1} flexWrap="wrap">
           {filters.fechaInicio && filters.fechaFin && (
             <Chip
+              size="small"
               label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`}
               onDelete={() => handleChipDelete("fechaInicio")}
               sx={chipPrimarySx}
@@ -347,6 +348,7 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
           )}
           {filters.sku && (
             <Chip
+              size="small"
               label={`Producto: ${filters.sku}`}
               onDelete={() => handleChipDelete("sku")}
               sx={chipPrimarySx}
@@ -354,6 +356,7 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
           )}
           {filters.familia && (
             <Chip
+              size="small"
               label={`Familia: ${filters.familia}`}
               onDelete={() => handleChipDelete("familia")}
               sx={chipNeutralSx}
@@ -361,6 +364,7 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
           )}
           {filters.subfamilia && (
             <Chip
+              size="small"
               label={`Subfamilia: ${filters.subfamilia}`}
               onDelete={() => handleChipDelete("subfamilia")}
               sx={chipNeutralSx}
@@ -368,6 +372,7 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
           )}
           {filters.proveedor && (
             <Chip
+              size="small"
               label={`Proveedor: ${filters.proveedor}`}
               onDelete={() => handleChipDelete("proveedor")}
               sx={chipNeutralSx}
@@ -375,6 +380,7 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
           )}
           {filters.primerNivel && (
             <Chip
+              size="small"
               label={`Primer Nivel: ${filters.primerNivel}`}
               onDelete={() => handleChipDelete("primerNivel")}
               sx={chipNeutralSx}
@@ -382,6 +388,7 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
           )}
           {filters.categoria && (
             <Chip
+              size="small"
               label={`Categoría: ${filters.categoria}`}
               onDelete={() => handleChipDelete("categoria")}
               sx={chipNeutralSx}
@@ -389,6 +396,7 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
           )}
           {filters.subcategoria && (
             <Chip
+              size="small"
               label={`Subcategoría: ${filters.subcategoria}`}
               onDelete={() => handleChipDelete("subcategoria")}
               sx={chipNeutralSx}

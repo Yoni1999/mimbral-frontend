@@ -166,7 +166,14 @@ const VentasPorCanal = () => {
         description="Resumen de ventas filtradas por canal, período y rango de fechas"
       >
         <Box sx={{ p: 0 }}>
-          <Box sx={{ mb: 1, display: "flex", justifyContent: "flex-end", px: 2 }}>
+          <Box
+            sx={{
+              mb: { xs: 0.5, md: 1 },
+              display: { xs: "none", md: "flex" },
+              justifyContent: "flex-end",
+              px: 2,
+            }}
+          >
             <Typography variant="body2" color="text.secondary">
               {filters.fechaInicio && filters.fechaFin ? `Filtrando por rango: ${filters.fechaInicio} al ${filters.fechaFin}` : "Viendo datos de hoy"}
             </Typography>
@@ -174,18 +181,23 @@ const VentasPorCanal = () => {
 
           <HeaderFilters filters={filters} onFilterChange={handleFilterChange} />
 
-          <Box sx={{ mt: 2, px: 2 }}>
+          <Box sx={{ mt: { xs: 0.5, md: 2 }, px: { xs: 0.5, md: 2 } }}>
             <FormControlLabel
+              sx={{ mr: 0 }}
               control={
                 <Checkbox
                   checked={mostrarProductos}
                   onChange={(e) => setMostrarProductos(e.target.checked)}
                   name="verProductos"
                   color="primary"
+                  sx={{ py: { xs: 0.5, md: 1 } }}
                 />
               }
               label={
-                <Typography variant="body1" sx={{ cursor: "pointer" }}>
+                <Typography
+                  variant="body1"
+                  sx={{ cursor: "pointer", fontSize: { xs: "0.85rem", md: "1rem" } }}
+                >
                   Ver ventas productos detallados
                 </Typography>
               }
@@ -193,7 +205,7 @@ const VentasPorCanal = () => {
           </Box>
 
           {mostrarProductos ? (
-            <Box mt={4}>
+            <Box mt={{ xs: 1.5, md: 4 }}>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   {/* Asegúrate de que ProductosVendidos también maneje su estado de carga internamente
@@ -209,7 +221,7 @@ const VentasPorCanal = () => {
             </Box>
           ) : (
             <>
-              <Grid container spacing={2} mt={2}>
+              <Grid container spacing={2} mt={{ xs: 0.5, md: 2 }}>
                 <Grid item xs={12}>
                   <SeccionTitulo
                     title="Métricas Clave del Canal"
@@ -315,7 +327,7 @@ const VentasPorCanal = () => {
               </Grid>
 
               {/* --- Sección de Gráficos de Análisis por Canal --- */}
-              <Grid container spacing={2} mt={2}>
+              <Grid container spacing={2} mt={{ xs: 1, md: 2 }}>
                 <Grid item xs={12}>
                   <SeccionTitulo
                     title="Análisis Detallado por Canal"
@@ -351,7 +363,7 @@ const VentasPorCanal = () => {
               </Grid>
 
               {/* --- Segunda Fila de Gráficos (siempre visible con las métricas clave) --- */}
-              <Grid container spacing={2} mt={2}>
+              <Grid container spacing={2} mt={{ xs: 1, md: 2 }}>
                 <Grid item xs={12} md={6}>
                   {/* TopProductosChart no depende de 'loading' directamente aquí,
                       pero internamente debe manejar si 'data.topProductos' está vacío/nulo al inicio. */}

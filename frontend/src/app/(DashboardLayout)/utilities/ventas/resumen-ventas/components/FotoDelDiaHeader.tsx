@@ -174,16 +174,16 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
   return (
     <Box
       sx={{
-        mb: 2,
-        px: { xs: 1.5, md: 2.25 },
-        py: { xs: 1.5, md: 1.75 },
+        mb: { xs: 1, md: 2 },
+        px: { xs: 1.25, md: 2.25 },
+        py: { xs: 1, md: 1.75 },
         background: "linear-gradient(180deg, #ffffff 0%, #fbfcff 100%)",
         borderRadius: 2,
         boxShadow: "0 8px 30px rgba(15, 23, 42, 0.06)",
         border: "1px solid rgba(148, 163, 184, 0.18)",
       }}
     >
-      <Grid container alignItems="center" justifyContent="space-between" spacing={2}>
+      <Grid container alignItems="center" justifyContent="space-between" spacing={{ xs: 1, md: 2 }}>
         <Grid item xs={12} md={2}>
           <Box
             sx={{
@@ -197,7 +197,7 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
               variant="h6"
               sx={{
                 fontWeight: 700,
-                fontSize: "1rem",
+                fontSize: { xs: "0.92rem", md: "1rem" },
                 color: "#0f172a",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
@@ -206,7 +206,14 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
             >
               Resumen Ventas
             </Typography>
-            <Typography variant="body2" sx={{ color: "#64748b", mt: 0.5, fontSize: "0.78rem" }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "#64748b",
+                mt: { xs: 0.25, md: 0.5 },
+                fontSize: { xs: "0.72rem", md: "0.78rem" },
+              }}
+            >
               Estás viendo datos de: <strong>{resumen}</strong>
             </Typography>
           </Box>
@@ -215,13 +222,13 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
         <Grid item xs={12} md={10}>
           <Stack
             direction={{ xs: "column", xl: "row" }}
-            spacing={1.5}
+            spacing={{ xs: 1, md: 1.5 }}
             alignItems={{ xs: "stretch", xl: "flex-end" }}
             justifyContent="space-between"
           >
             <Stack
               direction={{ xs: "column", sm: "row" }}
-              spacing={1.5}
+              spacing={{ xs: 1, md: 1.5 }}
               sx={{ flex: 1, width: "100%" }}
               alignItems="flex-end"
             >
@@ -238,7 +245,7 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
                     onChange={(e) => handleChange("canal", e.target.value)}
                     displayEmpty
                     sx={{
-                      height: 42,
+                      height: { xs: 38, md: 42 },
                       bgcolor: "#fff",
                       borderRadius: 1.75,
                       "& .MuiOutlinedInput-notchedOutline": { borderColor: "#cbd5e1" },
@@ -278,7 +285,7 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
                     onChange={(e) => handleChange("temporada", e.target.value)}
                     displayEmpty
                     sx={{
-                      height: 42,
+                      height: { xs: 38, md: 42 },
                       bgcolor: "#fff",
                       borderRadius: 1.75,
                       "& .MuiOutlinedInput-notchedOutline": { borderColor: "#cbd5e1" },
@@ -311,8 +318,10 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
                 sx={{
                   textTransform: "none",
                   borderRadius: 999,
-                  px: 2.1,
-                  height: 40,
+                  px: { xs: 1.5, md: 2.1 },
+                  py: { xs: 0.4, md: 0.75 },
+                  height: { xs: 34, md: 40 },
+                  fontSize: { xs: "0.8rem", md: "0.875rem" },
                   borderColor: "#cbd5e1",
                   color: "#334155",
                   bgcolor: "#fff",
@@ -335,6 +344,8 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
                   textTransform: "none",
                   color: "#cbd5e1",
                   fontWeight: 500,
+                  py: { xs: 0.4, md: 0.75 },
+                  fontSize: { xs: "0.8rem", md: "0.875rem" },
                   "&.Mui-disabled": {
                     color: "#cbd5e1",
                   },

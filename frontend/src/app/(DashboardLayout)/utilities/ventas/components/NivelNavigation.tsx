@@ -18,8 +18,8 @@ const NivelNavigation = () => {
     <Box
       sx={{
         display: "flex",
-        gap: 1,
-        padding: "8px 24px",
+        gap: { xs: 0.75, md: 1 },
+        padding: { xs: "4px 12px", md: "8px 24px" },
         backgroundColor: "transparent",
         flexWrap: "wrap",
       }}
@@ -38,6 +38,11 @@ const NivelNavigation = () => {
                 color: isActive ? "#fff" : "#5d87ff",
                 border: isActive ? "none" : "1px solid #5d87ff",
                 fontWeight: 500,
+                height: { xs: 26, md: 32 },
+                fontSize: { xs: "0.74rem", md: "0.8125rem" },
+                "& .MuiChip-label": {
+                  px: { xs: 1.1, md: 1.5 },
+                },
                 "&:hover": {
                   backgroundColor: isActive ? "#4c76e8" : "#e3f0ff",
                 },

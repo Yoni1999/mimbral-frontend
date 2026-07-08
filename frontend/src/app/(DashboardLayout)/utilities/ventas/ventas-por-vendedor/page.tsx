@@ -334,7 +334,7 @@ const VentasVendedorPage: React.FC = () => {
 return (
     <>
       <NivelNavigation />
-      <Box sx={{ p: { xs: 1.5, md: 3 } }}>
+      <Box sx={{ p: { xs: 1, md: 3 } }}>
         <HeaderVendedor
           filtros={filtros}
           setFiltros={setFiltros}
@@ -424,7 +424,7 @@ return (
         </Grid>
 
         {/* --- Sección de Gráficos de Análisis de Ventas --- */}
-        <Grid container spacing={2} mt={2}>
+        <Grid container spacing={2} mt={{ xs: 1, md: 2 }}>
           <Grid item xs={12}>
             <SeccionTitulo
               title="Análisis de Ventas"
@@ -440,7 +440,7 @@ return (
         </Grid>
 
         {/* --- Sección de Rendimiento y Comparación --- */}
-        <Grid container spacing={2} mt={2}>
+        <Grid container spacing={2} mt={{ xs: 1, md: 2 }}>
           <Grid item xs={12}>
             <SeccionTitulo
               title="Rendimiento y Comparación"

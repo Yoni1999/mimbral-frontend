@@ -12,9 +12,14 @@ const PanelMetasPage = () => {
   return (
     <Box sx={{ bgcolor: '#FEFEFE', minHeight: '100vh', px: { xs: 1.5, md: 5 }, pt: 0 }}>
       {/* Navegación superior */}
-      <Box display="flex" flexDirection="column" gap={1} mb={2}>
+      <Box display="flex" flexDirection="column" sx={{ gap: { xs: 0.5, md: 1 }, mb: { xs: 1, md: 2 } }}>
         <NivelNavigation />
-        <Typography variant="h5" fontWeight="bold" color="primary" mt={1}>
+        <Typography
+          variant="h5"
+          fontWeight="bold"
+          color="primary"
+          sx={{ mt: { xs: 0.5, md: 1 }, fontSize: { xs: "1.05rem", md: "h5.fontSize" } }}
+        >
           KPI Metas
         </Typography>
       </Box>

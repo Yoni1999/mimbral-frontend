@@ -58,17 +58,23 @@ const HeaderFilters = ({ filters, onFilterChange }: HeaderFiltersProps) => {
   return (
     <Box
       sx={{
-        mb: 3,
-        p: 2,
+        mb: { xs: 1.5, md: 3 },
+        p: { xs: 1.25, md: 2 },
         bgcolor: "background.paper",
         borderRadius: 2,
         boxShadow: 2,
       }}
     >
-      <Grid container spacing={2} alignItems="flex-end">
+      <Grid container spacing={{ xs: 1, md: 2 }} alignItems="flex-end">
         <Grid item sx={{ display: "flex", alignItems: "center", pb: 0.4 }}>
-          <FilterListIcon sx={{ mr: 1, fontSize: 24, color: "primary.main" }} />
-          <Typography variant="h6" color="primary" sx={{ mr: 2 }}>
+          <FilterListIcon
+            sx={{ mr: 1, fontSize: { xs: 20, md: 24 }, color: "primary.main" }}
+          />
+          <Typography
+            variant="h6"
+            color="primary"
+            sx={{ mr: { xs: 1, md: 2 }, fontSize: { xs: "1.05rem", md: "1.25rem" } }}
+          >
             Filtros
           </Typography>
         </Grid>
@@ -93,7 +99,7 @@ const HeaderFilters = ({ filters, onFilterChange }: HeaderFiltersProps) => {
               value={canal}
               displayEmpty
               onChange={(e) => setCanal(e.target.value)}
-              sx={{ height: 42 }}
+              sx={{ height: { xs: 38, md: 42 } }}
             >
               <MenuItem value="">Todos</MenuItem>
               <MenuItem value="Meli">Mercado Libre</MenuItem>
@@ -132,7 +138,13 @@ const HeaderFilters = ({ filters, onFilterChange }: HeaderFiltersProps) => {
             color="primary"
             onClick={handleApplyFilters}
             size="small"
-            sx={{ borderRadius: 2, textTransform: "none", height: 40 }}
+            sx={{
+              borderRadius: 2,
+              textTransform: "none",
+              height: { xs: 34, md: 40 },
+              fontSize: { xs: "0.78rem", md: "0.8125rem" },
+              py: { xs: 0.3, md: 0.5 },
+            }}
           >
             Aplicar
           </Button>
@@ -142,7 +154,13 @@ const HeaderFilters = ({ filters, onFilterChange }: HeaderFiltersProps) => {
             onClick={handleClearFilters}
             size="small"
             startIcon={<ClearAllIcon />}
-            sx={{ borderRadius: 2, textTransform: "none", height: 40 }}
+            sx={{
+              borderRadius: 2,
+              textTransform: "none",
+              height: { xs: 34, md: 40 },
+              fontSize: { xs: "0.78rem", md: "0.8125rem" },
+              py: { xs: 0.3, md: 0.5 },
+            }}
           >
             Limpiar
           </Button>

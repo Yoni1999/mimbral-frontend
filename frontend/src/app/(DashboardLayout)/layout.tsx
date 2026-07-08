@@ -61,7 +61,7 @@ export default function RootLayout({ children }: Props) {
         <Container
           disableGutters
           maxWidth={false}
-          sx={{ paddingTop: "20px", px: { xs: 2, md: 4, xl: 6 } }}
+          sx={{ paddingTop: { xs: 1, md: 2.5 }, px: { xs: 1.5, md: 4, xl: 6 } }}
         >
           <Box sx={{ minHeight: "calc(100vh - 170px)" }}>{children}</Box>
         </Container>

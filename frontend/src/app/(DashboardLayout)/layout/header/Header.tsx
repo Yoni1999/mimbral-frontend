@@ -97,6 +97,7 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
             borderRadius: "18px",
             px: { xs: 1, sm: 2 },
             gap: { xs: 0.5, sm: 1 },
+            minHeight: { xs: 52, sm: 64 },
           }}
         >
           <IconButton

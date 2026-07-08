@@ -374,13 +374,22 @@ const InformeVentasPorCanalPage: React.FC = () => {
         gutterBottom
         display="flex"
         alignItems="center"
-        sx={{ flexWrap: "wrap", fontSize: { xs: "1.4rem", sm: "2.125rem" } }}
+        sx={{
+          flexWrap: "wrap",
+          fontSize: { xs: "1.05rem", sm: "2.125rem" },
+          mb: { xs: 0.5, md: 1 },
+        }}
       >
-        <TrendingUpIcon sx={{ mr: 1 }} />
+        <TrendingUpIcon sx={{ mr: 1, fontSize: { xs: "1.2rem", sm: "1.5rem" } }} />
         Informe ventas de Productos por Canal
       </Typography>
 
-      <Typography variant="body1" color="text.secondary" gutterBottom>
+      <Typography
+        variant="body1"
+        color="text.secondary"
+        gutterBottom
+        sx={{ display: { xs: "none", md: "block" } }}
+      >
         Agrupa ventas por producto y canal. Haz clic en una cifra para ver el detalle (folio, fecha, vendedor, etc.).
       </Typography>
 
@@ -389,19 +398,20 @@ const InformeVentasPorCanalPage: React.FC = () => {
         currentFilters={filters}
       />
 
-      <Divider sx={{ my: 2 }} />
+      <Divider sx={{ my: { xs: 1, md: 2 } }} />
 
       <Box
         display="flex"
         justifyContent="space-between"
-        mb={2}
         sx={{
-          flexDirection: { xs: "column", sm: "row" },
-          alignItems: { xs: "flex-start", sm: "center" },
+          mb: { xs: 1, md: 2 },
+          flexDirection: "row",
+          flexWrap: "wrap",
+          alignItems: "center",
           gap: 1,
         }}
       >
-        <Typography variant="subtitle2">
+        <Typography variant="subtitle2" sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
           {!hasAppliedFilters ? (
             "Sin filtros aplicados"
           ) : total === 0 ? (
@@ -421,7 +431,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
             startIcon={<LaunchIcon />}
             disabled={!hasAppliedFilters}
             onClick={() => window.open(buildDashboardUrl(), "_blank", "noopener,noreferrer")}
-            sx={{ mr: 0.5 }}
+            sx={{ mr: 0.5, fontSize: { xs: "0.75rem", sm: "0.875rem" }, py: { xs: 0.4, sm: 0.75 } }}
           >
             Dashboard
           </Button>
@@ -429,6 +439,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
             variant="contained"
             onClick={(e) => setAnchorEl(e.currentTarget)}
             endIcon={<MoreVertIcon />}
+            sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" }, py: { xs: 0.4, sm: 0.75 } }}
           >
             Exportar
           </Button>

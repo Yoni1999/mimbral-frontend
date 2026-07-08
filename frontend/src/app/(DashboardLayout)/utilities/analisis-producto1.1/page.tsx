@@ -629,34 +629,50 @@ useEffect(() => {
 
   return (
     <Box p={0}>
-      <Box display="flex" justifyContent="flex-end" mb={1}>
-        <Typography variant="subtitle2" color="text.secondary">
+      <Box display="flex" justifyContent="flex-end" mb={{ xs: 0.5, md: 1 }}>
+        <Typography
+          variant="subtitle2"
+          color="text.secondary"
+          sx={{ fontSize: { xs: "0.72rem", md: "0.875rem" } }}
+        >
           Estás viendo el período: <strong>{obtenerDescripcionPeriodo()}</strong>
         </Typography>
       </Box>
       {/* Header */}
       <Box
         display="flex"
-        flexDirection={{ xs: "column", sm: "row" }}
+        flexDirection="row"
+        flexWrap="wrap"
         justifyContent="space-between"
-        alignItems={{ xs: "flex-start", sm: "center" }}
+        alignItems="center"
         gap={1}
-        p={2}
-        mb={3}
+        p={{ xs: 1.25, md: 2 }}
+        mb={{ xs: 1, md: 3 }}
         borderRadius={2}
         border={1}
         borderColor="divider"
         bgcolor="background.paper"
         boxShadow="0 1px 2px rgba(0, 0, 0, 0.04)"
       >
-        <Typography variant="h5" fontWeight={700} color="text.primary">
+        <Typography
+          variant="h5"
+          fontWeight={700}
+          color="text.primary"
+          sx={{ fontSize: { xs: "1.05rem", md: "1.5rem" } }}
+        >
           ANÁLISIS DE PRODUCTO
         </Typography>
         <MuiButton
           variant="outlined"
           startIcon={<FilterAltOutlined />}
           onClick={handleOpenDrawer}
-          sx={{ textTransform: "none", fontWeight: 500 }}
+          sx={{
+            textTransform: "none",
+            fontWeight: 500,
+            fontSize: { xs: "0.78rem", md: "0.875rem" },
+            py: { xs: 0.4, md: "5px" },
+            px: { xs: 1.25, md: "15px" },
+          }}
         >
           Filtros Avanzados
         </MuiButton>

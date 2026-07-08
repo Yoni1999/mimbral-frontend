@@ -28,7 +28,7 @@ const LineaCreditoPage = () => {
   };
 
   return (
-    <Box p={2}>
+    <Box sx={{ p: { xs: 1, md: 2 } }}>
       <HeaderLineaCredito
         obtenerDescripcionPeriodo={obtenerDescripcionPeriodo}
         handleOpenDrawer={handleOpenDrawer}

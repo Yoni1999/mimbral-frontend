@@ -15,10 +15,10 @@ const SeccionTitulo: React.FC<Props> = ({ title, icon, infoRight }) => {
         justifyContent: "space-between", // Distribuye el contenido
         alignItems: "center",
         width: "100%",
-        mb: 2,
-        pl: 1.2,
-        pr: 2,
-        py: 0.5,
+        mb: { xs: 1, md: 2 },
+        pl: { xs: 0.8, md: 1.2 },
+        pr: { xs: 1, md: 2 },
+        py: { xs: 0.25, md: 0.5 },
         borderRadius: 2,
         transition: "all 0.3s ease",
         cursor: "default",
@@ -34,7 +34,7 @@ const SeccionTitulo: React.FC<Props> = ({ title, icon, infoRight }) => {
         <Box
           sx={{
             width: 4,
-            height: 24,
+            height: { xs: 18, md: 24 },
             backgroundColor: "primary.main",
             borderRadius: 1,
           }}
@@ -46,7 +46,8 @@ const SeccionTitulo: React.FC<Props> = ({ title, icon, infoRight }) => {
           color="text.primary"
           sx={{
             textTransform: "uppercase",
-            letterSpacing: 1,
+            letterSpacing: { xs: 0.5, md: 1 },
+            fontSize: { xs: "0.85rem", md: "1rem" },
             transition: "color 0.3s ease",
             "&:hover": {
               color: "primary.main",
@@ -66,7 +67,7 @@ const SeccionTitulo: React.FC<Props> = ({ title, icon, infoRight }) => {
           sx={{
             color: "text.secondary",
             fontStyle: "italic",
-            display: { xs: "none", sm: "block" },
+            display: { xs: "none", md: "block" },
           }}
         >
           {infoRight}

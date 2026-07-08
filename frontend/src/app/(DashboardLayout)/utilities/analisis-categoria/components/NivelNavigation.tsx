@@ -18,8 +18,8 @@ const NivelNavigation = () => {
     <Box
       sx={{
         display: "flex",
-        gap: 1,
-        padding: "8px 24px",
+        gap: { xs: 0.75, md: 1 },
+        padding: { xs: "4px 8px", md: "8px 24px" },
         backgroundColor: "transparent",
         flexWrap: "wrap",
       }}
@@ -31,9 +31,12 @@ const NivelNavigation = () => {
             <Chip
               label={nivel.label}
               clickable
+              size="small"
               variant={isActive ? "filled" : "outlined"}
               sx={{
                 borderRadius: "16px",
+                height: { xs: 26, md: 32 },
+                fontSize: { xs: "0.75rem", md: "0.8125rem" },
                 backgroundColor: isActive ? "#5d87ff" : "transparent",
                 color: isActive ? "#fff" : "#5d87ff",
                 border: isActive ? "none" : "1px solid #5d87ff",

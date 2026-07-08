@@ -179,9 +179,9 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
   return (
     <Box
       sx={{
-        mb: 2,
-        px: 2,
-        py: 2,
+        mb: { xs: 1, md: 2 },
+        px: { xs: 1.5, md: 2 },
+        py: { xs: 1.25, md: 2 },
         backgroundColor: "rgba(255, 255, 255, 0.5)",
         borderRadius: 2,
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
@@ -196,6 +196,7 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
               display: "flex",
               flexDirection: "column",
               pl: 1,
+              mb: { xs: 1, md: 0 },
               borderLeft: "4px solid #d93a3a",
             }}
           >
@@ -203,7 +204,7 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
               variant="h6"
               sx={{
                 fontWeight: 600,
-                fontSize: "1.1rem",
+                fontSize: { xs: "1.05rem", md: "1.1rem" },
                 color: "primary.main",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
@@ -214,7 +215,12 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
 
             <Typography
               variant="body2"
-              sx={{ color: "#555", mt: 0.5, fontSize: "0.75rem" }}
+              sx={{
+                color: "#555",
+                mt: 0.5,
+                fontSize: "0.75rem",
+                display: { xs: "none", md: "block" },
+              }}
             >
               Estás viendo: <strong>{obtenerResumenFiltro()}</strong>
             </Typography>
@@ -223,7 +229,7 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
         </Grid>
 
         <Grid item xs={12} md={10}>
-          <Grid container spacing={1.5} justifyContent="flex-end">
+          <Grid container spacing={{ xs: 1, md: 1.5 }} justifyContent="flex-end">
             <Grid item xs={12} sm={3} md={2.2}>
             <Autocomplete
               size="small"
@@ -285,7 +291,7 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
 
             </Grid>
 
-            <Grid item xs={12} sm={3} md={2}>
+            <Grid item xs={6} sm={3} md={2}>
               <FormControl fullWidth size="small">
                 <InputLabel sx={{ fontSize: "0.75rem" }}>Temporada</InputLabel>
                 <Select
@@ -305,7 +311,7 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={3} md={2}>
+            <Grid item xs={6} sm={3} md={2}>
               <FormControl fullWidth size="small">
                 <InputLabel sx={{ fontSize: "0.75rem" }}>Período</InputLabel>
                 <Select
@@ -330,7 +336,7 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={3} md={1.8}>
+            <Grid item xs={6} sm={3} md={1.8}>
               <TextField
                 label="Inicio"
                 type="date"
@@ -345,7 +351,7 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
               />
             </Grid>
 
-            <Grid item xs={12} sm={3} md={1.8}>
+            <Grid item xs={6} sm={3} md={1.8}>
               <TextField
                 label="Fin"
                 type="date"
@@ -360,7 +366,7 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
               />
             </Grid>
 
-            <Grid item xs={12} sm={2} md={1.9}>
+            <Grid item xs={6} sm={2} md={1.9}>
               <Button
                 onClick={handleClear}
                 fullWidth
@@ -384,8 +390,8 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
             </Grid>
           </Grid>
 
-          <Grid container spacing={1.5} justifyContent="flex-end" mt={1}>
-            <Grid item xs={12} sm={3} md={1.5}>
+          <Grid container spacing={{ xs: 1, md: 1.5 }} justifyContent="flex-end" mt={{ xs: 0.25, md: 1 }}>
+            <Grid item xs={6} sm={3} md={1.5}>
               <FormControl fullWidth size="small">
                 <InputLabel sx={{ fontSize: "0.65rem" }}>
                   Comparando con

@@ -12,9 +12,13 @@ interface Props {
 
 const HeaderLineaCredito: React.FC<Props> = ({ obtenerDescripcionPeriodo, handleOpenDrawer }) => {
   return (
-    <Stack spacing={1}>
+    <Stack spacing={{ xs: 0.5, md: 1 }}>
       <Box display="flex" justifyContent="flex-end">
-        <Typography variant="subtitle2" color="text.secondary">
+        <Typography
+          variant="subtitle2"
+          color="text.secondary"
+          sx={{ fontSize: { xs: "0.7rem", md: "0.875rem" }, lineHeight: { xs: 1.3, md: 1.57 } }}
+        >
           Estás viendo el periodo: <strong>{obtenerDescripcionPeriodo()}</strong>
         </Typography>
       </Box>
@@ -22,23 +26,32 @@ const HeaderLineaCredito: React.FC<Props> = ({ obtenerDescripcionPeriodo, handle
       <Paper
         elevation={1}
         sx={{
-          p: 3,
+          p: { xs: 1.5, md: 3 },
           borderRadius: 3,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-          gap: 2,
+          gap: { xs: 1, md: 2 },
           backgroundColor: "background.paper",
           border: "1px solid",
           borderColor: "divider"
         }}
       >
         <Box>
-          <Typography variant="h5" fontWeight={700} color="text.primary">
+          <Typography
+            variant="h5"
+            fontWeight={700}
+            color="text.primary"
+            sx={{ fontSize: { xs: "1.05rem", md: "1.5rem" } }}
+          >
             LÍNEA DE CRÉDITO CLIENTES
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ display: { xs: "none", md: "block" } }}
+          >
             Visualiza, filtra y analiza los datos financieros de tus clientes.
           </Typography>
         </Box>
@@ -47,7 +60,13 @@ const HeaderLineaCredito: React.FC<Props> = ({ obtenerDescripcionPeriodo, handle
           variant="outlined"
           startIcon={<FilterAltOutlined />}
           onClick={handleOpenDrawer}
-          sx={{ textTransform: "none", fontWeight: 500 }}
+          sx={{
+            textTransform: "none",
+            fontWeight: 500,
+            fontSize: { xs: "0.78rem", md: "0.875rem" },
+            py: { xs: 0.4, md: 0.75 },
+            px: { xs: 1.25, md: 2 },
+          }}
         >
           Filtros Avanzados
         </MuiButton>

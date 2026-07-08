@@ -56,12 +56,21 @@ const HeaderLineaCredito: React.FC<Props> = ({
   };
 
   return (
-    <Stack spacing={1}>
+    <Stack spacing={{ xs: 0.5, md: 1 }}>
       {/* Línea de periodo */}
       <Box display="flex" justifyContent="flex-end">
-        <Typography variant="subtitle2" color="text.secondary">
+        <Typography
+          variant="subtitle2"
+          color="text.secondary"
+          sx={{ fontSize: { xs: "0.7rem", md: "0.875rem" }, lineHeight: { xs: 1.3, md: 1.57 } }}
+        >
           Estás viendo el periodo:{" "}
-          <Typography component="span" fontWeight={600} color="text.primary">
+          <Typography
+            component="span"
+            fontWeight={600}
+            color="text.primary"
+            sx={{ fontSize: "inherit" }}
+          >
             {descripcionPeriodo}
           </Typography>
         </Typography>
@@ -71,7 +80,7 @@ const HeaderLineaCredito: React.FC<Props> = ({
       <Paper
         elevation={2}
         sx={{
-          p: 3,
+          p: { xs: 1.5, md: 3 },
           borderRadius: 3,
           border: "1px solid",
           borderColor: "divider",
@@ -79,11 +88,15 @@ const HeaderLineaCredito: React.FC<Props> = ({
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-          gap: 2,
+          gap: { xs: 1, md: 2 },
         }}
       >
         {/* Título */}
-        <Typography variant="h6" fontWeight={700}>
+        <Typography
+          variant="h6"
+          fontWeight={700}
+          sx={{ fontSize: { xs: "1.05rem", md: "1.25rem" } }}
+        >
           DETALLE CLIENTE
         </Typography>
 
@@ -91,7 +104,7 @@ const HeaderLineaCredito: React.FC<Props> = ({
         <Box
           display="flex"
           alignItems="center"
-          gap={2}
+          gap={{ xs: 1, md: 2 }}
           flexWrap="wrap"
           sx={{ width: { xs: "100%", md: "auto" } }}
         >
@@ -140,7 +153,7 @@ const HeaderLineaCredito: React.FC<Props> = ({
             InputLabelProps={{ shrink: true }}
             value={fechaInicio}
             onChange={(e) => setFechaInicio(e.target.value)}
-            sx={{ width: { xs: "100%", sm: "auto" } }}
+            sx={{ width: { xs: "calc(50% - 4px)", sm: "auto" } }}
           />
           <TextField
             label="Fin"
@@ -149,7 +162,7 @@ const HeaderLineaCredito: React.FC<Props> = ({
             InputLabelProps={{ shrink: true }}
             value={fechaFin}
             onChange={(e) => setFechaFin(e.target.value)}
-            sx={{ width: { xs: "100%", sm: "auto" } }}
+            sx={{ width: { xs: "calc(50% - 4px)", sm: "auto" } }}
           />
 
           {/* Botones */}
