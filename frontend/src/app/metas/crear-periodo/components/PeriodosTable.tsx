@@ -99,7 +99,8 @@ const PeriodosTable = () => {
 
       <Paper elevation={1} sx={{backgroundColor: '#FEFEFE',p: 0, borderRadius: 1,}}>
         <Typography variant="subtitle1" className="mb-2 font-semibold">Periodos creados</Typography>
-        <Table>
+        <Box sx={{ overflowX: "auto" }}>
+        <Table sx={{ minWidth: 650 }}>
           <TableHead>
             <TableRow>
               <TableCell><strong>ID Periodo</strong></TableCell>
@@ -147,9 +148,10 @@ const PeriodosTable = () => {
             ))}
           </TableBody>
         </Table>
+        </Box>
       </Paper>
 
-      <Dialog open={openDialog} onClose={handleDialogClose}>
+      <Dialog open={openDialog} onClose={handleDialogClose} fullWidth maxWidth="xs">
         <DialogTitle>Confirmar eliminación</DialogTitle>
         <DialogContent>
           <Typography>
