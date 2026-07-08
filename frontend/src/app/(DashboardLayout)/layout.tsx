@@ -9,6 +9,7 @@ import { useVerificarExpiracionToken } from "@/hooks/useVerificarExpiracionToke"
 import { ModalRenovarSesion } from "@/components/ModalRenovarSesion";
 import { renovarSesion } from "@/utils/renovarSesion";
 import FloatingHelpAgent from "@/components/agent/FloatingHelpAgent";
+import MobileBottomNav from "@/app/(DashboardLayout)/layout/MobileBottomNav";
 
 const MainWrapper = styled("div")(() => ({
   display: "flex",
@@ -63,11 +64,21 @@ export default function RootLayout({ children }: Props) {
           maxWidth={false}
           sx={{ paddingTop: { xs: 1, md: 2.5 }, px: { xs: 1.5, md: 4, xl: 6 } }}
         >
-          <Box sx={{ minHeight: "calc(100vh - 170px)" }}>{children}</Box>
+          <Box
+            sx={{
+              minHeight: "calc(100vh - 170px)",
+              // Deja espacio para la barra de navegación inferior en móvil
+              pb: { xs: "72px", md: 0 },
+            }}
+          >
+            {children}
+          </Box>
         </Container>
       </PageWrapper>
 
       <FloatingHelpAgent />
+
+      <MobileBottomNav onOpenMenu={() => setMobileSidebarOpen(true)} />
 
       {mostrarModal && (
         <ModalRenovarSesion

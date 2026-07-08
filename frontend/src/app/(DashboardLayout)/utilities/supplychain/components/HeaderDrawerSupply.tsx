@@ -16,6 +16,8 @@ import {
   Checkbox,
   ListItemText,
   OutlinedInput,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -52,6 +54,9 @@ const MenuProps = {
 };
 
 const HeaderDrawerSupply: React.FC<Props> = ({ open, onClose, onApply }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   const [filters, setFilters] = useState<Filters>({
     almacen: "",
     primerNivel: [],
@@ -102,7 +107,22 @@ const HeaderDrawerSupply: React.FC<Props> = ({ open, onClose, onApply }) => {
   };
 
   return (
-    <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: "100%", sm: 400 }, p: 3 } }}>
+    <Drawer
+      anchor={isMobile ? "bottom" : "right"}
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          width: { xs: "100%", md: 400 },
+          maxHeight: { xs: "88vh", md: "100%" },
+          borderTopLeftRadius: { xs: 16, md: 0 },
+          borderTopRightRadius: { xs: 16, md: 0 },
+          overflowY: "auto",
+          p: 3,
+        },
+      }}
+    >
+      <Box sx={{ width: 40, height: 4, borderRadius: 2, bgcolor: "grey.300", mx: "auto", mb: 1, display: { xs: "block", md: "none" } }} />
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6">Filtros Supply Chain</Typography>
         <IconButton onClick={onClose}><CloseIcon /></IconButton>

@@ -348,7 +348,8 @@ export default function FloatingHelpAgent() {
       sx={{
         position: "fixed",
         right: { xs: 12, sm: 20 },
-        bottom: { xs: 12, sm: 20 },
+        // En móvil se eleva sobre la barra de navegación inferior
+        bottom: { xs: 76, sm: 20 },
         zIndex: 1400,
         display: "flex",
         flexDirection: "column",

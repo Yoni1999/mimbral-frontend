@@ -6,7 +6,8 @@ import {
   Box, Drawer, IconButton, Typography, Divider,
   FormControl, InputLabel, Select, MenuItem, Button,
   Grid, Chip, Avatar, TextField, ListItemIcon, ListItemText,
-  CircularProgress // You've already imported this, good!
+  CircularProgress, // You've already imported this, good!
+  useMediaQuery, useTheme
 } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import CloseIcon from "@mui/icons-material/Close";
@@ -43,6 +44,8 @@ interface Props {
 }
 
 const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [openDrawer, setOpenDrawer] = useState(false);
   // Initialize filters with currentFilters if provided, otherwise default to "7D"
   // Initialize almacenes as an empty array if not provided
@@ -310,21 +313,25 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
 
       {/* Side Drawer */}
       <Drawer
-        anchor="right"
+        anchor={isMobile ? "bottom" : "right"}
         open={openDrawer}
         onClose={() => setOpenDrawer(false)}
         PaperProps={{
           sx: {
-            width: { xs: "100vw", sm: 380 },
-            borderTopLeftRadius: 12,
-            borderBottomLeftRadius: 12,
+            width: { xs: "100%", md: 380 },
+            borderTopLeftRadius: { xs: 16, md: 12 },
+            borderTopRightRadius: { xs: 16, md: 0 },
+            borderBottomLeftRadius: { xs: 0, md: 12 },
+            maxHeight: { xs: "88vh", md: "100%" },
             boxShadow: 6,
             p: { xs: 1.5, sm: 3 },
             backgroundColor: "#fafafa",
+            overflowY: "auto",
           },
         }}
       >
-        <Box sx={{ width: "100%", maxWidth: 360, p: { xs: 1.5, sm: 3 } }}>
+        <Box sx={{ width: "100%", maxWidth: { xs: "100%", md: 360 }, p: { xs: 1.5, sm: 3 } }}>
+          <Box sx={{ width: 40, height: 4, borderRadius: 2, bgcolor: "grey.300", mx: "auto", mb: 1, display: { xs: "block", md: "none" } }} />
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6">Filtros de búsqueda</Typography>
             <IconButton onClick={() => setOpenDrawer(false)}>
