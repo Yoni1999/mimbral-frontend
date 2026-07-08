@@ -137,13 +137,14 @@ const TablaMetas: React.FC<TablaMetasProps> = ({ data, dataMonto = [], tipoMeta,
 
   return (
     <Box sx={{ mt: 2, width: "100%" }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} gap={2}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} gap={2} flexWrap="wrap">
         <TextField
           size="small"
           label="Buscar producto o SKU"
           variant="outlined"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
+          sx={{ width: { xs: "100%", sm: "auto" } }}
         />
         <Select
           size="small"
@@ -162,8 +163,8 @@ const TablaMetas: React.FC<TablaMetasProps> = ({ data, dataMonto = [], tipoMeta,
         </IconButton>
       </Box>
 
-      <TableContainer component={Paper} sx={{ borderRadius: 2, border: "1px solid #e0e0e0", boxShadow: "none" }}>
-        <Table size="small">
+      <TableContainer component={Paper} sx={{ borderRadius: 2, border: "1px solid #e0e0e0", boxShadow: "none", overflowX: "auto" }}>
+        <Table size="small" sx={{ minWidth: tipoMeta === "sku" ? 900 : 650 }}>
           <TableHead sx={{ backgroundColor: "#f9f9f9" }}>
             <TableRow>
               {tipoMeta === "sku" ? (

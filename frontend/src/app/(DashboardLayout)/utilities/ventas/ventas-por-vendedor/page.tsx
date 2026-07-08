@@ -334,7 +334,7 @@ const VentasVendedorPage: React.FC = () => {
 return (
     <>
       <NivelNavigation />
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: { xs: 1.5, md: 3 } }}>
         <HeaderVendedor
           filtros={filtros}
           setFiltros={setFiltros}

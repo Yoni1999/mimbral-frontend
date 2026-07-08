@@ -11,8 +11,8 @@ export default function LoginPage() {
   return (
     <Box
       sx={{
-        width: "100vw",
-        height: "100vh",
+        width: "100%",
+        minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -22,6 +22,9 @@ export default function LoginPage() {
         backgroundRepeat: "no-repeat",
         position: "relative",
         px: 2,
+        py: 2,
+        // 🔹 Espacio superior en móvil para no quedar bajo el header absoluto
+        pt: { xs: 22, sm: 2 },
       }}
     >
       <Box

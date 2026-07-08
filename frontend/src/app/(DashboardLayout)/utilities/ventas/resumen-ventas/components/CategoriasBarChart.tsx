@@ -86,8 +86,8 @@ const CategoriasTableChart: React.FC<Props> = ({ data, height = 300 }) => {
 
         <Divider sx={{ mb: 1 }} />
 
-        <Box sx={{ maxHeight: height, overflowY: "auto" }}>
-          <Table size="small">
+        <Box sx={{ maxHeight: height, overflowY: "auto", overflowX: "auto" }}>
+          <Table size="small" sx={{ minWidth: 550 }}>
             <TableHead>
               <TableRow>
                 <TableCell>Imagen</TableCell>

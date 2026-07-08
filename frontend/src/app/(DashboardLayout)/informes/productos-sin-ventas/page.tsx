@@ -443,7 +443,7 @@ const ProductosSinVentasPage: React.FC = () => {
 
         return (
             <Paper variant="outlined" sx={{ width: '100%', overflowX: 'auto' }}>
-                <Table size="small">
+                <Table size="small" sx={{ minWidth: 650 }}>
                     <TableHead>
                         <TableRow>
                             <TableCell><strong>Doc N°</strong></TableCell>
@@ -480,9 +480,9 @@ const ProductosSinVentasPage: React.FC = () => {
 
     return (
         <Box p={0}>
-            <Box display="flex" alignItems="center" gap={1} mb={1}>
+            <Box display="flex" alignItems="center" gap={1} mb={1} flexWrap="wrap">
                 <RemoveShoppingCartIcon color="primary" fontSize="large" />
-                <Typography variant="h4" fontWeight="bold" gutterBottom>
+                <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     Productos sin Ventas
                 </Typography>
             </Box>
@@ -499,7 +499,16 @@ const ProductosSinVentasPage: React.FC = () => {
             <Divider sx={{ my: 3 }} />
 
             {/* Barra con conteo + export */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box
+                display="flex"
+                justifyContent="space-between"
+                mb={2}
+                sx={{
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    gap: 1,
+                }}
+            >
                 <Typography variant="subtitle2">{productosCountText}</Typography>
 
                 {!skuSalesMode && (
@@ -551,7 +560,7 @@ const ProductosSinVentasPage: React.FC = () => {
                 open={showMensaje}
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                 autoHideDuration={null}
-                sx={{ maxWidth: '400px' }}
+                sx={{ maxWidth: { xs: 'calc(100vw - 16px)', sm: '400px' } }}
             >
                 <Alert
                     severity="warning"

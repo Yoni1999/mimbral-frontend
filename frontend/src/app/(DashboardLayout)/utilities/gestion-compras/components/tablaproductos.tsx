@@ -170,13 +170,19 @@ export default function RotacionStockDataGrid() {
   };
 
   return (
-    <Box sx={{ width: '100%', height: 600 }}>
-    <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+    <Box sx={{ width: '100%' }}>
+    <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+        gap={1}
+        mb={2}
+    >
     <TextField
         label="Buscar por descripción o SKU"
         variant="outlined"
         size="small"
-        sx={{ width: 300 }}
+        sx={{ width: { xs: '100%', sm: 300 } }}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
     />
@@ -197,6 +203,8 @@ export default function RotacionStockDataGrid() {
         }}
         sx={{
           borderRadius: 2,
+          height: 520,
+          width: '100%',
           '& .MuiDataGrid-columnHeaders': {
             backgroundColor: '#f5f5f5',
             fontWeight: 'bold',

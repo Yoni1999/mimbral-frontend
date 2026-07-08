@@ -69,7 +69,7 @@ const EstadoCuentasChart: React.FC<EstadoCuentasChartProps> = ({
   return (
     <DashboardCard
       title="Estado de Cuentas"
-      sx={{ maxWidth: 500, mt: 4, ...sx }}    >
+      sx={{ width: "100%", maxWidth: 500, mt: 4, ...sx }}    >
       {loading ? (
         <Typography variant="body1">Cargando gráfico...</Typography>
       ) : (

@@ -1,0 +1,18 @@
+/* Ajustes globales para uso en móvil */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Los contenedores de tablas siempre permiten scroll horizontal */
+.MuiTableContainer-root {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}

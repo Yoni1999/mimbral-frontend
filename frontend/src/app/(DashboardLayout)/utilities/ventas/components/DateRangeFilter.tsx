@@ -519,6 +519,8 @@ export default function DateRangeFilter({
             <Box
               sx={{
                 display: "flex",
+                flexWrap: { xs: "wrap", md: "nowrap" },
+                justifyContent: { xs: "center", md: "flex-start" },
                 gap: 3,
                 px: 2,
                 pb: 1.5,

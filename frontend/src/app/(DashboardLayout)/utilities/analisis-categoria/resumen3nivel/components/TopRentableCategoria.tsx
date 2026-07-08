@@ -180,7 +180,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
 
   return (
     <Card sx={{ backgroundColor: "transparent", boxShadow: "none", border: "none", p: 1 }}>
-      <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+      <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1} mb={2}>
         <Typography
           variant="h6"
           sx={{
@@ -217,13 +217,13 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
         )}
       </Box>
 
-      <Box mb={2} display="flex" justifyContent="space-between" alignItems="center">
+      <Box mb={2} display="flex" flexDirection={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "stretch", sm: "center" }} gap={1}>
         <TextField
           size="small"
           placeholder="Buscar producto..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          sx={{ width: 300 }}
+          sx={{ width: { xs: "100%", sm: 300 } }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -243,7 +243,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
         </Box>
       ) : (
         <TableContainer component={Paper} sx={{ minHeight: 600, overflowY: "auto" }}>
-          <Table stickyHeader size="small">
+          <Table stickyHeader size="small" sx={{ minWidth: 650 }}>
             <TableHead>
               <TableRow>
                 <TableCell>#</TableCell>

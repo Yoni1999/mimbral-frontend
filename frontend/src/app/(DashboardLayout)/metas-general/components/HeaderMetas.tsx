@@ -281,7 +281,7 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
 
 
       <Drawer anchor="right" open={openDrawer} onClose={() => setOpenDrawer(false)}>
-        <Box sx={{ width: 360, p: 3 }}>
+        <Box sx={{ width: { xs: "100vw", sm: 360 }, p: 3 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6">Filtros de búsqueda</Typography>
             <IconButton onClick={() => setOpenDrawer(false)}>

@@ -63,8 +63,8 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
           Top 10 Vendedores
         </Typography>
 
-        <Box sx={{ maxHeight: 307.5, overflowY: "auto" }}>
-          <Table size="small" stickyHeader>
+        <Box sx={{ maxHeight: 307.5, overflowY: "auto", overflowX: "auto" }}>
+          <Table size="small" stickyHeader sx={{ minWidth: 650 }}>
             <TableHead>
               <TableRow>
                 <TableCell>Vendedor</TableCell>

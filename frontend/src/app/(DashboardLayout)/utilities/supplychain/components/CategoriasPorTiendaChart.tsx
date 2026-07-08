@@ -9,7 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Paper, Typography, Box } from "@mui/material";
+import { Paper, Typography, Box, useMediaQuery, useTheme } from "@mui/material";
 
 // Datos extendidos: 18 categorías
 const data = [
@@ -43,9 +43,11 @@ const almacenes = [
 
 const CategoriasPorTiendaChart = () => {
   const alturaGrafico = data.length * 28; // ~28px por categoría (ajustable)
+  const theme = useTheme();
+  const esMovil = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
-    <Paper sx={{ p: 3, borderRadius: 4 }}>
+    <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 4 }}>
       <Box display="flex" justifyContent="space-between" mb={2}>
         <Typography variant="h6" fontWeight={600}>
           Categorías por Tienda
@@ -59,11 +61,16 @@ const CategoriasPorTiendaChart = () => {
         <BarChart
           layout="vertical"
           data={data}
-          margin={{ top: 0, right: 0, left: 20, bottom: 0 }}
+          margin={{ top: 0, right: 0, left: esMovil ? 0 : 20, bottom: 0 }}
           barCategoryGap={4}
         >
           <XAxis type="number" hide />
-          <YAxis dataKey="categoria" type="category" width={200} />
+          <YAxis
+            dataKey="categoria"
+            type="category"
+            width={esMovil ? 120 : 200}
+            tick={{ fontSize: esMovil ? 10 : 12 }}
+          />
           <Tooltip />
 
           {almacenes.map((almacen) => (

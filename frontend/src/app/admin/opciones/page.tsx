@@ -68,7 +68,7 @@ const OpcionesAdminPage = () => {
   if (!isAuthorized) return null;
 
   return (
-    <Box p={4} position="relative" sx={{backgroundColor: "#FEFEFE", minHeight: "100vh"}} >
+    <Box position="relative" sx={{ p: { xs: 2, md: 4 }, backgroundColor: "#FEFEFE", minHeight: "100vh" }} >
       <Typography variant="h4" fontWeight="bold" mb={2}>
         Dashboard de Administración
       </Typography>
@@ -137,8 +137,8 @@ const OpcionesAdminPage = () => {
           aria-label="add"
           sx={{
             position: "fixed",
-            bottom: 32,
-            right: 32,
+            bottom: { xs: 16, sm: 32 },
+            right: { xs: 16, sm: 32 },
             zIndex: 1000,
             boxShadow: 4,
           }}
@@ -155,8 +155,8 @@ const OpcionesAdminPage = () => {
           aria-label="manage"
           sx={{
             position: "fixed",
-            bottom: 100,
-            right: 32,
+            bottom: { xs: 84, sm: 100 },
+            right: { xs: 16, sm: 32 },
             zIndex: 1000,
             boxShadow: 4,
           }}

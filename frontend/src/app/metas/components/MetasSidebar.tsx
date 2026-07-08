@@ -15,8 +15,13 @@ import { usePathname } from "next/navigation";
 import MetasMenuitems from "./MetasMenuitems";
 import MenuIcon from "@mui/icons-material/Menu"; // Ícono para el modo colapsado
 
-const MetasSidebar = () => {
-  const [isHovered, setIsHovered] = useState(false);
+interface MetasSidebarProps {
+  expanded?: boolean;
+}
+
+const MetasSidebar = ({ expanded = false }: MetasSidebarProps) => {
+  const [hovered, setHovered] = useState(false);
+  const isHovered = expanded || hovered;
   const pathname = usePathname() ?? "";
 
   return (
@@ -31,8 +36,8 @@ const MetasSidebar = () => {
         display: "flex",
         flexDirection: "column",
       }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       {/* 🔹 Sección superior */}
       <Box

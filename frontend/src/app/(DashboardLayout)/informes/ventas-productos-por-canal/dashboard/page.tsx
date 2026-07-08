@@ -476,9 +476,17 @@ const DashboardVentasPorCanalPage: React.FC = () => {
   );
 
   return (
-    <Box p={3}>
+    <Box sx={{ p: { xs: 1.5, md: 3 } }}>
       <Box mb={2}>
-        <Typography variant="h4" fontWeight={800} gutterBottom display="flex" alignItems="center" gap={1}>
+        <Typography
+          variant="h4"
+          fontWeight={800}
+          gutterBottom
+          display="flex"
+          alignItems="center"
+          gap={1}
+          sx={{ flexWrap: "wrap", fontSize: { xs: "1.4rem", sm: "2.125rem" } }}
+        >
           <TrendingUpIcon />
           Dashboard de ventas por canal
         </Typography>
@@ -659,11 +667,11 @@ const DashboardVentasPorCanalPage: React.FC = () => {
                 maxHeight: 420,
                 border: "1px solid #e8eef8",
                 borderRadius: 3,
-                overflow: "hidden",
+                overflow: "auto",
                 background: "linear-gradient(180deg, #ffffff 0%, #fbfcff 100%)",
               }}
             >
-              <Table stickyHeader size="small">
+              <Table stickyHeader size="small" sx={{ minWidth: 560 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 800, backgroundColor: "#f4f7fc" }}>SKU</TableCell>

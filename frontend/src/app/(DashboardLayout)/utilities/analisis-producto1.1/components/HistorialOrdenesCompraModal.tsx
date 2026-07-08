@@ -94,7 +94,8 @@ const HistorialOrdenesCompraModal = ({ open, onClose, data }: Props) => {
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails sx={{ px: 1 }}>
-                  <Table size="small">
+                  <Box sx={{ overflowX: "auto" }}>
+                  <Table size="small" sx={{ minWidth: 650 }}>
                     <TableHead>
                       <TableRow sx={{ backgroundColor: '#fafafa' }}>
                         <TableCell>N° OC</TableCell>
@@ -129,6 +130,7 @@ const HistorialOrdenesCompraModal = ({ open, onClose, data }: Props) => {
                       ))}
                     </TableBody>
                   </Table>
+                  </Box>
                 </AccordionDetails>
               </Accordion>
             ))}

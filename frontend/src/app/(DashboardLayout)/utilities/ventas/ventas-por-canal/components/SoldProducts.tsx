@@ -183,8 +183,8 @@ const ProductosVendidos: React.FC<Props> = ({ filters }) => {
             Mostrando {productos.length} de {totalProductos} productos
           </Typography>
 
-          <TableContainer component={Paper}>
-            <Table size="small" stickyHeader>
+          <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+            <Table size="small" stickyHeader sx={{ minWidth: 800 }}>
               <TableHead>
                 <TableRow>
                   <TableCell />

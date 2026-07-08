@@ -357,7 +357,8 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
           sx: {
             mt: 1,
             p: 2.25,
-            width: { xs: 340, sm: 580, md: 680 },
+            width: { xs: "calc(100vw - 32px)", sm: 580, md: 680 },
+            maxWidth: "calc(100vw - 16px)",
             borderRadius: 3,
             border: "1px solid rgba(148, 163, 184, 0.22)",
             background: "linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)",

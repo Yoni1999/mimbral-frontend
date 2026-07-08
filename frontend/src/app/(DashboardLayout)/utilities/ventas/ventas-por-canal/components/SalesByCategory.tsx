@@ -91,7 +91,7 @@ const VentasPorCategoriaChart: React.FC<Props> = ({ data }) => {
       }}
     >
       <CardContent>
-        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1} mb={2}>
           <Typography variant="h6" fontWeight="bold" color="text.primary">
             Ventas por Categoría
           </Typography>

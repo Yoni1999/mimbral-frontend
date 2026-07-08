@@ -156,7 +156,7 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
       }}
     >
       <CardContent sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <Box display="flex" alignItems="center" justifyContent="space-between" gap={2}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
           <Typography variant="h6" color="primary" fontWeight={600}>
             Categorías Vendidas
           </Typography>
@@ -167,12 +167,12 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
             variant="outlined"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ width: "200px" }}
+            sx={{ width: { xs: "100%", sm: "200px" } }}
           />
         </Box>
 
         <Box sx={{ flex: 1, overflowY: "auto", overflowX: "auto", mt: 1 }}>
-          <Table stickyHeader size="small">
+          <Table stickyHeader size="small" sx={{ minWidth: 520 }}>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: "bold" }}>Categoría</TableCell>

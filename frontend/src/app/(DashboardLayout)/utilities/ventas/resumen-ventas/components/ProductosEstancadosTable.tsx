@@ -55,8 +55,8 @@ const ProductosEstancadosTable: React.FC<Props> = ({ data }) => {
       <Typography variant="h6" gutterBottom fontWeight={600}>
         Resumen Productos Estancados
       </Typography>
-      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
-        <Table>
+      <TableContainer component={Paper} sx={{ borderRadius: 2, overflowX: 'auto' }}>
+        <Table sx={{ minWidth: 800 }}>
           <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
             <TableRow>
               <TableCell>Imagen</TableCell>

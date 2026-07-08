@@ -79,17 +79,18 @@ const UserSessionTable = () => {
   if (loading) return <Typography sx={{ mt: 4 }}>Cargando sesiones...</Typography>;
 
   return (
-    <DashboardCard title="Resumen de Sesiones" sx={{ maxWidth: 500, mt: 0 }}>
+    <DashboardCard title="Resumen de Sesiones" sx={{ width: "100%", maxWidth: 500, mt: 0 }}>
       <TableContainer
         component={Paper}
         sx={{
           height: 280,
           overflowY: "auto",
+          overflowX: "auto",
           backgroundColor: "transparent",
           boxShadow: "none",
         }}
       >
-        <Table stickyHeader>
+        <Table stickyHeader sx={{ minWidth: 400 }}>
           <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
             <TableRow>
               <TableCell>

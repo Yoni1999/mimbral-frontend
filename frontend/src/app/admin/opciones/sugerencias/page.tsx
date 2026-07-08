@@ -83,7 +83,7 @@ const AdminSugerenciasPage = () => {
   };
 
   return (
-    <Box p={4}>
+    <Box sx={{ p: { xs: 2, md: 4 } }}>
       <Typography variant="h4" fontWeight="bold" gutterBottom>
         Gestión de Sugerencias
       </Typography>
@@ -95,7 +95,7 @@ const AdminSugerenciasPage = () => {
           </Box>
         ) : (
           <>
-            <Table>
+            <Table sx={{ minWidth: 650 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>

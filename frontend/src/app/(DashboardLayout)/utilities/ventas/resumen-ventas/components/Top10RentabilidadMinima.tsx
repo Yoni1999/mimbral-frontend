@@ -49,8 +49,8 @@ const TopRentabilidadMinima = ({ data }: Props) => {
         </Typography>
         </Box>
 
-        <Box sx={{ maxHeight: 310, overflowY: "auto" }}>
-          <Table size="small" stickyHeader>
+        <Box sx={{ maxHeight: 310, overflowY: "auto", overflowX: "auto" }}>
+          <Table size="small" stickyHeader sx={{ minWidth: 650 }}>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontSize: 12, py: 0.5 }}>Producto</TableCell>

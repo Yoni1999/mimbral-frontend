@@ -121,7 +121,7 @@ const CrearUsuarioForm = () => {
           />
         </Grid>
 
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <TextField
             label="Contraseña"
             type="password"
@@ -133,7 +133,7 @@ const CrearUsuarioForm = () => {
           />
         </Grid>
 
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <TextField
             label="Confirmar contraseña"
             type="password"
@@ -145,7 +145,7 @@ const CrearUsuarioForm = () => {
           />
         </Grid>
 
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <TextField
             label="Teléfono"
             name="telefono"
@@ -156,7 +156,7 @@ const CrearUsuarioForm = () => {
           />
         </Grid>
 
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <TextField
             label="Dirección"
             name="direccion"
@@ -167,7 +167,7 @@ const CrearUsuarioForm = () => {
           />
         </Grid>
 
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <FormControl fullWidth required>
             <InputLabel>Rol</InputLabel>
             <Select value={formData.rol} onChange={handleSelectChange} label="Rol">
@@ -177,7 +177,7 @@ const CrearUsuarioForm = () => {
           </FormControl>
         </Grid>
 
-        <Grid item xs={6} display="flex" alignItems="center">
+        <Grid item xs={12} sm={6} display="flex" alignItems="center">
           <FormControlLabel
             control={<Switch checked={formData.estado} onChange={handleEstadoToggle} />}
             label={formData.estado ? "Activo" : "Inactivo"}

@@ -157,8 +157,8 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
 
   return (
     <>
-      <Dialog open={showCanalWarning}>
-        <Box p={3} textAlign="center" minWidth={360}>
+      <Dialog open={showCanalWarning} fullWidth maxWidth="sm">
+        <Box p={3} textAlign="center" minWidth={{ xs: 0, sm: 360 }}>
           <Typography variant="h6" fontWeight={600} mb={2}>
             ¡Para Analizar un vendedor primero debes elegir su canal de ventas!
           </Typography>
@@ -201,7 +201,7 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
         </Box>
       </Dialog>
 
-      <Dialog open={showVendedorModal} onClose={() => setShowVendedorModal(false)}>
+      <Dialog open={showVendedorModal} onClose={() => setShowVendedorModal(false)} fullWidth maxWidth="sm">
         <Box p={3}>
           <Typography variant="h6" fontWeight={600} mb={2}>
             Selecciona un vendedor asociado al canal

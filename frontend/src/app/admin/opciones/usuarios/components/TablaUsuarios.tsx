@@ -150,7 +150,7 @@ const UsuariosPage = () => {
   );
 
   return (
-    <Box p={4}>
+    <Box sx={{ p: { xs: 0, md: 4 } }}>
       {loading ? (
         <CircularProgress />
       ) : (
@@ -160,8 +160,8 @@ const UsuariosPage = () => {
       )}
 
       {!loading && (
-        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
-          <Table>
+        <TableContainer component={Paper} sx={{ borderRadius: 2, overflowX: "auto" }}>
+          <Table sx={{ minWidth: 800 }}>
             <TableHead>
               <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
                 <TableCell><Tooltip title="ID"><NumbersIcon fontSize="small" /></Tooltip></TableCell>

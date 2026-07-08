@@ -94,7 +94,7 @@ const Page = () => {
   };
 
   return (
-    <Box p={4}>
+    <Box sx={{ p: { xs: 2, md: 4 } }}>
       <Typography variant="h4" fontWeight="bold" gutterBottom>
         Sugerencias de Usuarios
       </Typography>
@@ -124,7 +124,7 @@ const Page = () => {
 
       <Fab
         color="primary"
-        sx={{ position: "fixed", bottom: 32, right: 32, zIndex: 100 }}
+        sx={{ position: "fixed", bottom: { xs: 16, sm: 32 }, right: { xs: 16, sm: 32 }, zIndex: 100 }}
         onClick={() => setOpenDialog(true)}
       >
         <AddIcon />

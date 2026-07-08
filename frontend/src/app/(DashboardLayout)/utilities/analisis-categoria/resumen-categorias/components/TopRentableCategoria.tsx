@@ -183,13 +183,13 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
         Productos Vendidos del primer nivel
       </Typography>
 
-      <Box mb={3} display="flex" justifyContent="space-between" alignItems="center">
+      <Box mb={3} display="flex" flexDirection={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "stretch", sm: "center" }} gap={1}>
         <TextField
           size="small"
           placeholder="Buscar producto..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          sx={{color: "primary.main", width: 300 }}
+          sx={{color: "primary.main", width: { xs: "100%", sm: 300 } }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -210,7 +210,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
           overflowY: "auto",
         }}
       >
-        <Table stickyHeader size="small">
+        <Table stickyHeader size="small" sx={{ minWidth: 650 }}>
           <TableHead>
             <TableRow>
               <TableCell>#</TableCell>

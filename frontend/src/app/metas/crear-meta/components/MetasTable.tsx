@@ -141,31 +141,31 @@ const MetasTable = () => {
   const metasFiltradas = metas.filter((m) => m.tipoMeta === tipoMeta);
 
   return (
-    <Box className="space-y-4" p={2}>
+    <Box className="space-y-4" sx={{ p: { xs: 0, sm: 2 } }}>
       {/* Filtros y acciones */}
       <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" mb={2} gap={2}>
-        <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
+        <Box display="flex" gap={2} flexWrap="wrap" alignItems="center" sx={{ width: { xs: "100%", md: "auto" } }}>
           <FilterListIcon color="action" />
-          <Select value={canal} onChange={(e) => setCanal(e.target.value)} size="small" sx={{ minWidth: 180 }}>
+          <Select value={canal} onChange={(e) => setCanal(e.target.value)} size="small" sx={{ minWidth: 180, width: { xs: "100%", sm: "auto" } }}>
             {Object.keys(canalSlpMap).map((c) => (
               <MenuItem key={c} value={c}>{c}</MenuItem>
             ))}
           </Select>
 
-          <Select value={periodo} onChange={(e) => setPeriodo(e.target.value)} size="small" sx={{ minWidth: 180 }}>
+          <Select value={periodo} onChange={(e) => setPeriodo(e.target.value)} size="small" sx={{ minWidth: 180, width: { xs: "100%", sm: "auto" } }}>
             {periodosDisponibles.map((p) => (
               <MenuItem key={p.id} value={p.id.toString()}>{p.nombre}</MenuItem>
             ))}
           </Select>
 
-          <Select value={tipoMeta} onChange={(e) => setTipoMeta(e.target.value as 'cantidad' | 'monto')} size="small" sx={{ minWidth: 180 }}>
+          <Select value={tipoMeta} onChange={(e) => setTipoMeta(e.target.value as 'cantidad' | 'monto')} size="small" sx={{ minWidth: 180, width: { xs: "100%", sm: "auto" } }}>
             <MenuItem value="cantidad">Metas por Producto</MenuItem>
             <MenuItem value="monto">Metas por Monto</MenuItem>
           </Select>
         </Box>
 
 
-        <Box display="flex" gap={1.5}>
+        <Box display="flex" gap={1.5} flexWrap="wrap">
           <Button variant="contained" color="primary" size="small" startIcon={<AddIcon />} onClick={() => setDrawerOpen(true)}>Nueva Meta</Button>
           <Button variant="contained" color="secondary" size="small" startIcon={<AddIcon />} onClick={() => setOpenPeriodoModal(true)}>Nuevo Periodo</Button>
           <Button variant="contained" color="success" size="small" startIcon={<FileDownloadIcon />} onClick={() => alert('Exportar datos')}>Exportar</Button>
@@ -178,7 +178,8 @@ const MetasTable = () => {
           {`Metas Registradas ${periodoSeleccionado ? `– ${periodoSeleccionado.nombre}` : ''}`}
         </Typography>
 
-        <Table size="small">
+        <Box sx={{ overflowX: "auto" }}>
+        <Table size="small" sx={{ minWidth: 650 }}>
           <TableHead>
             <TableRow>
               {tipoMeta === 'cantidad' ? (
@@ -263,6 +264,7 @@ const MetasTable = () => {
             ))}
           </TableBody>
         </Table>
+        </Box>
       </Paper>
 
       <MetaFormModal

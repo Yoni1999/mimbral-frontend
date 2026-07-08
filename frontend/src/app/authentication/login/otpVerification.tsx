@@ -34,18 +34,24 @@ const OtpVerification = ({ email }: Props) => {
   return (
     <Box
       sx={{
+        width: "100%",
         maxWidth: 450,
         mx: "auto",
-        mt: 6,
-        px: 4,
-        py: 5,
+        mt: { xs: 3, sm: 6 },
+        px: { xs: 1.5, sm: 4 },
+        py: { xs: 3, sm: 5 },
         boxShadow: 3,
         borderRadius: 2,
         backgroundColor: "#fff",
       }}
     >
       <Stack spacing={2}>
-        <Typography variant="h4" fontWeight={700} textAlign="center">
+        <Typography
+          variant="h4"
+          fontWeight={700}
+          textAlign="center"
+          sx={{ fontSize: { xs: "1.25rem", sm: "1.5rem" } }}
+        >
           Es necesario tu codigo de acceso unico
         </Typography>
 
@@ -65,7 +71,7 @@ const OtpVerification = ({ email }: Props) => {
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 style={{
-                  width: "40px",
+                  width: "clamp(30px, 8vw, 40px)",
                   height: "50px",
                   fontSize: "24px",
                   textAlign: "center",

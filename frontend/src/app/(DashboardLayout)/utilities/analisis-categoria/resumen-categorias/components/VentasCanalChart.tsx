@@ -158,7 +158,7 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
             transform: "translateY(-3px)",
             boxShadow: 3,
           },
-          height: 435,
+          minHeight: 435,
         }}
         title={
           <Box

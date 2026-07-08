@@ -637,8 +637,10 @@ useEffect(() => {
       {/* Header */}
       <Box
         display="flex"
+        flexDirection={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
-        alignItems="center"
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        gap={1}
         p={2}
         mb={3}
         borderRadius={2}
@@ -663,7 +665,8 @@ useEffect(() => {
       {/* Producto Principal */}
       <Box
         display="flex"
-        alignItems="center"
+        flexDirection={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "stretch", sm: "center" }}
         p={2}
         border={1}
         borderRadius={2}
@@ -765,8 +768,8 @@ useEffect(() => {
       </Box>
 
       {/* Grilla de KPIs */}
-      <Box display="flex" gap={2} mt={2}>
-        <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2} flex={1}>
+      <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={2} mt={2}>
+        <Box display="grid" gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr" }} gap={2} flex={1}>
           {[
             {
             label: 'Ventas',
@@ -891,7 +894,7 @@ useEffect(() => {
                 overflowX: 'auto',
               }}
             >
-              <Table size="small" stickyHeader>
+              <Table size="small" stickyHeader sx={{ minWidth: 500 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell><b>Código</b></TableCell>
@@ -973,7 +976,7 @@ useEffect(() => {
       </Box>
 
       {/* Gráficos y acciones */}
-      <Box display="flex" gap={2} mt={3}>
+      <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={2} mt={3}>
         <Box flex={0.6}>
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
             <VentasChart filtros={filtros} />
@@ -1027,7 +1030,7 @@ useEffect(() => {
       </Box>
 
       {/* Gráfico de ventas por canal */}
-      <Box display="flex" gap={2} mt={3}>
+      <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={2} mt={3}>
         {/* Gráfico de ventas por canal */}
         <Box flex={0.4}>
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>

@@ -112,7 +112,7 @@ const TablaLineaCredito: React.FC<Props> = ({ filters }) => {
   }, [filters]);
 
   return (
-    <TableContainer component={Paper} sx={{ mt: 3 }}>
+    <TableContainer component={Paper} sx={{ mt: 3, overflowX: "auto" }}>
       {loading ? (
         <Box display="flex" justifyContent="center" p={3}>
           <CircularProgress />
@@ -122,7 +122,7 @@ const TablaLineaCredito: React.FC<Props> = ({ filters }) => {
           <Typography variant="body2" color="text.secondary">No hay resultados</Typography>
         </Box>
       ) : (
-        <Table size="small">
+        <Table size="small" sx={{ minWidth: 1200 }}>
           <TableHead>
             <TableRow>
               <TableCell>Avatar</TableCell>

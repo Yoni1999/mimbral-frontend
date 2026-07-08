@@ -11,8 +11,13 @@ import {
 import Link from "next/link";
 import AdminMenuitems from "./AdminMenuitems";
 
-const AdminSidebar = () => {
-  const [isHovered, setIsHovered] = useState(false);
+interface AdminSidebarProps {
+  expanded?: boolean;
+}
+
+const AdminSidebar = ({ expanded = false }: AdminSidebarProps) => {
+  const [hovered, setHovered] = useState(false);
+  const isHovered = expanded || hovered;
 
   return (
     <Box
@@ -20,14 +25,15 @@ const AdminSidebar = () => {
         width: isHovered ? 250 : 70,
         transition: "width 0.5s",
         backgroundColor: "#ffffff",
-        height: "100vh",
+        height: "100%",
+        minHeight: "100vh",
         overflow: "hidden",
         borderRight: "1px solid #e0e0e0",
         display: "flex",
         flexDirection: "column",
       }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       {/* 🔝 Logo fijo arriba */}
       <Box

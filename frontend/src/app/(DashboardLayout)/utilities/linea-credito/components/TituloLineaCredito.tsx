@@ -27,6 +27,8 @@ const HeaderLineaCredito: React.FC<Props> = ({ obtenerDescripcionPeriodo, handle
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          flexWrap: "wrap",
+          gap: 2,
           backgroundColor: "background.paper",
           border: "1px solid",
           borderColor: "divider"

@@ -90,7 +90,15 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
   return (
     <>
       <AppBar position="sticky" color="default" elevation={1} sx={{ background: "linear-gradient(#ffffff)" }}>
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between", borderRadius: "18px" }}>
+        <Toolbar
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            borderRadius: "18px",
+            px: { xs: 1, sm: 2 },
+            gap: { xs: 0.5, sm: 1 },
+          }}
+        >
           <IconButton
             color="inherit"
             aria-label="menu"
@@ -100,8 +108,17 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
             <IconMenu width="40" height="30" />
           </IconButton>
 
-          <Box flexGrow={1} display="flex" justifyContent="center">
-            <Typography variant="h4" fontWeight={500} color="primary" sx={{ letterSpacing: 3 }}>
+          <Box flexGrow={1} display="flex" justifyContent="center" minWidth={0}>
+            <Typography
+              variant="h4"
+              fontWeight={500}
+              color="primary"
+              noWrap
+              sx={{
+                letterSpacing: { xs: 1, md: 3 },
+                fontSize: { xs: "0.95rem", sm: "1.25rem", md: "1.5rem" },
+              }}
+            >
               ANALISIS DE DATOS
             </Typography>
           </Box>
@@ -111,7 +128,7 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
             spacing={0.5}
             alignItems="center"
             divider={<Divider orientation="vertical" flexItem />}
-            sx={{ mr: 2 }}
+            sx={{ mr: 2, display: { xs: "none", lg: "flex" } }}
           >
             {[
               { key: "dolar", label: "USD", color: "success.main" },
@@ -145,7 +162,12 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
             })}
           </Stack>
 
-          <Stack spacing={1.2} direction="row" alignItems="center" divider={<Divider orientation="vertical" flexItem />}>
+          <Stack
+            spacing={{ xs: 0.25, sm: 1.2 }}
+            direction="row"
+            alignItems="center"
+            divider={<Divider orientation="vertical" flexItem />}
+          >
             <IconButton
               ref={refreshButtonRef}
               size="large"

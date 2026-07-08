@@ -163,7 +163,7 @@ const styles = {
     borderRadius: 3,
     boxShadow: 24,
     padding: 2.5,
-    width: "100%",
+    width: "calc(100% - 32px)",
     maxWidth: 420,
     mx: "auto",
     mt: "18vh",

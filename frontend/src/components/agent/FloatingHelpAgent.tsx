@@ -347,8 +347,8 @@ export default function FloatingHelpAgent() {
     <Box
       sx={{
         position: "fixed",
-        right: 20,
-        bottom: 20,
+        right: { xs: 12, sm: 20 },
+        bottom: { xs: 12, sm: 20 },
         zIndex: 1400,
         display: "flex",
         flexDirection: "column",
@@ -360,7 +360,7 @@ export default function FloatingHelpAgent() {
         <Paper
           elevation={8}
           sx={{
-            width: { xs: "calc(100vw - 32px)", sm: 380 },
+            width: { xs: "calc(100vw - 24px)", sm: 380 },
             maxWidth: 380,
             borderRadius: 3,
             overflow: "hidden",
@@ -386,7 +386,7 @@ export default function FloatingHelpAgent() {
             </IconButton>
           </Box>
 
-          <Box sx={{ p: 1.25, height: 300, overflowY: "auto", bgcolor: "#f8fafc" }}>
+          <Box sx={{ p: 1.25, height: { xs: 260, sm: 300 }, maxHeight: "50vh", overflowY: "auto", bgcolor: "#f8fafc" }}>
             {messages.map((msg, index) => (
               <Box
                 key={`${msg.role}-${index}`}

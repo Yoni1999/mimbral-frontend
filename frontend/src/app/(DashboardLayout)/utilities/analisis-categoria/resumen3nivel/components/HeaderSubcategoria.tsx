@@ -204,7 +204,7 @@ const HeaderSubcategoria: React.FC<Props> = ({ onFilterChange, initialFilters })
 
         <Grid item xs={12} md={10}>
           <Grid container spacing={1.5} justifyContent="flex-end">
-            <Grid item xs={6} sm={3} md={2.2}>
+            <Grid item xs={12} sm={3} md={2.2}>
             <Autocomplete
               size="small"
               fullWidth
@@ -257,7 +257,7 @@ const HeaderSubcategoria: React.FC<Props> = ({ onFilterChange, initialFilters })
 
             </Grid>
 
-            <Grid item xs={6} sm={3} md={2}>
+            <Grid item xs={12} sm={3} md={2}>
               <FormControl fullWidth size="small">
                 <InputLabel sx={{ fontSize: "0.75rem" }}>Temporada</InputLabel>
                 <Select
@@ -275,7 +275,7 @@ const HeaderSubcategoria: React.FC<Props> = ({ onFilterChange, initialFilters })
               </FormControl>
             </Grid>
 
-            <Grid item xs={6} sm={3} md={2}>
+            <Grid item xs={12} sm={3} md={2}>
               <FormControl fullWidth size="small">
                 <InputLabel sx={{ fontSize: "0.75rem" }}>Período</InputLabel>
                 <Select
@@ -300,7 +300,7 @@ const HeaderSubcategoria: React.FC<Props> = ({ onFilterChange, initialFilters })
               </FormControl>
             </Grid>
 
-            <Grid item xs={6} sm={3} md={1.8}>
+            <Grid item xs={12} sm={3} md={1.8}>
               <TextField
                 label="Inicio"
                 type="date"
@@ -313,7 +313,7 @@ const HeaderSubcategoria: React.FC<Props> = ({ onFilterChange, initialFilters })
               />
             </Grid>
 
-            <Grid item xs={6} sm={3} md={1.8}>
+            <Grid item xs={12} sm={3} md={1.8}>
               <TextField
                 label="Fin"
                 type="date"
@@ -326,7 +326,7 @@ const HeaderSubcategoria: React.FC<Props> = ({ onFilterChange, initialFilters })
               />
             </Grid>
 
-            <Grid item xs={6} sm={2} md={1.9}>
+            <Grid item xs={12} sm={2} md={1.9}>
               <Button
                 onClick={handleClear}
                 fullWidth

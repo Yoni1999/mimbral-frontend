@@ -27,6 +27,8 @@ import {
   TableContainer,
   Paper,
   Avatar,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CloseIcon from "@mui/icons-material/Close";
@@ -111,6 +113,9 @@ const getPeriodoFechasLabel = (filters: FiltrosPorCanal) => {
 };
 
 const InformeVentasPorCanalPage: React.FC = () => {
+  // Pantalla completa para el modal de detalle en móviles
+  const theme = useTheme();
+  const fullScreenXs = useMediaQuery(theme.breakpoints.down("sm"));
   const [filters, setFilters] = useState<FiltrosPorCanal>({});
   const [appliedFilters, setAppliedFilters] = useState<FiltrosPorCanal | null>(null);
   const [page, setPage] = useState(1);
@@ -363,7 +368,14 @@ const InformeVentasPorCanalPage: React.FC = () => {
 
   return (
     <Box p={1}>
-      <Typography variant="h4" fontWeight="bold" gutterBottom display="flex" alignItems="center">
+      <Typography
+        variant="h4"
+        fontWeight="bold"
+        gutterBottom
+        display="flex"
+        alignItems="center"
+        sx={{ flexWrap: "wrap", fontSize: { xs: "1.4rem", sm: "2.125rem" } }}
+      >
         <TrendingUpIcon sx={{ mr: 1 }} />
         Informe ventas de Productos por Canal
       </Typography>
@@ -379,7 +391,16 @@ const InformeVentasPorCanalPage: React.FC = () => {
 
       <Divider sx={{ my: 2 }} />
 
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        mb={2}
+        sx={{
+          flexDirection: { xs: "column", sm: "row" },
+          alignItems: { xs: "flex-start", sm: "center" },
+          gap: 1,
+        }}
+      >
         <Typography variant="subtitle2">
           {!hasAppliedFilters ? (
             "Sin filtros aplicados"
@@ -394,13 +415,13 @@ const InformeVentasPorCanalPage: React.FC = () => {
           )}
         </Typography>
 
-        <Box>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
           <Button
             variant="outlined"
             startIcon={<LaunchIcon />}
             disabled={!hasAppliedFilters}
             onClick={() => window.open(buildDashboardUrl(), "_blank", "noopener,noreferrer")}
-            sx={{ mr: 1.5 }}
+            sx={{ mr: 0.5 }}
           >
             Dashboard
           </Button>
@@ -467,7 +488,13 @@ const InformeVentasPorCanalPage: React.FC = () => {
       )}
 
       {/* ===== Modal Detalle de venta ===== */}
-      <Dialog open={detalleOpen} onClose={() => setDetalleOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={detalleOpen}
+        onClose={() => setDetalleOpen(false)}
+        maxWidth="md"
+        fullWidth
+        fullScreen={fullScreenXs}
+      >
         <DialogTitle>Detalle de venta · {detalleTitulo}</DialogTitle>
         <DialogContent>
           <TextField
@@ -477,8 +504,8 @@ const InformeVentasPorCanalPage: React.FC = () => {
             value={detalleSearch}
             onChange={(e) => setDetalleSearch(e.target.value)}
           />
-          <TableContainer component={Paper} sx={{ mt: 2 }}>
-            <Table>
+          <TableContainer component={Paper} sx={{ mt: 2, overflowX: "auto" }}>
+            <Table sx={{ minWidth: 650 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Folio</TableCell>

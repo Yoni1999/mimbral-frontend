@@ -63,7 +63,8 @@ const AlmacenesSelector = () => {
                 selectedAlmacen === almacen.id
                   ? selectionColor // Use the consistent selection color
                   : "text.secondary", // Default color when not selected
-              flex: "1 1 auto",
+              flex: "1 0 auto",
+              minWidth: 72,
               transition: "color 0.3s ease",
               "&:hover": {
                 color: selectedAlmacen === almacen.id ? selectionColor : almacen.color, // Hover color: maintain selection color if selected, otherwise use original almacen color

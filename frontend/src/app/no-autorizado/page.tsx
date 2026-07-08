@@ -28,7 +28,7 @@ const NotAuthorizedPage = () => {
       <Box
         sx={{
           backgroundColor: "#fff",
-          padding: 6,
+          padding: { xs: 3, sm: 6 },
           borderRadius: 4,
           boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
           maxWidth: 500,

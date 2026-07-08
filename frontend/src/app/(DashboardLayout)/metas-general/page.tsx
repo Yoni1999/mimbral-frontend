@@ -118,7 +118,7 @@ export default function MetasPage() {
         open={showMensaje}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         autoHideDuration={null}
-        sx={{ maxWidth: "400px" }}
+        sx={{ maxWidth: { xs: "calc(100vw - 16px)", sm: "400px" } }}
       >
         <Alert
           severity="warning"

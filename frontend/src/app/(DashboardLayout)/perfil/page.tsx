@@ -88,7 +88,7 @@ export default function PerfilPage() {
         <Box
           sx={{
             bgcolor: theme.palette.primary.light,
-            p: 4,
+            p: { xs: 2.5, md: 4 },
             display: "flex",
             alignItems: "center",
             flexDirection: { xs: "column", md: "row" },
@@ -116,7 +116,7 @@ export default function PerfilPage() {
         </Box>
 
         {/* Información detallada */}
-        <Box sx={{ p: 4 }}>
+        <Box sx={{ p: { xs: 2, md: 4 } }}>
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6} md={4}>
               <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -200,7 +200,7 @@ export default function PerfilPage() {
 
       {/* Historial de conexiones */}
       <Paper elevation={1} sx={{ borderRadius: 4, overflow: "hidden", mt: 4 }}>
-        <Box sx={{ p: 4 }}>
+        <Box sx={{ p: { xs: 2, md: 4 } }}>
           <Typography variant="h6" fontWeight={700} gutterBottom>
             Historial de conexiones
           </Typography>

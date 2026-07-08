@@ -162,22 +162,24 @@ const ProductoAnalisisChart: React.FC<Props> = ({ filters }) => {
           </Box>
         ) : (
           <Box sx={{ overflowX: 'auto', width: '100%' }}>
-            <BarChart
-              dataset={dataset}
-              xAxis={[{
-                dataKey: 'month',
-                label: 'Mes',
-                scaleType: 'band',
-              }]}
-              series={series}
-              yAxis={[{
-                label: '',
-                valueFormatter: (value: number) => formatVentas(value),
-              }]}
-              margin={{ left: 80, right: 10, top: 30, bottom: 60 }}
-              height={330}
-              skipAnimation={false}
-            />
+            <Box sx={{ minWidth: 600 }}>
+              <BarChart
+                dataset={dataset}
+                xAxis={[{
+                  dataKey: 'month',
+                  label: 'Mes',
+                  scaleType: 'band',
+                }]}
+                series={series}
+                yAxis={[{
+                  label: '',
+                  valueFormatter: (value: number) => formatVentas(value),
+                }]}
+                margin={{ left: 80, right: 10, top: 30, bottom: 60 }}
+                height={330}
+                skipAnimation={false}
+              />
+            </Box>
           </Box>
         )}
       </CardContent>

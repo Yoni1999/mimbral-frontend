@@ -63,7 +63,11 @@ const SeccionTitulo: React.FC<Props> = ({ title, icon, infoRight }) => {
       {infoRight && (
         <Typography
           variant="body2"
-          sx={{ color: "text.secondary", fontStyle: "italic" }}
+          sx={{
+            color: "text.secondary",
+            fontStyle: "italic",
+            display: { xs: "none", sm: "block" },
+          }}
         >
           {infoRight}
         </Typography>

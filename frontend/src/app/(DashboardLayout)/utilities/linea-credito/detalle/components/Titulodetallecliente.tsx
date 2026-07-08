@@ -88,13 +88,20 @@ const HeaderLineaCredito: React.FC<Props> = ({
         </Typography>
 
         {/* Filtros alineados a la derecha */}
-        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+        <Box
+          display="flex"
+          alignItems="center"
+          gap={2}
+          flexWrap="wrap"
+          sx={{ width: { xs: "100%", md: "auto" } }}
+        >
           {/* Buscar por RUT */}
           <TextField
             label="Buscar RUT"
             size="small"
             value={rut}
             onChange={(e) => setRut(e.target.value)}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           />
 
           {/* Rango monto */}
@@ -114,7 +121,7 @@ const HeaderLineaCredito: React.FC<Props> = ({
               {formatVentas(montoRange[1])}
             </Typography>
           </Box>
-          <Box width={180}>
+          <Box sx={{ width: { xs: "100%", sm: 180 } }}>
             <Slider
               size="small"
               value={montoRange}
@@ -133,6 +140,7 @@ const HeaderLineaCredito: React.FC<Props> = ({
             InputLabelProps={{ shrink: true }}
             value={fechaInicio}
             onChange={(e) => setFechaInicio(e.target.value)}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           />
           <TextField
             label="Fin"
@@ -141,6 +149,7 @@ const HeaderLineaCredito: React.FC<Props> = ({
             InputLabelProps={{ shrink: true }}
             value={fechaFin}
             onChange={(e) => setFechaFin(e.target.value)}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           />
 
           {/* Botones */}

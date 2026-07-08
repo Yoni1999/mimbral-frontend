@@ -139,8 +139,8 @@ const ProductosSinVentasTable: React.FC<Props> = ({ data, onSortChange, ordenAct
         />
       </Box> */}
 
-      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
-        <Table stickyHeader>
+      <TableContainer component={Paper} sx={{ borderRadius: 2, overflowX: 'auto' }}>
+        <Table stickyHeader sx={{ minWidth: 900 }}>
           <TableHead>
             <TableRow>
               <StyledHeadCell>Imagen</StyledHeadCell>

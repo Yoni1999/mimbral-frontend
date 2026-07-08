@@ -65,7 +65,7 @@ const AdminPage = () => {
   if (!isAuthorized) return null;
 
   return (
-    <Box p={4}>
+    <Box sx={{ p: { xs: 2, md: 4 } }}>
       <Typography variant="h4" fontWeight="bold" gutterBottom>
         Panel de Administrador
       </Typography>

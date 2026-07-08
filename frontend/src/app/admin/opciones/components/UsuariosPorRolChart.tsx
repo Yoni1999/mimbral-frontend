@@ -41,7 +41,7 @@ const UsuariosPorRolChart: React.FC = () => {
   };
 
   return (
-    <DashboardCard title="Usuarios por Rol" sx={{ maxWidth: 500, mt: 4 }}>
+    <DashboardCard title="Usuarios por Rol" sx={{ width: "100%", maxWidth: 500, mt: 4 }}>
       <Box
         sx={{
           height: 380,

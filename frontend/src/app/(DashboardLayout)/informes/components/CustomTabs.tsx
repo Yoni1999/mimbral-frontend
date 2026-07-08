@@ -30,7 +30,7 @@ const CustomTabPanel = ({
       id={`custom-tabpanel-${index}`}
       aria-labelledby={`custom-tab-${index}`}
     >
-      {value === index && <Box sx={{ p: 2 }}>{children}</Box>}
+      {value === index && <Box sx={{ p: { xs: 1, sm: 2 } }}>{children}</Box>}
     </div>
   );
 };
@@ -45,7 +45,14 @@ export default function CustomTabs({ tabLabels, tabContents }: CustomTabsProps) 
   return (
     <>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-        <Tabs value={value} onChange={handleChange} aria-label="custom tabs">
+        <Tabs
+          value={value}
+          onChange={handleChange}
+          aria-label="custom tabs"
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+        >
           {tabLabels.map((label, index) => (
             <Tab key={index} label={label} {...a11yProps(index)} />
           ))}

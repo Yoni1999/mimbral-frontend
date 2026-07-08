@@ -30,11 +30,11 @@ const CrearUsuarioPage = () => {
   if (!isAuthorized) return null;
 
   return (
-    <Container maxWidth="md" sx={{ py: 6 }}>
+    <Container maxWidth="md" sx={{ py: { xs: 3, md: 6 }, px: { xs: 1.5, md: 3 } }}>
       <Paper
         elevation={1}
         sx={{
-          p: 4,
+          p: { xs: 2, md: 4 },
           borderRadius: 4,
           backgroundColor: theme.palette.background.paper,
         }}

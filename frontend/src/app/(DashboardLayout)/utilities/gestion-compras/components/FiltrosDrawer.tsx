@@ -165,7 +165,7 @@ const FiltrosDrawer = () => {
           </Button>
         </Stack>
 
-        <Drawer anchor="right" open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { width: 360, p: 3 } }}>
+        <Drawer anchor="right" open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { width: { xs: '100vw', sm: 360 }, p: 3 } }}>
           <Box>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6">Filtros</Typography>

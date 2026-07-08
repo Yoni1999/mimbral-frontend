@@ -169,7 +169,7 @@ const VentasPorCanalTable: React.FC<Props> = ({
         overflow: "auto",
       }}
     >
-      <Table stickyHeader>
+      <Table stickyHeader sx={{ minWidth: 800 }}>
         <TableHead>
           <TableRow>
             <StyledTableCell>Producto (SKU)</StyledTableCell>

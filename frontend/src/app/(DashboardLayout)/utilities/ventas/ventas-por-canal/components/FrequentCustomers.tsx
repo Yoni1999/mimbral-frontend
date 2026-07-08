@@ -138,10 +138,11 @@ return (
               sx={{
                 maxHeight: sortedData.length > 5 ? 480 : "auto",
                 overflowY: sortedData.length > 5 ? "auto" : "visible",
+                overflowX: "auto",
                 transition: "max-height 0.3s ease-in-out",
               }}
             >
-              <Table size="small" stickyHeader={sortedData.length > 5}>
+              <Table size="small" stickyHeader={sortedData.length > 5} sx={{ minWidth: 800 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>Cliente</TableCell>

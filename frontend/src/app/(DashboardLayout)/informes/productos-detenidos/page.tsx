@@ -170,7 +170,14 @@ const ProductosDetenidosPage = () => {
         tabLabels={["Activos para compras", "Inactivos para compra con stock"]}
         tabContents={[
           <React.Fragment key="tab-activos">
-            <Typography variant="h4" fontWeight="bold" gutterBottom display="flex" alignItems="center">
+            <Typography
+              variant="h4"
+              fontWeight="bold"
+              gutterBottom
+              display="flex"
+              alignItems="center"
+              sx={{ flexWrap: "wrap", fontSize: { xs: "1.4rem", sm: "2.125rem" } }}
+            >
               <TrendingDown sx={{ mr: 1 }} />
               Informe de Productos Detenidos Activos para compras
             </Typography>
@@ -182,7 +189,16 @@ const ProductosDetenidosPage = () => {
             <HeaderProductosDetenidos onFilterChange={handleFilterChange} />
             <Divider sx={{ my: 3 }} />
 
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              mb={2}
+              sx={{
+                flexDirection: { xs: "column", sm: "row" },
+                alignItems: { xs: "flex-start", sm: "center" },
+                gap: 1,
+              }}
+            >
               <Typography variant="subtitle2">
                 Mostrando {productos.length} de {total} productos
               </Typography>
@@ -226,7 +242,16 @@ const ProductosDetenidosPage = () => {
             <HeaderProductosDetenidos onFilterChange={handleFilterChange} />
             <Divider sx={{ my: 3 }} />
 
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              mb={2}
+              sx={{
+                flexDirection: { xs: "column", sm: "row" },
+                alignItems: { xs: "flex-start", sm: "center" },
+                gap: 1,
+              }}
+            >
               <Typography variant="subtitle2">
                 Mostrando {stockInactivos.length} productos
               </Typography>
@@ -251,7 +276,7 @@ const ProductosDetenidosPage = () => {
         open={showMensaje}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         autoHideDuration={null}
-        sx={{ maxWidth: "400px" }}
+        sx={{ maxWidth: { xs: "calc(100vw - 16px)", sm: "400px" } }}
       >
         <Alert
           severity="warning"

@@ -119,7 +119,7 @@ const TopProductosChart: React.FC<Props> = ({ filters }) => {
         mt: 2,
       }}
     >
-      <Table stickyHeader size="small">
+      <Table stickyHeader size="small" sx={{ minWidth: 450 }}>
         <TableHead>
           <TableRow>
             <TableCell sx={{ fontWeight: "bold" }}>Producto</TableCell>

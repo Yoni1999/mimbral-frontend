@@ -83,7 +83,7 @@ const ProductosVendidos = ({ data }: Props) => {
   };
 
   const TablaContenido = () => (
-    <Table stickyHeader>
+    <Table stickyHeader sx={{ minWidth: 900 }}>
       <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
         <TableRow>
           <TableCell>Imagen</TableCell>
@@ -195,7 +195,13 @@ const ProductosVendidos = ({ data }: Props) => {
 
   return (
     <Box mt={3}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        justifyContent="space-between"
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        spacing={1}
+        mb={1}
+      >
         <Typography variant="h6" fontWeight={600}>
           Top 50 Productos más Vendidos ({filteredData.length})
         </Typography>
@@ -209,7 +215,7 @@ const ProductosVendidos = ({ data }: Props) => {
           label="Buscar por nombre o SKU"
           variant="outlined"
           size="small"
-          sx={{ width: 250 }}
+          sx={{ width: { xs: "100%", sm: 250 } }}
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
@@ -221,6 +227,7 @@ const ProductosVendidos = ({ data }: Props) => {
           borderRadius: 2,
           maxHeight: 530,
           overflowY: 'auto',
+          overflowX: 'auto',
         }}
       >
         {TablaContenido()}

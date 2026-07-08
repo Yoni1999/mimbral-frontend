@@ -62,8 +62,8 @@ const dataFacturas = [
 const TablaFacturas = () => {
   return (
     <Box mt={5}>
-      <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
-        <Table size="small">
+      <TableContainer component={Paper} sx={{ borderRadius: 3, overflowX: "auto" }}>
+        <Table size="small" sx={{ minWidth: 1100 }}>
           <TableHead>
             <TableRow>
               <TableCell>Factura</TableCell>

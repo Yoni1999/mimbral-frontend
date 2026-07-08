@@ -6,10 +6,16 @@ import FiltrosDrawer from './components/FiltrosDrawer'; // ← Asegúrate de que
 
 const RotacionStockPage = () => {
   return (
-    <Container maxWidth={false} disableGutters sx={{ px: { xs: 2, md: 4 }, py: 4 }}>
+    <Container maxWidth={false} disableGutters sx={{ px: { xs: 1.5, md: 4 }, py: { xs: 2, md: 4 } }}>
       <Box width="100%">
         {/* Header con título y botón de filtros */}
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          gap={1}
+          mb={2}
+        >
           <Box>
             <Typography variant="h4" fontWeight={700} gutterBottom>
               Análisis Gestión de Compras

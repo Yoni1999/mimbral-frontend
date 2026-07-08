@@ -164,7 +164,7 @@ const sortedData = [...data].sort((a, b) => {
         mt: 2,
       }}
     >
-      <Table stickyHeader size="small">
+      <Table stickyHeader size="small" sx={{ minWidth: 550 }}>
       <TableHead>
         <TableRow>
           <TableCell
@@ -258,7 +258,7 @@ const sortedData = [...data].sort((a, b) => {
         elevation={0}
         sx={{
           borderRadius: 2,
-          height: 460,
+          minHeight: 460,
           background: "#fff",
           border: "1px solid #e0e0e0",
           p: 2,

@@ -119,13 +119,14 @@ const ProductosEstancadosTable = ({ data = [] }: { data: ProductoEstancado[] }) 
         <Typography variant="h6" fontWeight={600}>
           Productos Estancados
         </Typography>
-        <Box display="flex" gap={2} alignItems="center">
+        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" sx={{ width: { xs: '100%', sm: 'auto' } }}>
           <TextField
             size="small"
             variant="outlined"
             label="Buscar SKU o nombre"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
           />
           <Button variant="contained" onClick={exportToExcel}>
             Exportar a Excel
@@ -133,8 +134,8 @@ const ProductosEstancadosTable = ({ data = [] }: { data: ProductoEstancado[] }) 
         </Box>
       </Box>
 
-      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
-        <Table size="small">
+      <TableContainer component={Paper} sx={{ borderRadius: 2, overflowX: 'auto' }}>
+        <Table size="small" sx={{ minWidth: 900 }}>
           <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
             <TableRow>
               <TableCell>Imagen</TableCell>

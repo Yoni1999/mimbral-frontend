@@ -204,7 +204,7 @@ const AuthRegister = ({ title, subtitle, subtext }: RegisterProps) => {
         </Box>
       </Box>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth maxWidth="xs">
         <DialogTitle>Cuenta creada exitosamente</DialogTitle>
         <DialogContent>
           <DialogContentText>

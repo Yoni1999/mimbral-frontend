@@ -42,7 +42,7 @@ const PageFiltrosAvanzados = () => {
   };
 
   return (
-    <Box p={3}>
+    <Box sx={{ p: { xs: 1.5, md: 3 } }}>
       {/* Header con título y botón de filtros */}
       <TituloSupply
         obtenerDescripcionPeriodo={obtenerDescripcionPeriodo}
@@ -120,7 +120,7 @@ const PageFiltrosAvanzados = () => {
         <Paper sx={{ mt: 4, p: 3, borderRadius: 3 }}>
           <Typography variant="h6">Filtros aplicados:</Typography>
           <Divider sx={{ my: 2 }} />
-          <pre style={{ fontSize: 14 }}>
+          <pre style={{ fontSize: 14, overflowX: "auto" }}>
             {JSON.stringify(filtrosAplicados, null, 2)}
           </pre>
         </Paper>

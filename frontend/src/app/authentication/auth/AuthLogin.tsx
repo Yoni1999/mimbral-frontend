@@ -101,7 +101,13 @@ const AuthLogin = ({ title, subtitle, subtext }: LoginProps) => {
           />
         </Box>
 
-        <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
+        <Stack
+          justifyContent="space-between"
+          direction={{ xs: "column", sm: "row" }}
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          spacing={{ xs: 1, sm: 0 }}
+          my={2}
+        >
           <FormGroup>
             <FormControlLabel
               control={

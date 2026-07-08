@@ -38,13 +38,13 @@ const DashboardCard = ({
           </Typography>
         </CardContent>
       ) : (
-        <CardContent sx={{ p: "30px" }}>
+        <CardContent sx={{ p: { xs: "20px", sm: "30px" } }}>
           {title ? (
             <Stack
-              direction="row"
+              direction={{ xs: "column", sm: "row" }}
               spacing={2}
               justifyContent="space-between"
-              alignItems={"center"}
+              alignItems={{ xs: "flex-start", sm: "center" }}
               mb={3}
             >
               <Box>

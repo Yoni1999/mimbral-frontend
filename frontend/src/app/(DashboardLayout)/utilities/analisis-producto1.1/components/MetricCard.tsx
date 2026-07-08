@@ -20,7 +20,7 @@ const MetricCard: React.FC<Props> = ({ icon, label, value, variation, variationC
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        width: 120,
+        minWidth: 120,
         flex:1,
         minHeight: 90,
         borderRadius: 2,
