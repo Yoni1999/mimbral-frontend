@@ -182,7 +182,7 @@ const AsignarMetaModal: React.FC<Props> = ({
               )}
 
               {vendedores.map(v => (
-                <Box key={v.id} display="flex" justifyContent="space-between" alignItems="center">
+                <Box key={v.id} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
                   <Typography>{v.NOMBRE}</Typography>
                   <TextField
                     size="small"
@@ -190,7 +190,7 @@ const AsignarMetaModal: React.FC<Props> = ({
                     value={valores[v.id] || ''}
                     onChange={(e) => handleChange(v.id, e.target.value)}
                     label={tipoMeta === 'monto' ? 'Meta $' : 'Meta cantidad'}
-                    sx={{ width: 150 }}
+                    sx={{ width: { xs: "100%", sm: 150 } }}
                   />
                 </Box>
               ))}

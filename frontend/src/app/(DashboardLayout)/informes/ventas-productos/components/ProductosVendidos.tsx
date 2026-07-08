@@ -139,14 +139,14 @@ const ProductosVendidos = ({
           label="Buscar por nombre o SKU"
           variant="outlined"
           size="small"
-          sx={{ width: 250 }}
+          sx={{ width: { xs: '100%', sm: 250 } }}
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
       </Box>
 
-      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
-        <Table stickyHeader>
+      <TableContainer component={Paper} sx={{ borderRadius: 2, overflowX: 'auto' }}>
+        <Table stickyHeader sx={{ minWidth: 1000 }}>
           <TableHead>
             <TableRow>
               <StyledTableCell>Imagen</StyledTableCell>

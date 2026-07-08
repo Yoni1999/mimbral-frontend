@@ -579,9 +579,9 @@ const ProductosMenosRentablesPage: React.FC = () => {
 
     return (
         <Box p={0}>
-            <Box display="flex" alignItems="center" gap={1} mb={1}>
+            <Box display="flex" alignItems="center" gap={1} mb={1} flexWrap="wrap">
                 <TrendingDownIcon color="primary" fontSize="large" />
-                <Typography variant="h4" fontWeight="bold" gutterBottom>
+                <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ fontSize: { xs: '1.4rem', sm: '2.125rem' } }}>
                     Informe de Productos menos Rentables
                 </Typography>
             </Box>
@@ -598,7 +598,16 @@ const ProductosMenosRentablesPage: React.FC = () => {
             <Divider sx={{ my: 3 }} />
 
             {/* Barra con conteo + export */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box
+                display="flex"
+                justifyContent="space-between"
+                mb={2}
+                sx={{
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    gap: 1,
+                }}
+            >
                 <Typography variant="subtitle2">{productosCountText}</Typography>
 
                 <Box>
@@ -640,7 +649,7 @@ const ProductosMenosRentablesPage: React.FC = () => {
             )}
 
             {/* Snackbar de “data freshness” como en otros informes */}
-            <Snackbar open={showMensaje} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} autoHideDuration={null} sx={{ maxWidth: '400px' }}>
+            <Snackbar open={showMensaje} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} autoHideDuration={null} sx={{ maxWidth: { xs: 'calc(100vw - 16px)', sm: '400px' } }}>
                 <Alert
                     severity="warning"
                     variant="filled"

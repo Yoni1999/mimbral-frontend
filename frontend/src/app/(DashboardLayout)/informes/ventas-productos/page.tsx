@@ -448,7 +448,16 @@ const InformeVentaPage = () => {
 
       <Divider sx={{ my: 2 }} />
 
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        mb={2}
+        sx={{
+          flexDirection: { xs: "column", sm: "row" },
+          alignItems: { xs: "flex-start", sm: "center" },
+          gap: 1,
+        }}
+      >
         <Typography variant="subtitle2">
           {total === 0 ? (
             "Sin productos para mostrar"

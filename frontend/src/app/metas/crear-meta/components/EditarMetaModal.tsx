@@ -52,6 +52,8 @@ const EditarMetaModal = ({ open, onClose, meta, onMetaActualizada }: EditarMetaM
     <Dialog
         open={open}
         onClose={onClose}
+        fullWidth
+        maxWidth="xs"
         PaperProps={{
         sx: {
             border: '1.8px solid',

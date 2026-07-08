@@ -55,6 +55,8 @@ const EliminarMetaModal = ({ open, onClose, idMeta, onMetaEliminada }: EliminarM
         setRequiereConfirmacion(false);
         onClose();
       }}
+      fullWidth
+      maxWidth="xs"
       PaperProps={{
         sx: {
           border: '2px solid',

@@ -347,7 +347,7 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
         <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setOpen(true)}>Filtros</Button>
       </Box>
 
-      <Drawer anchor="right" open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { width: 360, p: 3 } }}>
+      <Drawer anchor="right" open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { width: { xs: "100vw", sm: 360 }, p: { xs: 2, sm: 3 } } }}>
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6">Filtros de ventas</Typography>
