@@ -21,6 +21,7 @@ const PageWrapper = styled("div")(() => ({
   flexGrow: 1,
   flexDirection: "column",
   zIndex: 1,
+  minWidth: 0,
   backgroundColor: "#FEFEFE",
 }));
 
