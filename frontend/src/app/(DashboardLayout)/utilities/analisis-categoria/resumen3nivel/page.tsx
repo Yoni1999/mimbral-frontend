@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import NivelNavigation from "../components/NivelNavigation";
 import HeaderCategoria, { Filters } from "./components/HeaderSubcategoria";
-import MetricCard from "./components/MetricCard";
+import MetricCard from "../components/MetricCard";
 import VentasChart from "./components/VentasChart";
 import dynamic from "next/dynamic";
 import TopProductosChart from "./components/TopProductosChart";

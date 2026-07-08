@@ -25,7 +25,7 @@ import {
 } from "@mui/icons-material";
 import HeaderDrawerProducto from "./components/HeaderDrawerProducto";
 import HistorialVentasModal from "./components/HistorialVentasModal";
-import HistorialOrdenesCompraModal from "./components/HistorialOrdenesCompraModal.tsx";
+import HistorialOrdenesCompraModal from "./components/HistorialOrdenesCompraModal";
 import MetricCard from "./components/MetricCard";
 import dynamic from "next/dynamic";
 const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), { ssr: false });
