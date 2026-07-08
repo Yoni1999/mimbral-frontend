@@ -128,7 +128,7 @@ const CategoriasTableChart: React.FC<Props> = ({ data, height = 300 }) => {
             <TableBody>
               {sortedData.map((item, idx) => (
                 <TableRow key={idx}>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                     <Avatar
                       src={item.U_Imagen}
                       alt={item.Categoria}
@@ -142,7 +142,7 @@ const CategoriasTableChart: React.FC<Props> = ({ data, height = 300 }) => {
                   </TableCell>
                   <TableCell align="right">{formatVentas(item.TotalVentas)}</TableCell>
                   <TableCell align="right">{formatVentas(item.MargenAbsoluto)}</TableCell>
-                  <TableCell align="right">{item.MargenPorcentaje.toFixed(1)}%</TableCell>
+                  <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>{item.MargenPorcentaje.toFixed(1)}%</TableCell>
                 </TableRow>
               ))}
             </TableBody>

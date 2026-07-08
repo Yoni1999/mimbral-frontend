@@ -243,11 +243,11 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
         </Box>
       ) : (
         <TableContainer component={Paper} sx={{ minHeight: 600, overflowY: "auto" }}>
-          <Table stickyHeader size="small" sx={{ minWidth: 650 }}>
+          <Table stickyHeader size="small" sx={{ minWidth: { xs: 0, md: 650 } }}>
             <TableHead>
               <TableRow>
-                <TableCell>#</TableCell>
-                <TableCell>Foto</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>#</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Foto</TableCell>
                 <TableCell>Nombre</TableCell>
                 <TableCell
                   align="right"
@@ -267,11 +267,11 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
                   {sortField === "Margen_Absoluto" &&
                     (sortDirection === "asc" ? <ArrowDropUpIcon /> : <ArrowDropDownIcon />)}
                 </TableCell>
-                <TableCell align="right">Margen %</TableCell>
+                <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>Margen %</TableCell>
                 <TableCell
                   align="right"
                   onClick={() => handleSort("Margen_Unitario")}
-                  sx={{ cursor: "pointer", fontWeight: sortField === "Margen_Unitario" ? 700 : 500 }}
+                  sx={{ cursor: "pointer", fontWeight: sortField === "Margen_Unitario" ? 700 : 500, display: { xs: "none", md: "table-cell" } }}
                 >
                   Margen Unitario{" "}
                   {sortField === "Margen_Unitario" &&
@@ -287,8 +287,8 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
                   onClick={() => handleRowClick(producto)}
                   sx={{ cursor: "pointer" }}
                 >
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{index + 1}</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                     <Avatar
                       src={producto.Imagen}
                       alt={producto.Nombre_Producto}

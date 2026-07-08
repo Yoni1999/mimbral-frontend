@@ -210,11 +210,11 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
           overflowY: "auto",
         }}
       >
-        <Table stickyHeader size="small" sx={{ minWidth: 650 }}>
+        <Table stickyHeader size="small" sx={{ minWidth: { xs: 0, md: 650 } }}>
           <TableHead>
             <TableRow>
-              <TableCell>#</TableCell>
-              <TableCell>Imagen</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>#</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Imagen</TableCell>
               <TableCell>Nombre Producto</TableCell>
 
               <TableCell
@@ -248,7 +248,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
               <TableCell
                 align="right"
                 onClick={() => handleSort("Margen_Unitario")}
-                sx={{ cursor: "pointer", fontWeight: sortField === "Margen_Unitario" ? 700 : 500 }}
+                sx={{ cursor: "pointer", fontWeight: sortField === "Margen_Unitario" ? 700 : 500, display: { xs: "none", md: "table-cell" } }}
               >
                 Margen Unitario{" "}
                 {sortField === "Margen_Unitario" &&
@@ -263,8 +263,8 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
           <TableBody>
             {productosVisibles.map((producto, index) => (
               <TableRow key={producto.Codigo_Producto}hover onClick={() => handleRowClick(producto)} sx={{ cursor: "pointer" }}>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{index + 1}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                   <Avatar
                     src={producto.Imagen_Producto}
                     alt={producto.Nombre_Producto}
@@ -286,7 +286,7 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
                 <TableCell align="right">
                   {(producto.Cantidad_Vendida ?? 0).toLocaleString()}
                 </TableCell>
-                <TableCell align="right">
+                <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>
                   ${(producto.Margen_Unitario ?? 0).toLocaleString()} CLP
                 </TableCell>
               </TableRow>

@@ -63,13 +63,13 @@ function Row({ row }: { row: ProductoDetallado }) {
             </Box>
           </Stack>
         </TableCell>
-        <TableCell align="right">
+        <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>
           <Typography variant="body2">{row.primerNivel}</Typography>
           <Typography variant="caption" color="text.secondary">{row.categoria}</Typography>
         </TableCell>
-        <TableCell align="right">{row.cantidadVendida}</TableCell>
+        <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>{row.cantidadVendida}</TableCell>
         <TableCell align="right">{formatVentas(row.totalVentas)}</TableCell>
-        <TableCell align="right">{formatVentas(row.precioPromedio)}</TableCell>
+        <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>{formatVentas(row.precioPromedio)}</TableCell>
         <TableCell align="right">
           <Typography variant="body2">{formatVentas(row.margenBruto)}</Typography>
           <Typography variant="caption" color="text.secondary">
@@ -184,15 +184,15 @@ const ProductosVendidos: React.FC<Props> = ({ filters }) => {
           </Typography>
 
           <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
-            <Table size="small" stickyHeader sx={{ minWidth: 800 }}>
+            <Table size="small" stickyHeader sx={{ minWidth: { xs: 0, md: 800 } }}>
               <TableHead>
                 <TableRow>
                   <TableCell />
                   <TableCell>Producto</TableCell>
-                  <TableCell align="right">Primer Nivel / Categoría</TableCell>
-                  <TableCell align="right">Cantidad</TableCell>
+                  <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>Primer Nivel / Categoría</TableCell>
+                  <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>Cantidad</TableCell>
                   <TableCell align="right">Total Ventas</TableCell>
-                  <TableCell align="right">Precio Promedio</TableCell>
+                  <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>Precio Promedio</TableCell>
                   <TableCell align="right">Margen Bruto</TableCell>
                 </TableRow>
               </TableHead>

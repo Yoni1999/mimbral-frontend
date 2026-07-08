@@ -679,15 +679,15 @@ const DashboardVentasPorCanalPage: React.FC = () => {
                 background: "linear-gradient(180deg, #ffffff 0%, #fbfcff 100%)",
               }}
             >
-              <Table stickyHeader size="small" sx={{ minWidth: 560 }}>
+              <Table stickyHeader size="small" sx={{ minWidth: { xs: 0, md: 560 } }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 800, backgroundColor: "#f4f7fc" }}>SKU</TableCell>
+                    <TableCell sx={{ fontWeight: 800, backgroundColor: "#f4f7fc", display: { xs: "none", md: "table-cell" } }}>SKU</TableCell>
                     <TableCell sx={{ fontWeight: 800, backgroundColor: "#f4f7fc" }}>Producto</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 800, backgroundColor: "#f4f7fc" }}>
                       {selectedChannel ? "Ventas canal" : "Ventas"}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 800, backgroundColor: "#f4f7fc" }}>Margen</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 800, backgroundColor: "#f4f7fc", display: { xs: "none", md: "table-cell" } }}>Margen</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 800, backgroundColor: "#f4f7fc" }}>Stock 01+03</TableCell>
                   </TableRow>
                 </TableHead>
@@ -701,7 +701,7 @@ const DashboardVentasPorCanalPage: React.FC = () => {
                         "&:hover": { backgroundColor: alpha("#4C6EDB", 0.06) },
                       }}
                     >
-                      <TableCell sx={{ fontWeight: 700, color: "#294273" }}>{product.sku}</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: "#294273", display: { xs: "none", md: "table-cell" } }}>{product.sku}</TableCell>
                       <TableCell>
                         <Typography fontWeight={700} sx={{ lineHeight: 1.2 }}>
                           {product.nombre}
@@ -714,7 +714,7 @@ const DashboardVentasPorCanalPage: React.FC = () => {
                           sx={{ backgroundColor: alpha("#4C6EDB", 0.08), fontWeight: 700 }}
                         />
                       </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 700 }}>
+                      <TableCell align="right" sx={{ fontWeight: 700, display: { xs: "none", md: "table-cell" } }}>
                         {formatMoney(product.margenBruto)}
                       </TableCell>
                       <TableCell align="right">

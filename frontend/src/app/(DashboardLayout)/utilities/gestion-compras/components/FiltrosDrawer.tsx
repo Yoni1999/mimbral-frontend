@@ -257,7 +257,7 @@ const FiltrosDrawer = () => {
                 </FormControl>
               </Grid>
 
-              <Grid item xs={6}>
+              <Grid item xs={12}>
                 <DatePicker
                 label="Fecha Inicio"
                 value={filtros.fechaInicio}
@@ -273,7 +273,7 @@ const FiltrosDrawer = () => {
                 />
 
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12}>
                 <DatePicker
                 label="Fecha Fin"
                 value={filtros.fechaFin}

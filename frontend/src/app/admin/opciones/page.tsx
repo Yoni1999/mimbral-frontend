@@ -79,16 +79,16 @@ const OpcionesAdminPage = () => {
 
       {/* 🔹 Fila 1 - Tarjetas resumen */}
       <Grid container spacing={2} mb={6}>
-        <Grid item xs={6} md={3}>
+        <Grid item xs={12} sm={6} md={3}>
           <UsuarioKpiCard title="Total Usuarios" value={usuariosData.total} icon={<PeopleIcon fontSize="large" />} />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid item xs={12} sm={6} md={3}>
           <UsuarioKpiCard title="Activos" value={usuariosData.activos} color="#4caf50" icon={<VerifiedUserIcon fontSize="large" />} />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid item xs={12} sm={6} md={3}>
           <UsuarioKpiCard title="Inactivos" value={usuariosData.inactivos} color="#f44336" icon={<PersonOffIcon fontSize="large" />} />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid item xs={12} sm={6} md={3}>
           <UsuarioKpiCard title="Admins" value={usuariosData.admins} color="#9c27b0" icon={<AdminPanelSettingsIcon fontSize="large" />} />
         </Grid>
       </Grid>

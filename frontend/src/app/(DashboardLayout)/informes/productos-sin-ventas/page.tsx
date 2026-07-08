@@ -443,15 +443,15 @@ const ProductosSinVentasPage: React.FC = () => {
 
         return (
             <Paper variant="outlined" sx={{ width: '100%', overflowX: 'auto' }}>
-                <Table size="small" sx={{ minWidth: 650 }}>
+                <Table size="small" sx={{ minWidth: { xs: 0, md: 650 } }}>
                     <TableHead>
                         <TableRow>
                             <TableCell><strong>Doc N°</strong></TableCell>
-                            <TableCell><strong>Fecha</strong></TableCell>
-                            <TableCell><strong>Cliente</strong></TableCell>
+                            <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}><strong>Fecha</strong></TableCell>
+                            <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}><strong>Cliente</strong></TableCell>
                             <TableCell align="right"><strong>Cantidad</strong></TableCell>
-                            <TableCell align="right"><strong>Precio</strong></TableCell>
-                            <TableCell align="right"><strong>Moneda</strong></TableCell>
+                            <TableCell align="right" sx={{ display: { xs: 'none', md: 'table-cell' } }}><strong>Precio</strong></TableCell>
+                            <TableCell align="right" sx={{ display: { xs: 'none', md: 'table-cell' } }}><strong>Moneda</strong></TableCell>
                             <TableCell align="right"><strong>Total línea</strong></TableCell>
                         </TableRow>
                     </TableHead>
@@ -459,11 +459,11 @@ const ProductosSinVentasPage: React.FC = () => {
                         {rows.map((r, idx) => (
                             <TableRow key={`${r.docNum}-${idx}`} hover>
                                 <TableCell>{r.docNum}</TableCell>
-                                <TableCell>{fmtDate(r.docDate || r.createDate)}</TableCell>
-                                <TableCell>{r.customer}</TableCell>
+                                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{fmtDate(r.docDate || r.createDate)}</TableCell>
+                                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{r.customer}</TableCell>
                                 <TableCell align="right">{fmtNumber(r.quantity)}</TableCell>
-                                <TableCell align="right">{fmtMoney(r.price, r.currency)}</TableCell>
-                                <TableCell align="right">{r.currency}</TableCell>
+                                <TableCell align="right" sx={{ display: { xs: 'none', md: 'table-cell' } }}>{fmtMoney(r.price, r.currency)}</TableCell>
+                                <TableCell align="right" sx={{ display: { xs: 'none', md: 'table-cell' } }}>{r.currency}</TableCell>
                                 <TableCell align="right">{fmtMoney(r.lineTotal, r.currency)}</TableCell>
                             </TableRow>
                         ))}

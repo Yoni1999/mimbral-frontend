@@ -161,23 +161,28 @@ const UsuariosPage = () => {
 
       {!loading && (
         <TableContainer component={Paper} sx={{ borderRadius: 2, overflowX: "auto" }}>
-          <Table sx={{ minWidth: 800 }}>
+          <Table
+            sx={{
+              minWidth: { xs: 0, md: 800 },
+              "& .MuiTableCell-root": { px: { xs: 1, md: 2 } },
+            }}
+          >
             <TableHead>
               <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                <TableCell><Tooltip title="ID"><NumbersIcon fontSize="small" /></Tooltip></TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><Tooltip title="ID"><NumbersIcon fontSize="small" /></Tooltip></TableCell>
                 <TableCell><Tooltip title="Nombre"><PersonIcon fontSize="small" /></Tooltip></TableCell>
-                <TableCell><Tooltip title="Correo Electrónico"><EmailIcon fontSize="small" /></Tooltip></TableCell>
-                <TableCell><Tooltip title="Teléfono"><PhoneIcon fontSize="small" /></Tooltip></TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><Tooltip title="Correo Electrónico"><EmailIcon fontSize="small" /></Tooltip></TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><Tooltip title="Teléfono"><PhoneIcon fontSize="small" /></Tooltip></TableCell>
                 <TableCell><Tooltip title="Rol"><LockIcon fontSize="small" /></Tooltip></TableCell>
-                <TableCell><Tooltip title="Estado"><VerifiedUserIcon fontSize="small" /></Tooltip></TableCell>
-                <TableCell><Tooltip title="Fecha de creación"><AccessTimeIcon fontSize="small" /></Tooltip></TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><Tooltip title="Estado"><VerifiedUserIcon fontSize="small" /></Tooltip></TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><Tooltip title="Fecha de creación"><AccessTimeIcon fontSize="small" /></Tooltip></TableCell>
                 <TableCell align="center">Acciones</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.ID} hover>
-                  <TableCell>{user.ID}</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{user.ID}</TableCell>
                   <TableCell>
                     {editId === user.ID ? (
                       <TextField
@@ -189,7 +194,7 @@ const UsuariosPage = () => {
                       user.NOMBRE
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                     {editId === user.ID ? (
                       <TextField
                         value={editedData.EMAIL}

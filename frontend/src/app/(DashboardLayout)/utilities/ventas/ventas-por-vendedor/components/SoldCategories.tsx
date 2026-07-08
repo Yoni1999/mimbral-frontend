@@ -172,11 +172,11 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
         </Box>
 
         <Box sx={{ flex: 1, overflowY: "auto", overflowX: "auto", mt: 1 }}>
-          <Table stickyHeader size="small" sx={{ minWidth: 520 }}>
+          <Table stickyHeader size="small" sx={{ minWidth: { xs: 0, md: 520 } }}>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: "bold" }}>Categoría</TableCell>
-                <TableCell align="right" sx={{ fontWeight: "bold" }}>
+                <TableCell align="right" sx={{ fontWeight: "bold", display: { xs: "none", md: "table-cell" } }}>
                   <TableSortLabel
                     active={sortBy === "unidades"}
                     direction={sortDirection}
@@ -230,7 +230,7 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
                     </Box>
                   </TableCell>
 
-                  <TableCell align="right">
+                  <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>
                     <Typography fontWeight={500}>{formatUnidades(row.Cantidad_Vendida)}</Typography>
                     <Box display="flex" justifyContent="flex-end" alignItems="center" gap={0.5}>
                       {row.PorcentajeCambioUnidades > 0 ? (

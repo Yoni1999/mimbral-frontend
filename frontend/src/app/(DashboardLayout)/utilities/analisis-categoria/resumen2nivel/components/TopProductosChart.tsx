@@ -164,7 +164,7 @@ const sortedData = [...data].sort((a, b) => {
         mt: 2,
       }}
     >
-      <Table stickyHeader size="small" sx={{ minWidth: 550 }}>
+      <Table stickyHeader size="small" sx={{ minWidth: { xs: 0, md: 550 } }}>
       <TableHead>
         <TableRow>
           <TableCell
@@ -179,7 +179,7 @@ const sortedData = [...data].sort((a, b) => {
           <TableCell
             align="right"
             onClick={() => handleSort("NumTransacciones")}
-            sx={{ fontWeight: "bold", cursor: "pointer" }}
+            sx={{ fontWeight: "bold", cursor: "pointer", display: { xs: "none", md: "table-cell" } }}
           >
             Transacciones{" "}
             {sortField === "NumTransacciones" &&
@@ -236,7 +236,7 @@ const sortedData = [...data].sort((a, b) => {
                   </Typography>
                 </Box>
               </TableCell>
-              <TableCell align="right">
+              <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>
                 {row.NumTransacciones.toLocaleString("es-CL")}
               </TableCell>
               <TableCell align="right">

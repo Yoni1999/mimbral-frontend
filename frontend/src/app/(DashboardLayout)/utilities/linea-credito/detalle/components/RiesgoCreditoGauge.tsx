@@ -44,7 +44,7 @@ const RiesgoCreditoGauge: React.FC<Props> = ({ value, montoUtilizado, montoLimit
   return (
     <Grid container spacing={1} alignItems="center">
       {/* Gauge */}
-      <Grid item xs={5}>
+      <Grid item xs={12} sm={5}>
         <GaugeContainer
           width={100}
           height={100}
@@ -60,7 +60,7 @@ const RiesgoCreditoGauge: React.FC<Props> = ({ value, montoUtilizado, montoLimit
       </Grid>
 
       {/* Texto al lado */}
-      <Grid item xs={7}>
+      <Grid item xs={12} sm={7}>
         <Typography variant="subtitle2" color="text.secondary">
           Riesgo de Crédito
         </Typography>

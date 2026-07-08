@@ -140,14 +140,14 @@ const ProductosSinVentasTable: React.FC<Props> = ({ data, onSortChange, ordenAct
       </Box> */}
 
       <TableContainer component={Paper} sx={{ borderRadius: 2, overflowX: 'auto' }}>
-        <Table stickyHeader sx={{ minWidth: 900 }}>
+        <Table stickyHeader sx={{ minWidth: { xs: 0, md: 900 } }}>
           <TableHead>
             <TableRow>
-              <StyledHeadCell>Imagen</StyledHeadCell>
+              <StyledHeadCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Imagen</StyledHeadCell>
               <StyledHeadCell>Producto (SKU)</StyledHeadCell>
-              <StyledHeadCell>Primer Nivel / Categoría</StyledHeadCell>
+              <StyledHeadCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Primer Nivel / Categoría</StyledHeadCell>
 
-              <StyledHeadCell>
+              <StyledHeadCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                 <TableSortLabel
                   active={ordenPorActual === 'createDate'}
                   direction={ordenPorActual === 'createDate' ? ordenActual : 'asc'}
@@ -167,7 +167,7 @@ const ProductosSinVentasTable: React.FC<Props> = ({ data, onSortChange, ordenAct
                 </TableSortLabel>
               </StyledHeadCell>
 
-              <StyledHeadCell>Almacenes</StyledHeadCell>
+              <StyledHeadCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Almacenes</StyledHeadCell>
               <StyledHeadCell>Última OC</StyledHeadCell>
             </TableRow>
           </TableHead>
@@ -175,7 +175,7 @@ const ProductosSinVentasTable: React.FC<Props> = ({ data, onSortChange, ordenAct
           <TableBody>
             {filteredData.map((row, idx) => (
               <StyledTableRow key={`${row.itemCode}-${idx}`}>
-                <StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   <Avatar
                     src={row.imagen || PlaceholderImg}
                     alt={row.nombre}
@@ -202,14 +202,14 @@ const ProductosSinVentasTable: React.FC<Props> = ({ data, onSortChange, ordenAct
                   </Box>
                 </StyledTableCell>
 
-                <StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   <Typography>{row.primerNivel || ''}</Typography>
                   <Typography variant="caption" color="text.secondary">
                     {row.categoria || ''}{row.subcategoria ? ` / ${row.subcategoria}` : ''}
                   </Typography>
                 </StyledTableCell>
 
-                <StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   {row.createDate ? new Date(row.createDate).toLocaleDateString() : '-'}
                 </StyledTableCell>
 
@@ -217,7 +217,7 @@ const ProductosSinVentasTable: React.FC<Props> = ({ data, onSortChange, ordenAct
                   <Chip label={row.stockTotal} color={row.stockTotal > 0 ? 'primary' : 'default'} size="small" />
                 </StyledTableCell>
 
-                <StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   <IconButton size="small" onClick={(e) => handleOpenWH(e, row.itemCode)} aria-label="Ver almacenes">
                     <InfoOutlinedIcon fontSize="small" />
                   </IconButton>

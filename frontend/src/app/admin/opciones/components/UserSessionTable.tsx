@@ -90,7 +90,13 @@ const UserSessionTable = () => {
           boxShadow: "none",
         }}
       >
-        <Table stickyHeader sx={{ minWidth: 400 }}>
+        <Table
+          stickyHeader
+          sx={{
+            minWidth: { xs: 0, md: 400 },
+            "& .MuiTableCell-root": { px: { xs: 1, md: 2 } },
+          }}
+        >
           <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
             <TableRow>
               <TableCell>

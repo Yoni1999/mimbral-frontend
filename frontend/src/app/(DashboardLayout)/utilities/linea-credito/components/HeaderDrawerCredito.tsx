@@ -250,10 +250,10 @@ const HeaderDrawerLineaCredito: React.FC<Props> = ({ open, onClose, onApply }) =
         </Grid>
 
         <Grid item container spacing={2}>
-          <Grid item xs={6}>
+          <Grid item xs={12}>
             <Button fullWidth variant="outlined" onClick={handleClear} startIcon={<DeleteOutlineIcon />}>Limpiar</Button>
           </Grid>
-          <Grid item xs={6}>
+          <Grid item xs={12}>
             <Button fullWidth variant="contained" onClick={() => { onApply(filters); onClose(); }}>Aplicar</Button>
           </Grid>
         </Grid>

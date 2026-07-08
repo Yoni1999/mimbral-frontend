@@ -142,7 +142,7 @@ return (
                 transition: "max-height 0.3s ease-in-out",
               }}
             >
-              <Table size="small" stickyHeader={sortedData.length > 5} sx={{ minWidth: 800 }}>
+              <Table size="small" stickyHeader={sortedData.length > 5} sx={{ minWidth: { xs: 0, md: 800 } }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>Cliente</TableCell>
@@ -164,7 +164,7 @@ return (
                         Total Comprado
                       </TableSortLabel>
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>
                       <TableSortLabel
                         active={orderBy === "ticket_promedio"}
                         direction={order}
@@ -173,7 +173,7 @@ return (
                         Ticket Promedio
                       </TableSortLabel>
                     </TableCell>
-                    <TableCell align="center">
+                    <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
                       <TableSortLabel
                         active={orderBy === "ultima_compra"}
                         direction={order}
@@ -182,7 +182,7 @@ return (
                         Última Compra
                       </TableSortLabel>
                     </TableCell>
-                    <TableCell align="center">Pendiente de pago</TableCell>
+                    <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>Pendiente de pago</TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -221,13 +221,13 @@ return (
 
                         <TableCell align="center">{cliente.cantidad_compras}</TableCell>
                         <TableCell align="right">{formatVentas(cliente.total_comprado)}</TableCell>
-                        <TableCell align="right">{formatVentas(cliente.ticket_promedio)}</TableCell>
-                        <TableCell align="center">
+                        <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>{formatVentas(cliente.ticket_promedio)}</TableCell>
+                        <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
                           {cliente.ultima_compra && !isNaN(new Date(cliente.ultima_compra).getTime())
                             ? new Date(cliente.ultima_compra).toLocaleDateString("es-CL")
                             : "N/A"}
                         </TableCell>
-                        <TableCell align="center">
+                        <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
                           {cliente.balance !== undefined && cliente.balance !== null
                             ? formatVentas(cliente.balance) +
                               (excedente > 0 ? ` ⚠️ Excede: ${formatVentas(excedente)}` : "")
