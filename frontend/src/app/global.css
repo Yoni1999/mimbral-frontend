@@ -16,3 +16,11 @@ video {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+/* En pantallas chicas las celdas se compactan para que la tabla quepa sin scroll lateral */
+@media (max-width: 599px) {
+  .MuiTableCell-root {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+}
