@@ -13,7 +13,9 @@ import {
   Tooltip,
 } from "@mui/material";
 import PropTypes from "prop-types";
+import { usePathname } from "next/navigation";
 import Profile from "./Profile";
+import AdminBreadcrumb from "@/app/admin/opciones/components/AdminBreadcrumb";
 import { IconRefresh, IconBellRinging, IconMenu } from "@tabler/icons-react";
 import { apiJson } from "@/utils/apiClient";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -21,6 +23,43 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 interface ItemType {
   toggleMobileSidebar: (event: React.MouseEvent<HTMLElement>) => void;
 }
+
+// Nombre legible de la sección actual, para mostrarlo en la barra superior.
+// El orden importa: las rutas más específicas van antes (coincidencia por prefijo).
+const SECCIONES: { prefijo: string; titulo: string }[] = [
+  { prefijo: "/inicio", titulo: "Dashboard" },
+  { prefijo: "/utilities/ventas/resumen-ventas", titulo: "Resumen de Ventas" },
+  { prefijo: "/utilities/ventas/ventas-por-canal", titulo: "Ventas por Canal" },
+  { prefijo: "/utilities/ventas/ventas-por-vendedor", titulo: "Ventas por Vendedor" },
+  { prefijo: "/utilities/analisis-categoria", titulo: "Análisis por Categoría" },
+  { prefijo: "/utilities/analisis-producto", titulo: "Análisis por Producto" },
+  { prefijo: "/utilities/gestion-compras", titulo: "Gestión de Compras" },
+  { prefijo: "/utilities/linea-credito/detalle", titulo: "Detalle de Crédito" },
+  { prefijo: "/utilities/linea-credito", titulo: "Línea de Crédito" },
+  { prefijo: "/utilities/supplychain", titulo: "Supply Chain" },
+  { prefijo: "/informes/ventas-productos-por-canal", titulo: "Ventas por Canal" },
+  { prefijo: "/informes/ventas-productos", titulo: "Ventas de Productos" },
+  { prefijo: "/informes/productos-detenidos", titulo: "Productos Detenidos" },
+  { prefijo: "/informes/productos-sin-ventas", titulo: "Productos sin Ventas" },
+  { prefijo: "/informes/productos-menos-rentables", titulo: "Productos Menos Rentables" },
+  { prefijo: "/informes/Vendedores", titulo: "Reporte de Vendedores" },
+  { prefijo: "/metas-general", titulo: "Metas" },
+  { prefijo: "/metas/crear-meta", titulo: "Crear Meta" },
+  { prefijo: "/metas/crear-periodo", titulo: "Crear Período" },
+  { prefijo: "/metas", titulo: "Metas" },
+  { prefijo: "/sugerencias", titulo: "Sugerencias" },
+  { prefijo: "/perfil", titulo: "Mi Perfil" },
+  { prefijo: "/admin/opciones/crear-usuario", titulo: "Crear Usuario" },
+  { prefijo: "/admin/opciones/usuarios", titulo: "Usuarios" },
+  { prefijo: "/admin/opciones/sugerencias", titulo: "Sugerencias" },
+  { prefijo: "/admin/opciones", titulo: "Opciones" },
+  { prefijo: "/admin", titulo: "Administración" },
+];
+
+const obtenerSeccionActual = (pathname: string): string => {
+  const match = SECCIONES.find((s) => pathname.startsWith(s.prefijo));
+  return match ? match.titulo : "Análisis de Datos";
+};
 
 interface Usuario {
   id: number;
@@ -87,14 +126,16 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
   const handlePopoverClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
 
+  const pathname = usePathname() ?? "";
+  const seccionActual = obtenerSeccionActual(pathname);
+
   return (
     <>
-      <AppBar position="sticky" color="default" elevation={1} sx={{ background: "linear-gradient(#ffffff)" }}>
+      <AppBar position="sticky" color="default" elevation={1} sx={{ background: "#ffffff" }}>
         <Toolbar
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            borderRadius: "18px",
             px: { xs: 1, sm: 2 },
             gap: { xs: 0.5, sm: 1 },
             minHeight: { xs: 52, sm: 64 },
@@ -109,18 +150,17 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
             <IconMenu width="40" height="30" />
           </IconButton>
 
-          <Box flexGrow={1} display="flex" justifyContent="center" minWidth={0}>
+          <Box flexGrow={1} display="flex" justifyContent="flex-start" minWidth={0}>
             <Typography
-              variant="h4"
-              fontWeight={500}
+              variant="h6"
+              fontWeight={600}
               color="primary"
               noWrap
               sx={{
-                letterSpacing: { xs: 1, md: 3 },
-                fontSize: { xs: "0.95rem", sm: "1.25rem", md: "1.5rem" },
+                fontSize: { xs: "1rem", sm: "1.2rem", md: "1.35rem" },
               }}
             >
-              ANALISIS DE DATOS
+              {seccionActual}
             </Typography>
           </Box>
 
@@ -212,6 +252,9 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
             </Box>
           </Stack>
         </Toolbar>
+
+        {/* Segunda fila integrada en el mismo header: ruta de navegación */}
+        <AdminBreadcrumb />
       </AppBar>
 
       <Popover

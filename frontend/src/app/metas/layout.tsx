@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Box, Drawer } from "@mui/material";
 import Header from "@/app/(DashboardLayout)/layout/header/Header";
-import AdminBreadcrumb from "../admin/opciones/components/AdminBreadcrumb";
 import MetasSidebar from "./components/MetasSidebar";
 
 export default function MetasLayout({ children }: { children: React.ReactNode }) {
@@ -31,7 +30,6 @@ export default function MetasLayout({ children }: { children: React.ReactNode })
       {/* 🔹 Contenido principal */}
       <Box flex={1} minWidth={0} display="flex" flexDirection="column" height="100vh" overflow="hidden">
         <Header toggleMobileSidebar={() => setMobileSidebarOpen(true)} />
-        <AdminBreadcrumb />
         <Box p={{ xs: 1.5, md: 2 }} flex={1} overflow="auto">
           {children}
         </Box>

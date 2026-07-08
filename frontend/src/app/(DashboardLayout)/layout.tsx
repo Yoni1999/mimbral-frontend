@@ -3,7 +3,6 @@ import { styled, Container, Box } from "@mui/material";
 import React, { useState } from "react";
 import Header from "@/app/(DashboardLayout)/layout/header/Header";
 import Sidebar from "@/app/(DashboardLayout)/layout/sidebar/Sidebar";
-import AdminBreadcrumb from "@/app/admin/opciones/components/AdminBreadcrumb";
 
 import { useVerificarExpiracionToken } from "@/hooks/useVerificarExpiracionToke";
 import { ModalRenovarSesion } from "@/components/ModalRenovarSesion";
@@ -57,7 +56,6 @@ export default function RootLayout({ children }: Props) {
 
       <PageWrapper className="page-wrapper">
         <Header toggleMobileSidebar={() => setMobileSidebarOpen(true)} />
-        <AdminBreadcrumb />
 
         <Container
           disableGutters

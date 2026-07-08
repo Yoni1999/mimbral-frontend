@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Box, Drawer } from "@mui/material";
 import AdminSidebar from "./opciones/components/AdminSidebar";
-import AdminBreadcrumb from "./opciones/components/AdminBreadcrumb";
 import Header from "@/app/(DashboardLayout)/layout/header/Header";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -34,7 +33,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </Drawer>
 
         <Box flex={1} minWidth={0}>
-          <AdminBreadcrumb />
           <Box p={{ xs: 1.5, md: 3 }} sx={{ backgroundColor: "#FEFEFE", minHeight: "100vh" }}>
             {children}
           </Box>

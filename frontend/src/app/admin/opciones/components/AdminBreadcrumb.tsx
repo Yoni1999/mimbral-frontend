@@ -71,7 +71,11 @@ const AdminBreadcrumb = () => {
   };
 
   return (
-    <Box py={{ xs: 0.75, md: 1.5 }} px={{ xs: 1.5, md: 3 }} sx={{ backgroundColor: "#FEFEFE" }}>
+    <Box
+      py={{ xs: 0.5, md: 0.75 }}
+      px={{ xs: 1.5, md: 3 }}
+      sx={{ backgroundColor: "transparent", borderTop: "1px solid #f0f0f0", overflowX: "auto" }}
+    >
       <Breadcrumbs
         separator={<ChevronRightIcon fontSize="small" sx={{ color: "#bdbdbd" }} />}
         aria-label="breadcrumb"
