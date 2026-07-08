@@ -306,8 +306,8 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
                   </TableCell>
                   <TableCell align="right">{producto.Cantidad_Vendida.toLocaleString("es-CL")}</TableCell>
                   <TableCell align="right">${(producto.Margen_Absoluto ?? 0).toLocaleString("es-CL")}</TableCell>
-                  <TableCell align="right">{(producto.Margen_Porcentaje ?? 0).toFixed(2)}%</TableCell>
-                  <TableCell align="right">${(producto.Margen_Unitario ?? 0).toLocaleString("es-CL")}</TableCell>
+                  <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>{(producto.Margen_Porcentaje ?? 0).toFixed(2)}%</TableCell>
+                  <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>${(producto.Margen_Unitario ?? 0).toLocaleString("es-CL")}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

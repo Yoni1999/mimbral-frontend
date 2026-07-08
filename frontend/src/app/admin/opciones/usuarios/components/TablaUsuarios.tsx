@@ -205,7 +205,7 @@ const UsuariosPage = () => {
                       user.EMAIL
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                     {editId === user.ID ? (
                       <TextField
                         value={editedData.TELEFONO}
@@ -230,7 +230,7 @@ const UsuariosPage = () => {
                       getRolChip(user.ROL)
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                     {editId === user.ID ? (
                       <Select
                         value={editedData.ESTADO}
@@ -244,7 +244,7 @@ const UsuariosPage = () => {
                       getEstadoChip(user.ESTADO)
                     )}
                   </TableCell>
-                  <TableCell>{new Date(user.FECHA_CREACION).toLocaleDateString()}</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{new Date(user.FECHA_CREACION).toLocaleDateString()}</TableCell>
                   <TableCell align="center">
                     {editId === user.ID ? (
                       <>

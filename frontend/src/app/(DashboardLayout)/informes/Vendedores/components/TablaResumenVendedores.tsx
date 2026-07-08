@@ -198,7 +198,7 @@ const TablaResumenVendedores: React.FC = () => {
       </Box>
 
       <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-        <Table stickyHeader sx={{ minWidth: 900 }}>
+        <Table stickyHeader sx={{ minWidth: { xs: 0, md: 900 } }}>
           <TableHead>
             <TableRow>
               <StyledTableCell>Vendedor</StyledTableCell>
@@ -208,7 +208,16 @@ const TablaResumenVendedores: React.FC = () => {
                 { key: 'unidadesVendidas', label: 'S.Corrida' },
                 { key: 'rentabilidad', label: 'T.Comisión' },
                 { key: 'notasCredito', label: 'Rentabilidad' }].map(({ key, label }) => (
-                  <StyledTableCell key={key} align="right" sortDirection={ordenPor === key ? orden : false}>
+                  <StyledTableCell
+                    key={key}
+                    align="right"
+                    sortDirection={ordenPor === key ? orden : false}
+                    sx={
+                      key === 'cantidadNeta' || key === 'itemsVendidos'
+                        ? undefined
+                        : { display: { xs: 'none', md: 'table-cell' } }
+                    }
+                  >
                     <TableSortLabel
                       active={ordenPor === key}
                       direction={ordenPor === key ? orden : 'asc'}

@@ -162,7 +162,7 @@ const ProductoAnalisisChart: React.FC<Props> = ({ filters }) => {
           </Box>
         ) : (
           <Box sx={{ overflowX: 'auto', width: '100%' }}>
-            <Box sx={{ minWidth: 600 }}>
+            <Box sx={{ minWidth: { xs: 0, sm: 600 } }}>
               <BarChart
                 dataset={dataset}
                 xAxis={[{

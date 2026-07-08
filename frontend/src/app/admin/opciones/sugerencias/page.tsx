@@ -95,14 +95,19 @@ const AdminSugerenciasPage = () => {
           </Box>
         ) : (
           <>
-            <Table sx={{ minWidth: 650 }}>
+            <Table
+              sx={{
+                minWidth: { xs: 0, md: 650 },
+                "& .MuiTableCell-root": { px: { xs: 1, md: 2 } },
+              }}
+            >
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Departamento</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>ID</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Departamento</TableCell>
                   <TableCell>Sugerencia</TableCell>
                   <TableCell>Estado</TableCell>
-                  <TableCell>Fecha</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Fecha</TableCell>
                   <TableCell>Acciones</TableCell>
                 </TableRow>
               </TableHead>
@@ -114,8 +119,8 @@ const AdminSugerenciasPage = () => {
                   )
                   .map((sug) => (
                     <TableRow key={sug.ID}>
-                      <TableCell>{sug.ID}</TableCell>
-                      <TableCell>{sug.DEPARTAMENTO}</TableCell>
+                      <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{sug.ID}</TableCell>
+                      <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{sug.DEPARTAMENTO}</TableCell>
                       <TableCell>{sug.SUGERENCIA}</TableCell>
                       <TableCell>
                         <Select
@@ -132,7 +137,7 @@ const AdminSugerenciasPage = () => {
                           ))}
                         </Select>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                         {new Date(sug.FECHA_REGISTRO).toLocaleDateString()}
                       </TableCell>
                       <TableCell>

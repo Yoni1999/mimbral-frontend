@@ -375,7 +375,7 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
                 />
               </Grid>
 
-              <Grid item xs={6} sm={3} md={1.5}>
+              <Grid item xs={12} sm={3} md={1.5}>
                 <FormControl fullWidth size="small">
                   <Typography variant="caption" sx={fieldLabelSx}>
                     Comparar con
