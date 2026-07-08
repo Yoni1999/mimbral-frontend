@@ -164,12 +164,18 @@ const TablaMetas: React.FC<TablaMetasProps> = ({ data, dataMonto = [], tipoMeta,
       </Box>
 
       <TableContainer component={Paper} sx={{ borderRadius: 2, border: "1px solid #e0e0e0", boxShadow: "none", overflowX: "auto" }}>
-        <Table size="small" sx={{ minWidth: tipoMeta === "sku" ? 900 : 650 }}>
+        <Table
+          size="small"
+          sx={{
+            minWidth: { xs: 0, md: tipoMeta === "sku" ? 900 : 650 },
+            "& .MuiTableCell-root": { px: { xs: 0.75, md: 2 } },
+          }}
+        >
           <TableHead sx={{ backgroundColor: "#f9f9f9" }}>
             <TableRow>
               {tipoMeta === "sku" ? (
                 <>
-                  <TableCell padding="checkbox">
+                  <TableCell padding="checkbox" sx={{ display: { xs: "none", md: "table-cell" } }}>
                     <Checkbox
                       size="small"
                       checked={seleccionados.length === data.length}
@@ -178,16 +184,16 @@ const TablaMetas: React.FC<TablaMetasProps> = ({ data, dataMonto = [], tipoMeta,
                     />
                   </TableCell>
                   <TableCell><strong>Producto</strong></TableCell>
-                  <TableCell align="center"><strong>SKU</strong></TableCell>
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}><strong>SKU</strong></TableCell>
                   <TableCell align="center">{renderSortableHeader("Meta", "META_CANTIDAD")}</TableCell>
                   <TableCell align="center">{renderSortableHeader("Vendidas", "TOTAL_VENDIDO_NETO")}</TableCell>
                   <TableCell align="center">{renderSortableHeader("% Cumplimiento", "CUMPLIMIENTO_PORCENTAJE")}</TableCell>
-                  <TableCell align="center">{renderSortableHeader("Precio Venta", "PRECIO_PROMEDIO_VENTA")}</TableCell>
-                  <TableCell align="center">{renderSortableHeader("Precio Compra", "PRECIO_COMPRA")}</TableCell>
-                  <TableCell align="center">{renderSortableHeader("Margen %", "MARGEN_PORCENTAJE")}</TableCell>
-                  <TableCell align="center">{renderSortableHeader("Prom. Diario", "PROMEDIO_DIARIO")}</TableCell>
-                  <TableCell align="center">{renderSortableHeader("Tickets", "TICKETS_TOTALES")}</TableCell>
-                  <TableCell align="center"><strong>Acción</strong></TableCell>
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>{renderSortableHeader("Precio Venta", "PRECIO_PROMEDIO_VENTA")}</TableCell>
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>{renderSortableHeader("Precio Compra", "PRECIO_COMPRA")}</TableCell>
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>{renderSortableHeader("Margen %", "MARGEN_PORCENTAJE")}</TableCell>
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>{renderSortableHeader("Prom. Diario", "PROMEDIO_DIARIO")}</TableCell>
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>{renderSortableHeader("Tickets", "TICKETS_TOTALES")}</TableCell>
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}><strong>Acción</strong></TableCell>
                 </>
               ) : (
                 <>
@@ -203,7 +209,7 @@ const TablaMetas: React.FC<TablaMetasProps> = ({ data, dataMonto = [], tipoMeta,
             {tipoMeta === "sku" ? (
               sortedData.map((row, index) => (
                 <TableRow key={index} hover>
-                  <TableCell padding="checkbox">
+                  <TableCell padding="checkbox" sx={{ display: { xs: "none", md: "table-cell" } }}>
                     <Checkbox
                       size="small"
                       checked={seleccionados.includes(index)}
@@ -216,23 +222,23 @@ const TablaMetas: React.FC<TablaMetasProps> = ({ data, dataMonto = [], tipoMeta,
                         src={row.IMAGEN_PRODUCTO}
                         alt={row.NOMBRE_PRODUCTO}
                         variant="rounded"
-                        sx={{ width: 48, height: 48 }}
+                        sx={{ width: { xs: 32, md: 48 }, height: { xs: 32, md: 48 } }}
                       />
                       <Typography fontSize="0.875rem" fontWeight={500}>
                         {row.NOMBRE_PRODUCTO}
                       </Typography>
                     </Box>
                   </TableCell>
-                  <TableCell align="center">{row.SKU}</TableCell>
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>{row.SKU}</TableCell>
                   <TableCell align="center">{row.META_CANTIDAD}</TableCell>
                   <TableCell align="center">{row.TOTAL_VENDIDO_NETO}</TableCell>
                   <TableCell align="center">{row.CUMPLIMIENTO_PORCENTAJE.toFixed(1)}%</TableCell>
-                  <TableCell align="center">${row.PRECIO_PROMEDIO_VENTA.toLocaleString()}</TableCell>
-                  <TableCell align="center">${row.PRECIO_COMPRA.toLocaleString()}</TableCell>
-                  <TableCell align="center">{row.MARGEN_PORCENTAJE.toFixed(1)}%</TableCell>
-                  <TableCell align="center">{row.PROMEDIO_DIARIO.toFixed(1)}</TableCell>
-                  <TableCell align="center">{row.TICKETS_TOTALES}</TableCell>
-                  <TableCell align="center">
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>${row.PRECIO_PROMEDIO_VENTA.toLocaleString()}</TableCell>
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>${row.PRECIO_COMPRA.toLocaleString()}</TableCell>
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>{row.MARGEN_PORCENTAJE.toFixed(1)}%</TableCell>
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>{row.PROMEDIO_DIARIO.toFixed(1)}</TableCell>
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>{row.TICKETS_TOTALES}</TableCell>
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
                     <Button
                       variant="contained"
                       size="small"

@@ -146,12 +146,12 @@ const ProductosVendidos = ({
       </Box>
 
       <TableContainer component={Paper} sx={{ borderRadius: 2, overflowX: 'auto' }}>
-        <Table stickyHeader sx={{ minWidth: 1000 }}>
+        <Table stickyHeader sx={{ minWidth: { xs: 0, md: 1000 } }}>
           <TableHead>
             <TableRow>
-              <StyledTableCell>Imagen</StyledTableCell>
+              <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Imagen</StyledTableCell>
               <StyledTableCell>Producto (SKU)</StyledTableCell>
-              <StyledTableCell>Primer Nivel / Categoría</StyledTableCell>
+              <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Primer Nivel / Categoría</StyledTableCell>
 
               <StyledTableCell sortDirection={ordenPorActual === 'cantidadVendida' ? ordenActual : false}>
                 <TableSortLabel
@@ -163,7 +163,7 @@ const ProductosVendidos = ({
                 </TableSortLabel>
               </StyledTableCell>
 
-              <StyledTableCell sortDirection={ordenPorActual === 'facturasUnicas' ? ordenActual : false}>
+              <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }} sortDirection={ordenPorActual === 'facturasUnicas' ? ordenActual : false}>
                 <TableSortLabel
                   active={ordenPorActual === 'facturasUnicas'}
                   direction={ordenPorActual === 'facturasUnicas' ? ordenActual : 'asc'}
@@ -183,7 +183,7 @@ const ProductosVendidos = ({
                 </TableSortLabel>
               </StyledTableCell>
 
-              <StyledTableCell sortDirection={ordenPorActual === 'margenBruto' ? ordenActual : false}>
+              <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }} sortDirection={ordenPorActual === 'margenBruto' ? ordenActual : false}>
                 <TableSortLabel
                   active={ordenPorActual === 'margenBruto'}
                   direction={ordenPorActual === 'margenBruto' ? ordenActual : 'asc'}
@@ -193,7 +193,7 @@ const ProductosVendidos = ({
                 </TableSortLabel>
               </StyledTableCell>
 
-              <StyledTableCell sortDirection={ordenPorActual === 'precioPromedio' ? ordenActual : false}>
+              <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }} sortDirection={ordenPorActual === 'precioPromedio' ? ordenActual : false}>
                 <TableSortLabel
                   active={ordenPorActual === 'precioPromedio'}
                   direction={ordenPorActual === 'precioPromedio' ? ordenActual : 'asc'}
@@ -207,15 +207,15 @@ const ProductosVendidos = ({
                 Stock Actual
               </StyledTableCell>
 
-              <StyledTableCell>Stock Chorrillo</StyledTableCell>
-              <StyledTableCell>OC (On Order)</StyledTableCell>
+              <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Stock Chorrillo</StyledTableCell>
+              <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>OC (On Order)</StyledTableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
             {filteredData.map((row) => (
               <StyledTableRow key={`${row.sku}-${row.nombre}`}>
-                <StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   <Avatar
                     src={
                       row.imagen?.startsWith('http')
@@ -246,26 +246,26 @@ const ProductosVendidos = ({
                   </Box>
                 </StyledTableCell>
 
-                <StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   <Typography>{row.primerNivel}</Typography>
                   <Typography variant="caption" color="text.secondary">{row.categoria}</Typography>
                 </StyledTableCell>
 
                 <StyledTableCell>{formatUnidades(row.cantidadVendida)}</StyledTableCell>
-                <StyledTableCell>{row.facturasUnicas}</StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.facturasUnicas}</StyledTableCell>
                 <StyledTableCell>{formatVentas(row.totalVentas)}</StyledTableCell>
 
-                <StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   <Typography>{formatVentas(row.margenBruto)}</Typography>
                   <Typography variant="caption" color="text.secondary">
                     {row.margenPorcentaje?.toFixed(2)}%
                   </Typography>
                 </StyledTableCell>
 
-                <StyledTableCell>{formatVentas(row.precioPromedio)}</StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{formatVentas(row.precioPromedio)}</StyledTableCell>
                 <StyledTableCell>{formatUnidades(row.stockCanal)}</StyledTableCell>
-                <StyledTableCell>{row.stockChorrillo !== undefined ? formatUnidades(row.stockChorrillo) : 'N/A'}</StyledTableCell>
-                <StyledTableCell>{row.stockOnOrder !== undefined ? formatUnidades(row.stockOnOrder) : 'N/A'}</StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.stockChorrillo !== undefined ? formatUnidades(row.stockChorrillo) : 'N/A'}</StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.stockOnOrder !== undefined ? formatUnidades(row.stockOnOrder) : 'N/A'}</StyledTableCell>
               </StyledTableRow>
             ))}
             {filteredData.length === 0 && (

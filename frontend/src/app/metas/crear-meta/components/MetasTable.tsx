@@ -179,15 +179,21 @@ const MetasTable = () => {
         </Typography>
 
         <Box sx={{ overflowX: "auto" }}>
-        <Table size="small" sx={{ minWidth: 650 }}>
+        <Table
+          size="small"
+          sx={{
+            minWidth: { xs: 0, md: 650 },
+            "& .MuiTableCell-root": { px: { xs: 1, md: 2 } },
+          }}
+        >
           <TableHead>
             <TableRow>
               {tipoMeta === 'cantidad' ? (
                 <>
-                  <TableCell><strong>SKU</strong></TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><strong>SKU</strong></TableCell>
                   <TableCell><strong>Nombre</strong></TableCell>
                   <TableCell><strong>Cantidad Meta</strong></TableCell>
-                  <TableCell><strong>Total Vendido</strong></TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><strong>Total Vendido</strong></TableCell>
                 </>
               ) : (
                 <>
@@ -195,8 +201,8 @@ const MetasTable = () => {
                   <TableCell><strong>Total Vendido ($)</strong></TableCell>
                 </>
               )}
-              <TableCell><strong>Fecha Registro</strong></TableCell>
-              <TableCell><strong>Completado</strong></TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><strong>Fecha Registro</strong></TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><strong>Completado</strong></TableCell>
               <TableCell><strong>Acciones</strong></TableCell>
             </TableRow>
           </TableHead>
@@ -205,10 +211,10 @@ const MetasTable = () => {
               <TableRow key={index}>
                 {tipoMeta === 'cantidad' ? (
                   <>
-                    <TableCell>{meta.sku}</TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{meta.sku}</TableCell>
                     <TableCell>{meta.nombre}</TableCell>
                     <TableCell>{meta.cantidadMeta}</TableCell>
-                    <TableCell>{meta.totalVentas}</TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{meta.totalVentas}</TableCell>
                   </>
                 ) : (
                   <>
@@ -216,14 +222,14 @@ const MetasTable = () => {
                     <TableCell>${meta.montoTotal?.toLocaleString()}</TableCell>
                   </>
                 )}
-                <TableCell>{meta.fechaRegistro}</TableCell>
-                <TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{meta.fechaRegistro}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                   <span style={{ fontWeight: 'bold', color: meta.completado >= 100 ? 'green' : meta.completado >= 75 ? 'orange' : 'red' }}>
                     {meta.completado.toFixed(1)}%
                   </span>
                 </TableCell>
                 <TableCell>
-                  <Box display="flex" gap={1}>
+                  <Box display="flex" gap={1} sx={{ flexDirection: { xs: "column", md: "row" } }}>
                     <Button
                       variant="outlined"
                       size="small"

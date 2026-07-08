@@ -100,21 +100,26 @@ const PeriodosTable = () => {
       <Paper elevation={1} sx={{backgroundColor: '#FEFEFE',p: 0, borderRadius: 1,}}>
         <Typography variant="subtitle1" className="mb-2 font-semibold">Periodos creados</Typography>
         <Box sx={{ overflowX: "auto" }}>
-        <Table sx={{ minWidth: 650 }}>
+        <Table
+          sx={{
+            minWidth: { xs: 0, md: 650 },
+            "& .MuiTableCell-root": { px: { xs: 1, md: 2 } },
+          }}
+        >
           <TableHead>
             <TableRow>
-              <TableCell><strong>ID Periodo</strong></TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><strong>ID Periodo</strong></TableCell>
               <TableCell><strong>Nombre</strong></TableCell>
               <TableCell><strong>Fecha Inicio</strong></TableCell>
               <TableCell><strong>Fecha Fin</strong></TableCell>
-              <TableCell><strong>Acciones</strong></TableCell>
-              <TableCell><strong>Estado</strong></TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><strong>Acciones</strong></TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><strong>Estado</strong></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {periodos.map((p, idx) => (
               <TableRow key={idx} hover>
-                <TableCell>{p.idPeriodo}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{p.idPeriodo}</TableCell>
                 <TableCell>
                   {editandoId === p.idPeriodo ? (
                     <TextField size="small" value={periodoEditado?.nombre || ''} onChange={(e) => setPeriodoEditado(prev => ({ ...prev!, nombre: e.target.value }))} />
@@ -130,7 +135,7 @@ const PeriodosTable = () => {
                     <TextField size="small" type="date" value={periodoEditado?.fechaFin || ''} onChange={(e) => setPeriodoEditado(prev => ({ ...prev!, fechaFin: e.target.value }))} />
                   ) : p.fechaFin}
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                   {editandoId === p.idPeriodo ? (
                     <Button variant="contained" size="small" onClick={() => handleGuardar(p.idPeriodo)}>Guardar</Button>
                   ) : (

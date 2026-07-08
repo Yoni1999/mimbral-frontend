@@ -130,14 +130,14 @@ const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ord
       </Box>
 
       <TableContainer component={Paper} sx={{ borderRadius: 2, overflowX: 'auto' }}>
-        <Table stickyHeader sx={{ minWidth: 1000 }}>
+        <Table stickyHeader sx={{ minWidth: { xs: 0, md: 1000 } }}>
           <TableHead>
             <TableRow>
-              <StyledHeadCell>Imagen</StyledHeadCell>
+              <StyledHeadCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Imagen</StyledHeadCell>
               <StyledHeadCell>Producto (SKU)</StyledHeadCell>
-              <StyledHeadCell>Primer Nivel / Categoría</StyledHeadCell>
+              <StyledHeadCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Primer Nivel / Categoría</StyledHeadCell>
 
-              <StyledHeadCell>
+              <StyledHeadCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                 <TableSortLabel
                   active={ordenPorActual === 'cantidadVendida'}
                   direction={ordenPorActual === 'cantidadVendida' ? ordenActual : 'asc'}
@@ -147,7 +147,7 @@ const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ord
                 </TableSortLabel>
               </StyledHeadCell>
 
-              <StyledHeadCell>
+              <StyledHeadCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                 <TableSortLabel
                   active={ordenPorActual === 'facturasUnicas'}
                   direction={ordenPorActual === 'facturasUnicas' ? ordenActual : 'asc'}
@@ -177,7 +177,7 @@ const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ord
                 </TableSortLabel>
               </StyledHeadCell>
 
-              <StyledHeadCell>
+              <StyledHeadCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                 <TableSortLabel
                   active={ordenPorActual === 'precioPromedio'}
                   direction={ordenPorActual === 'precioPromedio' ? ordenActual : 'asc'}
@@ -187,16 +187,16 @@ const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ord
                 </TableSortLabel>
               </StyledHeadCell>
 
-              <StyledHeadCell>Stock Actual</StyledHeadCell>
-              <StyledHeadCell>Stock Chorrillo</StyledHeadCell>
-              <StyledHeadCell>OC (On Order)</StyledHeadCell>
+              <StyledHeadCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Stock Actual</StyledHeadCell>
+              <StyledHeadCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Stock Chorrillo</StyledHeadCell>
+              <StyledHeadCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>OC (On Order)</StyledHeadCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
             {filteredData.map((row, idx) => (
               <StyledTableRow key={row.sku + idx}>
-                <StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   <Avatar
                     src={row.imagen || PlaceholderImg}
                     alt={row.nombre}
@@ -223,13 +223,13 @@ const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ord
                   </Box>
                 </StyledTableCell>
 
-                <StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   <Typography>{row.primerNivel || ''}</Typography>
                   <Typography variant="caption" color="text.secondary">{row.categoria || ''}</Typography>
                 </StyledTableCell>
 
-                <StyledTableCell>{row.cantidadVendida.toLocaleString()}</StyledTableCell>
-                <StyledTableCell>{row.facturasUnicas}</StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.cantidadVendida.toLocaleString()}</StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.facturasUnicas}</StyledTableCell>
                 <StyledTableCell>{row.totalVentas.toLocaleString('es-CL')}</StyledTableCell>
 
                 <StyledTableCell>
@@ -239,10 +239,10 @@ const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ord
                   </Typography>
                 </StyledTableCell>
 
-                <StyledTableCell>{row.precioPromedio.toLocaleString('es-CL')}</StyledTableCell>
-                <StyledTableCell>{row.stockCanal.toLocaleString()}</StyledTableCell>
-                <StyledTableCell>{row.stockChorrillo ?? 'N/A'}</StyledTableCell>
-                <StyledTableCell>{row.stockOnOrder ?? 'N/A'}</StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.precioPromedio.toLocaleString('es-CL')}</StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.stockCanal.toLocaleString()}</StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.stockChorrillo ?? 'N/A'}</StyledTableCell>
+                <StyledTableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.stockOnOrder ?? 'N/A'}</StyledTableCell>
               </StyledTableRow>
             ))}
 

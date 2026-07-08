@@ -243,11 +243,11 @@ const TablaResumenVendedores: React.FC = () => {
                   </Stack>
                 </StyledTableCell>
                 <StyledTableCell align="right">${v.cantidadNeta.toLocaleString()}</StyledTableCell>
-                <StyledTableCell align="right">{v.margen.toFixed(2)}%</StyledTableCell>
+                <StyledTableCell align="right" sx={{ display: { xs: 'none', md: 'table-cell' } }}>{v.margen.toFixed(2)}%</StyledTableCell>
                 <StyledTableCell align="right">{v.itemsVendidos}</StyledTableCell>
-                <StyledTableCell align="right">{v.unidadesVendidas}</StyledTableCell>
-                <StyledTableCell align="right">${v.rentabilidad.toLocaleString()}</StyledTableCell>
-                <StyledTableCell align="right">${v.notasCredito.toLocaleString()}</StyledTableCell>
+                <StyledTableCell align="right" sx={{ display: { xs: 'none', md: 'table-cell' } }}>{v.unidadesVendidas}</StyledTableCell>
+                <StyledTableCell align="right" sx={{ display: { xs: 'none', md: 'table-cell' } }}>${v.rentabilidad.toLocaleString()}</StyledTableCell>
+                <StyledTableCell align="right" sx={{ display: { xs: 'none', md: 'table-cell' } }}>${v.notasCredito.toLocaleString()}</StyledTableCell>
                 <StyledTableCell align="right">
                   <Tooltip title="Descargar informe de comisiones detallado en Excel">
                     <IconButton color="primary" onClick={() => handleDescargarComision(v.nombre)}>

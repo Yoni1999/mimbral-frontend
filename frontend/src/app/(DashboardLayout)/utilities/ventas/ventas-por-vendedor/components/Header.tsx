@@ -399,7 +399,7 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
                 </FormControl>
               </Grid>
 
-              <Grid item xs={6} sm={3} md={1.5}>
+              <Grid item xs={12} sm={3} md={1.5}>
                 <Button
                   variant="outlined"
                   color="primary"
