@@ -22,13 +22,6 @@ const UsuariosAdminPage = () => {
   return (
     <>
       <Box sx={{ p: { xs: 1.5, md: 4 } }}>
-        <Typography
-          variant="h4"
-          fontWeight="bold"
-          sx={{ fontSize: { xs: "1.05rem", md: "h4.fontSize" }, mb: { xs: 1, md: 2 } }}
-        >
-          Administración de Usuarios
-        </Typography>
         <TablaUsuarios />
       </Box>
     </>

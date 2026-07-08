@@ -194,23 +194,9 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
             }}
           >
             <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                fontSize: { xs: "0.92rem", md: "1rem" },
-                color: "#0f172a",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                lineHeight: 1.1,
-              }}
-            >
-              Resumen Ventas
-            </Typography>
-            <Typography
               variant="body2"
               sx={{
                 color: "#64748b",
-                mt: { xs: 0.25, md: 0.5 },
                 fontSize: { xs: "0.72rem", md: "0.78rem" },
               }}
             >

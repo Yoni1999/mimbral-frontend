@@ -5,7 +5,7 @@ import {
   Box, Typography, Divider, Snackbar, Alert, IconButton,
   Pagination, CircularProgress, Button
 } from "@mui/material";
-import { TrendingDown, Close as CloseIcon } from "@mui/icons-material";
+import { Close as CloseIcon } from "@mui/icons-material";
 import ProductosEstancadosTable from "./components/ProductosEstancadosTable";
 import HeaderProductosDetenidos from "./components/HeaderProductosDetenidos";
 import { apiJson } from "@/utils/apiClient";
@@ -170,31 +170,6 @@ const ProductosDetenidosPage = () => {
         tabLabels={["Activos para compras", "Inactivos para compra con stock"]}
         tabContents={[
           <React.Fragment key="tab-activos">
-            <Typography
-              variant="h4"
-              fontWeight="bold"
-              gutterBottom
-              display="flex"
-              alignItems="center"
-              sx={{
-                flexWrap: "wrap",
-                fontSize: { xs: "1.05rem", sm: "2.125rem" },
-                mb: { xs: 0.5, md: 1 },
-              }}
-            >
-              <TrendingDown sx={{ mr: 1, fontSize: { xs: "1.2rem", sm: "1.5rem" } }} />
-              Informe de Productos Detenidos Activos para compras
-            </Typography>
-
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              gutterBottom
-              sx={{ display: { xs: "none", md: "block" } }}
-            >
-              Este reporte muestra los productos que no han tenido ventas desde hace varios días, con información detallada sobre inventario y margen.
-            </Typography>
-
             <HeaderProductosDetenidos onFilterChange={handleFilterChange} />
             <Divider sx={{ my: { xs: 1, md: 3 } }} />
 
@@ -246,22 +221,6 @@ const ProductosDetenidosPage = () => {
           </React.Fragment>,
 
           <React.Fragment key="tab-inactivos">
-            <Typography
-              variant="h5"
-              fontWeight="bold"
-              gutterBottom
-              sx={{ fontSize: { xs: "1.05rem", md: "1.5rem" }, mb: { xs: 0.5, md: 1 } }}
-            >
-              Inactivos para compra con stock
-            </Typography>
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{ mb: 2, display: { xs: "none", md: "block" } }}
-            >
-              Productos que tienen stock disponible, pero están desactivados para compras y no tienen ventas recientes.
-            </Typography>
-
             <HeaderProductosDetenidos onFilterChange={handleFilterChange} />
             <Divider sx={{ my: { xs: 1, md: 3 } }} />
 

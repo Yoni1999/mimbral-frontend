@@ -69,18 +69,6 @@ const OpcionesAdminPage = () => {
 
   return (
     <Box position="relative" sx={{ p: { xs: 1.5, md: 4 }, backgroundColor: "#FEFEFE", minHeight: "100vh" }} >
-      <Typography
-        variant="h4"
-        fontWeight="bold"
-        sx={{ fontSize: { xs: "1.05rem", md: "h4.fontSize" }, mb: { xs: 1, md: 2 } }}
-      >
-        Dashboard de Administración
-      </Typography>
-
-      <Typography variant="subtitle1" sx={{ display: { xs: "none", md: "block" }, mb: 4 }}>
-        Visualiza información clave de los usuarios registrados en el sistema.
-      </Typography>
-
       {/* 🔹 Fila 1 - Tarjetas resumen */}
       <Grid container spacing={2} sx={{ mb: { xs: 3, md: 6 } }}>
         <Grid item xs={12} sm={6} md={3}>

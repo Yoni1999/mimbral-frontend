@@ -95,15 +95,6 @@ const Page = () => {
 
   return (
     <Box sx={{ p: { xs: 1.5, md: 4 } }}>
-      <Typography
-        variant="h4"
-        fontWeight="bold"
-        gutterBottom
-        sx={{ fontSize: { xs: "1.05rem", md: "h4.fontSize" }, mb: { xs: 0.5, md: 1 } }}
-      >
-        Sugerencias de Usuarios
-      </Typography>
-
       <Grid container spacing={2} sx={{ mt: { xs: 0.5, md: 2 } }}>
         {loading ? (
           <Box m={2}>

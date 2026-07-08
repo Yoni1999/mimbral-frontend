@@ -201,19 +201,6 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
             }}
           >
             <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 600,
-                fontSize: { xs: "1.05rem", md: "1.1rem" },
-                color: "primary.main",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-              }}
-            >
-              {obtenerTituloCategoria()}
-            </Typography>
-
-            <Typography
               variant="body2"
               sx={{
                 color: "#555",

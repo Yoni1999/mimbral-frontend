@@ -485,28 +485,6 @@ const DashboardVentasPorCanalPage: React.FC = () => {
 
   return (
     <Box sx={{ p: { xs: 1.5, md: 3 } }}>
-      <Box sx={{ mb: { xs: 1, md: 2 } }}>
-        <Typography
-          variant="h4"
-          fontWeight={800}
-          gutterBottom
-          display="flex"
-          alignItems="center"
-          gap={1}
-          sx={{
-            flexWrap: "wrap",
-            fontSize: { xs: "1.05rem", sm: "2.125rem" },
-            mb: { xs: 0.5, md: 1 },
-          }}
-        >
-          <TrendingUpIcon sx={{ fontSize: { xs: "1.2rem", sm: "1.5rem" } }} />
-          Dashboard de ventas por canal
-        </Typography>
-        <Typography color="text.secondary" sx={{ display: { xs: "none", md: "block" } }}>
-          Vista resumida con los mismos filtros aplicados desde la tabla.
-        </Typography>
-      </Box>
-
       <Box display="flex" flexWrap="wrap" sx={{ mb: { xs: 1, md: 2 }, gap: { xs: 0.5, md: 1 } }}>
         {searchParams?.toString() ? (
           Array.from(searchParams.entries()).map(([key, value]) => (

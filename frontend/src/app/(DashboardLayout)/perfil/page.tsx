@@ -55,34 +55,6 @@ export default function PerfilPage() {
 
   return (
     <Box sx={{ p: { xs: 1.5, md: 4 }, bgcolor: "#ffffff", minHeight: "100vh" }}>
-      <Chip
-        label="Mi Perfil"
-        icon={
-          <Avatar
-            sx={{
-              bgcolor: "#ffffff",
-              color: theme.palette.primary.main,
-              width: 28,
-              height: 28,
-            }}
-          >
-            👤
-          </Avatar>
-        }
-        sx={{
-          fontSize: { xs: "0.85rem", md: "1rem" },
-          fontWeight: "bold",
-          px: { xs: 1, md: 2 },
-          py: { xs: 0.5, md: 1.2 },
-          mb: { xs: 1.5, md: 3 },
-          borderRadius: "999px",
-          backgroundColor: theme.palette.primary.main,
-          color: "#fff",
-          boxShadow: "0px 3px 8px rgba(0, 0, 0, 0.1)",
-          ".MuiChip-icon": { mr: 1 },
-        }}
-      />
-
       <Paper elevation={1} sx={{ borderRadius: 4, overflow: "hidden" }}>
         {/* Encabezado tipo portada */}
         <Box

@@ -29,7 +29,7 @@ const HeaderLineaCredito: React.FC<Props> = ({ obtenerDescripcionPeriodo, handle
           p: { xs: 1.5, md: 3 },
           borderRadius: 3,
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           alignItems: "center",
           flexWrap: "wrap",
           gap: { xs: 1, md: 2 },
@@ -38,24 +38,6 @@ const HeaderLineaCredito: React.FC<Props> = ({ obtenerDescripcionPeriodo, handle
           borderColor: "divider"
         }}
       >
-        <Box>
-          <Typography
-            variant="h5"
-            fontWeight={700}
-            color="text.primary"
-            sx={{ fontSize: { xs: "1.05rem", md: "1.5rem" } }}
-          >
-            LÍNEA DE CRÉDITO CLIENTES
-          </Typography>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ display: { xs: "none", md: "block" } }}
-          >
-            Visualiza, filtra y analiza los datos financieros de tus clientes.
-          </Typography>
-        </Box>
-
         <MuiButton
           variant="outlined"
           startIcon={<FilterAltOutlined />}

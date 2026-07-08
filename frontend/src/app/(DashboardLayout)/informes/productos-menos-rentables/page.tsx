@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import HeaderVentasProductosDrawer from '../ventas-productos/components/HeaderVentasProductosDrawer';
 import ProductosMenosRentablesTable from './components/ProductosMenosRentablesTable';
 import * as XLSX from 'xlsx';
@@ -579,16 +578,6 @@ const ProductosMenosRentablesPage: React.FC = () => {
 
     return (
         <Box p={0}>
-            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap" sx={{ mb: { xs: 0.5, md: 1 } }}>
-                <TrendingDownIcon color="primary" fontSize="large" sx={{ fontSize: { xs: '1.4rem', md: '2.1875rem' } }} />
-                <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ fontSize: { xs: '1.05rem', sm: '2.125rem' }, mb: { xs: 0.5, md: 1 } }}>
-                    Informe de Productos menos Rentables
-                </Typography>
-            </Box>
-            <Typography variant="body1" color="text.secondary" gutterBottom sx={{ display: { xs: 'none', md: 'block' } }}>
-                Revisa el detalle de productos menos rentables por período, canal, proveedor y más.
-            </Typography>
-
             {/* Filtros reutilizando el header existente */}
             <HeaderVentasProductosDrawer
                 onFilterChange={handleFilterChange}

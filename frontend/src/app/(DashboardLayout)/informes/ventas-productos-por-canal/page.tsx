@@ -30,7 +30,6 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { apiJson } from "@/utils/apiClient";
@@ -368,31 +367,6 @@ const InformeVentasPorCanalPage: React.FC = () => {
 
   return (
     <Box p={1}>
-      <Typography
-        variant="h4"
-        fontWeight="bold"
-        gutterBottom
-        display="flex"
-        alignItems="center"
-        sx={{
-          flexWrap: "wrap",
-          fontSize: { xs: "1.05rem", sm: "2.125rem" },
-          mb: { xs: 0.5, md: 1 },
-        }}
-      >
-        <TrendingUpIcon sx={{ mr: 1, fontSize: { xs: "1.2rem", sm: "1.5rem" } }} />
-        Informe ventas de Productos por Canal
-      </Typography>
-
-      <Typography
-        variant="body1"
-        color="text.secondary"
-        gutterBottom
-        sx={{ display: { xs: "none", md: "block" } }}
-      >
-        Agrupa ventas por producto y canal. Haz clic en una cifra para ver el detalle (folio, fecha, vendedor, etc.).
-      </Typography>
-
       <HeaderVentasPorCanalDrawer
         onFilterChange={handleAppliedFiltersChange}
         currentFilters={filters}

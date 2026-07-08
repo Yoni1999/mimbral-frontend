@@ -20,7 +20,6 @@ import {
   TextField,            // <-- agregado para input manual
   DialogActions         // <-- agregado para botones del modal
 } from "@mui/material";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ProductosVendidosTable from "./components/ProductosVendidos";
 import HeaderVentasProductosDrawer from "./components/HeaderVentasProductosDrawer";
@@ -424,31 +423,6 @@ const InformeVentaPage = () => {
 
   return (
     <Box p={1}>
-      <Typography
-        variant="h4"
-        fontWeight="bold"
-        gutterBottom
-        display="flex"
-        alignItems="center"
-        sx={{
-          flexWrap: "wrap",
-          fontSize: { xs: "1.05rem", sm: "2.125rem" },
-          mb: { xs: 0.5, md: 1 },
-        }}
-      >
-        <TrendingUpIcon sx={{ mr: 1, fontSize: { xs: "1.2rem", sm: "1.5rem" } }} />
-        Informe de Venta de productos
-      </Typography>
-
-      <Typography
-        variant="body1"
-        color="text.secondary"
-        gutterBottom
-        sx={{ display: { xs: "none", md: "block" } }}
-      >
-        Revisa el detalle de productos vendidos por período, canal, proveedor y más.
-      </Typography>
-
       <HeaderVentasProductosDrawer
         onFilterChange={handleFilterChange}
         currentFilters={filters}

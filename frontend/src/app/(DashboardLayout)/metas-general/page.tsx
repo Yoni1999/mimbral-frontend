@@ -93,14 +93,6 @@ export default function MetasPage() {
     <PageContainer title="Metas" description="Sección de Metas">
       <Box sx={{ display: "flex", justifyContent: "center", px: 0, mt: 0 }}>
         <Box sx={{ width: "100%" }}>
-          <Typography
-            variant="h5"
-            fontWeight={700}
-            sx={{ mb: { xs: 1, md: 2 }, pl: { xs: 1, md: 2 }, fontSize: { xs: "1.05rem", md: "h5.fontSize" } }}
-          >
-            Metas creadas
-          </Typography>
-
           <HeaderMetas onFilterChange={handleFilterChange} initialFilters={filters} />
 
           {loading ? (

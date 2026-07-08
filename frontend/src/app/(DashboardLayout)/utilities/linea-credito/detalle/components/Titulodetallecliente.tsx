@@ -85,21 +85,12 @@ const HeaderLineaCredito: React.FC<Props> = ({
           border: "1px solid",
           borderColor: "divider",
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           alignItems: "center",
           flexWrap: "wrap",
           gap: { xs: 1, md: 2 },
         }}
       >
-        {/* Título */}
-        <Typography
-          variant="h6"
-          fontWeight={700}
-          sx={{ fontSize: { xs: "1.05rem", md: "1.25rem" } }}
-        >
-          DETALLE CLIENTE
-        </Typography>
-
         {/* Filtros alineados a la derecha */}
         <Box
           display="flex"

@@ -41,7 +41,7 @@ const TituloSupply: React.FC<Props> = ({
           p: { xs: 1.5, md: 3 },
           borderRadius: 3,
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           alignItems: "center",
           backgroundColor: "background.paper",
           border: "1px solid",
@@ -50,15 +50,6 @@ const TituloSupply: React.FC<Props> = ({
           gap: { xs: 1, md: 2 },
         }}
       >
-        <Typography
-          variant="h5"
-          fontWeight={700}
-          color="text.primary"
-          sx={{ fontSize: { xs: "1.05rem", md: "1.5rem" } }}
-        >
-          SUPPLY CHAIN DASHBOARD
-        </Typography>
-
         <Button
           variant="outlined"
           startIcon={<FilterAltOutlined />}

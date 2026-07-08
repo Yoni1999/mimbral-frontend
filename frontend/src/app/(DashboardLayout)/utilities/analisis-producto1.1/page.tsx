@@ -643,7 +643,7 @@ useEffect(() => {
         display="flex"
         flexDirection="row"
         flexWrap="wrap"
-        justifyContent="space-between"
+        justifyContent="flex-end"
         alignItems="center"
         gap={1}
         p={{ xs: 1.25, md: 2 }}
@@ -654,14 +654,6 @@ useEffect(() => {
         bgcolor="background.paper"
         boxShadow="0 1px 2px rgba(0, 0, 0, 0.04)"
       >
-        <Typography
-          variant="h5"
-          fontWeight={700}
-          color="text.primary"
-          sx={{ fontSize: { xs: "1.05rem", md: "1.125rem" } }}
-        >
-          ANÁLISIS DE PRODUCTO
-        </Typography>
         <MuiButton
           variant="outlined"
           startIcon={<FilterAltOutlined />}

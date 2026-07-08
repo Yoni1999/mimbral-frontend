@@ -39,30 +39,6 @@ const CrearUsuarioPage = () => {
           backgroundColor: theme.palette.background.paper,
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: { xs: 1, md: 2 } }}>
-          <Avatar sx={{ bgcolor: "primary.main" }}>
-            <PersonAddAlt1Icon />
-          </Avatar>
-          <div>
-            <Typography
-              variant="h5"
-              fontWeight="bold"
-              sx={{ fontSize: { xs: "1.05rem", md: "h5.fontSize" } }}
-            >
-              Crear nuevo usuario
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ display: { xs: "none", md: "block" } }}
-            >
-              Completa los campos para registrar un nuevo usuario en el sistema.
-            </Typography>
-          </div>
-        </Stack>
-
-        <Divider sx={{ my: { xs: 1.5, md: 3 } }} />
-
         <CrearUsuarioForm />
       </Paper>
     </Container>

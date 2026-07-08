@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import RemoveShoppingCartIcon from '@mui/icons-material/RemoveShoppingCart';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -480,16 +479,6 @@ const ProductosSinVentasPage: React.FC = () => {
 
     return (
         <Box p={0}>
-            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap" sx={{ mb: { xs: 0.5, md: 1 } }}>
-                <RemoveShoppingCartIcon color="primary" fontSize="large" sx={{ fontSize: { xs: '1.4rem', md: '2.1875rem' } }} />
-                <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ fontSize: { xs: '1.05rem', sm: '2.125rem' }, mb: { xs: 0.5, md: 1 } }}>
-                    Productos sin Ventas
-                </Typography>
-            </Box>
-            <Typography variant="body1" color="text.secondary" gutterBottom sx={{ display: { xs: 'none', md: 'block' } }}>
-                Revisa el detalle de productos sin ventas desde un mínimo de stock, fecha mínima de creación, categoría, subcategoría y más. (excluye almacén 04)
-            </Typography>
-
             {/* Filtros (drawer) */}
             <HeaderSinVentasDrawer
                 currentFilters={filters}
