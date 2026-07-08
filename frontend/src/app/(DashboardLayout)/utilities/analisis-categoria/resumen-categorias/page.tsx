@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Grid } from "@mui/material";
 import HeaderCategoria, { Filters } from "./components/HeaderCategoria";
 import NivelNavigation from "../components/NivelNavigation";
-import MetricCard from "./components/MetricCard";
+import MetricCard from "../components/MetricCard";
 import VentasChart from "./components/VentasChart";
 import dynamic from "next/dynamic";
 import TopProductosChart from "./components/TopProductosChart";
