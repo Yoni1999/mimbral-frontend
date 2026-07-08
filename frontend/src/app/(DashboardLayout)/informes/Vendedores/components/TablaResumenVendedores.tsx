@@ -172,18 +172,23 @@ const TablaResumenVendedores: React.FC = () => {
   };
 
   return (
-    <Box mt={3}>
-      <Box display="flex" justifyContent="space-between" mb={2} flexWrap="wrap" gap={1}>
+    <Box sx={{ mt: { xs: 1, md: 3 } }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1} sx={{ mb: { xs: 1, md: 2 } }}>
         <TextField
           label="Buscar por nombre"
           variant="outlined"
           size="small"
-          sx={{ width: { xs: '100%', sm: 250 } }}
+          sx={{ width: { sm: 250 }, flex: { xs: 1, sm: '0 0 auto' } }}
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
         <Box>
-          <Button variant="outlined" color="primary" onClick={handleMenuClick}>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={handleMenuClick}
+            sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, py: { xs: 0.4, sm: 0.75 } }}
+          >
             Exportar
           </Button>
           <Menu anchorEl={anchorEl} open={menuOpen} onClose={handleMenuClose}>
