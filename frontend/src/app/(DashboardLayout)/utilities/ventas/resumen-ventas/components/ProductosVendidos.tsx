@@ -83,13 +83,19 @@ const ProductosVendidos = ({ data }: Props) => {
   };
 
   const TablaContenido = () => (
-    <Table stickyHeader sx={{ minWidth: 900 }}>
+    <Table
+      stickyHeader
+      sx={{
+        minWidth: { xs: 0, md: 900 },
+        '& .MuiTableCell-root': { px: { xs: 1, md: 2 }, py: { xs: 1, md: 2 } },
+      }}
+    >
       <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
         <TableRow>
-          <TableCell>Imagen</TableCell>
+          <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Imagen</TableCell>
           <TableCell>Producto (SKU)</TableCell>
-          <TableCell>Primer Nivel</TableCell>
-          <TableCell>Categoría</TableCell>
+          <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Primer Nivel</TableCell>
+          <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Categoría</TableCell>
           <TableCell sortDirection={orderBy === 'cantidadVendida' ? order : false}>
             <TableSortLabel
               active={orderBy === 'cantidadVendida'}
@@ -117,7 +123,7 @@ const ProductosVendidos = ({ data }: Props) => {
               % Margen
             </TableSortLabel>
           </TableCell>
-          <TableCell sortDirection={orderBy === 'stock' ? order : false}>
+          <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }} sortDirection={orderBy === 'stock' ? order : false}>
             <TableSortLabel
               active={orderBy === 'stock'}
               direction={orderBy === 'stock' ? order : 'asc'}
@@ -126,7 +132,7 @@ const ProductosVendidos = ({ data }: Props) => {
               Stock Total
             </TableSortLabel>
           </TableCell>
-          <TableCell sortDirection={orderBy === 'margenBruto' ? order : false}>
+          <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }} sortDirection={orderBy === 'margenBruto' ? order : false}>
             <TableSortLabel
               active={orderBy === 'margenBruto'}
               direction={orderBy === 'margenBruto' ? order : 'asc'}
@@ -135,7 +141,7 @@ const ProductosVendidos = ({ data }: Props) => {
               Margen Bruto
             </TableSortLabel>
           </TableCell>
-          <TableCell sortDirection={orderBy === 'precioPromedio' ? order : false}>
+          <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }} sortDirection={orderBy === 'precioPromedio' ? order : false}>
             <TableSortLabel
               active={orderBy === 'precioPromedio'}
               direction={orderBy === 'precioPromedio' ? order : 'asc'}
@@ -150,7 +156,7 @@ const ProductosVendidos = ({ data }: Props) => {
       <TableBody>
         {sortedData.map((row, idx) => (
           <TableRow key={idx}>
-            <TableCell>
+            <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
               <Box
                 component="img"
                 src={row.imagen}
@@ -179,14 +185,14 @@ const ProductosVendidos = ({ data }: Props) => {
               <Typography fontWeight={600}>{row.nombre}</Typography>
               <Typography variant="caption" color="textSecondary">{row.sku}</Typography>
             </TableCell>
-            <TableCell>{row.primerNivel}</TableCell>
-            <TableCell>{row.categoria}</TableCell>
+            <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.primerNivel}</TableCell>
+            <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.categoria}</TableCell>
             <TableCell>{row.cantidadVendida}</TableCell>
             <TableCell>${row.totalVentas.toLocaleString('es-CL')}</TableCell>
             <TableCell>{`${row.margenPorcentaje}%`}</TableCell>
-            <TableCell>{row.stock}</TableCell>
-            <TableCell>${row.margenBruto.toLocaleString('es-CL')}</TableCell>
-            <TableCell>${row.precioPromedio.toLocaleString('es-CL')}</TableCell>
+            <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.stock}</TableCell>
+            <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>${row.margenBruto.toLocaleString('es-CL')}</TableCell>
+            <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>${row.precioPromedio.toLocaleString('es-CL')}</TableCell>
           </TableRow>
         ))}
       </TableBody>

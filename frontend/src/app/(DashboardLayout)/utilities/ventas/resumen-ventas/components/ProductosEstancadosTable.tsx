@@ -56,13 +56,18 @@ const ProductosEstancadosTable: React.FC<Props> = ({ data }) => {
         Resumen Productos Estancados
       </Typography>
       <TableContainer component={Paper} sx={{ borderRadius: 2, overflowX: 'auto' }}>
-        <Table sx={{ minWidth: 800 }}>
+        <Table
+          sx={{
+            minWidth: { xs: 0, md: 800 },
+            '& .MuiTableCell-root': { px: { xs: 1, md: 2 }, py: { xs: 1, md: 2 } },
+          }}
+        >
           <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
             <TableRow>
-              <TableCell>Imagen</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Imagen</TableCell>
               <TableCell>Producto</TableCell>
-              <TableCell>Categoría</TableCell>
-              <TableCell>Última venta</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Categoría</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Última venta</TableCell>
 
               <TableCell sortDirection={orderBy === 'DiasSinVenta' ? order : false}>
                 <TableSortLabel
@@ -84,7 +89,7 @@ const ProductosEstancadosTable: React.FC<Props> = ({ data }) => {
                 </TableSortLabel>
               </TableCell>
 
-              <TableCell sortDirection={orderBy === 'MargenPorcentaje' ? order : false}>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }} sortDirection={orderBy === 'MargenPorcentaje' ? order : false}>
                 <TableSortLabel
                   active={orderBy === 'MargenPorcentaje'}
                   direction={orderBy === 'MargenPorcentaje' ? order : 'asc'}

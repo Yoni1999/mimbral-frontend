@@ -135,26 +135,26 @@ const ProductosEstancadosTable = ({ data = [] }: { data: ProductoEstancado[] }) 
       </Box>
 
       <TableContainer component={Paper} sx={{ borderRadius: 2, overflowX: 'auto' }}>
-        <Table size="small" sx={{ minWidth: 900 }}>
+        <Table size="small" sx={{ minWidth: { xs: 0, md: 900 } }}>
           <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
             <TableRow>
-              <TableCell>Imagen</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Imagen</TableCell>
               <TableCell>Producto</TableCell>
-              <TableCell>Primer Nivel</TableCell>
-              <TableCell>Categoría</TableCell>
-              <TableCell>{renderSortLabel('UltimaVenta', 'Última venta')}</TableCell>
-              <TableCell>{renderSortLabel('UltimaFechaCompra', 'Última compra')}</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Primer Nivel</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Categoría</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{renderSortLabel('UltimaVenta', 'Última venta')}</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{renderSortLabel('UltimaFechaCompra', 'Última compra')}</TableCell>
               <TableCell>{renderSortLabel('DiasSinVenta', 'Días sin venta')}</TableCell>
               <TableCell>{renderSortLabel('Stock', 'Stock')}</TableCell>
-              <TableCell>{renderSortLabel('CostoPromedioUlt3Compras', 'Costo Prom.')}</TableCell>
-              <TableCell>{renderSortLabel('MargenPorcentaje', '% Margen')}</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{renderSortLabel('CostoPromedioUlt3Compras', 'Costo Prom.')}</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{renderSortLabel('MargenPorcentaje', '% Margen')}</TableCell>
               <TableCell>Alerta</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {sortedData.map((row, idx) => (
               <TableRow key={idx}>
-                <TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   {row.Imagen ? (
                     <img src={row.Imagen} alt="producto" style={{ width: 40, height: 40, borderRadius: 4 }} />
                   ) : (
@@ -165,22 +165,22 @@ const ProductosEstancadosTable = ({ data = [] }: { data: ProductoEstancado[] }) 
                   <Typography fontWeight={500}>{row.Producto}</Typography>
                   <Typography variant="caption" color="text.secondary">{row.SKU}</Typography>
                 </TableCell>
-                <TableCell>{row.PrimerNivel || '—'}</TableCell>
-                <TableCell>{row.Categoria || '—'}</TableCell>
-                <TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.PrimerNivel || '—'}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.Categoria || '—'}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   {isFechaValida(row.UltimaVenta)
                     ? new Date(row.UltimaVenta!).toLocaleDateString('es-CL', { timeZone: 'UTC' })
                     : <em style={{ color: '#888' }}>Sin ventas</em>}
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   {isFechaValida(row.UltimaFechaCompra)
                     ? new Date(row.UltimaFechaCompra!).toLocaleDateString('es-CL', { timeZone: 'UTC' })
                     : '—'}
                 </TableCell>
                 <TableCell>{`${row.DiasSinVenta} días`}</TableCell>
                 <TableCell>{row.Stock}</TableCell>
-                <TableCell>{row.CostoPromedioUlt3Compras}</TableCell>
-                <TableCell>{`${row.MargenPorcentaje}%`}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.CostoPromedioUlt3Compras}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{`${row.MargenPorcentaje}%`}</TableCell>
                 <TableCell>{renderAlertaIcon(row.DiasSinVenta)}</TableCell>
               </TableRow>
             ))}
