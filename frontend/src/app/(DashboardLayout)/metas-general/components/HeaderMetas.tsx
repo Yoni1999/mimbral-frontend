@@ -17,6 +17,8 @@ import {
   Avatar,
   ListItemIcon,
   ListItemText,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import CloseIcon from "@mui/icons-material/Close";
@@ -54,6 +56,8 @@ const canalSlpMap: Record<string, number> = {
 };
 
 const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [openDrawer, setOpenDrawer] = useState(false);
   const [filters, setFilters] = useState<MetaFilters>(
     initialFilters || {
@@ -297,8 +301,22 @@ const HeaderMetasDrawer: React.FC<Props> = ({ onFilterChange, initialFilters }) 
 
 
 
-      <Drawer anchor="right" open={openDrawer} onClose={() => setOpenDrawer(false)}>
-        <Box sx={{ width: { xs: "100vw", sm: 360 }, p: 3 }}>
+      <Drawer
+        anchor={isMobile ? "bottom" : "right"}
+        open={openDrawer}
+        onClose={() => setOpenDrawer(false)}
+        PaperProps={{
+          sx: {
+            width: { xs: "100%", md: 360 },
+            borderTopLeftRadius: { xs: 16, md: 0 },
+            borderTopRightRadius: { xs: 16, md: 0 },
+            maxHeight: { xs: "88vh", md: "100%" },
+            overflowY: "auto",
+          },
+        }}
+      >
+        <Box sx={{ width: { xs: "100%", md: 360 }, p: 3 }}>
+          <Box sx={{ width: 40, height: 4, borderRadius: 2, bgcolor: "grey.300", mx: "auto", mb: 1, display: { xs: "block", md: "none" } }} />
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6">Filtros de búsqueda</Typography>
             <IconButton onClick={() => setOpenDrawer(false)}>

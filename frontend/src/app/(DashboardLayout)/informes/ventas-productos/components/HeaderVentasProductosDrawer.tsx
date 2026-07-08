@@ -5,7 +5,7 @@ import {
   Box, Drawer, IconButton, Typography, Divider,
   FormControl, InputLabel, Select, MenuItem, Button,
   Grid, TextField, Chip, Avatar, ListItemIcon, ListItemText,
-  CircularProgress
+  CircularProgress, useMediaQuery, useTheme
 } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import CloseIcon from "@mui/icons-material/Close";
@@ -73,6 +73,8 @@ const tiposEnvioMeli = [
 ];
 
 const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters, multiCanal }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [open, setOpen] = useState(false);
   // Inicializa tipoEnvio a 'todas' por defecto cuando el canal es Meli o si no hay un filtro actual
   const [filters, setFilters] = useState<FiltroVentas>(() => {
@@ -361,8 +363,23 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
         </Button>
       </Box>
 
-      <Drawer anchor="right" open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { width: { xs: "100vw", sm: 360 }, p: { xs: 2, sm: 3 } } }}>
+      <Drawer
+        anchor={isMobile ? "bottom" : "right"}
+        open={open}
+        onClose={() => setOpen(false)}
+        PaperProps={{
+          sx: {
+            width: { xs: "100%", md: 360 },
+            borderTopLeftRadius: { xs: 16, md: 0 },
+            borderTopRightRadius: { xs: 16, md: 0 },
+            maxHeight: { xs: "88vh", md: "100%" },
+            p: { xs: 2, sm: 3 },
+            overflowY: "auto",
+          },
+        }}
+      >
         <Box>
+          <Box sx={{ width: 40, height: 4, borderRadius: 2, bgcolor: "grey.300", mx: "auto", mb: 1, display: { xs: "block", md: "none" } }} />
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6">Filtros de ventas</Typography>
             <IconButton onClick={() => setOpen(false)}><CloseIcon /></IconButton>

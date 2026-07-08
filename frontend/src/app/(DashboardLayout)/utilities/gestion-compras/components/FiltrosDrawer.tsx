@@ -36,6 +36,9 @@ const canales = [
 const marcas = ["Sipa", "Topex", "Tricolor", "Tigre"];
 
 const FiltrosDrawer = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   const [open, setOpen] = useState(false);
   const [filtros, setFiltros] = useState({
     proveedor: '',
@@ -169,8 +172,23 @@ const FiltrosDrawer = () => {
           </Button>
         </Stack>
 
-        <Drawer anchor="right" open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { width: { xs: '100vw', sm: 360 }, p: 3 } }}>
+        <Drawer
+          anchor={isMobile ? "bottom" : "right"}
+          open={open}
+          onClose={() => setOpen(false)}
+          PaperProps={{
+            sx: {
+              width: { xs: '100%', md: 360 },
+              maxHeight: { xs: '88vh', md: '100%' },
+              borderTopLeftRadius: { xs: 16, md: 0 },
+              borderTopRightRadius: { xs: 16, md: 0 },
+              overflowY: 'auto',
+              p: 3,
+            },
+          }}
+        >
           <Box>
+            <Box sx={{ width: 40, height: 4, borderRadius: 2, bgcolor: 'grey.300', mx: 'auto', mb: 1, display: { xs: 'block', md: 'none' } }} />
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6">Filtros</Typography>
               <IconButton onClick={() => setOpen(false)}><CloseIcon /></IconButton>

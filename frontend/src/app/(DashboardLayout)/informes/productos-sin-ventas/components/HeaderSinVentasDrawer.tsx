@@ -33,6 +33,8 @@ interface Props {
 }
 
 const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters }) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     const [open, setOpen] = useState(false);
     const [filters, setFilters] = useState<FiltroSinVentas>(() => currentFilters || { minStock: 0 });
 
@@ -246,8 +248,23 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
                 </Button>
             </Box>
 
-            <Drawer anchor="right" open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { width: { xs: '100vw', sm: 360 }, p: { xs: 2, sm: 3 } } }}>
+            <Drawer
+                anchor={isMobile ? "bottom" : "right"}
+                open={open}
+                onClose={() => setOpen(false)}
+                PaperProps={{
+                    sx: {
+                        width: { xs: '100%', md: 360 },
+                        borderTopLeftRadius: { xs: 16, md: 0 },
+                        borderTopRightRadius: { xs: 16, md: 0 },
+                        maxHeight: { xs: '88vh', md: '100%' },
+                        p: { xs: 2, sm: 3 },
+                        overflowY: 'auto',
+                    },
+                }}
+            >
                 <Box>
+                    <Box sx={{ width: 40, height: 4, borderRadius: 2, bgcolor: 'grey.300', mx: 'auto', mb: 1, display: { xs: 'block', md: 'none' } }} />
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Typography variant="h6">Filtros</Typography>
                         <IconButton onClick={() => setOpen(false)}><CloseIcon /></IconButton>
