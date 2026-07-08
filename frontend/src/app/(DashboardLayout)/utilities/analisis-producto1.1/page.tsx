@@ -683,30 +683,50 @@ useEffect(() => {
         display="flex"
         flexDirection={{ xs: "column", sm: "row" }}
         alignItems={{ xs: "stretch", sm: "center" }}
-        p={2}
+        p={{ xs: 1.25, md: 2 }}
         border={1}
         borderRadius={2}
         borderColor="divider"
         bgcolor="background.paper"
         boxShadow="0 1px 2px rgba(0, 0, 0, 0.04)"
-        gap={3}
+        gap={{ xs: 1.5, md: 3 }}
       >
         <Box flexShrink={0} display="flex" flexDirection="column" alignItems="center">
-          <img
+          <Box
+            component="img"
             src={productoSeleccionado?.U_Imagen || "/no-image.png"}
             alt="Producto"
-            style={{ width: 96, height: 96, objectFit: "contain", borderRadius: 8 }}
+            sx={{
+              width: { xs: 56, md: 96 },
+              height: { xs: 56, md: 96 },
+              objectFit: "contain",
+              borderRadius: "8px",
+            }}
           />
-          <Typography variant="caption" color="primary" fontWeight="bold" sx={{ mt: 1 }}>SKU:
+          <Typography
+            variant="caption"
+            color="primary"
+            fontWeight="bold"
+            sx={{ mt: { xs: 0.5, md: 1 }, fontSize: { xs: "0.65rem", md: "0.75rem" } }}
+          >SKU:
             {productoSeleccionado?.itemcode || "Sin producto seleccionado"}
           </Typography>
         </Box>
 
         <Box flex={1}>
-          <Typography variant="h6" fontWeight={700}>{productoSeleccionado?.itemname || "Debes seleccionar un producto"}</Typography>
-          <Typography variant="body2" color="text.secondary" mb={1}>Canal: {filtros.canal}</Typography>
+          <Typography
+            variant="h6"
+            fontWeight={700}
+            sx={{ fontSize: { xs: "0.95rem", md: "1.25rem" } }}
+          >{productoSeleccionado?.itemname || "Debes seleccionar un producto"}</Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            mb={{ xs: 0.5, md: 1 }}
+            sx={{ fontSize: { xs: "0.75rem", md: "0.875rem" } }}
+          >Canal: {filtros.canal}</Typography>
 
-          <Box display="flex" gap={1.5} flexWrap="wrap">
+          <Box display="flex" gap={{ xs: 1, md: 1.5 }} flexWrap="wrap">
             <MetricCard
             icon={<FolderIcon color="primary" />}
             label="Stock"

@@ -328,16 +328,15 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
   };
 
   return (
-    <Box mb={2}>
+    <Box sx={{ mb: { xs: 1, md: 2 } }}>
       <Box
-        mt={1}
         display="flex"
         justifyContent="space-between"
         alignItems="center"
         flexWrap="wrap"
-        gap={1.5}
+        sx={{ mt: { xs: 0.5, md: 1 }, gap: { xs: 1, md: 1.5 } }}
       >
-        <Box display="flex" gap={1} flexWrap="wrap">
+        <Box display="flex" sx={{ gap: { xs: 0.5, md: 1 } }} flexWrap="wrap">
           {filters.fechaInicio && filters.fechaFin && (
             <Chip
               size="small"
