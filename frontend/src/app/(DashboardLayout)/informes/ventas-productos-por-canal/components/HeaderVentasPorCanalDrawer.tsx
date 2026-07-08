@@ -409,8 +409,9 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
           onClick={(e) => setAnchorEl(e.currentTarget)}
           sx={{
             borderRadius: 2.5,
-            px: 2.2,
-            py: 1.1,
+            px: { xs: 1.5, md: 2.2 },
+            py: { xs: 0.5, md: 1.1 },
+            fontSize: { xs: "0.75rem", md: "0.875rem" },
             textTransform: "none",
             fontWeight: 700,
             color: "#294273",

@@ -16,21 +16,21 @@ const MetricCard: React.FC<Props> = ({ icon, label, value, variation, variationC
     <Paper
       variant="outlined"
       sx={{
-        p: 1.5,
+        p: { xs: 1, md: 1.5 },
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        minWidth: 120,
+        minWidth: { xs: 104, md: 120 },
         flex:1,
-        minHeight: 90,
+        minHeight: { xs: 72, md: 90 },
         borderRadius: 2,
       }}
     >
       <Box display="flex" alignItems="center" gap={0.5}>
         {icon}
-        <Typography fontWeight={600} fontSize={13}>{label}</Typography>
+        <Typography fontWeight={600} sx={{ fontSize: { xs: 12, md: 13 } }}>{label}</Typography>
       </Box>
-      <Typography variant="h6" fontWeight={700}>{value}</Typography>
+      <Typography variant="h6" fontWeight={700} sx={{ fontSize: { xs: "1rem", md: "1.25rem" } }}>{value}</Typography>
       {variation && (
         <Typography variant="caption" color={variationColor}>
           {variation}

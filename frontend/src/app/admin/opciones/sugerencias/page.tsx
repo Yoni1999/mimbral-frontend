@@ -83,12 +83,17 @@ const AdminSugerenciasPage = () => {
   };
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 } }}>
-      <Typography variant="h4" fontWeight="bold" gutterBottom>
+    <Box sx={{ p: { xs: 1.5, md: 4 } }}>
+      <Typography
+        variant="h4"
+        fontWeight="bold"
+        gutterBottom
+        sx={{ fontSize: { xs: "1.05rem", md: "h4.fontSize" }, mb: { xs: 0.5, md: 1 } }}
+      >
         Gestión de Sugerencias
       </Typography>
 
-      <Paper sx={{ mt: 3, overflowX: "auto" }}>
+      <Paper sx={{ mt: { xs: 1, md: 3 }, overflowX: "auto" }}>
         {loading ? (
           <Box p={4} display="flex" justifyContent="center">
             <CircularProgress />

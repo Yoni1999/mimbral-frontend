@@ -136,7 +136,7 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
   };
 
   return (
-    <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: "100%", sm: 400 }, p: 3 } }}>
+    <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: "100%", sm: 400 }, p: { xs: 2, sm: 3 } } }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6">Filtros Avanzados</Typography>
         <IconButton onClick={onClose}><CloseIcon /></IconButton>
