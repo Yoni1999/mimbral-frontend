@@ -74,7 +74,7 @@ const MetricCard = ({
         </Typography>
 
         {/* 🔹 Valor y % cambio */}
-        <Box display="flex" alignItems="center" justifyContent="center" mt={2}>
+        <Box display="flex" alignItems="center" justifyContent="center" mt={2} flexWrap="wrap">
           <Typography variant={small ? "h6" : "h4"} fontWeight="bold" color="primary">
             {value}
           </Typography>

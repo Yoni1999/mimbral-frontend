@@ -173,12 +173,12 @@ const TablaResumenVendedores: React.FC = () => {
 
   return (
     <Box mt={3}>
-      <Box display="flex" justifyContent="space-between" mb={2}>
+      <Box display="flex" justifyContent="space-between" mb={2} flexWrap="wrap" gap={1}>
         <TextField
           label="Buscar por nombre"
           variant="outlined"
           size="small"
-          sx={{ width: 250 }}
+          sx={{ width: { xs: '100%', sm: 250 } }}
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
@@ -197,8 +197,8 @@ const TablaResumenVendedores: React.FC = () => {
         </Box>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table stickyHeader>
+      <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+        <Table stickyHeader sx={{ minWidth: 900 }}>
           <TableHead>
             <TableRow>
               <StyledTableCell>Vendedor</StyledTableCell>

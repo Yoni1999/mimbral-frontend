@@ -424,7 +424,14 @@ const InformeVentaPage = () => {
 
   return (
     <Box p={1}>
-      <Typography variant="h4" fontWeight="bold" gutterBottom display="flex" alignItems="center">
+      <Typography
+        variant="h4"
+        fontWeight="bold"
+        gutterBottom
+        display="flex"
+        alignItems="center"
+        sx={{ flexWrap: "wrap", fontSize: { xs: "1.4rem", sm: "2.125rem" } }}
+      >
         <TrendingUpIcon sx={{ mr: 1 }} />
         Informe de Venta de productos
       </Typography>

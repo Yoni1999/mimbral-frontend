@@ -164,7 +164,7 @@ const VentasChart: React.FC<Props> = ({ filters }) => {
         }}
       >
 
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" rowGap={1} sx={{ mb: 1 }}>
         <Typography
           variant="h6"
           sx={{

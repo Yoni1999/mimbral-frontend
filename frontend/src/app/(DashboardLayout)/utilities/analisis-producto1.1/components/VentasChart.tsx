@@ -142,7 +142,7 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
       }}
     >
 
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" rowGap={1}>
           <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1rem", color: "#333" }}>
             Histórico por Canal
           </Typography>

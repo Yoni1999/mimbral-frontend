@@ -4,6 +4,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Box,
   Typography, IconButton, TextField, MenuItem, Button,
   Select, Autocomplete, CircularProgress, Divider,
+  useMediaQuery, useTheme,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import * as XLSX from 'xlsx';
@@ -32,6 +33,8 @@ const canalSlpMap: Record<string, number> = {
 };
 
 const MetaFormModal = ({ open, onClose, onMetaGuardada }: Props) => {
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const [canal, setCanal] = useState('');
   const [periodo, setPeriodo] = useState('');
   const [tipoMeta, setTipoMeta] = useState('');
@@ -166,13 +169,13 @@ const MetaFormModal = ({ open, onClose, onMetaGuardada }: Props) => {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" sx={{ '& .MuiDialog-paper': { borderRadius: 4 } }}>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" fullScreen={fullScreen} sx={{ '& .MuiDialog-paper': { borderRadius: { xs: 0, sm: 4 } } }}>
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h6" fontWeight="bold">Crear Nueva Meta</Typography>
         <IconButton onClick={onClose}><CloseIcon /></IconButton>
       </DialogTitle>
 
-      <DialogContent dividers sx={{ px: 4, py: 4 }}>
+      <DialogContent dividers sx={{ px: { xs: 2, sm: 4 }, py: 4 }}>
         <Box display="flex" flexDirection="column" gap={2}>
           <Select value={canal} onChange={(e) => setCanal(e.target.value)} fullWidth displayEmpty>
             <MenuItem value="">Seleccionar Canal</MenuItem>
