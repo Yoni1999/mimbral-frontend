@@ -894,14 +894,14 @@ useEffect(() => {
                 overflowX: 'auto',
               }}
             >
-              <Table size="small" stickyHeader sx={{ minWidth: 500 }}>
+              <Table size="small" stickyHeader sx={{ minWidth: { xs: 0, md: 500 } }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell><b>Código</b></TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><b>Código</b></TableCell>
                     <TableCell><b>Nombre</b></TableCell>
                     <TableCell align="right"><b>Unidades</b></TableCell>
-                    <TableCell align="right"><b>Notas de Venta</b></TableCell>
-                    <TableCell align="right"><b>OC</b></TableCell>
+                    <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}><b>Notas de Venta</b></TableCell>
+                    <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}><b>OC</b></TableCell>
                     <TableCell align="right"><b>Disponible</b></TableCell>
                   </TableRow>
                 </TableHead>
@@ -926,13 +926,13 @@ useEffect(() => {
 
                     return (
                       <TableRow key={code}>
-                        <TableCell>{code}</TableCell>
+                        <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{code}</TableCell>
                         <TableCell>{name}</TableCell>
                         <TableCell align="right" sx={{ color: unidades > 0 ? 'text.primary' : 'text.disabled' }}>
                           {unidades.toLocaleString("es-CL")}
                         </TableCell>
-                        <TableCell align="right">{notasVenta.toLocaleString("es-CL")}</TableCell>
-                        <TableCell align="right">{oc.toLocaleString("es-CL")}</TableCell>
+                        <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>{notasVenta.toLocaleString("es-CL")}</TableCell>
+                        <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>{oc.toLocaleString("es-CL")}</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 500, color: disponible === 0 ? 'error.main' : 'success.main' }}>
                           {disponible.toLocaleString("es-CL")}
                         </TableCell>

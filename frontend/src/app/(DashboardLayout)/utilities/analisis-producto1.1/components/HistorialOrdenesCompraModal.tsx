@@ -95,17 +95,17 @@ const HistorialOrdenesCompraModal = ({ open, onClose, data }: Props) => {
                 </AccordionSummary>
                 <AccordionDetails sx={{ px: 1 }}>
                   <Box sx={{ overflowX: "auto" }}>
-                  <Table size="small" sx={{ minWidth: 650 }}>
+                  <Table size="small" sx={{ minWidth: { xs: 0, md: 650 } }}>
                     <TableHead>
                       <TableRow sx={{ backgroundColor: '#fafafa' }}>
                         <TableCell>N° OC</TableCell>
                         <TableCell>Fecha</TableCell>
-                        <TableCell>SKU</TableCell>
-                        <TableCell>Descripción</TableCell>
+                        <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>SKU</TableCell>
+                        <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Descripción</TableCell>
                         <TableCell align="right">Cantidad</TableCell>
-                        <TableCell align="right">Precio Unitario</TableCell>
+                        <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>Precio Unitario</TableCell>
                         <TableCell align="right">Total</TableCell>
-                        <TableCell>Vendedor</TableCell>
+                        <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Vendedor</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -120,12 +120,12 @@ const HistorialOrdenesCompraModal = ({ open, onClose, data }: Props) => {
                         >
                           <TableCell>{orden.NumeroOrdenCompra}</TableCell>
                           <TableCell>{parseFechaLocal(orden.FechaOrden).toLocaleDateString("es-CL")}</TableCell>
-                          <TableCell>{orden.ItemCode}</TableCell>
-                          <TableCell>{orden.DescripcionProducto}</TableCell>
+                          <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{orden.ItemCode}</TableCell>
+                          <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{orden.DescripcionProducto}</TableCell>
                           <TableCell align="right">{orden.CantidadComprada.toLocaleString('es-CL')}</TableCell>
-                          <TableCell align="right">${orden.PrecioUnitario.toLocaleString('es-CL')}</TableCell>
+                          <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>${orden.PrecioUnitario.toLocaleString('es-CL')}</TableCell>
                           <TableCell align="right">${orden.TotalLinea.toLocaleString('es-CL')}</TableCell>
-                          <TableCell>{orden.Vendedor}</TableCell>
+                          <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{orden.Vendedor}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

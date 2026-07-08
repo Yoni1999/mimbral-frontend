@@ -51,7 +51,7 @@ const HistorialVentasModal: React.FC<Props> = ({ open, onClose, data }) => {
 
       <DialogContent dividers>
         <Box sx={{ overflowX: "auto" }}>
-        <Table sx={{ minWidth: 450 }}>
+        <Table sx={{ minWidth: { xs: 0, md: 450 } }}>
           <TableHead>
             <TableRow>
               <TableCell><b>Mes</b></TableCell>

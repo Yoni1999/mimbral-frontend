@@ -47,9 +47,10 @@ const AlmacenesSelector = () => {
       <Box
         sx={{
           display: "flex",
-          overflowX: "auto",
-          gap: 3,
-          justifyContent: "space-between",
+          flexWrap: { xs: "wrap", md: "nowrap" },
+          overflowX: { xs: "visible", md: "auto" },
+          gap: { xs: 2, md: 3 },
+          justifyContent: { xs: "flex-start", md: "space-between" },
           alignItems: "flex-start",
         }}
       >

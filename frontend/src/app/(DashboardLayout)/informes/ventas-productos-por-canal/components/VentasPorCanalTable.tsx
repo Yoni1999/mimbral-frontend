@@ -169,7 +169,13 @@ const VentasPorCanalTable: React.FC<Props> = ({
         overflow: "auto",
       }}
     >
-      <Table stickyHeader size="small" sx={{ minWidth: { xs: 0, md: 800 } }}>
+      <Table
+        stickyHeader
+        sx={{
+          minWidth: { xs: 0, md: 800 },
+          "& .MuiTableCell-root": { px: { xs: 1, md: 2 }, py: { xs: 1, md: 2 } },
+        }}
+      >
         <TableHead>
           <TableRow>
             <StyledTableCell>Producto (SKU)</StyledTableCell>
@@ -187,7 +193,9 @@ const VentasPorCanalTable: React.FC<Props> = ({
             <StyledTableCell>Stock</StyledTableCell>
 
             {canales.map((c) => (
-              <StyledTableCell key={`head-${c}`}>{formatChannelLabel(c)}</StyledTableCell>
+              <StyledTableCell key={`head-${c}`} sx={{ display: { xs: "none", md: "table-cell" } }}>
+                {formatChannelLabel(c)}
+              </StyledTableCell>
             ))}
           </TableRow>
         </TableHead>
@@ -220,7 +228,7 @@ const VentasPorCanalTable: React.FC<Props> = ({
                         : "https://res.cloudinary.com/dhzahos7u/image/upload/v1748960388/producto_sin_imagen_vqaps4.jpg"
                     }
                     alt={row.nombre}
-                    sx={{ width: 40, height: 40 }}
+                    sx={{ width: 40, height: 40, display: { xs: "none", md: "inline-flex" } }}
                     variant="rounded"
                   />
                   <Box>
@@ -265,7 +273,10 @@ const VentasPorCanalTable: React.FC<Props> = ({
                 const isTopChannel = topChannels.includes(canalNombre);
 
                 return (
-                  <StyledTableCell key={`${row.sku}-${canalNombre}`}>
+                  <StyledTableCell
+                    key={`${row.sku}-${canalNombre}`}
+                    sx={{ display: { xs: "none", md: "table-cell" } }}
+                  >
                     {tieneDetalle ? (
                       <Button
                         variant="text"

@@ -100,14 +100,14 @@ const ProductosEstancadosTable: React.FC<Props> = ({ data }) => {
               </TableCell>
 
               <TableCell>Alerta</TableCell>
-              <TableCell>Acción Sugerida</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Acción Sugerida</TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
             {sortedData.map((row, idx) => (
               <TableRow key={idx}>
-                <TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   <Avatar
                     src={row.Imagen || undefined}
                     alt={row.Producto}
@@ -115,13 +115,13 @@ const ProductosEstancadosTable: React.FC<Props> = ({ data }) => {
                   />
                 </TableCell>
                 <TableCell>{row.Producto}</TableCell>
-                <TableCell>{row.Categoria || '-'}</TableCell>
-                <TableCell>{row.UltimaVenta ? new Date(row.UltimaVenta).toLocaleDateString() : '-'}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.Categoria || '-'}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.UltimaVenta ? new Date(row.UltimaVenta).toLocaleDateString() : '-'}</TableCell>
                 <TableCell>{row.DiasSinVenta} días</TableCell>
                 <TableCell>{row.Stock}</TableCell>
-                <TableCell>{row.MargenPorcentaje?.toFixed(1).replace('.', ',')}%</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{row.MargenPorcentaje?.toFixed(1).replace('.', ',')}%</TableCell>
                 <TableCell>{renderAlertaIcon(row.DiasSinVenta, row.MargenPorcentaje)}</TableCell>
-                <TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   {
                     row.Stock === 0 ? 'Sin stock'
                     : row.MargenPorcentaje < 5 ? 'Posible liquidación'

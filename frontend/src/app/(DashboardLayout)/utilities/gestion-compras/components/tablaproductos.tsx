@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { Box, Typography, Stack, Button, TextField } from '@mui/material';
+import { Box, Typography, Stack, Button, TextField, useMediaQuery, useTheme } from '@mui/material';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
@@ -134,8 +134,26 @@ const columns: GridColDef[] = [
   { field: 'sugeridoCompra', headerName: 'Sugerido Compra', type: 'number', flex: 1, align: 'right', headerAlign: 'right' },
 ];
 
+// Columnas esenciales visibles en móvil (solo presentación)
+const columnasMovil = ['sku', 'descripcion', 'stockDisponible', 'sugeridoCompra'];
+
 export default function RotacionStockDataGrid() {
   const [search, setSearch] = React.useState('');
+  const theme = useTheme();
+  const esMovil = useMediaQuery(theme.breakpoints.down('md'));
+
+  const visibleColumns = React.useMemo(
+    () =>
+      esMovil
+        ? columns
+            .filter((col) => columnasMovil.includes(col.field))
+            .map((col) => ({
+              ...col,
+              minWidth: col.field === 'descripcion' ? 130 : 80,
+            }))
+        : columns,
+    [esMovil]
+  );
 
   const filteredRows = rows.filter(
     (row) =>
@@ -194,7 +212,7 @@ export default function RotacionStockDataGrid() {
 
       <DataGrid
         rows={filteredRows}
-        columns={columns}
+        columns={visibleColumns}
         pageSizeOptions={[5, 10, 20]}
         initialState={{
           pagination: {
@@ -213,7 +231,7 @@ export default function RotacionStockDataGrid() {
             whiteSpace: 'nowrap',
           },
         }}
-        checkboxSelection
+        checkboxSelection={!esMovil}
         disableRowSelectionOnClick
       />
     </Box>

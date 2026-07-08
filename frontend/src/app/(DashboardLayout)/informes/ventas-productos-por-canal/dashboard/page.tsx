@@ -450,8 +450,13 @@ const DashboardVentasPorCanalPage: React.FC = () => {
       <Table stickyHeader size="small">
         <TableHead>
           <TableRow>
-            {["SKU", "Producto", "Ventas", "Margen", "Stock 01+03"].map((head) => (
-              <TableCell key={head}>{head}</TableCell>
+            {["SKU", "Producto", "Ventas", "Margen", "Stock 01+03"].map((head, headIdx) => (
+              <TableCell
+                key={head}
+                sx={headIdx === 0 || headIdx === 3 ? { display: { xs: "none", md: "table-cell" } } : undefined}
+              >
+                {head}
+              </TableCell>
             ))}
           </TableRow>
         </TableHead>
@@ -459,7 +464,10 @@ const DashboardVentasPorCanalPage: React.FC = () => {
           {Array.from({ length: 6 }).map((_, idx) => (
             <TableRow key={idx}>
               {Array.from({ length: 5 }).map((__, cellIdx) => (
-                <TableCell key={cellIdx}>
+                <TableCell
+                  key={cellIdx}
+                  sx={cellIdx === 0 || cellIdx === 3 ? { display: { xs: "none", md: "table-cell" } } : undefined}
+                >
                   <ShimmerBlock
                     width={cellIdx === 1 ? 220 : 90}
                     height={14}

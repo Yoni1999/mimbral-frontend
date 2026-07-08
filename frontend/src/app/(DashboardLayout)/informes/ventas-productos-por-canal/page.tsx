@@ -505,15 +505,15 @@ const InformeVentasPorCanalPage: React.FC = () => {
             onChange={(e) => setDetalleSearch(e.target.value)}
           />
           <TableContainer component={Paper} sx={{ mt: 2, overflowX: "auto" }}>
-            <Table sx={{ minWidth: 650 }}>
+            <Table size="small" sx={{ minWidth: { xs: 0, md: 650 } }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Folio</TableCell>
                   <TableCell>Cantidad</TableCell>
-                  <TableCell>Fecha</TableCell>
-                  <TableCell>Vendedor</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Fecha</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Vendedor</TableCell>
                   <TableCell>Venta</TableCell>
-                  <TableCell>Margen</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Margen</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -521,8 +521,8 @@ const InformeVentasPorCanalPage: React.FC = () => {
                   <TableRow key={`${d.folioNum}-${d.vendedor}-${d.fecha}`}>
                     <TableCell>{d.folioNum}</TableCell>
                     <TableCell>{formatNumber(d.cantidad)}</TableCell>
-                    <TableCell>{new Date(d.fecha).toLocaleDateString("es-CL")}</TableCell>
-                    <TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{new Date(d.fecha).toLocaleDateString("es-CL")}</TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                       <Box display="flex" alignItems="center" gap={1}>
                         <Avatar sx={{ width: 28, height: 28 }}>
                           {d.vendedor?.[0]?.toUpperCase() || "V"}
@@ -531,7 +531,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
                       </Box>
                     </TableCell>
                     <TableCell>{money(d.venta)}</TableCell>
-                    <TableCell>{money(d.margenBrutoLinea)}</TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{money(d.margenBrutoLinea)}</TableCell>
                   </TableRow>
                 ))}
                 {detalleFiltrado.length === 0 && (

@@ -50,13 +50,13 @@ const TopRentabilidadMinima = ({ data }: Props) => {
         </Box>
 
         <Box sx={{ maxHeight: 310, overflowY: "auto", overflowX: "auto" }}>
-          <Table size="small" stickyHeader sx={{ minWidth: 650 }}>
+          <Table size="small" stickyHeader sx={{ minWidth: { xs: 0, md: 650 } }}>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontSize: 12, py: 0.5 }}>Producto</TableCell>
-                <TableCell align="right" sx={{ fontSize: 12, py: 0.5 }}>Cantidad</TableCell>
-                <TableCell align="right" sx={{ fontSize: 12, py: 0.5 }}>Venta Prom.</TableCell>
-                <TableCell align="right" sx={{ fontSize: 12, py: 0.5 }}>Costo Prom.</TableCell>
+                <TableCell align="right" sx={{ fontSize: 12, py: 0.5, display: { xs: "none", md: "table-cell" } }}>Cantidad</TableCell>
+                <TableCell align="right" sx={{ fontSize: 12, py: 0.5, display: { xs: "none", md: "table-cell" } }}>Venta Prom.</TableCell>
+                <TableCell align="right" sx={{ fontSize: 12, py: 0.5, display: { xs: "none", md: "table-cell" } }}>Costo Prom.</TableCell>
                 <TableCell align="right" sx={{ fontSize: 12, py: 0.5 }}>Rentabilidad</TableCell>
                 <TableCell align="right" sx={{ fontSize: 12, py: 0.5 }}>% Margen</TableCell>
               </TableRow>
@@ -87,13 +87,13 @@ const TopRentabilidadMinima = ({ data }: Props) => {
                       </Box>
                     </Stack>
                   </TableCell>
-                  <TableCell align="right" sx={{ fontSize: 12, py: 0.5 }}>
+                  <TableCell align="right" sx={{ fontSize: 12, py: 0.5, display: { xs: "none", md: "table-cell" } }}>
                     {item.Cantidad_Vendida}
                   </TableCell>
-                  <TableCell align="right" sx={{ fontSize: 12, py: 0.5 }}>
+                  <TableCell align="right" sx={{ fontSize: 12, py: 0.5, display: { xs: "none", md: "table-cell" } }}>
                     ${item.Precio_Venta_Promedio.toLocaleString("es-CL")}
                   </TableCell>
-                  <TableCell align="right" sx={{ fontSize: 12, py: 0.5 }}>
+                  <TableCell align="right" sx={{ fontSize: 12, py: 0.5, display: { xs: "none", md: "table-cell" } }}>
                     ${item.Costo_Promedio.toLocaleString("es-CL")}
                   </TableCell>
                   <TableCell align="right" sx={{ fontSize: 12, py: 0.5 }}>

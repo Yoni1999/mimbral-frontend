@@ -122,40 +122,40 @@ const TablaLineaCredito: React.FC<Props> = ({ filters }) => {
           <Typography variant="body2" color="text.secondary">No hay resultados</Typography>
         </Box>
       ) : (
-        <Table size="small" sx={{ minWidth: 1200 }}>
+        <Table size="small" sx={{ minWidth: { xs: 0, md: 1200 } }}>
           <TableHead>
             <TableRow>
-              <TableCell>Avatar</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Avatar</TableCell>
               <TableCell>Cliente</TableCell>
-              <TableCell>RUT</TableCell>
-              <TableCell>Teléfono</TableCell>
-              <TableCell>Dirección</TableCell>
-              <TableCell>Razón Social</TableCell>
-              <TableCell>Categoría</TableCell>
-              <TableCell>Fecha Apertura</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>RUT</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Teléfono</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Dirección</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Razón Social</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Categoría</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Fecha Apertura</TableCell>
               <TableCell>Límite Crédito</TableCell>
               <TableCell>Crédito Disponible</TableCell>
               <TableCell>Estado</TableCell>
-              <TableCell>Última Modificación</TableCell>
-              <TableCell>Pago Predeterminado</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Última Modificación</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Pago Predeterminado</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {data.map((row, index) => (
               <TableRow key={index}>
-                <TableCell><Avatar>{row.cliente.charAt(0)}</Avatar></TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><Avatar>{row.cliente.charAt(0)}</Avatar></TableCell>
                 <TableCell>{row.cliente}</TableCell>
-                <TableCell>{row.rut}</TableCell>
-                <TableCell>{row.telefono}</TableCell>
-                <TableCell>{row.direccion}, {row.ciudad}</TableCell>
-                <TableCell>{row.razonSocial}</TableCell>
-                <TableCell>{row.categoria}</TableCell>
-                <TableCell>{row.fechaApertura}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.rut}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.telefono}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.direccion}, {row.ciudad}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.razonSocial}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.categoria}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.fechaApertura}</TableCell>
                 <TableCell>${row.limiteCredito.toLocaleString("es-CL")}</TableCell>
                 <TableCell>${row.creditoDisponible.toLocaleString("es-CL")}</TableCell>
                 <TableCell>{row.estado}</TableCell>
-                <TableCell>{row.ultimaModificacion}</TableCell>
-                <TableCell>{row.pagoPredeterminado}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.ultimaModificacion}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.pagoPredeterminado}</TableCell>
               </TableRow>
             ))}
           </TableBody>

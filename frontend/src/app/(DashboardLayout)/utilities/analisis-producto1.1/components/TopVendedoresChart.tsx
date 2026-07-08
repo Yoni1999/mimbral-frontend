@@ -110,11 +110,11 @@ return (
             width: "100%",
         }}
         >
-        <Table size="small" stickyHeader sx={{ minWidth: 600 }}>
+        <Table size="small" stickyHeader sx={{ minWidth: { xs: 0, md: 600 } }}>
           <TableHead>
             <TableRow>
               <TableCell>Nombre Vendedores</TableCell>
-              <TableCell align="right">
+              <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>
                 <TableSortLabel
                   active={orderBy === "CantidadVendida"}
                   direction={order}
@@ -141,7 +141,7 @@ return (
                   Margen
                 </TableSortLabel>
               </TableCell>
-              <TableCell align="right">
+              <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>
                 <TableSortLabel
                   active={orderBy === "Porcentaje"}
                   direction={order}
@@ -164,7 +164,7 @@ return (
                     </Typography>
                   </Stack>
                 </TableCell>
-                <TableCell align="right">{vendedor.CantidadVendida}</TableCell>
+                <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>{vendedor.CantidadVendida}</TableCell>
                 <TableCell align="right">{formatVentas(vendedor.TotalVentas)}</TableCell>
                 <TableCell align="right">
                   <Stack spacing={0}>
@@ -176,7 +176,7 @@ return (
                     </Typography>
                   </Stack>
                 </TableCell>
-                <TableCell align="right">
+                <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>
                   {vendedor.Porcentaje.toFixed(1).replace(".", ",")}%
                 </TableCell>
               </TableRow>

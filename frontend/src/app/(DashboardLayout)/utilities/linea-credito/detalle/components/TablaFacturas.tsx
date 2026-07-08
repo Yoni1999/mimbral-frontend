@@ -63,46 +63,46 @@ const TablaFacturas = () => {
   return (
     <Box mt={5}>
       <TableContainer component={Paper} sx={{ borderRadius: 3, overflowX: "auto" }}>
-        <Table size="small" sx={{ minWidth: 1100 }}>
+        <Table size="small" sx={{ minWidth: { xs: 0, md: 1100 } }}>
           <TableHead>
             <TableRow>
               <TableCell>Factura</TableCell>
-              <TableCell>Emisión</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Emisión</TableCell>
               <TableCell>Vencimiento</TableCell>
               <TableCell>Monto</TableCell>
-              <TableCell>Pagado</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Pagado</TableCell>
               <TableCell>Estado</TableCell>
-              <TableCell>Mora ($)</TableCell>
-              <TableCell>Días atraso</TableCell>
-              <TableCell>% Uso crédito</TableCell>
-              <TableCell>Puntaje</TableCell>
-              <TableCell>Nivel Riesgo</TableCell>
-              <TableCell>Última Acción</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Mora ($)</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Días atraso</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>% Uso crédito</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Puntaje</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Nivel Riesgo</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Última Acción</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {dataFacturas.map((row, idx) => (
               <TableRow key={idx}>
                 <TableCell>{row.factura}</TableCell>
-                <TableCell>{row.emision}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.emision}</TableCell>
                 <TableCell>{row.vencimiento}</TableCell>
                 <TableCell>
                   {typeof row.monto === "number"
                     ? `$${row.monto.toLocaleString("es-CL")}`
                     : row.monto}
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                   {typeof row.pagado === "number"
                     ? `$${row.pagado.toLocaleString("es-CL")}`
                     : row.pagado}
                 </TableCell>
                 <TableCell>{row.estado}</TableCell>
-                <TableCell>{row.mora}</TableCell>
-                <TableCell>{row.diasAtraso}</TableCell>
-                <TableCell>{row.usoCredito}</TableCell>
-                <TableCell>{row.puntaje}</TableCell>
-                <TableCell>{row.riesgo}</TableCell>
-                <TableCell>{row.ultimaAccion}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.mora}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.diasAtraso}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.usoCredito}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.puntaje}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.riesgo}</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{row.ultimaAccion}</TableCell>
               </TableRow>
             ))}
           </TableBody>

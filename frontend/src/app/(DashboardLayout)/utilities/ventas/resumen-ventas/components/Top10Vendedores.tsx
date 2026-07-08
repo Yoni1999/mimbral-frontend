@@ -64,12 +64,12 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
         </Typography>
 
         <Box sx={{ maxHeight: 307.5, overflowY: "auto", overflowX: "auto" }}>
-          <Table size="small" stickyHeader sx={{ minWidth: 650 }}>
+          <Table size="small" stickyHeader sx={{ minWidth: { xs: 0, md: 650 } }}>
             <TableHead>
               <TableRow>
                 <TableCell>Vendedor</TableCell>
 
-                <TableCell align="right" sortDirection={orderBy === "UnidadesVendidas" ? order : false}>
+                <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }} sortDirection={orderBy === "UnidadesVendidas" ? order : false}>
                   <TableSortLabel
                     active={orderBy === "UnidadesVendidas"}
                     direction={order}
@@ -90,7 +90,7 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
                 </TableCell>
 
 
-                <TableCell align="right" sortDirection={orderBy === "Items" ? order : false}>
+                <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }} sortDirection={orderBy === "Items" ? order : false}>
                   <TableSortLabel
                     active={orderBy === "Items"}
                     direction={order}
@@ -110,7 +110,7 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
                   </TableSortLabel>
                 </TableCell>
 
-                <TableCell align="right" sortDirection={orderBy === "MargenPorcentaje" ? order : false}>
+                <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }} sortDirection={orderBy === "MargenPorcentaje" ? order : false}>
                   <TableSortLabel
                     active={orderBy === "MargenPorcentaje"}
                     direction={order}
@@ -134,19 +134,19 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
                     </Stack>
                   </TableCell>
 
-                  <TableCell align="right">{vendedor.UnidadesVendidas}</TableCell>
+                  <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>{vendedor.UnidadesVendidas}</TableCell>
 
                   <TableCell align="right">
                     {vendedor.TotalVentas ? formatVentas(vendedor.TotalVentas) : "-"}
                   </TableCell>
 
-                  <TableCell align="right">{vendedor.Items}</TableCell>
+                  <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>{vendedor.Items}</TableCell>
 
                   <TableCell align="right">
                     {formatVentas(vendedor.MargenBruto)}
                   </TableCell>
 
-                  <TableCell align="right">
+                  <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }}>
                     {vendedor.MargenPorcentaje.toFixed(1).replace(".", ",")}
                   </TableCell>
                 </TableRow>

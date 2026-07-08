@@ -87,10 +87,10 @@ const CategoriasTableChart: React.FC<Props> = ({ data, height = 300 }) => {
         <Divider sx={{ mb: 1 }} />
 
         <Box sx={{ maxHeight: height, overflowY: "auto", overflowX: "auto" }}>
-          <Table size="small" sx={{ minWidth: 550 }}>
+          <Table size="small" sx={{ minWidth: { xs: 0, md: 550 } }}>
             <TableHead>
               <TableRow>
-                <TableCell>Imagen</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Imagen</TableCell>
                 <TableCell>Categoría</TableCell>
 
                 <TableCell align="right" sortDirection={orderBy === "TotalVentas" ? order : false}>
@@ -113,7 +113,7 @@ const CategoriasTableChart: React.FC<Props> = ({ data, height = 300 }) => {
                   </TableSortLabel>
                 </TableCell>
 
-                <TableCell align="right" sortDirection={orderBy === "MargenPorcentaje" ? order : false}>
+                <TableCell align="right" sx={{ display: { xs: "none", md: "table-cell" } }} sortDirection={orderBy === "MargenPorcentaje" ? order : false}>
                   <TableSortLabel
                     active={orderBy === "MargenPorcentaje"}
                     direction={orderBy === "MargenPorcentaje" ? order : "asc"}
