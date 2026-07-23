@@ -30,6 +30,8 @@ const sinventasRoutes = require("./informes/productossinventas.routes");
 const informecanalRoutes = require("./informes/informecanal.routes");
 const stockRoutes = require("./pricing/stock.Routes");
 const ventasCanalRoutes = require("./ventascanal.routes");
+const shareRoutes = require("./share.routes");
+const publicRoutes = require("./public.routes");
 
 const router = express.Router();
 
@@ -65,5 +67,7 @@ router.use("/api", renovarSesionRoutes);
 router.use("/api/informes", productosmenosrentablesRoutes);
 router.use("/api/informes", sinventasRoutes);
 router.use("/api/informes", informecanalRoutes);
+router.use("/api/share", shareRoutes);
+router.use("/api/public", publicRoutes);
 
 module.exports = router;
