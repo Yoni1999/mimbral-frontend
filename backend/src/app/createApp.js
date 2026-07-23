@@ -21,7 +21,7 @@ function createApp() {
       return next();
     }
 
-    const publicRoutes = ["/v1/api/auth", "/v1/api/entradas", "/v1/api/templace", "/v1/api/pricing"];
+    const publicRoutes = ["/v1/api/auth", "/v1/api/entradas", "/v1/api/templace", "/v1/api/pricing", "/v1/api/public"];
     const isPublic = publicRoutes.some((route) => req.path.startsWith(route));
     if (isPublic) return next();
     authMiddleware(req, res, next);
