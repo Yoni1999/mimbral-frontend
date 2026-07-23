@@ -22,6 +22,7 @@ const PUBLIC_ENDPOINTS = [
   "/api/auth/register",
   "/api/auth/verificar-otp",
   "/api/auth/verify-otp",
+  "/api/public",
 ];
 
 function isBrowser(): boolean {

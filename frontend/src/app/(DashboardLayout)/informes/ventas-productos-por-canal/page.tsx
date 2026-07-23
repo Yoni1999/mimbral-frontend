@@ -8,6 +8,7 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  Tooltip,
   IconButton,
   Pagination,
   Menu,
@@ -31,6 +32,8 @@ import {
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
 import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import * as XLSX from "xlsx";
@@ -124,9 +127,16 @@ const InformeVentasPorCanalPage: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [shareAnchorEl, setShareAnchorEl] = useState<null | HTMLElement>(null);
   const [openExportModal, setOpenExportModal] = useState(false);
   const [exportType, setExportType] = useState<"excel" | "pdf" | null>(null);
   const [exportCount, setExportCount] = useState<number>(100);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareSnack, setShareSnack] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   // ==== Modal Detalle (ahora 100% implementado) ====
   const [detalleOpen, setDetalleOpen] = useState(false);
@@ -233,6 +243,59 @@ const InformeVentasPorCanalPage: React.FC = () => {
     if (sourceFilters.categoria) params.set("categoria", sourceFilters.categoria);
     if (sourceFilters.subcategoria) params.set("subcategoria", sourceFilters.subcategoria);
     return `/informes/ventas-productos-por-canal/dashboard?${params.toString()}`;
+  };
+
+  const buildSharedLink = (token: string) => {
+    if (typeof window === "undefined") return `/compartido/informes/ventas-productos-por-canal/${token}`;
+    return `${window.location.origin}/compartido/informes/ventas-productos-por-canal/${token}`;
+  };
+
+  const copyTextToClipboard = async (text: string) => {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+  };
+
+  const handleCopySharedLink = async () => {
+    if (!hasAppliedFilters || shareLoading) return;
+
+    setShareLoading(true);
+    try {
+      const sourceFilters = appliedFilters || filters;
+      const response = await apiJson<{ token: string; expiresAt?: string }>("/api/share/informes/ventas-productos-por-canal", {
+        method: "POST",
+        auth: "required",
+        body: JSON.stringify({ filters: sourceFilters }),
+      });
+
+      const sharedUrl = buildSharedLink(response.token);
+      await copyTextToClipboard(sharedUrl);
+
+      setShareSnack({
+        open: true,
+        message: "Link compartible copiado. Vence en 24 horas.",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Error al crear link compartible:", error);
+      setShareSnack({
+        open: true,
+        message: "No se pudo generar el link compartible.",
+        severity: "error",
+      });
+    } finally {
+      setShareLoading(false);
+    }
   };
 
   const handleAppliedFiltersChange = (nextFilters: FiltrosPorCanal) => {
@@ -395,6 +458,24 @@ const InformeVentasPorCanalPage: React.FC = () => {
         </Typography>
 
         <Box>
+          <Tooltip title="Compartir enlace temporal" arrow>
+            <span>
+              <IconButton
+                onClick={(e) => setShareAnchorEl(e.currentTarget)}
+                disabled={!hasAppliedFilters || shareLoading}
+                aria-label="Compartir"
+                sx={{
+                  mr: 1.5,
+                  border: "1px solid #cfd8ea",
+                  borderRadius: 2,
+                  backgroundColor: "#fff",
+                  "&:hover": { backgroundColor: "#f5f8ff" },
+                }}
+              >
+                <ShareOutlinedIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
           <Button
             variant="outlined"
             startIcon={<LaunchIcon />}
@@ -414,6 +495,17 @@ const InformeVentasPorCanalPage: React.FC = () => {
           <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
             <MenuItem onClick={() => openExport("excel")}>Exportar a Excel</MenuItem>
             <MenuItem onClick={() => openExport("pdf")}>Exportar a PDF</MenuItem>
+          </Menu>
+          <Menu anchorEl={shareAnchorEl} open={Boolean(shareAnchorEl)} onClose={() => setShareAnchorEl(null)}>
+            <MenuItem
+              onClick={() => {
+                setShareAnchorEl(null);
+                void handleCopySharedLink();
+              }}
+            >
+              <ContentCopyIcon fontSize="small" sx={{ mr: 1 }} />
+              Copiar link compartido
+            </MenuItem>
           </Menu>
         </Box>
       </Box>
@@ -601,6 +693,21 @@ const InformeVentasPorCanalPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={shareSnack.open}
+        autoHideDuration={2500}
+        onClose={() => setShareSnack((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setShareSnack((prev) => ({ ...prev, open: false }))}
+          severity={shareSnack.severity}
+          variant="filled"
+        >
+          {shareSnack.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
