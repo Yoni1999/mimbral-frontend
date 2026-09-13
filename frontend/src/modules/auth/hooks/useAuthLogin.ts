@@ -1,24 +1,52 @@
 import { useEffect, useState } from "react";
-import type { AlertColor } from "@mui/material";
-import { loginUser } from "../services/auth.service";
+import { useRouter } from "next/navigation";
+import { loginIdService } from "../services/idservice.client";
 import {
   clearRememberedEmail,
   getRememberedEmail,
-  saveSession,
+  saveIdServiceSession,
   setRememberedEmail,
 } from "../utils/auth.storage";
+import {
+  formatRutForInput,
+  isValidLoginIdentifier,
+  looksLikeRutInput,
+  normalizeIdentifierForApi,
+} from "../utils/rut";
+import type { IdServiceApiError } from "../types/auth.types";
+
+/** Traduce el error del id-service/gateway a un mensaje que el usuario entiende. */
+function friendlyMessage(error: IdServiceApiError): string {
+  const raw = (error.message || "").trim();
+  const status = error.status;
+
+  if (status === 409 || error.forceLogin) {
+    return raw || "Ya existe una sesion activa. Deseas cerrarla e iniciar una nueva?";
+  }
+  if (raw) return raw;
+  if (status === 401) return "Credenciales invalidas. Revisa tu usuario y contrasena.";
+  if (status === 403) return "Tu usuario no tiene permisos para acceder a esta plataforma.";
+  if (status === 429) return "Demasiados intentos. Espera unos minutos antes de reintentar.";
+  if (status === 0 || error.codigo === "NETWORK_ERROR") {
+    return "No se pudo conectar con el servidor. Revisa tu conexion e intentalo de nuevo.";
+  }
+  if (typeof status === "number" && status >= 500) {
+    return "El servicio de autenticacion no esta disponible. Intentalo en unos minutos.";
+  }
+  return "Se produjo un error inesperado.";
+}
 
 export function useAuthLogin() {
+  const router = useRouter();
+
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<"login" | "otp">("login");
 
-  const [mensajeVisible, setMensajeVisible] = useState(false);
-  const [mensajeTexto, setMensajeTexto] = useState("");
-  const [mensajeTipo, setMensajeTipo] = useState<AlertColor>("info");
+  const [error, setError] = useState("");
+  const [showForceLogin, setShowForceLogin] = useState(false);
 
   useEffect(() => {
     const savedEmail = getRememberedEmail();
@@ -30,37 +58,42 @@ export function useAuthLogin() {
 
   const togglePassword = () => setShowPassword((prev) => !prev);
 
-  const handleLogin = async () => {
-    setLoading(true);
-    try {
-      const data = await loginUser({ email, password });
+  // Mientras se escribe un RUT se le van agregando puntos y el guion del DV;
+  // si no parece RUT (trae una @, por ejemplo) se deja tal cual porque es un
+  // correo. La contrasena no se habilita hasta que uno de los dos formatos
+  // quede valido (ver identifierIsValid).
+  const handleEmailChange = (value: string) => {
+    setEmail(looksLikeRutInput(value) ? formatRutForInput(value) : value);
+  };
 
-      if (rememberMe) setRememberedEmail(email);
+  const identifierIsValid = isValidLoginIdentifier(email);
+  const passwordEnabled = identifierIsValid;
+
+  const doLogin = async (forzarSesion: boolean) => {
+    setLoading(true);
+    setError("");
+    setShowForceLogin(false);
+
+    try {
+      const correo = normalizeIdentifierForApi(email);
+      const data = await loginIdService({ correo, password, forzarSesion });
+
+      if (rememberMe) setRememberedEmail(email.trim());
       else clearRememberedEmail();
 
-      if (data.requiresOtp) {
-        setMensajeTexto("Se ha enviado un codigo de verificacion a tu correo");
-        setMensajeTipo("success");
-        setMensajeVisible(true);
-        setStep("otp");
-        return;
-      }
-
-      if (data.token) {
-        saveSession(data.token, data.rol);
-        setMensajeTexto("Login Correcto");
-        setMensajeTipo("success");
-        setMensajeVisible(true);
-        window.location.href = "/inicio";
-      }
-    } catch (error: any) {
-      setMensajeTexto(error.message || "Error de conexion");
-      setMensajeTipo("error");
-      setMensajeVisible(true);
+      saveIdServiceSession(data);
+      router.push("/inicio");
+    } catch (err) {
+      const apiError = err as IdServiceApiError;
+      setError(friendlyMessage(apiError));
+      setShowForceLogin(Boolean(apiError.forceLogin));
     } finally {
       setLoading(false);
     }
   };
+
+  const handleLogin = () => doLogin(false);
+  const handleForceLogin = () => doLogin(true);
 
   return {
     showPassword,
@@ -68,15 +101,15 @@ export function useAuthLogin() {
     password,
     rememberMe,
     loading,
-    step,
-    mensajeVisible,
-    mensajeTexto,
-    mensajeTipo,
-    setEmail,
+    error,
+    showForceLogin,
+    identifierIsValid,
+    passwordEnabled,
+    setEmail: handleEmailChange,
     setPassword,
     setRememberMe,
-    setMensajeVisible,
     togglePassword,
     handleLogin,
+    handleForceLogin,
   };
 }

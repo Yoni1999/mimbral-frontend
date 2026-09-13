@@ -13,7 +13,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import PropTypes from "prop-types";
-import Profile from "./Profile";
+import Link from "next/link";
 import { IconRefresh, IconBellRinging, IconMenu } from "@tabler/icons-react";
 import { apiJson } from "@/utils/apiClient";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -22,19 +22,11 @@ interface ItemType {
   toggleMobileSidebar: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
-interface Usuario {
-  id: number;
-  nombre: string;
-  email: string;
-  rol: string;
-}
-
 const Header = ({ toggleMobileSidebar }: ItemType) => {
   const [ultimaFecha, setUltimaFecha] = useState<string | null>(null);
   const [ultimaHora, setUltimaHora] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const refreshButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [indicadoresData, setIndicadoresData] = useState<any>(null);
   const [anchorIndicador, setAnchorIndicador] = useState<null | HTMLElement>(null);
   const [indicadorSeleccionado, setIndicadorSeleccionado] = useState<any>(null);
@@ -51,15 +43,6 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
   };
 
   useEffect(() => {
-    const obtenerUsuario = async () => {
-      try {
-        const data = await apiJson<Usuario>("/api/auth/usuario");
-        setUsuario(data);
-      } catch (err) {
-        console.error("Error al obtener datos del usuario:", err);
-      }
-    };
-
     const obtenerIndicadores = async () => {
       try {
         const res = await fetch("https://mindicador.cl/api");
@@ -70,7 +53,6 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
       }
     };
 
-    obtenerUsuario();
     obtenerIndicadores();
   }, []);
 
@@ -90,19 +72,43 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
   return (
     <>
       <AppBar position="sticky" color="default" elevation={1} sx={{ background: "linear-gradient(#ffffff)" }}>
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between", borderRadius: "18px" }}>
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between", borderRadius: "18px", position: "relative" }}>
+          {/* Solo tiene sentido en pantallas chicas: en escritorio (lg+) el
+              sidebar ya es permanente (ver Sidebar.tsx), asi que este boton
+              no abria nada -quedaba como un control muerto en el header. */}
           <IconButton
             color="inherit"
             aria-label="menu"
             onClick={toggleMobileSidebar}
-            sx={{ display: "inline-flex" }}
+            sx={{ display: { xs: "inline-flex", lg: "none" } }}
           >
             <IconMenu width="40" height="30" />
           </IconButton>
 
-          <Box flexGrow={1} display="flex" justifyContent="center">
-            <Typography variant="h4" fontWeight={500} color="primary" sx={{ letterSpacing: 3 }}>
-              ANALISIS DE DATOS
+          {/* Centrado absoluto respecto a TODA la barra: con flex normal, el
+              hamburger (oculto en escritorio) y el stack de indicadores/iconos
+              a la derecha no pesan lo mismo, asi que un centrado por flexbox
+              quedaba corrido hacia la izquierda. */}
+          <Box
+            sx={{
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              transform: "translate(-50%, -50%)",
+              pointerEvents: "none",
+            }}
+          >
+            {/* Solo el texto vuelve a aceptar clicks -el Box de arriba sigue
+                sin bloquear nada a su alrededor-, y por eso lleva a /inicio. */}
+            <Typography
+              component={Link}
+              href="/inicio"
+              variant="h4"
+              fontWeight={500}
+              color="primary"
+              sx={{ letterSpacing: 3, pointerEvents: "auto", textDecoration: "none" }}
+            >
+              ANÁLISIS 360
             </Typography>
           </Box>
 
@@ -166,27 +172,6 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
                 <IconBellRinging size="21" stroke="1.5" />
               </Badge>
             </IconButton>
-
-            <Box display="flex" alignItems="center">
-              {usuario && (
-                <Box
-                  sx={{
-                    mr: 1,
-                    display: { xs: "none", md: "flex" },
-                    flexDirection: "column",
-                    alignItems: "flex-end",
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: "text.primary" }}>
-                    Hola, <strong>{usuario.nombre.trim()}</strong>!
-                  </Typography>
-                  <Typography variant="caption" sx={{ fontWeight: 400, color: "primary.main", fontStyle: "italic", textTransform: "capitalize" }}>
-                    Rol: {usuario.rol}
-                  </Typography>
-                </Box>
-              )}
-              <Profile />
-            </Box>
           </Stack>
         </Toolbar>
       </AppBar>

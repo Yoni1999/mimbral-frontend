@@ -12,7 +12,7 @@ const Loading = () => {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#ffffff',
+        backgroundColor: '#f4f4f5',
       }}
     >
       <Box

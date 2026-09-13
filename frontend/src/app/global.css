@@ -1,0 +1,13 @@
+/* Anillo del boton cerrar en los avisos con cuenta regresiva
+   (src/components/ui/toast/CountdownToast.tsx): se llena mientras corre el
+   tiempo y se detiene junto con el aviso. Es solo visual: el cierre lo decide
+   un temporizador, asi que el aviso dura lo mismo aunque la animacion no llegue
+   a verse completa (pestana en segundo plano, "reducir movimiento", etc.). */
+@keyframes toast-countdown {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}

@@ -9,6 +9,7 @@ import {
   useTheme,
   ListItemButton,
   Collapse,
+  Tooltip,
 } from "@mui/material";
 import Link from "next/link";
 import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
@@ -27,26 +28,40 @@ interface ItemType {
   onClick: (event: React.MouseEvent<HTMLElement>) => void;
   pathDirect: string;
   isOpen: boolean;
+  /** Riel angosto (solo iconos + tooltip): el rotulo y el submenu en linea no
+   * caben ahi. Pasar el mouse sobre TODO el sidebar ya lo expande antes de que
+   * se pueda hacer click, asi que ni el click ni el submenu necesitan un
+   * comportamiento distinto -solo se oculta el texto. */
+  collapsed?: boolean;
+}
+
+/** Activo = ruta exacta, o la ruta actual "vive dentro" de esta sección
+ *  (ej. href="/metas/periodos" activo también en "/metas/periodos/nuevo"). */
+function esRutaActiva(href: string | undefined, pathDirect: string): boolean {
+  if (!href) return false;
+  return pathDirect === href || pathDirect.startsWith(`${href}/`);
 }
 
 // NavItem.tsx
-// NavItem.tsx
-const NavItem = ({ item, pathDirect, onClick, isOpen }: ItemType) => {
+const NavItem = ({ item, pathDirect, onClick, isOpen, collapsed }: ItemType) => {
   const theme = useTheme();
+  const activo = esRutaActiva(item.href, pathDirect);
+  const hijoActivo = item.subMenu?.some((child) => esRutaActiva(child.href, pathDirect)) ?? false;
 
   const ListItemStyled = styled(ListItem)(() => ({
     padding: 0,
     ".MuiButtonBase-root": {
-      whiteSpace: "nowrap",
+      whiteSpace: "normal",
       marginBottom: "2px",
-      padding: "8px 10px",
-      borderRadius: "8px",
+      padding: "10px 12px",
+      borderRadius: "10px",
       backgroundColor: "inherit",
-      color: theme.palette.text.secondary,
-      paddingLeft: "10px",
+      color: "#475569",
+      alignItems: "flex-start",
+      justifyContent: collapsed ? "center" : "flex-start",
       "&:hover": {
-        backgroundColor: theme.palette.primary.light,
-        color: theme.palette.primary.main,
+        backgroundColor: theme.palette.action.hover,
+        color: theme.palette.text.primary,
       },
       "&.Mui-selected": {
         color: "white",
@@ -59,40 +74,86 @@ const NavItem = ({ item, pathDirect, onClick, isOpen }: ItemType) => {
     },
   }));
 
+  const icon = (
+    <ListItemIcon sx={{ minWidth: collapsed ? "auto" : "34px", p: "2px 0", mt: "1px", color: "inherit" }}>
+      {item.icon && <item.icon size={20} stroke={1.75} />}
+    </ListItemIcon>
+  );
+
+  const label = !collapsed && (
+    <ListItemText
+      primaryTypographyProps={{ fontSize: "0.9rem", fontWeight: 500, lineHeight: 1.3 }}
+      sx={{ my: 0 }}
+    >
+      {item.title}
+    </ListItemText>
+  );
+
+  const button =
+    item.subMenu && item.subMenu.length > 0 ? (
+      <ListItemButton onClick={onClick} selected={hijoActivo}>
+        {icon}
+        {label}
+        {!collapsed && (
+          <Box sx={{ color: hijoActivo ? "inherit" : "#94a3b8", display: "flex", alignItems: "center", mt: "3px" }}>
+            {isOpen ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+          </Box>
+        )}
+      </ListItemButton>
+    ) : (
+      <ListItemButton component={Link} href={item.href || "#"} onClick={onClick} selected={activo}>
+        {icon}
+        {label}
+      </ListItemButton>
+    );
 
   return (
     <>
       <List component="div" disablePadding key={item.id}>
         <ListItemStyled>
-          {item.subMenu && item.subMenu.length > 0 ? (
-            <ListItemButton onClick={onClick}>
-              <ListItemIcon sx={{ minWidth: "36px", p: "3px 0", color: "inherit" }}>
-                {item.icon && <item.icon size={18} />}
-              </ListItemIcon>
-              <ListItemText>{item.title}</ListItemText>
-              {isOpen ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
-            </ListItemButton>
+          {collapsed ? (
+            <Tooltip title={item.title || ""} placement="right">
+              <Box sx={{ width: "100%" }}>{button}</Box>
+            </Tooltip>
           ) : (
-            <ListItemButton component={Link} href={item.href || "#"} onClick={onClick}>
-              <ListItemIcon sx={{ minWidth: "36px", p: "3px 0", color: "inherit" }}>
-                {item.icon && <item.icon size={18} />}
-              </ListItemIcon>
-              <ListItemText>{item.title}</ListItemText>
-            </ListItemButton>
+            button
           )}
         </ListItemStyled>
       </List>
-      {item.subMenu && item.subMenu.length > 0 && (
+      {!collapsed && item.subMenu && item.subMenu.length > 0 && (
         <Collapse in={isOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {item.subMenu.map((child, index) => (
-              <ListItemButton key={child.id} component={Link} href={child.href || "#"} sx={{ pl: 4 }}>
-                <ListItemIcon sx={{ minWidth: "36px", p: "3px 0", color: "inherit" }}>
-                  {child.icon && <child.icon size={16} />}
-                </ListItemIcon>
-                <ListItemText>{child.title}</ListItemText>
-              </ListItemButton>
-            ))}
+          <List component="div" disablePadding sx={{ mb: 0.5 }}>
+            {item.subMenu.map((child) => {
+              const childActivo = esRutaActiva(child.href, pathDirect);
+              return (
+                <ListItemButton
+                  key={child.id}
+                  component={Link}
+                  href={child.href || "#"}
+                  selected={childActivo}
+                  sx={{
+                    pl: 5,
+                    pr: 1.5,
+                    py: "8px",
+                    borderRadius: "10px",
+                    mb: "2px",
+                    color: childActivo ? "white" : "#64748b",
+                    backgroundColor: childActivo ? theme.palette.primary.main : "transparent",
+                    "&:hover": {
+                      backgroundColor: childActivo ? theme.palette.primary.main : theme.palette.action.hover,
+                      color: childActivo ? "white" : theme.palette.text.primary,
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: "30px", p: "2px 0", color: "inherit" }}>
+                    {child.icon && <child.icon size={17} stroke={1.75} />}
+                  </ListItemIcon>
+                  <ListItemText primaryTypographyProps={{ fontSize: "0.85rem", fontWeight: 500 }}>
+                    {child.title}
+                  </ListItemText>
+                </ListItemButton>
+              );
+            })}
           </List>
         </Collapse>
       )}

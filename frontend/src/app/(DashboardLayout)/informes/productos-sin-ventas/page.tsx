@@ -2,12 +2,11 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    Box, Typography, Divider, Snackbar, Alert, IconButton,
+    Box, Typography, Divider,
     Pagination, CircularProgress, Button, Menu, MenuItem, Dialog,
     DialogTitle, DialogContent, DialogActions, TextField,
     Table, TableHead, TableRow, TableCell, TableBody, Paper
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RemoveShoppingCartIcon from '@mui/icons-material/RemoveShoppingCart';
 import * as XLSX from 'xlsx';
@@ -18,6 +17,7 @@ import autoTable from 'jspdf-autotable';
 import ProductosSinVentasTable from './components/ProductosSinVentas';
 import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from '@/config';
+import { notifyInfo } from "@/components/ui/toast/notify";
 
 import HeaderSinVentasDrawer from './components/HeaderSinVentasDrawer';
 
@@ -70,12 +70,6 @@ const ProductosSinVentasPage: React.FC = () => {
     const [openExportModal, setOpenExportModal] = useState(false);
     const [exportCount, setExportCount] = useState<number>(100);
     const [exportTarget, setExportTarget] = useState<'excel' | 'pdf'>('excel');
-
-    // Snackbar informativo “fijo” (existente)
-    const [showMensaje, setShowMensaje] = useState<boolean>(true);
-
-    // Mensaje dinámico del endpoint (SKU con o sin ventas)
-    const [endpointMsg, setEndpointMsg] = useState<string>('');
 
     // estado para vista de ventas por SKU ----
     const [skuSalesMode, setSkuSalesMode] = useState<boolean>(false);
@@ -161,10 +155,7 @@ const ProductosSinVentasPage: React.FC = () => {
 
                 // Toaster con el message, si viene
                 if (json?.message) {
-                    setEndpointMsg(String(json.message));   // <<< lo guardamos para el snackbar info
-                    setShowMensaje(true);                   // forzamos a que se muestre
-                } else {
-                    setEndpointMsg('');
+                    notifyInfo(String(json.message), { durationMs: 8000 });
                 }
 
 
@@ -250,6 +241,14 @@ const ProductosSinVentasPage: React.FC = () => {
         fetchSinVentas(filters, 1);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters]);
+
+    useEffect(() => {
+        notifyInfo("Informe actualizado a diario", {
+            description: "Si necesitas información más reciente, pide al usuario ADMIN que actualice la información.",
+            durationMs: 8000,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);
@@ -545,34 +544,6 @@ const ProductosSinVentasPage: React.FC = () => {
                     />
                 </Box>
             )}
-
-            {/* Snackbar info existente */}
-            <Snackbar
-                open={showMensaje}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                autoHideDuration={null}
-                sx={{ maxWidth: '400px' }}
-            >
-                <Alert
-                    severity="warning"
-                    variant="filled"
-                    action={
-                        <IconButton
-                            aria-label="close"
-                            color="inherit"
-                            size="small"
-                            onClick={() => setShowMensaje(false)}
-                        >
-                            <CloseIcon fontSize="inherit" />
-                        </IconButton>
-                    }
-                    sx={{ display: 'flex', alignItems: 'center', p: 1.5, borderRadius: 3, fontSize: '0.9rem' }}
-                >
-                    {endpointMsg
-                        ? endpointMsg
-                        : 'Este informe se actualiza a diario. Si necesitas información más reciente, pide al usuario ADMIN que actualice la información.'}
-                </Alert>
-            </Snackbar>
 
             {/* Modal export */}
             <Dialog open={openExportModal} onClose={() => setOpenExportModal(false)}>

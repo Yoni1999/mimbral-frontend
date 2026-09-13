@@ -1,4 +1,5 @@
 import { BACKEND_URL } from "@/config";
+import { getPlataformaId } from "@/modules/auth/utils/auth.storage";
 // export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://
 type ApiAuthMode = "none" | "optional" | "required";
 
@@ -104,6 +105,14 @@ function buildHeaders(endpoint: string, options: RequestInit = {}, auth: ApiAuth
 
   if (!isPublic && token) {
     headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  // El api-gateway exige que este header coincida con el `plataformaId` que
+  // trae el JWT (ver api-gateway/src/middlewares/auth.js) para cualquier ruta
+  // autenticada. Se manda siempre, no solo cuando hay token, porque tambien
+  // hay endpoints publicos del gateway que lo validan igual.
+  if (!headers.has("x-plataforma-id")) {
+    headers.set("x-plataforma-id", String(getPlataformaId()));
   }
 
   return headers;

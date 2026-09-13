@@ -63,10 +63,10 @@ const launcherItems = [
     softAccent: "rgba(124, 58, 237, 0.10)",
   },
   {
-    title: "Monitorea las Metas",
+    title: "Administrador de Metas",
     value: "250K",
-    description: "Monitorea metas comerciales",
-    route: "/metas-general",
+    description: "Periodos, objetivos y cumplimiento por vendedor y canal",
+    route: "/metas",
     icon: IconCategory,
     accent: "#ea580c",
     softAccent: "rgba(234, 88, 12, 0.10)",
@@ -251,7 +251,10 @@ const Dashboard = () => {
           overflow: "hidden",
           minHeight: "calc(100vh - 140px)",
           p: { xs: 2, md: 4 },
-          background: "#ffffff",
+          // Transparente: hereda el gris de PageWrapper (layout.tsx) en vez de
+          // pintar su propio blanco encima, que dejaba un panel blanco
+          // recortado sobre el fondo gris del resto de la app.
+          background: "transparent",
         }}
       >
         <Box

@@ -3,11 +3,6 @@ import { styled, Container, Box } from "@mui/material";
 import React, { useState } from "react";
 import Header from "@/app/(DashboardLayout)/layout/header/Header";
 import Sidebar from "@/app/(DashboardLayout)/layout/sidebar/Sidebar";
-import AdminBreadcrumb from "@/app/admin/opciones/components/AdminBreadcrumb";
-
-import { useVerificarExpiracionToken } from "@/hooks/useVerificarExpiracionToke";
-import { ModalRenovarSesion } from "@/components/ModalRenovarSesion";
-import { renovarSesion } from "@/utils/renovarSesion";
 import FloatingHelpAgent from "@/components/agent/FloatingHelpAgent";
 
 const MainWrapper = styled("div")(() => ({
@@ -16,12 +11,15 @@ const MainWrapper = styled("div")(() => ({
   width: "100%",
 }));
 
+// Mismo gris de fondo que usa FrontOms detras de sus tarjetas (su tema
+// "Light", --page-bg: 240 5% 96% = #f4f4f5) — antes esto era casi blanco
+// puro (#FEFEFE) y no distinguia el fondo de las tarjetas.
 const PageWrapper = styled("div")(() => ({
   display: "flex",
   flexGrow: 1,
   flexDirection: "column",
   zIndex: 1,
-  backgroundColor: "#FEFEFE",
+  backgroundColor: "#f4f4f5",
 }));
 
 interface Props {
@@ -31,19 +29,6 @@ interface Props {
 export default function RootLayout({ children }: Props) {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-
-  const { mostrarModal, cerrarModal } = useVerificarExpiracionToken();
-
-
-  const handleRenovar = async (password: string): Promise<boolean> => {
-    const exito = await renovarSesion(password);
-    if (exito) {
-      cerrarModal();
-      window.location.reload(); // opcional
-      return true;
-    }
-    return false;
-  };
 
   return (
     <MainWrapper className="mainwrapper">
@@ -55,7 +40,6 @@ export default function RootLayout({ children }: Props) {
 
       <PageWrapper className="page-wrapper">
         <Header toggleMobileSidebar={() => setMobileSidebarOpen(true)} />
-        <AdminBreadcrumb />
 
         <Container
           disableGutters
@@ -67,13 +51,6 @@ export default function RootLayout({ children }: Props) {
       </PageWrapper>
 
       <FloatingHelpAgent />
-
-      {mostrarModal && (
-        <ModalRenovarSesion
-          onRenovar={handleRenovar}
-          onCancelar={cerrarModal}
-        />
-      )}
     </MainWrapper>
   );
 }

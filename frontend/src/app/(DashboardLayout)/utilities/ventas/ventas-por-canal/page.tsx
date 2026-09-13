@@ -7,7 +7,6 @@ import SeccionTitulo from "../resumen-ventas/components/SeccionTitulo";
 import { Grid, Paper, CircularProgress, Box, Typography, FormControlLabel, Checkbox, } from "@mui/material";
 import MetricCard from "./components/Cards";
 import FechaRotacion from "./components/MonthlySalesRotation";
-import NivelNavigation from "../components/NivelNavigation";
 import HeaderFilters, { Filters } from "./components/Header";
 import ClientesFrecuentesTable from "./components/FrequentCustomers";
 import dynamic from "next/dynamic";
@@ -159,8 +158,6 @@ const VentasPorCanal = () => {
   const [mostrarProductos, setMostrarProductos] = useState(false);
 
   return (
-    <>
-      <NivelNavigation />
       <PageContainer
         title="Ventas por Canal"
         description="Resumen de ventas filtradas por canal, período y rango de fechas"
@@ -366,7 +363,6 @@ const VentasPorCanal = () => {
           )}
         </Box>
       </PageContainer>
-    </>
   );
 };
 
