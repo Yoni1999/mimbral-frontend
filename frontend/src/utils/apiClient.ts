@@ -118,8 +118,25 @@ function buildHeaders(endpoint: string, options: RequestInit = {}, auth: ApiAuth
   return headers;
 }
 
-function redirectToLogin() {
+const LOGOUT_REASON_KEY = "authLogoutReason";
+
+/** Deja registrada, antes del `window.location.href`, qué endpoint provocó
+ *  el cierre de sesión — `redirectToLogin()` navega de inmediato, así que la
+ *  pestaña Network/Console de devtools se vacía antes de que alguien alcance
+ *  a leerla. La pantalla de login la muestra y la limpia (ver AuthLogin.tsx). */
+function registrarMotivoLogout(detalle: string) {
+  if (!isBrowser()) return;
+  try {
+    sessionStorage.setItem(LOGOUT_REASON_KEY, JSON.stringify({ detalle, at: new Date().toISOString() }));
+  } catch {
+    // sessionStorage puede no estar disponible (modo privado, cuota); no es
+    // razón para bloquear el logout.
+  }
+}
+
+function redirectToLogin(motivo?: string) {
   if (isBrowser()) {
+    if (motivo) registrarMotivoLogout(motivo);
     window.location.href = "/authentication/login";
   }
 }
@@ -141,7 +158,7 @@ export async function apiRequest(endpoint: string, options: ApiRequestOptions = 
   const isPublic = auth === "none" || shouldTreatAsPublic(endpoint);
 
   if (auth === "required" && !token) {
-    redirectToLogin();
+    redirectToLogin(`Sin token guardado al pedir ${endpoint}`);
     return null;
   }
 
@@ -152,8 +169,19 @@ export async function apiRequest(endpoint: string, options: ApiRequestOptions = 
   });
 
   if (!isPublic && response.status === 401) {
+    let mensajeServidor = "";
+    try {
+      const cuerpo = await response.clone().json();
+      // `detail` es lo específico (ver analysis-service manejarError/
+      // identity.service.js): `message` sólo dice "sesión inválida" para
+      // cualquier motivo, `detail` trae la razón real cuando el backend la
+      // expone.
+      mensajeServidor = cuerpo?.detail || cuerpo?.message || cuerpo?.error || "";
+    } catch {
+      // Respuesta 401 sin cuerpo JSON legible; se deja sin mensaje del servidor.
+    }
     clearStoredToken();
-    redirectToLogin();
+    redirectToLogin(`401 en ${endpoint}${mensajeServidor ? ` — "${mensajeServidor}"` : ""}`);
     return null;
   }
 
