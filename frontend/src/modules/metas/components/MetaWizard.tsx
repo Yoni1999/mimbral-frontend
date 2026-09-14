@@ -7,11 +7,9 @@ import {
   Card,
   CardContent,
   Chip,
+  Divider,
   Grid,
   MenuItem,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
   Step,
   StepLabel,
   Stepper,
@@ -19,16 +17,31 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import {
+  IconCalendarEvent,
+  IconChecklist,
+  IconCoin,
+  IconPackages,
+  IconTarget,
+  IconUsers,
+} from "@tabler/icons-react";
 import dayjs from "dayjs";
 import EstadoChip from "./EstadoChip";
+import OpcionCard from "./OpcionCard";
 import ResponsableAutocomplete from "./ResponsableAutocomplete";
 import ProductoSelector from "./ProductoSelector";
 import DistribucionMontoEditor from "./DistribucionMontoEditor";
 import DistribucionSkuMatriz from "./DistribucionSkuMatriz";
 import { listarPeriodos } from "../services/metas.client";
+import { OPCIONES_ASIGNACION, OPCIONES_TARGET_TYPE } from "../opciones";
 import type { AssignmentMode, GoalDraft, GoalItem, GoalPeriod, GoalTarget, GoalTargetItem, GoalType, TargetType } from "../types";
 
-const PASOS = ["Periodo", "Responsable", "Objetivo", "Confirmación"];
+const PASOS = [
+  { label: "Periodo", icon: <IconCalendarEvent size={18} /> },
+  { label: "Responsable", icon: <IconUsers size={18} /> },
+  { label: "Objetivo", icon: <IconTarget size={18} /> },
+  { label: "Confirmación", icon: <IconChecklist size={18} /> },
+];
 
 interface Props {
   onCrear: (draft: GoalDraft) => Promise<void>;
@@ -129,8 +142,29 @@ export default function MetaWizard({ onCrear, onCancelar, creando }: Props) {
   return (
     <Box>
       <Stepper activeStep={paso} sx={{ mb: 4 }}>
-        {PASOS.map((label) => (
-          <Step key={label}><StepLabel>{label}</StepLabel></Step>
+        {PASOS.map((p, idx) => (
+          <Step key={p.label}>
+            <StepLabel
+              StepIconComponent={() => (
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: idx <= paso ? "primary.main" : "action.disabledBackground",
+                    color: idx <= paso ? "primary.contrastText" : "text.secondary",
+                  }}
+                >
+                  {p.icon}
+                </Box>
+              )}
+            >
+              {p.label}
+            </StepLabel>
+          </Step>
         ))}
       </Stepper>
 
@@ -163,23 +197,42 @@ export default function MetaWizard({ onCrear, onCancelar, creando }: Props) {
       )}
 
       {paso === 1 && (
-        <Stack spacing={3} maxWidth={640}>
-          <TextField select label="Tipo de responsable" value={targetType}
-            onChange={(e) => { setTargetType(e.target.value as TargetType); setTargets([]); }}>
-            <MenuItem value="SELLER">Vendedor</MenuItem>
-            <MenuItem value="SALES_CHANNEL">Canal de venta</MenuItem>
-          </TextField>
+        <Stack spacing={3} maxWidth={680}>
+          <Box>
+            <Typography variant="subtitle2" mb={1.5}>¿A quién le vas a asignar el objetivo?</Typography>
+            <Grid container spacing={2}>
+              {OPCIONES_TARGET_TYPE.map((op) => (
+                <Grid item xs={12} sm={6} key={op.value}>
+                  <OpcionCard
+                    selected={targetType === op.value}
+                    icon={op.icon}
+                    title={op.titulo}
+                    description={op.descripcion}
+                    onClick={() => { setTargetType(op.value); setTargets([]); }}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
 
           <ResponsableAutocomplete targetType={targetType} value={targets} onChange={setTargets} />
 
           {targets.length > 0 && (
             <Box>
-              <Typography variant="subtitle2" mb={1}>¿Cómo se aplicará la meta?</Typography>
-              <RadioGroup value={assignmentMode} onChange={(e) => setAssignmentMode(e.target.value as AssignmentMode)}>
-                <FormControlLabel value="INDIVIDUAL" control={<Radio />} label="Individual — cada responsable tiene el objetivo completo" />
-                <FormControlLabel value="SHARED" control={<Radio />} label="Compartido — todos suman contra una misma meta" />
-                <FormControlLabel value="DISTRIBUTED" control={<Radio />} label="Distribuido — el objetivo se reparte entre responsables" />
-              </RadioGroup>
+              <Typography variant="subtitle2" mb={1.5}>¿Cómo se aplicará la meta?</Typography>
+              <Grid container spacing={2}>
+                {OPCIONES_ASIGNACION.map((op) => (
+                  <Grid item xs={12} sm={4} key={op.value}>
+                    <OpcionCard
+                      selected={assignmentMode === op.value}
+                      icon={op.icon}
+                      title={op.titulo}
+                      description={op.descripcion}
+                      onClick={() => setAssignmentMode(op.value)}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
             </Box>
           )}
         </Stack>
@@ -190,10 +243,29 @@ export default function MetaWizard({ onCrear, onCancelar, creando }: Props) {
           <TextField label="Nombre de la meta" required value={name} onChange={(e) => setName(e.target.value)} />
           <TextField label="Descripción" multiline minRows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
 
-          <TextField select label="Tipo de meta" value={goalType} onChange={(e) => setGoalType(e.target.value as GoalType)}>
-            <MenuItem value="SALES_AMOUNT">Meta por monto de venta</MenuItem>
-            <MenuItem value="SKU_QUANTITY">Meta por productos / SKU</MenuItem>
-          </TextField>
+          <Box>
+            <Typography variant="subtitle2" mb={1.5}>¿Cómo se mide el objetivo?</Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <OpcionCard
+                  selected={goalType === "SALES_AMOUNT"}
+                  icon={<IconCoin size={20} />}
+                  title="Monto de venta"
+                  description="El objetivo es un monto de venta en pesos."
+                  onClick={() => setGoalType("SALES_AMOUNT")}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <OpcionCard
+                  selected={goalType === "SKU_QUANTITY"}
+                  icon={<IconPackages size={20} />}
+                  title="Productos / SKU"
+                  description="El objetivo es vender cierta cantidad de productos específicos."
+                  onClick={() => setGoalType("SKU_QUANTITY")}
+                />
+              </Grid>
+            </Grid>
+          </Box>
 
           {goalType === "SALES_AMOUNT" ? (
             <>
@@ -205,7 +277,14 @@ export default function MetaWizard({ onCrear, onCancelar, creando }: Props) {
             </>
           ) : (
             <>
-              <ProductoSelector value={items} onChange={setItems} />
+              <ProductoSelector
+                value={items}
+                onChange={setItems}
+                targets={targets}
+                assignmentMode={assignmentMode}
+                targetItems={targetItems}
+                onTargetItemsChange={setTargetItems}
+              />
               {assignmentMode === "DISTRIBUTED" && items.length > 0 && (
                 <DistribucionSkuMatriz items={items} targets={targets} targetItems={targetItems} onChange={setTargetItems} />
               )}
@@ -215,23 +294,44 @@ export default function MetaWizard({ onCrear, onCancelar, creando }: Props) {
       )}
 
       {paso === 3 && (
-        <Stack spacing={2} maxWidth={640}>
-          <Typography variant="h6">Resumen</Typography>
-          <Card variant="outlined"><CardContent>
-            <Stack spacing={1.5}>
-              <Row label="Periodo" value={periodoSeleccionado?.name} />
-              <Row label="Nombre" value={name} />
-              {description && <Row label="Descripción" value={description} />}
-              <Row label="Tipo" value={goalType === "SALES_AMOUNT" ? "Monto de venta" : "Cantidad de SKU"} />
-              <Row label="Modo" value={{ INDIVIDUAL: "Individual", SHARED: "Compartido", DISTRIBUTED: "Distribuido" }[assignmentMode]} />
-              <Row label="Responsables" value={<Stack direction="row" flexWrap="wrap" gap={0.5}>{targets.map((t) => <Chip key={t.targetReferenceId} size="small" label={t.targetName} />)}</Stack>} />
-              {goalType === "SALES_AMOUNT" ? (
-                <Row label="Objetivo total" value={formatoMonto(targetAmount)} />
-              ) : (
-                <Row label="Productos" value={<Stack spacing={0.5}>{items.map((it) => <Typography key={it.sku} variant="body2">{it.sku} — {it.productName}: {it.targetQuantity}</Typography>)}</Stack>} />
-              )}
-            </Stack>
-          </CardContent></Card>
+        <Stack spacing={2} maxWidth={680}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <IconChecklist size={20} />
+            <Typography variant="h6">Revisa antes de crear</Typography>
+          </Stack>
+          <Card variant="outlined">
+            <CardContent>
+              <Stack spacing={1.75} divider={<Divider flexItem />}>
+                <Row label="Periodo" value={periodoSeleccionado?.name} />
+                <Row label="Nombre" value={name} />
+                {description && <Row label="Descripción" value={description} />}
+                <Row label="Tipo" value={goalType === "SALES_AMOUNT" ? "Monto de venta" : "Cantidad de SKU"} />
+                <Row label="Modo" value={{ INDIVIDUAL: "Individual", SHARED: "Compartido", DISTRIBUTED: "Distribuido" }[assignmentMode]} />
+                <Row
+                  label="Responsables"
+                  value={
+                    <Stack direction="row" flexWrap="wrap" gap={0.5}>
+                      {targets.map((t) => <Chip key={t.targetReferenceId} size="small" label={t.targetName} />)}
+                    </Stack>
+                  }
+                />
+                {goalType === "SALES_AMOUNT" ? (
+                  <Row label="Objetivo total" value={formatoMonto(targetAmount)} />
+                ) : (
+                  <Row
+                    label={`Productos (${items.length})`}
+                    value={
+                      <Stack spacing={0.5}>
+                        {items.map((it) => (
+                          <Typography key={it.sku} variant="body2">{it.sku} — {it.productName}: <strong>{it.targetQuantity}</strong></Typography>
+                        ))}
+                      </Stack>
+                    }
+                  />
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
         </Stack>
       )}
 
@@ -242,7 +342,9 @@ export default function MetaWizard({ onCrear, onCancelar, creando }: Props) {
         {paso < PASOS.length - 1 ? (
           <Button variant="contained" onClick={siguiente}>Siguiente</Button>
         ) : (
-          <Button variant="contained" onClick={confirmar} disabled={creando}>Crear meta</Button>
+          <Button variant="contained" onClick={confirmar} disabled={creando}>
+            {creando ? "Creando…" : "Crear meta"}
+          </Button>
         )}
       </Stack>
     </Box>

@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Box, CircularProgress, Typography } from "@mui/material";
+import { IconPencil } from "@tabler/icons-react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import BlankCard from "@/app/(DashboardLayout)/components/shared/BlankCard";
+import MetasPageHeader from "@/modules/metas/components/MetasPageHeader";
 import PeriodoForm from "@/modules/metas/components/PeriodoForm";
 import { editarPeriodo, obtenerPeriodo, type PeriodoPayload } from "@/modules/metas/services/metas.client";
 import type { GoalPeriod } from "@/modules/metas/types";
@@ -36,7 +38,7 @@ export default function EditarPeriodoPage() {
   return (
     <PageContainer title="Editar periodo" description="Administra los rangos de fechas utilizados para medir las metas.">
       <Box>
-        <Typography variant="h4" mb={3}>Editar periodo</Typography>
+        <MetasPageHeader icon={<IconPencil size={22} />} title="Editar periodo" description={periodo?.name} />
         {loading ? (
           <CircularProgress />
         ) : periodo ? (

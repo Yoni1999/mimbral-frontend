@@ -2,8 +2,10 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Autocomplete,
+  Box,
   CircularProgress,
   IconButton,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -12,9 +14,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { IconTrash } from "@tabler/icons-react";
+import { IconPackageOff, IconTrash } from "@tabler/icons-react";
 import { buscarProductos } from "../services/metas.client";
-import type { GoalItem, ProductOption } from "../types";
+import ImportarSkuExcelDialog from "./ImportarSkuExcelDialog";
+import type { AssignmentMode, GoalItem, GoalTarget, GoalTargetItem, ProductOption } from "../types";
 
 const DEBOUNCE_MS = 350;
 
@@ -22,11 +25,17 @@ interface Props {
   value: GoalItem[];
   onChange: (items: GoalItem[]) => void;
   disabled?: boolean;
+  targets?: GoalTarget[];
+  assignmentMode?: AssignmentMode;
+  targetItems?: GoalTargetItem[];
+  onTargetItemsChange?: (targetItems: GoalTargetItem[]) => void;
 }
 
 /** Buscador de SKU (catalog-service-v1, por texto/código/nombre) + tabla de
- *  productos ya agregados a la meta, con su cantidad objetivo editable. */
-export default function ProductoSelector({ value, onChange, disabled }: Props) {
+ *  productos ya agregados a la meta, con su cantidad objetivo editable.
+ *  También ofrece carga masiva por Excel (ver ImportarSkuExcelDialog) para no
+ *  tener que agregar SKU de a uno cuando son muchos. */
+export default function ProductoSelector({ value, onChange, disabled, targets, assignmentMode, targetItems, onTargetItemsChange }: Props) {
   const [inputValue, setInputValue] = useState("");
   const [options, setOptions] = useState<ProductOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -67,32 +76,46 @@ export default function ProductoSelector({ value, onChange, disabled }: Props) {
 
   return (
     <>
-      <Autocomplete
-        disabled={disabled}
-        options={options.filter((o) => !value.some((v) => v.sku === o.sku))}
-        loading={loading}
-        value={null}
-        inputValue={inputValue}
-        onInputChange={(_, texto) => setInputValue(texto)}
-        getOptionLabel={(option) => `${option.sku} — ${option.productName}`}
-        onChange={(_, opcion) => agregarProducto(opcion)}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Buscar por SKU, código o nombre"
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {loading ? <CircularProgress color="inherit" size={16} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "flex-start" }}>
+        <Autocomplete
+          fullWidth
+          disabled={disabled}
+          options={options.filter((o) => !value.some((v) => v.sku === o.sku))}
+          loading={loading}
+          value={null}
+          inputValue={inputValue}
+          onInputChange={(_, texto) => setInputValue(texto)}
+          getOptionLabel={(option) => `${option.sku} — ${option.productName}`}
+          onChange={(_, opcion) => agregarProducto(opcion)}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Buscar por SKU, código o nombre"
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {loading ? <CircularProgress color="inherit" size={16} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+          noOptionsText={inputValue ? "Sin resultados" : "Escribe para buscar"}
+        />
+        <Box pt={{ xs: 0, sm: 1 }}>
+          <ImportarSkuExcelDialog
+            value={value}
+            onChange={onChange}
+            targets={targets}
+            assignmentMode={assignmentMode}
+            targetItems={targetItems}
+            onTargetItemsChange={onTargetItemsChange}
+            disabled={disabled}
           />
-        )}
-        noOptionsText={inputValue ? "Sin resultados" : "Escribe para buscar"}
-      />
+        </Box>
+      </Stack>
 
       {value.length > 0 ? (
         <Table size="small" sx={{ mt: 2 }}>
@@ -106,8 +129,8 @@ export default function ProductoSelector({ value, onChange, disabled }: Props) {
           </TableHead>
           <TableBody>
             {value.map((item) => (
-              <TableRow key={item.sku}>
-                <TableCell>{item.sku}</TableCell>
+              <TableRow key={item.sku} hover>
+                <TableCell sx={{ fontFamily: "monospace", fontSize: 13 }}>{item.sku}</TableCell>
                 <TableCell>{item.productName}</TableCell>
                 <TableCell align="right">
                   <TextField
@@ -121,7 +144,7 @@ export default function ProductoSelector({ value, onChange, disabled }: Props) {
                   />
                 </TableCell>
                 <TableCell align="center">
-                  <IconButton size="small" disabled={disabled} onClick={() => quitarProducto(item.sku)}>
+                  <IconButton size="small" color="error" disabled={disabled} onClick={() => quitarProducto(item.sku)}>
                     <IconTrash size={18} />
                   </IconButton>
                 </TableCell>
@@ -130,9 +153,12 @@ export default function ProductoSelector({ value, onChange, disabled }: Props) {
           </TableBody>
         </Table>
       ) : (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-          Todavía no agregas productos.
-        </Typography>
+        <Stack alignItems="center" spacing={1} sx={{ mt: 2, py: 3, borderRadius: 2, border: "1px dashed", borderColor: "divider", color: "text.secondary" }}>
+          <IconPackageOff size={28} strokeWidth={1.5} />
+          <Typography variant="body2" color="text.secondary">
+            Todavía no agregas productos. Búscalos arriba o impórtalos desde un Excel.
+          </Typography>
+        </Stack>
       )}
     </>
   );
