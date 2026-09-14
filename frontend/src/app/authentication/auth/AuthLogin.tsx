@@ -1,11 +1,33 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { IconButton } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 import { useAuthLogin } from "@/modules/auth/hooks/useAuthLogin";
 import styles from "./AuthLogin.module.css";
+
+const LOGOUT_REASON_KEY = "authLogoutReason";
+
+/** Lee el motivo del último cierre de sesión forzado (ver apiClient.ts
+ *  `redirectToLogin`) — se guarda justo antes del `window.location.href` que
+ *  trae de vuelta acá, porque esa navegación completa borra la pestaña
+ *  Network/Console de devtools antes de que alguien alcance a leerla. */
+function useMotivoLogout() {
+  const [motivo, setMotivo] = useState<{ detalle: string; at: string } | null>(null);
+
+  useEffect(() => {
+    try {
+      const crudo = sessionStorage.getItem(LOGOUT_REASON_KEY);
+      if (crudo) setMotivo(JSON.parse(crudo));
+      sessionStorage.removeItem(LOGOUT_REASON_KEY);
+    } catch {
+      // sessionStorage no disponible; sin banner, no es bloqueante.
+    }
+  }, []);
+
+  return [motivo, () => setMotivo(null)] as const;
+}
 
 /**
  * Misma estructura visual que FrontOmsMimbral/features/auth/pages/Login.tsx
@@ -29,6 +51,7 @@ const AuthLogin = () => {
     handleForceLogin,
   } = useAuthLogin();
 
+  const [motivoLogout, limpiarMotivoLogout] = useMotivoLogout();
   const canSubmit = identifierIsValid && password.trim().length > 0 && !loading;
 
   const onSubmit = (e: React.FormEvent) => {
@@ -50,6 +73,15 @@ const AuthLogin = () => {
 
         <form className={styles.card} onSubmit={onSubmit}>
           <h2 className={styles.cardHeading}>Inicia sesion con tu cuenta</h2>
+
+          {motivoLogout && (
+            <div className={`${styles.alert} ${styles.info}`} role="status">
+              <p className={styles.alertText}>Se cerró tu sesión: {motivoLogout.detalle}</p>
+              <button type="button" className={styles.dismissButton} onClick={limpiarMotivoLogout}>
+                Cerrar
+              </button>
+            </div>
+          )}
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="email">
