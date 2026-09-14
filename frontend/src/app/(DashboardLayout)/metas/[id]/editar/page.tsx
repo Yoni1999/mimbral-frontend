@@ -6,21 +6,22 @@ import {
   Box,
   Button,
   CircularProgress,
-  FormControlLabel,
-  MenuItem,
-  Radio,
-  RadioGroup,
+  Grid,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import { IconPencil } from "@tabler/icons-react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import BlankCard from "@/app/(DashboardLayout)/components/shared/BlankCard";
+import MetasPageHeader from "@/modules/metas/components/MetasPageHeader";
+import OpcionCard from "@/modules/metas/components/OpcionCard";
 import ResponsableAutocomplete from "@/modules/metas/components/ResponsableAutocomplete";
 import ProductoSelector from "@/modules/metas/components/ProductoSelector";
 import DistribucionMontoEditor from "@/modules/metas/components/DistribucionMontoEditor";
 import DistribucionSkuMatriz from "@/modules/metas/components/DistribucionSkuMatriz";
 import { editarMeta, obtenerMeta } from "@/modules/metas/services/metas.client";
+import { OPCIONES_ASIGNACION, OPCIONES_TARGET_TYPE } from "@/modules/metas/opciones";
 import type { AssignmentMode, Goal, GoalItem, GoalTarget, GoalTargetItem, TargetType } from "@/modules/metas/types";
 import { notifyError, notifySuccess } from "@/components/ui/toast/notify";
 
@@ -123,7 +124,7 @@ export default function EditarMetaPage() {
   return (
     <PageContainer title="Editar meta" description="Administra los objetivos comerciales asignados a vendedores y canales de venta.">
       <Box>
-        <Typography variant="h4" mb={3}>Editar meta</Typography>
+        <MetasPageHeader icon={<IconPencil size={22} />} title="Editar meta" description={meta.name} />
         <BlankCard>
           <Box p={3}>
             <Stack spacing={3} maxWidth={760}>
@@ -136,20 +137,40 @@ export default function EditarMetaPage() {
               <TextField label="Nombre" required value={name} onChange={(e) => setName(e.target.value)} />
               <TextField label="Descripción" multiline minRows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
 
-              <TextField select label="Tipo de responsable" value={targetType} onChange={(e) => cambiarTipoResponsable(e.target.value as TargetType)}>
-                <MenuItem value="SELLER">Vendedor</MenuItem>
-                <MenuItem value="SALES_CHANNEL">Canal de venta</MenuItem>
-              </TextField>
+              <Box>
+                <Typography variant="subtitle2" mb={1.5}>Tipo de responsable</Typography>
+                <Grid container spacing={2}>
+                  {OPCIONES_TARGET_TYPE.map((op) => (
+                    <Grid item xs={12} sm={6} key={op.value}>
+                      <OpcionCard
+                        selected={targetType === op.value}
+                        icon={op.icon}
+                        title={op.titulo}
+                        description={op.descripcion}
+                        onClick={() => cambiarTipoResponsable(op.value)}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
               <ResponsableAutocomplete targetType={targetType} value={targets} onChange={setTargets} />
 
               {targets.length > 0 && (
                 <Box>
-                  <Typography variant="subtitle2" mb={1}>¿Cómo se aplica la meta?</Typography>
-                  <RadioGroup value={assignmentMode} onChange={(e) => setAssignmentMode(e.target.value as AssignmentMode)}>
-                    <FormControlLabel value="INDIVIDUAL" control={<Radio />} label="Individual" />
-                    <FormControlLabel value="SHARED" control={<Radio />} label="Compartido" />
-                    <FormControlLabel value="DISTRIBUTED" control={<Radio />} label="Distribuido" />
-                  </RadioGroup>
+                  <Typography variant="subtitle2" mb={1.5}>¿Cómo se aplica la meta?</Typography>
+                  <Grid container spacing={2}>
+                    {OPCIONES_ASIGNACION.map((op) => (
+                      <Grid item xs={12} sm={4} key={op.value}>
+                        <OpcionCard
+                          selected={assignmentMode === op.value}
+                          icon={op.icon}
+                          title={op.titulo}
+                          description={op.descripcion}
+                          onClick={() => setAssignmentMode(op.value)}
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
                 </Box>
               )}
 
@@ -163,7 +184,14 @@ export default function EditarMetaPage() {
                 </>
               ) : (
                 <>
-                  <ProductoSelector value={items} onChange={setItems} />
+                  <ProductoSelector
+                    value={items}
+                    onChange={setItems}
+                    targets={targets}
+                    assignmentMode={assignmentMode}
+                    targetItems={targetItems}
+                    onTargetItemsChange={setTargetItems}
+                  />
                   {assignmentMode === "DISTRIBUTED" && items.length > 0 && targets.length > 0 && (
                     <DistribucionSkuMatriz items={items} targets={targets} targetItems={targetItems} onChange={setTargetItems} />
                   )}

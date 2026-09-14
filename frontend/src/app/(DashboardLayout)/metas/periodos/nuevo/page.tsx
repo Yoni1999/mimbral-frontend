@@ -1,8 +1,10 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
+import { IconCalendarStats } from "@tabler/icons-react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import BlankCard from "@/app/(DashboardLayout)/components/shared/BlankCard";
+import MetasPageHeader from "@/modules/metas/components/MetasPageHeader";
 import PeriodoForm from "@/modules/metas/components/PeriodoForm";
 import { crearPeriodo, type PeriodoPayload } from "@/modules/metas/services/metas.client";
 import { notifyError, notifyInfo, notifySuccess } from "@/components/ui/toast/notify";
@@ -24,7 +26,7 @@ export default function NuevoPeriodoPage() {
   return (
     <PageContainer title="Crear periodo" description="Administra los rangos de fechas utilizados para medir las metas.">
       <Box>
-        <Typography variant="h4" mb={3}>Crear periodo</Typography>
+        <MetasPageHeader icon={<IconCalendarStats size={22} />} title="Crear periodo" description="Define el rango de fechas para medir las metas." />
         <BlankCard>
           <Box p={3}>
             <PeriodoForm modo="crear" onCancelar={() => router.push("/metas/periodos")} onGuardar={guardar} />

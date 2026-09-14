@@ -19,9 +19,11 @@ import {
   Typography,
 } from "@mui/material";
 import dayjs from "dayjs";
+import { IconBuildingStore, IconClockHour4, IconUser } from "@tabler/icons-react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import BlankCard from "@/app/(DashboardLayout)/components/shared/BlankCard";
 import EstadoChip from "@/modules/metas/components/EstadoChip";
+import SeccionMeta from "@/modules/metas/components/SeccionMeta";
 import ConfirmarAccionModal from "@/modules/metas/components/ConfirmarAccionModal";
 import { cancelarMeta, eliminarMeta, obtenerHistorialMeta, obtenerMeta } from "@/modules/metas/services/metas.client";
 import type { Goal, GoalAuditEntry } from "@/modules/metas/types";
@@ -85,8 +87,21 @@ export default function DetalleMetaPage() {
   return (
     <PageContainer title={meta.name} description="Detalle de la meta comercial.">
       <Box>
-        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} spacing={2} mb={3}>
-          <Typography variant="h4">{meta.name}</Typography>
+        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={2} mb={3}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            {(meta.targetType || meta.targets?.[0]?.targetType) === "SALES_CHANNEL" ? (
+              <IconBuildingStore size={26} />
+            ) : (
+              <IconUser size={26} />
+            )}
+            <Box>
+              <Typography variant="h4">{meta.name}</Typography>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <EstadoChip estado={meta.status} />
+                <Typography variant="body2" color="text.secondary">{meta.periodName}</Typography>
+              </Stack>
+            </Box>
+          </Stack>
           {meta.status === "ACTIVE" && (
             <Stack direction="row" spacing={1}>
               <Button component={Link} href={`/metas/${meta.id}/editar`} variant="outlined">Editar</Button>
@@ -118,15 +133,19 @@ export default function DetalleMetaPage() {
           </Box>
         </BlankCard>
 
-        <Typography variant="h5" mt={4} mb={2}>Cumplimiento</Typography>
+        <SeccionMeta title="Cumplimiento" />
         <Card variant="outlined" sx={{ mb: 1 }}>
           <CardContent>
-            <Typography variant="body2" color="text.secondary">
-              El cálculo de venta real todavía no está definido (depende de cómo se conecte con SAP) — por ahora sólo se muestra el objetivo configurado.
-            </Typography>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <IconClockHour4 size={20} />
+              <Typography variant="body2" color="text.secondary">
+                El cálculo de venta real todavía no está definido (depende de cómo se conecte con SAP) — por ahora sólo se muestra el objetivo configurado.
+              </Typography>
+            </Stack>
           </CardContent>
         </Card>
 
+        <SeccionMeta title="Detalle del objetivo" />
         {meta.goalType === "SALES_AMOUNT" ? (
           <BlankCard>
             <Box p={3}>
@@ -138,7 +157,7 @@ export default function DetalleMetaPage() {
               </Grid>
               {meta.assignmentMode === "DISTRIBUTED" && (
                 <Table size="small" sx={{ mt: 3 }}>
-                  <TableHead><TableRow><TableCell>Responsable</TableCell><TableCell align="right">Objetivo</TableCell><TableCell align="right">Vendido</TableCell><TableCell align="right">Cumplimiento</TableCell></TableRow></TableHead>
+                  <TableHead sx={{ "& th": { bgcolor: "action.hover", fontWeight: 600 } }}><TableRow><TableCell>Responsable</TableCell><TableCell align="right">Objetivo</TableCell><TableCell align="right">Vendido</TableCell><TableCell align="right">Cumplimiento</TableCell></TableRow></TableHead>
                   <TableBody>
                     {(meta.targets || []).map((t) => (
                       <TableRow key={t.targetReferenceId}>
@@ -157,11 +176,13 @@ export default function DetalleMetaPage() {
           <BlankCard>
             <Box p={3}>
               <Table size="small">
-                <TableHead><TableRow><TableCell>SKU</TableCell><TableCell>Producto</TableCell><TableCell align="right">Meta</TableCell><TableCell align="right">Vendido</TableCell><TableCell align="right">Faltante</TableCell><TableCell align="right">%</TableCell></TableRow></TableHead>
+                <TableHead sx={{ "& th": { bgcolor: "action.hover", fontWeight: 600 } }}>
+                  <TableRow><TableCell>SKU</TableCell><TableCell>Producto</TableCell><TableCell align="right">Meta</TableCell><TableCell align="right">Vendido</TableCell><TableCell align="right">Faltante</TableCell><TableCell align="right">%</TableCell></TableRow>
+                </TableHead>
                 <TableBody>
                   {(meta.items || []).map((it) => (
-                    <TableRow key={it.sku}>
-                      <TableCell>{it.sku}</TableCell>
+                    <TableRow key={it.sku} hover>
+                      <TableCell sx={{ fontFamily: "monospace", fontSize: 13 }}>{it.sku}</TableCell>
                       <TableCell>{it.productName}</TableCell>
                       <TableCell align="right">{it.targetQuantity}</TableCell>
                       <TableCell align="right">—</TableCell>
@@ -176,7 +197,7 @@ export default function DetalleMetaPage() {
                 <>
                   <Typography variant="subtitle2" mt={3} mb={1}>Distribución configurada</Typography>
                   <Table size="small">
-                    <TableHead><TableRow><TableCell>SKU</TableCell><TableCell>Responsable</TableCell><TableCell align="right">Cantidad asignada</TableCell></TableRow></TableHead>
+                    <TableHead sx={{ "& th": { bgcolor: "action.hover", fontWeight: 600 } }}><TableRow><TableCell>SKU</TableCell><TableCell>Responsable</TableCell><TableCell align="right">Cantidad asignada</TableCell></TableRow></TableHead>
                     <TableBody>
                       {(meta.targetItems || []).map((ti, idx) => {
                         const responsable = (meta.targets || []).find((t) => t.id === ti.goalTargetId);
@@ -198,13 +219,15 @@ export default function DetalleMetaPage() {
 
         {historial.length > 0 && (
           <>
-            <Typography variant="h5" mt={4} mb={2}>Historial de cambios</Typography>
+            <SeccionMeta title="Historial de cambios" />
             <BlankCard>
               <Table size="small">
-                <TableHead><TableRow><TableCell>Fecha</TableCell><TableCell>Usuario</TableCell><TableCell>Acción</TableCell></TableRow></TableHead>
+                <TableHead sx={{ "& th": { bgcolor: "action.hover", fontWeight: 600 } }}>
+                  <TableRow><TableCell>Fecha</TableCell><TableCell>Usuario</TableCell><TableCell>Acción</TableCell></TableRow>
+                </TableHead>
                 <TableBody>
                   {historial.map((h) => (
-                    <TableRow key={h.id}>
+                    <TableRow key={h.id} hover>
                       <TableCell>{dayjs(h.createdAt).format("DD-MM-YYYY HH:mm")}</TableCell>
                       <TableCell>{h.userName || h.userId}</TableCell>
                       <TableCell>{h.action}</TableCell>

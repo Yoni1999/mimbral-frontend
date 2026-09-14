@@ -176,3 +176,14 @@ export async function buscarProductos(q: string, page = 1, pageSize = 20) {
   })) as Envelope<ProductOption[]>;
   return { items: res.data, pagination: res.pagination };
 }
+
+/** Valida un lote de SKU (carga masiva por Excel) contra el catálogo real
+ *  (catalog-service-v1, vía el backend) antes de agregarlos a una meta. */
+export async function resolverProductosPorSku(skus: string[]) {
+  const res = (await apiJson("/api/goals/lookups/products/resolve", {
+    method: "POST",
+    body: JSON.stringify({ skus }),
+    auth: "required",
+  })) as Envelope<{ items: ProductOption[]; notFound: string[] }>;
+  return res.data;
+}

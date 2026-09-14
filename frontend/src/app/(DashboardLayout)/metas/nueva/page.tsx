@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
+import { IconTargetArrow } from "@tabler/icons-react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import BlankCard from "@/app/(DashboardLayout)/components/shared/BlankCard";
+import MetasPageHeader from "@/modules/metas/components/MetasPageHeader";
 import MetaWizard from "@/modules/metas/components/MetaWizard";
 import { crearMeta } from "@/modules/metas/services/metas.client";
 import type { GoalDraft } from "@/modules/metas/types";
@@ -30,7 +32,7 @@ export default function NuevaMetaPage() {
   return (
     <PageContainer title="Nueva meta" description="Crea una meta comercial asignada a vendedores o canales de venta.">
       <Box>
-        <Typography variant="h4" mb={3}>Crear meta</Typography>
+        <MetasPageHeader icon={<IconTargetArrow size={24} />} title="Crear meta" description="Define el periodo, el responsable y el objetivo comercial." />
         <BlankCard>
           <Box p={3}>
             <MetaWizard onCrear={crear} onCancelar={() => router.push("/metas/listado")} creando={creando} />

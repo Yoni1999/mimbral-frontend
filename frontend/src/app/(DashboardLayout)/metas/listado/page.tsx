@@ -10,14 +10,14 @@ import {
   Stack,
   TextField,
   Tooltip,
-  Typography,
 } from "@mui/material";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
-import { IconEye, IconPencil, IconBan, IconTrash, IconPlus } from "@tabler/icons-react";
+import { IconEye, IconPencil, IconBan, IconTrash, IconPlus, IconListDetails, IconUser, IconBuildingStore } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import BlankCard from "@/app/(DashboardLayout)/components/shared/BlankCard";
 import EstadoChip from "@/modules/metas/components/EstadoChip";
+import MetasPageHeader from "@/modules/metas/components/MetasPageHeader";
 import ConfirmarAccionModal from "@/modules/metas/components/ConfirmarAccionModal";
 import { cancelarMeta, eliminarMeta, listarMetas, listarPeriodos } from "@/modules/metas/services/metas.client";
 import type { Goal, GoalPeriod } from "@/modules/metas/types";
@@ -92,7 +92,22 @@ export default function ListadoMetasPage() {
     () => [
       { field: "name", headerName: "Nombre", flex: 1.2, renderCell: (p) => <Link href={`/metas/${p.row.id}`}>{p.value}</Link> },
       { field: "periodName", headerName: "Periodo", width: 150 },
-      { field: "targetType", headerName: "Tipo responsable", width: 140, valueGetter: (v, row) => (row.targetType === "SELLER" ? "Vendedor" : row.targetType === "SALES_CHANNEL" ? "Canal" : "—") },
+      {
+        field: "targetType",
+        headerName: "Tipo responsable",
+        width: 150,
+        renderCell: (p) => {
+          const row = p.row as Goal;
+          if (!row.targetType) return "—";
+          const esVendedor = row.targetType === "SELLER";
+          return (
+            <Stack direction="row" spacing={0.75} alignItems="center">
+              {esVendedor ? <IconUser size={16} /> : <IconBuildingStore size={16} />}
+              <span>{esVendedor ? "Vendedor" : "Canal"}</span>
+            </Stack>
+          );
+        },
+      },
       { field: "targetNames", headerName: "Responsables", flex: 1, valueGetter: (v, row) => row.targetNames || "—" },
       { field: "goalType", headerName: "Tipo meta", width: 130, valueGetter: (v, row) => (row.goalType === "SALES_AMOUNT" ? "Monto" : "SKU") },
       { field: "assignmentMode", headerName: "Modo", width: 120, valueGetter: (v, row) => ({ INDIVIDUAL: "Individual", SHARED: "Compartido", DISTRIBUTED: "Distribuido" }[row.assignmentMode]) },
@@ -129,13 +144,14 @@ export default function ListadoMetasPage() {
   return (
     <PageContainer title="Metas" description="Administra los objetivos comerciales asignados a vendedores y canales de venta.">
       <Box>
-        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} spacing={2} mb={3}>
-          <Box>
-            <Typography variant="h4">Metas</Typography>
-            <Typography color="text.secondary">Administra los objetivos comerciales asignados a vendedores y canales de venta.</Typography>
-          </Box>
-          <Button component={Link} href="/metas/nueva" variant="contained" startIcon={<IconPlus size={18} />}>Crear meta</Button>
-        </Stack>
+        <MetasPageHeader
+          icon={<IconListDetails size={24} />}
+          title="Metas"
+          description="Administra los objetivos comerciales asignados a vendedores y canales de venta."
+          action={
+            <Button component={Link} href="/metas/nueva" variant="contained" startIcon={<IconPlus size={18} />}>Crear meta</Button>
+          }
+        />
 
         <BlankCard>
           <Box p={2}>

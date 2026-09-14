@@ -10,14 +10,14 @@ import {
   Stack,
   TextField,
   Tooltip,
-  Typography,
 } from "@mui/material";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
-import { IconEye, IconPencil, IconLock, IconBan, IconTrash, IconPlus } from "@tabler/icons-react";
+import { IconEye, IconPencil, IconLock, IconBan, IconTrash, IconPlus, IconCalendarStats } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import BlankCard from "@/app/(DashboardLayout)/components/shared/BlankCard";
 import EstadoChip from "@/modules/metas/components/EstadoChip";
+import MetasPageHeader from "@/modules/metas/components/MetasPageHeader";
 import ConfirmarAccionModal from "@/modules/metas/components/ConfirmarAccionModal";
 import { cancelarPeriodo, cerrarPeriodo, eliminarPeriodo, listarPeriodos } from "@/modules/metas/services/metas.client";
 import type { GoalPeriod, PeriodStatus } from "@/modules/metas/types";
@@ -135,15 +135,16 @@ export default function PeriodosPage() {
   return (
     <PageContainer title="Periodos" description="Administra los rangos de fechas utilizados para medir las metas.">
       <Box>
-        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} spacing={2} mb={3}>
-          <Box>
-            <Typography variant="h4">Periodos</Typography>
-            <Typography color="text.secondary">Administra los rangos de fechas utilizados para medir las metas.</Typography>
-          </Box>
-          <Button component={Link} href="/metas/periodos/nuevo" variant="contained" startIcon={<IconPlus size={18} />}>
-            Crear periodo
-          </Button>
-        </Stack>
+        <MetasPageHeader
+          icon={<IconCalendarStats size={24} />}
+          title="Periodos"
+          description="Administra los rangos de fechas utilizados para medir las metas."
+          action={
+            <Button component={Link} href="/metas/periodos/nuevo" variant="contained" startIcon={<IconPlus size={18} />}>
+              Crear periodo
+            </Button>
+          }
+        />
 
         <BlankCard>
           <Box p={2}>

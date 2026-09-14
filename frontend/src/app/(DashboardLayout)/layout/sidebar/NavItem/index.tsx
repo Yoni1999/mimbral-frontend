@@ -137,11 +137,24 @@ const NavItem = ({ item, pathDirect, onClick, isOpen, collapsed }: ItemType) => 
                     py: "8px",
                     borderRadius: "10px",
                     mb: "2px",
-                    color: childActivo ? "white" : "#64748b",
-                    backgroundColor: childActivo ? theme.palette.primary.main : "transparent",
+                    color: "#64748b",
+                    backgroundColor: "transparent",
                     "&:hover": {
-                      backgroundColor: childActivo ? theme.palette.primary.main : theme.palette.action.hover,
-                      color: childActivo ? "white" : theme.palette.text.primary,
+                      backgroundColor: theme.palette.action.hover,
+                      color: theme.palette.text.primary,
+                    },
+                    // MUI aplica su propio ".Mui-selected" con más
+                    // especificidad (dos clases) que un backgroundColor plano
+                    // en sx (una clase) — sin este anidado, el gris
+                    // translúcido por defecto de MUI le ganaba al navy
+                    // pensado para "seleccionado" y quedaba casi invisible.
+                    "&.Mui-selected": {
+                      color: "white",
+                      backgroundColor: theme.palette.primary.main,
+                      "&:hover": {
+                        backgroundColor: theme.palette.primary.main,
+                        color: "white",
+                      },
                     },
                   }}
                 >

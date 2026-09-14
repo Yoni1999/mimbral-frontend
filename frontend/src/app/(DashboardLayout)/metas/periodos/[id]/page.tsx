@@ -2,12 +2,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Box, Button, CircularProgress, Grid, Stack, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Grid, Typography } from "@mui/material";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import dayjs from "dayjs";
+import { IconCalendarStats } from "@tabler/icons-react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import BlankCard from "@/app/(DashboardLayout)/components/shared/BlankCard";
 import EstadoChip from "@/modules/metas/components/EstadoChip";
+import MetasPageHeader from "@/modules/metas/components/MetasPageHeader";
+import SeccionMeta from "@/modules/metas/components/SeccionMeta";
 import { listarMetas, obtenerPeriodo } from "@/modules/metas/services/metas.client";
 import type { Goal, GoalPeriod } from "@/modules/metas/types";
 import { notifyError } from "@/components/ui/toast/notify";
@@ -50,12 +53,16 @@ export default function DetallePeriodoPage() {
   return (
     <PageContainer title={periodo.name} description="Detalle del periodo.">
       <Box>
-        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} spacing={2} mb={3}>
-          <Typography variant="h4">{periodo.name}</Typography>
-          {(periodo.status === "DRAFT" || periodo.status === "ACTIVE") && (
-            <Button component={Link} href={`/metas/periodos/${periodo.id}/editar`} variant="outlined">Editar</Button>
-          )}
-        </Stack>
+        <MetasPageHeader
+          icon={<IconCalendarStats size={22} />}
+          title={periodo.name}
+          description="Detalle del periodo."
+          action={
+            (periodo.status === "DRAFT" || periodo.status === "ACTIVE") && (
+              <Button component={Link} href={`/metas/periodos/${periodo.id}/editar`} variant="outlined">Editar</Button>
+            )
+          }
+        />
 
         <BlankCard>
           <Box p={3}>
@@ -77,7 +84,7 @@ export default function DetallePeriodoPage() {
           </Box>
         </BlankCard>
 
-        <Typography variant="h5" mt={4} mb={2}>Metas de este periodo</Typography>
+        <SeccionMeta title="Metas de este periodo" />
         <BlankCard>
           <Box sx={{ height: 420 }}>
             <DataGrid rows={metas} columns={columnas} disableRowSelectionOnClick hideFooter={metas.length <= 10} />

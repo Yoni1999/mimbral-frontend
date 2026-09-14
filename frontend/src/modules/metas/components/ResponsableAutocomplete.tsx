@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Autocomplete, CircularProgress, Chip, TextField } from "@mui/material";
+import { Autocomplete, CircularProgress, Chip, Stack, TextField, Typography } from "@mui/material";
+import { IconBuildingStore, IconUser } from "@tabler/icons-react";
 import { buscarVendedores, buscarCanalesDeVenta } from "../services/metas.client";
 import type { GoalTarget, ResponsibleOption, TargetType } from "../types";
 
@@ -76,9 +77,25 @@ export default function ResponsableAutocomplete({ targetType, value, onChange, d
           }))
         );
       }}
+      renderOption={(props, option) => (
+        <li {...props} key={option.referenceId}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            {targetType === "SELLER" ? <IconUser size={16} /> : <IconBuildingStore size={16} />}
+            <Typography variant="body2">{option.name}</Typography>
+          </Stack>
+        </li>
+      )}
       renderTags={(tags, getTagProps) =>
         tags.map((option, index) => (
-          <Chip label={option.name} size="small" {...getTagProps({ index })} key={option.referenceId} />
+          <Chip
+            icon={targetType === "SELLER" ? <IconUser size={14} /> : <IconBuildingStore size={14} />}
+            label={option.name}
+            size="small"
+            color="primary"
+            variant="outlined"
+            {...getTagProps({ index })}
+            key={option.referenceId}
+          />
         ))
       }
       renderInput={(params) => (

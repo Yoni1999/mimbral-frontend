@@ -6,16 +6,15 @@ import {
   Button,
   Grid,
   MenuItem,
-  Stack,
   TextField,
-  Typography,
 } from "@mui/material";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
-import { IconPlus } from "@tabler/icons-react";
+import { IconPlus, IconTargetArrow, IconCalendarStats, IconGauge, IconBan } from "@tabler/icons-react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import BlankCard from "@/app/(DashboardLayout)/components/shared/BlankCard";
-import { Card, CardContent } from "@mui/material";
 import EstadoChip from "@/modules/metas/components/EstadoChip";
+import MetasPageHeader from "@/modules/metas/components/MetasPageHeader";
+import MetaMetricCard from "@/modules/metas/components/MetaMetricCard";
 import { listarMetas, listarPeriodos, obtenerResumenMetas } from "@/modules/metas/services/metas.client";
 import type { Goal, GoalPeriod, GoalsSummary } from "@/modules/metas/types";
 import { notifyError } from "@/components/ui/toast/notify";
@@ -35,22 +34,6 @@ const ESTADOS = [
   { value: "ACTIVE", label: "Activo" },
   { value: "CANCELLED", label: "Cancelado" },
 ];
-
-function tarjeta(titulo: string, valor: string, descripcion?: string) {
-  return (
-    <Grid item xs={12} sm={6} md={3}>
-      <Card variant="outlined">
-        <CardContent>
-          <Typography variant="body2" color="text.secondary">{titulo}</Typography>
-          <Typography variant="h4" sx={{ mt: 0.5 }}>{valor}</Typography>
-          {descripcion ? (
-            <Typography variant="caption" color="text.secondary">{descripcion}</Typography>
-          ) : null}
-        </CardContent>
-      </Card>
-    </Grid>
-  );
-}
 
 export default function ResumenMetasPage() {
   const [periodos, setPeriodos] = useState<GoalPeriod[]>([]);
@@ -127,23 +110,36 @@ export default function ResumenMetasPage() {
   return (
     <PageContainer title="Administrador de Metas" description="Gestiona periodos, objetivos comerciales y cumplimiento de vendedores y canales de venta.">
       <Box>
-        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} spacing={2} mb={3}>
-          <Box>
-            <Typography variant="h4">Administrador de Metas</Typography>
-            <Typography color="text.secondary">
-              Gestiona periodos, objetivos comerciales y cumplimiento de vendedores y canales de venta.
-            </Typography>
-          </Box>
-          <Button component={Link} href="/metas/nueva" variant="contained" startIcon={<IconPlus size={18} />}>
-            Crear meta
-          </Button>
-        </Stack>
+        <MetasPageHeader
+          icon={<IconTargetArrow size={24} />}
+          title="Administrador de Metas"
+          description="Gestiona periodos, objetivos comerciales y cumplimiento de vendedores y canales de venta."
+          action={
+            <Button component={Link} href="/metas/nueva" variant="contained" startIcon={<IconPlus size={18} />}>
+              Crear meta
+            </Button>
+          }
+        />
 
         <Grid container spacing={2} mb={3}>
-          {tarjeta("Periodo activo", resumen?.activePeriod?.name || "—")}
-          {tarjeta("Metas activas", String(resumen?.activeGoals ?? "—"))}
-          {tarjeta("Cumplimiento general", resumen?.overallCompliancePct != null ? `${resumen.overallCompliancePct}%` : "Pendiente de definir")}
-          {tarjeta("Metas canceladas", String(resumen?.cancelledGoals ?? "—"))}
+          <Grid item xs={12} sm={6} md={3}>
+            <MetaMetricCard title="Periodo activo" value={resumen?.activePeriod?.name || "—"} icon={<IconCalendarStats size={18} />} color="info" />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <MetaMetricCard title="Metas activas" value={resumen?.activeGoals ?? "—"} icon={<IconTargetArrow size={18} />} color="success" />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <MetaMetricCard
+              title="Cumplimiento general"
+              value={resumen?.overallCompliancePct != null ? `${resumen.overallCompliancePct}%` : "—"}
+              subtitle={resumen?.overallCompliancePct == null ? "Pendiente de definir" : undefined}
+              icon={<IconGauge size={18} />}
+              color="warning"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <MetaMetricCard title="Metas canceladas" value={resumen?.cancelledGoals ?? "—"} icon={<IconBan size={18} />} color="error" />
+          </Grid>
         </Grid>
 
         <BlankCard>
