@@ -7,7 +7,7 @@ import {
   TableBody, Avatar, TableSortLabel
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { Snackbar, Alert } from '@mui/material';
+import { notifySuccess, notifyError } from '@/components/ui/toast/notify';
 
 // Si ya existen estos helpers, impórtalos como en ventas:
 // import { formatVentas, formatUnidades } from '@/utils/format';
@@ -97,17 +97,12 @@ const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ord
   );
 
   ///////////// para copiar sku
-  const [copiedSku, setCopiedSku] = useState<string | null>(null);
-  const [copyError, setCopyError] = useState<string | null>(null);
-
   const handleCopySku = async (sku: string) => {
     const ok = await copyToClipboard(sku);
     if (ok) {
-      setCopyError(null);
-      setCopiedSku(sku);
+      notifySuccess(`SKU ${sku} copiado`);
     } else {
-      setCopiedSku(null);
-      setCopyError('No se pudo copiar el SKU. Prueba manualmente con Ctrl/Cmd + C.');
+      notifyError('No se pudo copiar el SKU. Prueba manualmente con Ctrl/Cmd + C.');
     }
   };
   /////////////
@@ -258,28 +253,6 @@ const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ord
           </TableBody>
         </Table>
       </TableContainer>
-      {/* sku copiado */}
-      <Snackbar
-        open={Boolean(copiedSku)}
-        autoHideDuration={1500}
-        onClose={() => setCopiedSku(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={() => setCopiedSku(null)} severity="success" variant="filled">
-          SKU {copiedSku} copiado
-        </Alert>
-      </Snackbar>
-
-      <Snackbar
-        open={Boolean(copyError)}
-        autoHideDuration={2500}
-        onClose={() => setCopyError(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={() => setCopyError(null)} severity="error" variant="filled">
-          {copyError}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

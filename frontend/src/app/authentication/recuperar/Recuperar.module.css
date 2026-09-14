@@ -1,0 +1,179 @@
+/*
+ * Mismo look que la pantalla de login (AuthLogin.module.css) para que el
+ * flujo de "olvide mi contrasena" se sienta parte de la misma pantalla, en
+ * vez de una pantalla suelta con otro estilo.
+ */
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #f6f8ff;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+}
+
+.content {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+}
+
+.brand {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.brandTitle {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.card {
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
+  outline: 1px solid rgba(226, 232, 240, 0.6);
+  padding: 2rem 1.75rem;
+}
+
+.heading {
+  text-align: center;
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.subheading {
+  text-align: center;
+  margin: 0 0 1.5rem;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.field {
+  margin-bottom: 1.25rem;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.inputWrap {
+  position: relative;
+}
+
+.input {
+  height: 2.75rem;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: transparent;
+  padding: 0 2.25rem 0 0.75rem;
+  font-size: 0.95rem;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input:focus {
+  border-color: #2563eb;
+}
+
+.otpInput {
+  composes: input;
+  text-align: center;
+  letter-spacing: 0.5em;
+  font-size: 1.1rem;
+  padding-right: 0.75rem;
+}
+
+.eyeButton {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  color: #334155;
+}
+
+.alert {
+  margin-bottom: 1.25rem;
+  border-radius: 16px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  padding: 0.75rem 1rem;
+}
+
+.alertText {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #991b1b;
+  white-space: pre-line;
+}
+
+.success {
+  margin-bottom: 1.25rem;
+  border-radius: 16px;
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  padding: 0.75rem 1rem;
+}
+
+.successText {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #166534;
+}
+
+.submitButton {
+  display: flex;
+  height: 2.75rem;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 9999px;
+  background: #2563eb;
+  padding: 0 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.submitButton:disabled {
+  cursor: not-allowed;
+  background: #93c5fd;
+}
+
+.backLink {
+  display: block;
+  margin-top: 1.25rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #64748b;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}

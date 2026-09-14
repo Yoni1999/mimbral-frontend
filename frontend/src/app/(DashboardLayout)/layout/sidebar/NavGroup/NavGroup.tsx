@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 // mui imports
-import { ListSubheader, styled, Theme } from '@mui/material';
+import { Divider, ListSubheader, styled, Theme } from '@mui/material';
 
 type NavGroup = {
   navlabel?: boolean;
@@ -9,20 +9,30 @@ type NavGroup = {
 
 interface ItemType {
   item: NavGroup;
+  /** Riel angosto (solo iconos): el subheader es puro texto, sin icono, asi
+   * que no cabe -se reemplaza por una linea divisoria. */
+  collapsed?: boolean;
 }
 
-const NavGroup = ({ item }: ItemType) => {
+const NavGroup = ({ item, collapsed }: ItemType) => {
   const ListSubheaderStyle = styled((props: Theme | any) => <ListSubheader disableSticky {...props} />)(
     ({ theme }) => ({
-      ...theme.typography.overline,
-      fontWeight: '700',
-      marginTop: theme.spacing(3),
-      marginBottom: theme.spacing(0),
-      color: theme.palette.text.primary,
-      lineHeight: '26px',
+      fontSize: '0.7rem',
+      fontWeight: 700,
+      letterSpacing: '0.06em',
+      textTransform: 'uppercase',
+      marginTop: theme.spacing(2.5),
+      marginBottom: theme.spacing(0.5),
+      color: '#94a3b8',
+      lineHeight: '20px',
       padding: '3px 12px',
     }),
   );
+
+  if (collapsed) {
+    return <Divider sx={{ my: 1.5, mx: 1.5 }} />;
+  }
+
   return (
     <ListSubheaderStyle>{item.subheader}</ListSubheaderStyle>
   );

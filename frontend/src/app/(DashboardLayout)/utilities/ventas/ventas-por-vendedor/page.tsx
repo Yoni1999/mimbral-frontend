@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Box, Grid, Paper, CircularProgress, Typography } from "@mui/material";
-import NivelNavigation from "../components/NivelNavigation";
 import HeaderVendedor, { Filters } from "./components/Header";
 import MetricCard from "./components/Cards";
 import ProgressGauge from "./components/Goals";
@@ -332,8 +331,6 @@ const VentasVendedorPage: React.FC = () => {
   const loadingFormasPagoData = false;
 
 return (
-    <>
-      <NivelNavigation />
       <Box sx={{ p: 3 }}>
         <HeaderVendedor
           filtros={filtros}
@@ -511,7 +508,6 @@ return (
         </>
         )}
       </Box>
-    </>
   );
 };
 

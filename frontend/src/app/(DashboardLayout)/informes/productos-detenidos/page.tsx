@@ -2,16 +2,17 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Box, Typography, Divider, Snackbar, Alert, IconButton,
+  Box, Typography, Divider,
   Pagination, CircularProgress, Button
 } from "@mui/material";
-import { TrendingDown, Close as CloseIcon } from "@mui/icons-material";
+import { TrendingDown } from "@mui/icons-material";
 import ProductosEstancadosTable from "./components/ProductosEstancadosTable";
 import HeaderProductosDetenidos from "./components/HeaderProductosDetenidos";
 import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import CustomTabs from "../components/CustomTabs";
 import * as XLSX from "xlsx";
+import { notifyInfo } from "@/components/ui/toast/notify";
 
 const limit = 20;
 
@@ -48,9 +49,16 @@ const ProductosDetenidosPage = () => {
   const [page, setPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingInactivos, setLoadingInactivos] = useState<boolean>(false);
-  const [showMensaje, setShowMensaje] = useState<boolean>(true);
 
   const totalPages = Math.ceil(total / limit);
+
+  useEffect(() => {
+    notifyInfo("Informe actualizado a diario", {
+      description: "Si necesitas información más reciente pide al usuario ADMIN que actualice la información.",
+      durationMs: 8000,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchProductos = async (filtros: FiltroProductos, pageNumber = 1) => {
     setLoading(true);
@@ -246,37 +254,6 @@ const ProductosDetenidosPage = () => {
           </React.Fragment>,
         ]}
       />
-
-      <Snackbar
-        open={showMensaje}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        autoHideDuration={null}
-        sx={{ maxWidth: "400px" }}
-      >
-        <Alert
-          severity="warning"
-          variant="filled"
-          action={
-            <IconButton
-              aria-label="close"
-              color="inherit"
-              size="small"
-              onClick={() => setShowMensaje(false)}
-            >
-              <CloseIcon fontSize="inherit" />
-            </IconButton>
-          }
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            p: 1.5,
-            borderRadius: 3,
-            fontSize: "0.9rem",
-          }}
-        >
-          Este informe de productos detenidos se actualiza a diario, ¡si necesitas información más reciente pide al usuario ADMIN que actualice la información!
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

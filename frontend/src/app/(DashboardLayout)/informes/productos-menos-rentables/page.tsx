@@ -3,11 +3,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    Box, Typography, Divider, Snackbar, Alert, IconButton,
+    Box, Typography, Divider,
     Pagination, CircularProgress, Button, Menu, MenuItem, Dialog,
-    DialogTitle, DialogContent, DialogActions, TextField
+    DialogTitle, DialogContent, DialogActions, TextField,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import HeaderVentasProductosDrawer from '../ventas-productos/components/HeaderVentasProductosDrawer';
@@ -19,6 +18,7 @@ import autoTable from 'jspdf-autotable';
 
 import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
+import { notifyInfo } from "@/components/ui/toast/notify";
 
 // ---- Tipos (siguen el estilo de ventas-productos) ----
 type Order = 'asc' | 'desc';
@@ -62,7 +62,6 @@ const ProductosMenosRentablesPage: React.FC = () => {
     const [total, setTotal] = useState<number>(0);
     const [page, setPage] = useState<number>(1);
     const [loading, setLoading] = useState<boolean>(false);
-    const [showMensaje, setShowMensaje] = useState<boolean>(true);
 
     const [orden, setOrden] = useState<Order>('asc');
     const [ordenPor, setOrdenPor] = useState<OrderBy>('margenBruto');
@@ -223,6 +222,14 @@ const ProductosMenosRentablesPage: React.FC = () => {
         fetchProductos(filters, 1);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters]);
+
+    useEffect(() => {
+        notifyInfo("Informe actualizado a diario", {
+            description: "Si necesitas información más reciente, pide al usuario ADMIN que actualice la información.",
+            durationMs: 8000,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleFilterChange = (newFilters: FiltroVentas) => {
         setFilters(newFilters);
@@ -638,22 +645,6 @@ const ProductosMenosRentablesPage: React.FC = () => {
                     />
                 </Box>
             )}
-
-            {/* Snackbar de “data freshness” como en otros informes */}
-            <Snackbar open={showMensaje} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} autoHideDuration={null} sx={{ maxWidth: '400px' }}>
-                <Alert
-                    severity="warning"
-                    variant="filled"
-                    action={
-                        <IconButton aria-label="close" color="inherit" size="small" onClick={() => setShowMensaje(false)}>
-                            <CloseIcon fontSize="inherit" />
-                        </IconButton>
-                    }
-                    sx={{ display: 'flex', alignItems: 'center', p: 1.5, borderRadius: 3, fontSize: '0.9rem' }}
-                >
-                    Este informe se actualiza a diario. Si necesitas información más reciente, pide al usuario ADMIN que actualice la información.
-                </Alert>
-            </Snackbar>
 
             {/* Modal unificado para elegir cantidad (Excel/PDF) */}
             <Dialog open={openExportModal} onClose={() => setOpenExportModal(false)}>

@@ -17,7 +17,11 @@ const PageContainer = ({ title, description, children }: Props) => (
         padding: "0 20px",
         overflowX: "hidden",
         boxSizing: "border-box",
-        backgroundColor: "#FEFEFE",
+        // Transparente: este wrapper lo comparten 5 pantallas (inicio,
+        // metas-general, typography, resumen-ventas, ventas-por-canal) y
+        // pintaba blanco por encima del gris de PageWrapper (layout.tsx) en
+        // todas ellas por igual.
+        backgroundColor: "transparent",
       }}
     >
       <Helmet>

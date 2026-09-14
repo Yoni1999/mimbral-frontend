@@ -8,7 +8,7 @@ import {
 import { styled } from '@mui/material/styles';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { ProductoSinVentas } from '../page';
-import { Snackbar, Alert } from '@mui/material';
+import { notifySuccess, notifyError } from '@/components/ui/toast/notify';
 
 // Mantener estilos y estructura de tabla como en ProductosMenosRentablesTable
 const PlaceholderImg = 'https://res.cloudinary.com/dhzahos7u/image/upload/v1748960388/producto_sin_imagen_vqaps4.jpg';
@@ -94,17 +94,12 @@ const ProductosSinVentasTable: React.FC<Props> = ({ data, onSortChange, ordenAct
   const whList = filteredData.find(r => r.itemCode === skuOpen)?.warehouses || {};
 
   ///////////// para copiar sku
-  const [copiedSku, setCopiedSku] = useState<string | null>(null);
-  const [copyError, setCopyError] = useState<string | null>(null);
-
   const handleCopySku = async (sku: string) => {
     const ok = await copyToClipboard(sku);
     if (ok) {
-      setCopyError(null);
-      setCopiedSku(sku);
+      notifySuccess(`SKU ${sku} copiado`);
     } else {
-      setCopiedSku(null);
-      setCopyError('No se pudo copiar el SKU. Prueba manualmente con Ctrl/Cmd + C.');
+      notifyError('No se pudo copiar el SKU. Prueba manualmente con Ctrl/Cmd + C.');
     }
   };
   /////////////
@@ -310,28 +305,6 @@ const ProductosSinVentasTable: React.FC<Props> = ({ data, onSortChange, ordenAct
           })()}
         </Box>
       </Popover>
-      {/* sku copiado */}
-      <Snackbar
-        open={Boolean(copiedSku)}
-        autoHideDuration={1500}
-        onClose={() => setCopiedSku(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={() => setCopiedSku(null)} severity="success" variant="filled">
-          SKU {copiedSku} copiado
-        </Alert>
-      </Snackbar>
-
-      <Snackbar
-        open={Boolean(copyError)}
-        autoHideDuration={2500}
-        onClose={() => setCopyError(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={() => setCopyError(null)} severity="error" variant="filled">
-          {copyError}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

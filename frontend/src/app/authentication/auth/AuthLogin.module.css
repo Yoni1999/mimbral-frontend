@@ -1,0 +1,293 @@
+/*
+ * Mismo look que FrontOmsMimbral/features/auth/pages/Login.tsx, portado a CSS
+ * plano porque este proyecto no tiene Tailwind (agregarlo solo para esta
+ * pantalla era un cambio de build innecesario). Los mismos nombres de
+ * variables/valores (radios, sombras, colores) que el original.
+ */
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #f6f8ff;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+}
+
+.decorTop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top, rgba(59, 130, 246, 0.12), transparent 36%),
+    radial-gradient(circle at bottom right, rgba(249, 115, 22, 0.1), transparent 28%);
+  pointer-events: none;
+}
+
+.decorBlobLeft {
+  position: absolute;
+  left: -8rem;
+  top: -8rem;
+  height: 16rem;
+  width: 16rem;
+  border-radius: 9999px;
+  background: rgba(96, 165, 250, 0.1);
+  filter: blur(64px);
+  pointer-events: none;
+}
+
+.decorBlobRight {
+  position: absolute;
+  right: -7rem;
+  bottom: -7rem;
+  height: 18rem;
+  width: 18rem;
+  border-radius: 9999px;
+  background: rgba(251, 146, 60, 0.1);
+  filter: blur(64px);
+  pointer-events: none;
+}
+
+.content {
+  position: relative;
+  width: 100%;
+  max-width: 470px;
+}
+
+.brand {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.brandTitle {
+  margin: 0;
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.card {
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
+  outline: 1px solid rgba(226, 232, 240, 0.6);
+  padding: 2rem 1.75rem;
+}
+
+@media (min-width: 640px) {
+  .card {
+    padding: 2.5rem 2.5rem;
+  }
+}
+
+.cardHeading {
+  text-align: center;
+  margin: 0 0 2.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #334155;
+}
+
+.field {
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.inputWrap {
+  position: relative;
+}
+
+.input {
+  height: 3rem;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #cbd5e1;
+  background: transparent;
+  padding: 0 2.25rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input:focus {
+  border-bottom-color: #2563eb;
+}
+
+.input:disabled {
+  border-bottom-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.input::placeholder {
+  color: #94a3b8;
+}
+
+.eyeButton {
+  position: absolute;
+  right: -8px;
+  top: 4px;
+  color: #334155;
+}
+
+.eyeButton:disabled {
+  color: #cbd5e1;
+}
+
+.hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.alert {
+  margin-bottom: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.alert.warning {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.alertText {
+  flex: 1;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #991b1b;
+  white-space: pre-line;
+}
+
+.alert.warning .alertText {
+  color: #78350f;
+}
+
+.forceLoginButton {
+  flex-shrink: 0;
+  border-radius: 9999px;
+  border: 1px solid #fcd34d;
+  background: #ffffff;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #92400e;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.forceLoginButton:hover {
+  background: #fef3c7;
+}
+
+.submitButton {
+  display: flex;
+  height: 3rem;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 9999px;
+  background: #2563eb;
+  padding: 0 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.submitButton:disabled {
+  cursor: not-allowed;
+  background: #93c5fd;
+}
+
+.divider {
+  margin: 1.5rem 0;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: #94a3b8;
+}
+
+.secondaryRow {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .secondaryRow {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.secondaryButton {
+  display: flex;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.recoverLink {
+  display: flex;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1d4ed8;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.recoverLink:hover {
+  background: #dbeafe;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: -0.5rem 0 1.25rem;
+  font-size: 0.875rem;
+  color: #475569;
+}

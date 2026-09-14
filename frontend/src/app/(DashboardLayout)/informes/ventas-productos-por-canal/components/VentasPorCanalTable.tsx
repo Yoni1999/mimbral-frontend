@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Typography, Box, Avatar, Button, TableSortLabel, Snackbar, Alert
+  Paper, Typography, Box, Avatar, Button, TableSortLabel
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
+import { notifySuccess, notifyError } from "@/components/ui/toast/notify";
 
 export type Order = "asc" | "desc";
 export type OrderBy = "cantidadVendida" | "margenPorcentaje" | "nombre";
@@ -133,10 +134,6 @@ const VentasPorCanalTable: React.FC<Props> = ({
 }) => {
   const safe = Array.isArray(data) ? data : [];
 
-  // Snackbars para copiado de SKU (mismo UX que informe original):contentReference[oaicite:2]{index=2}
-  const [copiedSku, setCopiedSku] = useState<string | null>(null);
-  const [copyError, setCopyError] = useState<string | null>(null);
-
   const getTopChannels = (row: ProductoPorCanal) => {
     return (row.porCanal || [])
       .map((item) => ({
@@ -152,11 +149,9 @@ const VentasPorCanalTable: React.FC<Props> = ({
   const handleCopySku = async (sku: string) => {
     const ok = await copyToClipboard(sku);
     if (ok) {
-      setCopyError(null);
-      setCopiedSku(sku);
+      notifySuccess(`SKU ${sku} copiado`);
     } else {
-      setCopiedSku(null);
-      setCopyError("No se pudo copiar el SKU. Prueba manualmente con Ctrl/Cmd + C.");
+      notifyError("No se pudo copiar el SKU. Prueba manualmente con Ctrl/Cmd + C.");
     }
   };
 
@@ -306,29 +301,6 @@ const VentasPorCanalTable: React.FC<Props> = ({
           )}
         </TableBody>
       </Table>
-
-      {/* Snackbars de copiado (mismo feedback del informe original):contentReference[oaicite:3]{index=3} */}
-      <Snackbar
-        open={Boolean(copiedSku)}
-        autoHideDuration={1500}
-        onClose={() => setCopiedSku(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert onClose={() => setCopiedSku(null)} severity="success" variant="filled">
-          SKU {copiedSku} copiado
-        </Alert>
-      </Snackbar>
-
-      <Snackbar
-        open={Boolean(copyError)}
-        autoHideDuration={2500}
-        onClose={() => setCopyError(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert onClose={() => setCopyError(null)} severity="error" variant="filled">
-          {copyError}
-        </Alert>
-      </Snackbar>
     </TableContainer>
   );
 };

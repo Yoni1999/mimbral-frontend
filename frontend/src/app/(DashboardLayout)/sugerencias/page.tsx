@@ -13,14 +13,13 @@ import {
   TextField,
   MenuItem,
   Button,
-  Snackbar,
-  Alert,
   CircularProgress,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SugerenciaCard from "./components/SugerenciaCard";
 import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
+import { notifySuccess, notifyError } from "@/components/ui/toast/notify";
 
 const API_URL = `${BACKEND_URL}/api/sugerencias`;
 
@@ -41,8 +40,6 @@ const Page = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [departamento, setDepartamento] = useState("");
   const [mensaje, setMensaje] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState(false);
 
   // Cargar sugerencias autenticadas
   useEffect(() => {
@@ -52,7 +49,7 @@ const Page = () => {
         setSugerencias(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("❌ Error en GET:", err);
-        setError(true);
+        notifyError("Ocurrió un error. Intenta nuevamente.");
       } finally {
         setLoading(false);
       }
@@ -83,13 +80,13 @@ const Page = () => {
         setSugerencias(Array.isArray(actualizadas) ? actualizadas : []);
       }
 
-      setSuccess(true);
+      notifySuccess("¡Gracias por tu sugerencia!");
       setDepartamento("");
       setMensaje("");
       setOpenDialog(false);
     } catch (err) {
       console.error("❌ Error en POST:", err);
-      setError(true);
+      notifyError("Ocurrió un error. Intenta nuevamente.");
     }
   };
 
@@ -178,28 +175,6 @@ const Page = () => {
     </form>
   </DialogContent>
 </Dialog>
-
-
-      <Snackbar
-        open={success}
-        autoHideDuration={3000}
-        onClose={() => setSuccess(false)}
-      >
-        <Alert severity="success" sx={{ width: "100%" }}>
-          ¡Gracias por tu sugerencia!
-        </Alert>
-      </Snackbar>
-
-      <Snackbar
-        open={error}
-        autoHideDuration={4000}
-        onClose={() => setError(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert severity="error" sx={{ width: "100%" }}>
-          Ocurrió un error. Intenta nuevamente.
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

@@ -6,8 +6,6 @@ import {
   Typography,
   Divider,
   CircularProgress,
-  Snackbar,
-  Alert,
   Tooltip,
   IconButton,
   Pagination,
@@ -36,6 +34,7 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
 import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
+import { notifySuccess, notifyError } from "@/components/ui/toast/notify";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -132,11 +131,6 @@ const InformeVentasPorCanalPage: React.FC = () => {
   const [exportType, setExportType] = useState<"excel" | "pdf" | null>(null);
   const [exportCount, setExportCount] = useState<number>(100);
   const [shareLoading, setShareLoading] = useState(false);
-  const [shareSnack, setShareSnack] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
-    open: false,
-    message: "",
-    severity: "success",
-  });
 
   // ==== Modal Detalle (ahora 100% implementado) ====
   const [detalleOpen, setDetalleOpen] = useState(false);
@@ -281,18 +275,10 @@ const InformeVentasPorCanalPage: React.FC = () => {
       const sharedUrl = buildSharedLink(response.token);
       await copyTextToClipboard(sharedUrl);
 
-      setShareSnack({
-        open: true,
-        message: "Link compartible copiado. Vence en 24 horas.",
-        severity: "success",
-      });
+      notifySuccess("Link compartible copiado. Vence en 24 horas.");
     } catch (error) {
       console.error("Error al crear link compartible:", error);
-      setShareSnack({
-        open: true,
-        message: "No se pudo generar el link compartible.",
-        severity: "error",
-      });
+      notifyError("No se pudo generar el link compartible.");
     } finally {
       setShareLoading(false);
     }
@@ -693,21 +679,6 @@ const InformeVentasPorCanalPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      <Snackbar
-        open={shareSnack.open}
-        autoHideDuration={2500}
-        onClose={() => setShareSnack((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={() => setShareSnack((prev) => ({ ...prev, open: false }))}
-          severity={shareSnack.severity}
-          variant="filled"
-        >
-          {shareSnack.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

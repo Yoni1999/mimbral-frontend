@@ -16,7 +16,6 @@ import SeccionTitulo from "./components/SeccionTitulo";
 import { apiJson } from "@/utils/apiClient";
 import { IconCurrencyDollar, IconTrendingUp, IconCreditCard, IconShoppingCart, IconStack2, IconBox, } from "@tabler/icons-react";
 import TopRentabilidadMinima from "./components/Top10RentabilidadMinima";
-import NivelNavigation from "../components/NivelNavigation";
 import FotoDelDiaHeader, { Filters } from "./components/FotoDelDiaHeader";
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades } from "@/utils/format";
@@ -179,8 +178,6 @@ const ResumenVentas = () => {
   }, [filtros]);
 
   return (
-    <>
-    <NivelNavigation/>
     <PageContainer title="Resumen Ventas" description="Resumen de las ventas">
       <Box sx={{ p: 0}}>
         <FotoDelDiaHeader onFilterChange={(f) => setFiltros(f)} />
@@ -311,7 +308,6 @@ const ResumenVentas = () => {
       </Grid>
   </Box>
 </PageContainer>
-    </>
   );
 };
 export default ResumenVentas;
