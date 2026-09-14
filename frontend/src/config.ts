@@ -11,7 +11,7 @@ export const BACKEND_URL =
 // por eso vive en una var NEXT_PUBLIC_*, igual que BACKEND_URL de arriba.
 export const ID_SERVICE_BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL_ID_SERVICE ||
-  "https://qaprodmimbral1.loclx.io/api/idservice";
+  "https://catalogomimbral.loclx.io/api/idservice";
 
 // Plataforma con la que Analisis 360 se identifica ante id-service (2 =
 // Analisis 360). El gateway exige que el header `x-plataforma-id` de cada
