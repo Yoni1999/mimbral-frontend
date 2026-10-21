@@ -8,7 +8,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import Autocomplete from "@mui/material/Autocomplete";
-import { apiJson } from "@/utils/apiClient";
+import { useApiDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 
 interface Props {
@@ -55,10 +55,14 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
     modoComparacion: "",
   });
 
-  const [skuOptions, setSkuOptions] = useState<Producto[]>([]);
-  const [loadingSku, setLoadingSku] = useState(false);
   const [selectedProducto, setSelectedProducto] = useState<Producto | null>(null);
   const [inputValue, setInputValue] = useState("");
+
+  // Búsqueda de SKU desde 2 caracteres: solo queda la respuesta de lo último tipeado.
+  const { datos: skuOptions, cargando: loadingSku } = useApiDatos<Producto[]>(
+    inputValue.length >= 2 ? `${BACKEND_URL}/api/pv/SKU?query=${encodeURIComponent(inputValue)}` : null,
+    []
+  );
   const [errores, setErrores] = useState({
     periodo: false,
     temporada: false,
@@ -120,21 +124,6 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
     setErrores({ periodo: false, temporada: false, fechaInicio: false, fechaFin: false });
   };
 
-  const fetchSKUs = async (query: string) => {
-    try {
-      setLoadingSku(true);
-      const response = await apiJson(`${BACKEND_URL}/api/pv/SKU?query=${encodeURIComponent(query)}`);
-      if (!response || !response.ok) throw new Error(`Error HTTP: ${response?.status}`);
-      const data: Producto[] = await response.json();
-      setSkuOptions(data);
-    } catch (error) {
-      console.error("❌ Error cargando SKUs:", error);
-      setSkuOptions([]);
-    } finally {
-      setLoadingSku(false);
-    }
-  };
-
   return (
     <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: "100%", sm: 400 }, p: 3 } }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -154,7 +143,6 @@ const HeaderDrawerProducto: React.FC<Props> = ({ open, onClose, onApply }) => {
             inputValue={inputValue}
             onInputChange={(e, value) => {
               setInputValue(value);
-              if (value.length >= 2) fetchSKUs(value);
             }}
             onChange={(e, value) => {
               setSelectedProducto(value);

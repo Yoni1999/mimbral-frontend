@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import {
   Grid,
@@ -14,6 +14,7 @@ import CategoriasBarChart from "./components/CategoriasBarChart";
 import dynamic from "next/dynamic";
 import SeccionTitulo from "./components/SeccionTitulo";
 import { apiJson } from "@/utils/apiClient";
+import { useApiDatos, useCargaDatos } from "@/utils/useCargaDatos";
 import { IconCurrencyDollar, IconTrendingUp, IconCreditCard, IconShoppingCart, IconStack2, IconBox, } from "@tabler/icons-react";
 import TopRentabilidadMinima from "./components/Top10RentabilidadMinima";
 import FotoDelDiaHeader, { Filters } from "./components/FotoDelDiaHeader";
@@ -33,7 +34,6 @@ const RentabilidadChart = dynamic(() => import("./components/Top10RentabilidadCh
 });
 
 const ResumenVentas = () => {
-  const [loading, setLoading] = useState(true);
   const [filtros, setFiltros] = useState<Filters>({
     canal: "", 
     temporada: "",
@@ -45,27 +45,57 @@ const ResumenVentas = () => {
     comparacion: "",
   });
 
+  const buildQuery = () => {
+    const params = new URLSearchParams();
+    if (filtros.canal) params.append("canal", filtros.canal);
+    if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
+    if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
+    if (filtros.temporada) params.append("temporada", filtros.temporada);
+    if (filtros.sku) params.append("sku", filtros.sku);
+    if (filtros.familia) params.append("familia", filtros.familia);
+    if (filtros.subfamilia) params.append("subfamilia", filtros.subfamilia);
+    if (filtros.comparacion) params.append("comparacion", filtros.comparacion);
+    return params.toString();
+  };
 
-  const [ventasHoy, setVentasHoy] = useState({
-    TotalVentasPeriodo: 0,
-    PromedioVentasPeriodo: 0,
-    PorcentajeCambio: 0,
-  });
-  const [margenBrutoHoy, setMargenBrutoHoy] = useState({
-    MargenPorcentajePeriodo: 0,
-    VariacionMargen: 0,
-  });
-  const [transaccionHoy, settransaccionHoy] = useState({
-    CantidadTransaccionesHoy: 0,
-    CantidadTransaccionesAyer: 0,
-    PorcentajeCambio: 0,
-  });
-  const [productosDistintos, setProductosDistintos] = useState({
-    ProductosPeriodoActual: 0,
-    ProductosPeriodoAnterior: 0,
-    PorcentajeCambio: 0,
-  });
-  const [Notascredito, setNotascredito] = useState({
+  // Cada bloque se identifica por su URL con los filtros: al cambiar un
+  // filtro se limpia al instante, se cancela lo pendiente y solo se muestra
+  // la respuesta del filtro actual (ver useCargaDatos). El gráfico de
+  // canales y el de ventas por fecha piden sus propios datos.
+  const query = buildQuery();
+  const url = (endpoint: string) => `${BACKEND_URL}/api/${endpoint}?${query}`;
+
+  const urlVentas = url("ventas-periodo");
+  const { datos: ventasHoy, cargando: cargandoVentas } = useCargaDatos(
+    urlVentas,
+    async (signal) => {
+      const data: any = await apiJson(urlVentas, { signal });
+      return {
+        TotalVentasPeriodo: data.TotalVentasPeriodo || 0,
+        PromedioVentasPeriodo: data.TotalVentasAnterior || 0,
+        PorcentajeCambio: data.PorcentajeCambio || 0,
+      };
+    },
+    { TotalVentasPeriodo: 0, PromedioVentasPeriodo: 0, PorcentajeCambio: 0 }
+  );
+  const urlTransacciones = url("transacciones-periodo");
+  const { datos: transaccionHoy, cargando: cargandoTransacciones } = useCargaDatos(
+    urlTransacciones,
+    async (signal) => {
+      const data: any = await apiJson(urlTransacciones, { signal });
+      return {
+        CantidadTransaccionesHoy: data.CantidadTransaccionesPeriodo || 0,
+        CantidadTransaccionesAyer: data.CantidadTransaccionesAnterior || 0,
+        PorcentajeCambio: data.PorcentajeCambio || 0,
+      };
+    },
+    { CantidadTransaccionesHoy: 0, CantidadTransaccionesAyer: 0, PorcentajeCambio: 0 }
+  );
+  const { datos: productosDistintos, cargando: cargandoProductos } = useApiDatos<any>(
+    url("productos-distintos-periodo"),
+    { ProductosPeriodoActual: 0, ProductosPeriodoAnterior: 0, PorcentajeCambio: 0 }
+  );
+  const { datos: Notascredito, cargando: cargandoNotas } = useApiDatos<any>(url("notascredito"), {
     CantidadNotasCreditoPeriodo: 0,
     CantidadNotasCreditoAnterior: 0,
     PorcentajeCambioNotasCredito: 0,
@@ -73,24 +103,28 @@ const ResumenVentas = () => {
     CantidadProductosDevueltosAnterior: 0,
     PorcentajeCambioProductosDevueltos: 0,
   });
-  const [unidadesVendidas, setUnidadesVendidas] = useState({
-    CantidadVendida: 0,
-    CantidadVendidaAnterior: 0,
-    PorcentajeCambio: 0,
+  const { datos: unidadesVendidas, cargando: cargandoUnidades } = useApiDatos<any>(
+    url("unidades-vendidas-periodo"),
+    { CantidadVendida: 0, CantidadVendidaAnterior: 0, PorcentajeCambio: 0 }
+  );
+  const { datos: margenBrutoHoy, cargando: cargandoMargen } = useApiDatos<any>(url("margen-ventas"), {
+    MargenPorcentajePeriodo: 0,
+    VariacionMargen: 0,
   });
-  
-  const [Ventascanal, setVentascanal] = useState({
-    Canal_Venta: 0,
-    Total_Ventas: 0,
-  });
-  const [topVendedores, setTopVendedores] = useState<any[]>([]);
-  const [productosRentabilidad, setProductosRentabilidad] = useState<any[]>([]);
-  const [categoriasData, setCategoriasData] = useState<any[]>([]);
-  const [detalleVentas, setDetalleVentas] = useState<any[]>([]);
-  const [productosEstancados, setProductosEstancados] = useState<any[]>([]);
-  const [productosRentabilidadMinima, setProductosRentabilidadMinima] = useState<any[]>([]);
 
-  const detalleTransformado = detalleVentas.map((item) => ({
+  // Las tarjetas primero; los gráficos y tablas se piden cuando terminan
+  // (clave null mientras tanto, y se muestran cargando).
+  const tarjetasListas =
+    !cargandoVentas && !cargandoTransacciones && !cargandoProductos &&
+    !cargandoNotas && !cargandoUnidades && !cargandoMargen;
+  const urlSecundaria = (endpoint: string) => (tarjetasListas ? url(endpoint) : null);
+  const vendedores = useApiDatos<any[]>(urlSecundaria("top-vendedores"), []);
+  const rentabilidad = useApiDatos<any[]>(urlSecundaria("productos-rentabilidad"), []);
+  const categorias = useApiDatos<any[]>(urlSecundaria("margen-categorias-comparado"), []);
+  const detalle = useApiDatos<any[]>(urlSecundaria("obtener-detalle-ventas"), []);
+  const rentabilidadMinima = useApiDatos<any[]>(urlSecundaria("productos-rentabilidad-minima"), []);
+
+  const detalleTransformado = detalle.datos.map((item) => ({
     imagen: item.Imagen,
     sku: item.Codigo_Producto,
     nombre: item.Nombre_Producto,
@@ -104,78 +138,24 @@ const ResumenVentas = () => {
     totalVentas: item.Total_Ventas,
   }));
 
-  const fetchData = async (
-    endpoint: string,
-    setState: React.Dispatch<React.SetStateAction<any>>,
-    postProcessor?: (data: any) => any
-  ) => {
-    try {
-      const response = await apiJson(
-        `${BACKEND_URL}/api/${endpoint}`
-      );
-      if (response) {
-        const data = await response.json();
-        setState(postProcessor ? postProcessor(data) : data);
-      }
-    } catch (error) {
-      console.error(`Error al obtener datos de ${endpoint}:`, error);
-    }
-  };
-  useEffect(() => {
-    const buildQuery = () => {
-      const params = new URLSearchParams();
-      if (filtros.canal) params.append("canal", filtros.canal);
-      if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
-      if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
-      if (filtros.temporada) params.append("temporada", filtros.temporada);
-      if (filtros.sku) params.append("sku", filtros.sku);
-      if (filtros.familia) params.append("familia", filtros.familia);
-      if (filtros.subfamilia) params.append("subfamilia", filtros.subfamilia);
-      if (filtros.comparacion) params.append("comparacion", filtros.comparacion);
-      return params.toString();
-    };
-    const query = buildQuery();
-    setLoading(true);
-
-    const fetchPrimaryData = async () => {
-      await Promise.all([
-        fetchData(`ventas-periodo?${query}`, setVentasHoy, (data) => ({
-          TotalVentasPeriodo: data.TotalVentasPeriodo || 0,
-          PromedioVentasPeriodo: data.TotalVentasAnterior || 0,
-          PorcentajeCambio: data.PorcentajeCambio || 0,
-        })),
-        fetchData(`transacciones-periodo?${query}`, settransaccionHoy, (data) => ({
-          CantidadTransaccionesHoy: data.CantidadTransaccionesPeriodo || 0,
-          CantidadTransaccionesAyer: data.CantidadTransaccionesAnterior || 0,
-          PorcentajeCambio: data.PorcentajeCambio || 0,
-        })),
-        fetchData(`productos-distintos-periodo?${query}`, setProductosDistintos),
-        fetchData(`notascredito?${query}`, setNotascredito),
-        fetchData(`unidades-vendidas-periodo?${query}`, setUnidadesVendidas),
-        fetchData(`margen-ventas?${query}`, setMargenBrutoHoy),
-      ]);
-    };
-    const fetchSecondaryData = async () => {
-      await Promise.all([
-        fetchData(`ventas-canal?${query}`, setVentascanal),
-        fetchData(`top-vendedores?${query}`, setTopVendedores),
-        fetchData(`productos-rentabilidad?${query}`, setProductosRentabilidad),
-        fetchData(`margen/bruto-periodo?${query}`, () => {}),
-        fetchData(`margen-categorias-comparado?${query}`, (data) => {
-          console.log("📦 Data bruta desde API (categorías):", data); // 👈
-          setCategoriasData(data);
-        }),
-
-        fetchData(`unidades-vendidas-periodo?${query}`, setUnidadesVendidas),
-        fetchData(`obtener-detalle-ventas?${query}`, setDetalleVentas),
-        fetchData(`top-productos-estancados?${query}`, setProductosEstancados),
-        fetchData(`productos-rentabilidad-minima?${query}`, setProductosRentabilidadMinima),
-      ]);
-      setLoading(false);
-    };
-
-    fetchPrimaryData().then(fetchSecondaryData);
-  }, [filtros]);
+  // Mientras un bloque carga se muestra el indicador en lugar del dato viejo.
+  const conCarga = (bloque: { cargando: boolean }, contenido: React.ReactNode, alto = 300) =>
+    !tarjetasListas || bloque.cargando ? (
+      <Paper
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: alto,
+          borderRadius: 2,
+          boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
+        }}
+      >
+        <CircularProgress />
+      </Paper>
+    ) : (
+      contenido
+    );
 
   return (
     <PageContainer title="Resumen Ventas" description="Resumen de las ventas">
@@ -192,7 +172,7 @@ const ResumenVentas = () => {
                 ventasHoy.PromedioVentasPeriodo
               )}`,
               percentageChange: ventasHoy.PorcentajeCambio,
-              isLoading: !ventasHoy.TotalVentasPeriodo === undefined,
+              cargando: cargandoVentas,
               icon: <IconCurrencyDollar />,
             },
             {
@@ -200,7 +180,7 @@ const ResumenVentas = () => {
               value: `${margenBrutoHoy.MargenPorcentajePeriodo}%`,
               subtitle: `Variación: ${margenBrutoHoy.VariacionMargen}%`,
               percentageChange: margenBrutoHoy.VariacionMargen,
-              isLoading: !margenBrutoHoy.MargenPorcentajePeriodo === undefined,
+              cargando: cargandoMargen,
               icon: <IconTrendingUp />,
             },
             {
@@ -208,7 +188,7 @@ const ResumenVentas = () => {
               value: formatUnidades(transaccionHoy.CantidadTransaccionesHoy),
               subtitle: `Periodo Anterior: ${formatUnidades(transaccionHoy.CantidadTransaccionesAyer)}`,
               percentageChange: transaccionHoy.PorcentajeCambio,
-              isLoading: !transaccionHoy.CantidadTransaccionesHoy === undefined,
+              cargando: cargandoTransacciones,
               icon: <IconShoppingCart />,
             },
             {
@@ -216,7 +196,7 @@ const ResumenVentas = () => {
               value: formatUnidades(Notascredito.CantidadNotasCreditoPeriodo),
               subtitle: `Periodo Anterior: ${formatUnidades(Notascredito.CantidadNotasCreditoAnterior)}`,
               percentageChange: Notascredito.PorcentajeCambioNotasCredito,
-              isLoading: Notascredito.CantidadNotasCreditoPeriodo === undefined,
+              cargando: cargandoNotas,
               icon: <IconCreditCard />,
             },
             {
@@ -224,7 +204,7 @@ const ResumenVentas = () => {
               value: formatUnidades(productosDistintos.ProductosPeriodoActual),
               subtitle: `Periodo Anterior: ${formatUnidades(productosDistintos.ProductosPeriodoAnterior)}`,
               percentageChange: productosDistintos.PorcentajeCambio,
-              isLoading: !productosDistintos.ProductosPeriodoActual === undefined,
+              cargando: cargandoProductos,
               icon: <IconStack2 />,
             },
             {
@@ -232,35 +212,20 @@ const ResumenVentas = () => {
               value: formatUnidades(unidadesVendidas.CantidadVendida),
               subtitle: `Periodo Anterior: ${formatUnidades(unidadesVendidas.CantidadVendidaAnterior)}`,
               percentageChange: unidadesVendidas.PorcentajeCambio,
-              isLoading: !unidadesVendidas.CantidadVendida === undefined,
+              cargando: cargandoUnidades,
               icon: <IconBox />,
             },
           ].map((card, index) => (
             <Grid item xs={12} sm={6} md={4} lg={2} key={index}> 
-              {card.isLoading ? (
-                <Paper
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: 120,
-                    borderRadius: 2,
-                    boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
-                    backgroundColor: "#f5f5f5",
-                  }}
-                >
-                  <CircularProgress />
-                </Paper>
-              ) : (
-                <MetricCard
-                  title={card.title}
-                  value={card.value}
-                  subtitle={card.subtitle}
-                  percentageChange={card.percentageChange}
-                  icon={card.icon}
-                  elevation={1}
-                />
-              )}
+              <MetricCard
+                title={card.title}
+                value={card.value}
+                subtitle={card.subtitle}
+                percentageChange={card.percentageChange}
+                icon={card.icon}
+                elevation={1}
+                cargando={card.cargando}
+              />
             </Grid>
           ))}
         </Grid>
@@ -285,10 +250,10 @@ const ResumenVentas = () => {
           />
         </Grid>
         <Grid item xs={12} md={5.5}> {/* Full width for category bar chart */}
-          <CategoriasBarChart data={categoriasData} />
+          {conCarga(categorias, <CategoriasBarChart data={categorias.datos} />)}
         </Grid>
         <Grid item xs={12} md={6.5}> {/* Top sellers chart next to category performance */}
-          <TopVendedoresChart data={topVendedores} />
+          {conCarga(vendedores, <TopVendedoresChart data={vendedores.datos} />)}
         </Grid>
         <Grid item xs={12}>
           <SeccionTitulo
@@ -297,13 +262,13 @@ const ResumenVentas = () => {
           />
         </Grid>
         <Grid item xs={12} md={7}> {/* Top selling products chart */}
-          <TopRentabilidadMinima data={productosRentabilidadMinima} />
+          {conCarga(rentabilidadMinima, <TopRentabilidadMinima data={rentabilidadMinima.datos} />)}
         </Grid>
         <Grid item xs={12} md={5}> {/* Rentability chart next to top sellers */}
-          <RentabilidadChart data={productosRentabilidad} />
+          {conCarga(rentabilidad, <RentabilidadChart data={rentabilidad.datos} />)}
         </Grid>
         <Grid item xs={12}> {/* Full width for detailed product table */}
-          <ProductosVendidos data={detalleTransformado} />
+          {conCarga(detalle, <ProductosVendidos data={detalleTransformado} />, 400)}
         </Grid>
       </Grid>
   </Box>

@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Card, CardContent, Typography, Box, Avatar,
   Table, TableBody, TableCell, TableHead, TableRow,
   Stack, TableSortLabel, CircularProgress
 } from "@mui/material";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { formatearRUTDesdeSAP } from "@/utils/formatearRUTDesdeSAP";
 import { formatVentas } from "@/utils/format";
 import { BACKEND_URL } from "@/config";
@@ -37,56 +38,38 @@ interface ClientesFrecuentesTableProps {
 }
 
 const ClientesFrecuentesTable: React.FC<ClientesFrecuentesTableProps> = ({ filters }) => {
-  const [clientes, setClientes] = useState<ClienteFrecuente[]>([]);
-  const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<Order>("desc");
   const [orderBy, setOrderBy] = useState<OrderBy>("total_comprado");
 
-  useEffect(() => {
-    const fetchClientes = async () => {
-      try {
-        setLoading(true);
-        const query = new URLSearchParams(
-          Object.entries(filters)
-            .filter(([_, v]) => v !== "" && v !== null) // Añadir `v !== null` para limpiar más los filtros
-            .map(([k, v]) => [k, String(v)])
-        ).toString();
+  // La clave es la URL: aunque la página pase un objeto `filters` nuevo en
+  // cada render, solo se pide de nuevo cuando cambian los valores.
+  const query = new URLSearchParams(
+    Object.entries(filters)
+      .filter(([_, v]) => v !== "" && v !== null) // Añadir `v !== null` para limpiar más los filtros
+      .map(([k, v]) => [k, String(v)])
+  ).toString();
+  const url = `${BACKEND_URL}/api/top10clientes?${query}`;
 
-        const res = await apiJson(`${BACKEND_URL}/api/top10clientes?${query}`);
-        
-        if (!res?.ok) { // Manejo básico de errores HTTP
-            console.error(`Error al obtener clientes frecuentes: ${res?.status} ${res?.statusText}`);
-            setClientes([]); // Asegura que la lista esté vacía en caso de error
-            return;
-        }
-
-        const raw = await res?.json();
-
-        const normalizados: ClienteFrecuente[] = raw.map((c: any) => ({
-          cardcode: c.CardCode,
-          cardname: c.CardName,
-          imagen: c.Imagen || "",
-          ciudad: c.CITY || "",
-          linea_credito: c.CreditLine || 0,
-          balance: c.Balance || 0,
-          cantidad_compras: c.Cantidad_Compras,
-          total_comprado: c.Total_Comprado,
-          ticket_promedio: c.Ticket_Promedio,
-          // Asegurarse de que ultima_compra sea una cadena válida antes de pasarla
-          ultima_compra: c.Ultima_Compra ? String(c.Ultima_Compra) : new Date(0).toISOString(),
-        }));
-
-        setClientes(normalizados);
-      } catch (err) {
-        console.error("❌ Error al obtener clientes frecuentes:", err);
-        setClientes([]); // En caso de cualquier otro error, también vaciar la lista
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchClientes();
-  }, [filters]); // Dependencia del `useEffect`
+  const { datos: clientes, cargando: loading } = useCargaDatos<ClienteFrecuente[]>(
+    url,
+    async (signal) => {
+      const raw = await apiJson(url, { signal });
+      return raw.map((c: any) => ({
+        cardcode: c.CardCode,
+        cardname: c.CardName,
+        imagen: c.Imagen || "",
+        ciudad: c.CITY || "",
+        linea_credito: c.CreditLine || 0,
+        balance: c.Balance || 0,
+        cantidad_compras: c.Cantidad_Compras,
+        total_comprado: c.Total_Comprado,
+        ticket_promedio: c.Ticket_Promedio,
+        // Asegurarse de que ultima_compra sea una cadena válida antes de pasarla
+        ultima_compra: c.Ultima_Compra ? String(c.Ultima_Compra) : new Date(0).toISOString(),
+      }));
+    },
+    []
+  );
 
   const handleSort = (key: OrderBy) => {
     if (orderBy === key) {

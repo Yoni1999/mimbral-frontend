@@ -1,7 +1,8 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Chart from "react-apexcharts";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { Box, Typography, Paper } from "@mui/material";
 import { ApexOptions } from "apexcharts";
 import { useRouter } from "next/navigation";
@@ -35,11 +36,6 @@ interface VentasCanalData {
 }
 
 const VentasCanalChart: React.FC<Props> = ({ filters, onSelectCanal }) => {
-  const [chartData, setChartData] = useState<number[]>([]);
-  const [labels, setLabels] = useState<string[]>([]);
-  const [rawLabels, setRawLabels] = useState<string[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-
   const router = useRouter();
 
   const buildQuery = () => {
@@ -54,35 +50,24 @@ const VentasCanalChart: React.FC<Props> = ({ filters, onSelectCanal }) => {
     return params.toString();
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!filters.itemCode) return;
-
-      try {
-        setLoading(true);
-        const query = buildQuery();
-        const response = await apiJson(`${BACKEND_URL}/api/ventas-canal?${query}`);
-        if (!response) return;
-
-        const data: VentasCanalData = (await response.json())[0];
-        const keys = Object.keys(data);
-        const mappedLabels = keys.map((key) => canalNameMap[key.toLowerCase()] || key);
-
-        setRawLabels(keys);
-        setLabels(mappedLabels);
-        setChartData(Object.values(data));
-      } catch (error) {
-        console.error("❌ Error al obtener datos de ventas por canal:", error);
-        setLabels([]);
-        setRawLabels([]);
-        setChartData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [filters]);
+  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
+  const url = filters.itemCode ? `${BACKEND_URL}/api/ventas-canal?${buildQuery()}` : null;
+  const { datos, cargando } = useCargaDatos<{ chartData: number[]; labels: string[]; rawLabels: string[] }>(
+    url,
+    async (signal) => {
+      const data: VentasCanalData = (await apiJson(url as string, { signal }))[0];
+      const keys = Object.keys(data);
+      return {
+        rawLabels: keys,
+        labels: keys.map((key) => canalNameMap[key.toLowerCase()] || key),
+        chartData: Object.values(data),
+      };
+    },
+    { chartData: [], labels: [], rawLabels: [] }
+  );
+  const { chartData, labels, rawLabels } = datos;
+  // Sin producto se mantiene el "Cargando gráfico..." que mostraba antes.
+  const loading = cargando || !filters.itemCode;
 
   const options: ApexOptions = {
     chart: {

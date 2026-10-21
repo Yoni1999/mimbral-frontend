@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import React from "react";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import ReactApexChart from "react-apexcharts";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { formatVentas } from "@/utils/format";
 
@@ -29,8 +30,6 @@ interface Props {
 }
 
 const TopVentasComparadoChart: React.FC<Props> = ({ filtros }) => {
-  const [data, setData] = useState<ProductoMasVendido[]>([]);
-
   const getComparacionTexto = () => {
     switch (filtros.modoComparacion) {
       case "PeriodoAnterior":
@@ -63,21 +62,13 @@ const TopVentasComparadoChart: React.FC<Props> = ({ filtros }) => {
     return params.toString();
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const url = `${BACKEND_URL}/api/pv/topproductosmasvendidos?${buildQuery()}`;
-        const res = await apiJson(url);
-        const json = await res!.json();
-        setData(json);
-      } catch (error) {
-        console.error("❌ Error al obtener top productos más vendidos:", error);
-        setData([]);
-      }
-    };
-
-    fetchData();
-  }, [filtros]);
+  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
+  const url = `${BACKEND_URL}/api/pv/topproductosmasvendidos?${buildQuery()}`;
+  const { datos: data, cargando: loading } = useCargaDatos<ProductoMasVendido[]>(
+    url,
+    (signal) => apiJson(url, { signal }),
+    []
+  );
 
   const categorias = data.map((item) =>
     item.Nombre_Producto.length > 40
@@ -148,7 +139,11 @@ const TopVentasComparadoChart: React.FC<Props> = ({ filtros }) => {
         </Typography>
       </Box>
 
-      {data.length > 0 ? (
+      {loading ? (
+        <Box display="flex" alignItems="center" justifyContent="center" height={260}>
+          <CircularProgress />
+        </Box>
+      ) : data.length > 0 ? (
         <ReactApexChart options={options} series={series} type="bar" height={360} />
       ) : (
         <Box

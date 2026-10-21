@@ -10,6 +10,7 @@ import {
 import FilterListIcon from "@mui/icons-material/FilterList";
 import CloseIcon from "@mui/icons-material/Close";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 
 // Interfaces moved out for clarity
@@ -72,6 +73,10 @@ const tiposEnvioMeli = [
     { value: "colecta", label: "Colecta" }, // Cambiado a minúscula
 ];
 
+// Adapta la respuesta de categorías / subcategorías a lo que muestran los selects.
+const aCategorias = (data: any): Categoria[] =>
+  (Array.isArray(data) ? data : []).map((c: any) => ({ codigo: c.codigo, nombre: c.nombre, imagen: c.imagen }));
+
 const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters, multiCanal }) => {
   const [open, setOpen] = useState(false);
   // Inicializa tipoEnvio a 'todas' por defecto cuando el canal es Meli o si no hay un filtro actual
@@ -87,8 +92,6 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
   });
 
   const [primerNiveles, setPrimerNiveles] = useState<Categoria[]>([]);
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [subcategorias, setSubcategorias] = useState<Categoria[]>([]);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [proveedorSearchInput, setProveedorSearchInput] = useState("");
   const [loadingProveedores, setLoadingProveedores] = useState(false);
@@ -115,14 +118,27 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
     fetchData();
   }, []);
 
-  // Effect para cargar categorías y subcategorías si los filtros iniciales ya las tienen
+  // Listas en cascada: salen de lo elegido (también de los filtros iniciales).
+  // Si cambia la selección se cancela la carga anterior y una lista vieja no
+  // pisa a la nueva.
+  const urlCategorias = filters.primerNivel
+    ? `${BACKEND_URL}/api/resumen-categoria/mostrar-categorias?primerNivel=${filters.primerNivel}`
+    : null;
+  const { datos: categorias } = useCargaDatos<Categoria[]>(
+    urlCategorias,
+    async (signal) => aCategorias(await apiJson(urlCategorias as string, { signal })),
+    []
+  );
+  const urlSubcategorias = filters.categoria
+    ? `${BACKEND_URL}/api/resumen-categoria/tercer-nivel?categoria=${filters.categoria}`
+    : null;
+  const { datos: subcategorias } = useCargaDatos<Categoria[]>(
+    urlSubcategorias,
+    async (signal) => aCategorias(await apiJson(urlSubcategorias as string, { signal })),
+    []
+  );
+
   useEffect(() => {
-    if (filters.primerNivel && categorias.length === 0) {
-      fetchCategorias(filters.primerNivel);
-    }
-    if (filters.categoria && subcategorias.length === 0) {
-      fetchSubcategorias(filters.categoria);
-    }
     // Set proveedor search input if currentFilters has a supplier
     if (currentFilters?.proveedor && proveedores.length > 0) {
       const selectedProv = proveedores.find(p => p.CardCode === currentFilters.proveedor);
@@ -130,10 +146,10 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
         setProveedorSearchInput(selectedProv.CardName);
       }
     }
-  }, [filters.primerNivel, filters.categoria, currentFilters, proveedores]); // Dependencias para re-ejecutar
+  }, [currentFilters, proveedores]); // Dependencias para re-ejecutar
 
 
-  const handleChange = async (key: keyof FiltroVentas, value: any) => {
+  const handleChange = (key: keyof FiltroVentas, value: any) => {
     let updatedFilters: FiltroVentas = { ...filters, [key]: value };
 
     // Lógica para el nuevo filtro de tipo de envío
@@ -162,46 +178,13 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
     if (key === "primerNivel") {
       updatedFilters.categoria = undefined;
       updatedFilters.subcategoria = undefined;
-      if (value) { // Only fetch if a primerNivel is selected
-        await fetchCategorias(value);
-      } else {
-        setCategorias([]);
-      }
-      setSubcategorias([]);
     }
 
     if (key === "categoria") {
       updatedFilters.subcategoria = undefined;
-      if (value) { // Only fetch if a categoria is selected
-        await fetchSubcategorias(value);
-      } else {
-        setSubcategorias([]);
-      }
     }
 
     setFilters(updatedFilters);
-  };
-
-  const fetchCategorias = async (primerNivel: string) => {
-    try {
-      const res = await apiJson(`${BACKEND_URL}/api/metas/getcat?primerNivel=${primerNivel}`);
-      const data = await res!.json();
-      setCategorias(data.map((cat: any) => ({ codigo: cat.codigo_categoria, nombre: cat.nombre_categoria, imagen: cat.IMAGEN })));
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      setCategorias([]);
-    }
-  };
-
-  const fetchSubcategorias = async (categoria: string) => {
-    try {
-      const res = await apiJson(`${BACKEND_URL}/api/metas/getsub?categoria=${categoria}`);
-      const data = await res!.json();
-      setSubcategorias(data.map((sub: any) => ({ codigo: sub.codigo_subcategoria, nombre: sub.nombre_subcategoria, imagen: sub.IMAGEN })));
-    } catch (error) {
-      console.error("Error fetching subcategories:", error);
-      setSubcategorias([]);
-    }
   };
 
   const handleProveedorSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,8 +212,6 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
     const cleared: FiltroVentas = { periodo: "7D" };
     setFilters(cleared);
     setProveedorSearchInput("");
-    setCategorias([]);
-    setSubcategorias([]);
     onFilterChange(cleared);
     setOpen(false);
   };
@@ -254,12 +235,9 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
         updated.primerNivel = undefined;
         updated.categoria = undefined;
         updated.subcategoria = undefined;
-        setCategorias([]);
-        setSubcategorias([]);
     } else if (key === "categoria") {
         updated.categoria = undefined;
         updated.subcategoria = undefined;
-        setSubcategorias([]);
     } else if (key === "subcategoria") {
         updated.subcategoria = undefined;
     } else if (key === "tipoEnvio") { // CAMBIO 7: Nuevo caso para 'tipoEnvio'

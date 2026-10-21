@@ -64,13 +64,8 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
-        const response = await apiJson(`${BACKEND_URL}/api/resumen-categoria/mostrar-categorias`);
-        if (!response) {
-          console.error("No se recibió respuesta del servidor.");
-          return;
-        }
-        const data = await response.json();
-        setCategoriasApi(data);
+        const data = await apiJson<Categoria[]>(`${BACKEND_URL}/api/resumen-categoria/mostrar-categorias`);
+        setCategoriasApi(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error al cargar categorías:", error);
       }
@@ -79,15 +74,9 @@ const HeaderCategoria: React.FC<Props> = ({ onFilterChange, initialFilters }) =>
     fetchCategorias();
   }, []);
 
-  // Este useEffect sincronizará la prop initialFilters con el estado local filters
-  useEffect(() => {
-    if (initialFilters) {
-      setFilters(initialFilters);
-      console.log("📥 initialFilters recibidos desde la URL:", initialFilters);
-      onFilterChange(initialFilters); // importante para que se dispare el fetch
-    }
-  }, [initialFilters]);
-  
+  // initialFilters solo fija el estado inicial: la página ya arranca con los
+  // filtros de la URL, así que volver a emitirlos solo duplicaba la carga.
+
 
   const obtenerResumenFiltro = () => {
     if (filters.temporada) return `Temporada: ${filters.temporada}`;

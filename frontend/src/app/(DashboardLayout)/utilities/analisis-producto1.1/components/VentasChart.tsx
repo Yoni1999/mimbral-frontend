@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend,
@@ -11,6 +11,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { Filters } from "./HeaderDrawerProducto";
 import { formatVentas} from "@/utils/format";
@@ -37,50 +38,35 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
   
     return params.toString();
   };
-  const [data, setData] = useState<any[]>([]);            // ← para el gráfico
-  const [loading, setLoading] = useState(false);          // ← para el estado de carga
   const [openModal, setOpenModal] = useState(false);      // ← para el modal
 
+  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
+  // Solo se pide si hay producto seleccionado.
+  const url = itemCode ? `${BACKEND_URL}/api/pv/historico?${buildQuery()}` : null;
+  const { datos: data, cargando: loading } = useCargaDatos<any[]>(
+    url,
+    async (signal) => {
+      const raw = await apiJson(url as string, { signal });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const query = buildQuery();
-        const response = await apiJson(`${BACKEND_URL}/api/pv/historico?${query}`);
-        if (!response) throw new Error("Error al cargar datos");
-  
-        const raw = await response.json();
-  
-        const procesado = raw.map((item: any) => {
-          const fechaISO = item.Fecha;
-          return {
-            date: fechaISO.slice(0, 10),
-            meli: item.Meli || 0,
-            falabella: item.Falabella || 0,
-            balmaceda: item.Balmaceda || 0,
-            vitex: item.Vitex || 0,
-            chorrillo: item.Chorrillo || 0,
-            empresas: item.Empresas || 0,
-            orden: new Date(fechaISO).getTime(),
-          };
-        });
-  
-        procesado.sort((a: { orden: number }, b: { orden: number }) => a.orden - b.orden);
-        setData(procesado);
-      } catch (err) {
-        console.error("❌ Error al obtener histórico:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    // Solo ejecutar si hay filtros válidos
-    if (itemCode ) {
-      fetchData();
-    }
-  }, [canal, itemCode, periodo, fechaInicio, fechaFin]);
-  
+      const procesado = raw.map((item: any) => {
+        const fechaISO = item.Fecha;
+        return {
+          date: fechaISO.slice(0, 10),
+          meli: item.Meli || 0,
+          falabella: item.Falabella || 0,
+          balmaceda: item.Balmaceda || 0,
+          vitex: item.Vitex || 0,
+          chorrillo: item.Chorrillo || 0,
+          empresas: item.Empresas || 0,
+          orden: new Date(fechaISO).getTime(),
+        };
+      });
+
+      procesado.sort((a: { orden: number }, b: { orden: number }) => a.orden - b.orden);
+      return procesado;
+    },
+    []
+  );
 
   const ChartComponent = (height: number) => (
     <ResponsiveContainer width="100%" height={height}>

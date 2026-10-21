@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Box, Collapse, IconButton, Typography,
   Table, TableBody, TableCell, TableContainer,
@@ -12,6 +12,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { formatVentas } from "@/utils/format";
 import { BACKEND_URL } from "@/config";
 
@@ -122,49 +123,47 @@ function Row({ row }: { row: ProductoDetallado }) {
 
 // Componente principal
 const ProductosVendidos: React.FC<Props> = ({ filters }) => {
-  const [productos, setProductos] = useState<ProductoDetallado[]>([]);
-  const [totalProductos, setTotalProductos] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const rowsPerPage = 100;
 
-  useEffect(() => {
+  // Filtros sin paginación: si cambian se vuelve a la página 1 en el mismo
+  // render (antes un efecto pedía primero con la página vieja y luego con la 1).
+  const filtrosClave = new URLSearchParams(
+    Object.entries({
+      ...filters,
+      vendedor: filters.vendedor != null ? String(filters.vendedor) : undefined,
+    })
+      .filter(([_, v]) => v != null && v !== "")
+      .map(([k, v]) => [k, String(v)])
+  ).toString();
+  const [filtrosPrevios, setFiltrosPrevios] = useState(filtrosClave);
+  let paginaActual = page;
+  if (filtrosPrevios !== filtrosClave) {
+    setFiltrosPrevios(filtrosClave);
     setPage(1);
-  }, [filters]);
+    paginaActual = 1;
+  }
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const offset = (page - 1) * rowsPerPage;
-        const params = {
-          ...filters,
-          vendedor: filters.vendedor != null ? String(filters.vendedor) : undefined,
-          limit: String(rowsPerPage),
-          offset: String(offset),
-        };
+  const offset = (paginaActual - 1) * rowsPerPage;
+  const params = new URLSearchParams(filtrosClave);
+  params.append("limit", String(rowsPerPage));
+  params.append("offset", String(offset));
+  const url = `${BACKEND_URL}/api/obtener-productos-detallado?${params.toString()}`;
 
-        const query = new URLSearchParams(
-          Object.entries(params)
-            .filter(([_, v]) => v != null && v !== "")
-            .map(([k, v]) => [k, String(v)])
-        ).toString();
-
-        const res = await apiJson(`${BACKEND_URL}/api/obtener-productos-detallado?${query}`);
-        const result = await res!.json();
-        setProductos(result.data || []);
-        setTotalProductos(result.total || 0);
-      } catch (error) {
-        console.error("Error al obtener productos:", error);
-        setProductos([]);
-        setTotalProductos(0);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [filters, page]);
+  const {
+    datos: { productos, totalProductos },
+    cargando: loading,
+  } = useCargaDatos(
+    url,
+    async (signal) => {
+      const result = await apiJson(url, { signal });
+      return {
+        productos: (result.data || []) as ProductoDetallado[],
+        totalProductos: (result.total || 0) as number,
+      };
+    },
+    { productos: [] as ProductoDetallado[], totalProductos: 0 }
+  );
 
   return (
     <Box mt={2}>
@@ -207,7 +206,7 @@ const ProductosVendidos: React.FC<Props> = ({ filters }) => {
           <Box mt={2} mb={4} display="flex" justifyContent="center">
             <Pagination
               count={Math.ceil(totalProductos / rowsPerPage)}
-              page={page}
+              page={paginaActual}
               onChange={(_, newPage) => setPage(newPage)}
               color="primary"
             />

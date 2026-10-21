@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import React from "react";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import ReactApexChart from "react-apexcharts";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { formatVentas } from "@/utils/format";
 
@@ -26,51 +27,33 @@ interface Props {
 }
 
 const TopRentableVendedor: React.FC<Props> = ({ filtros }) => {
-  const [data, setData] = useState<ProductoRentable[]>([]);
+  const buildQuery = () => {
+    const params = new URLSearchParams();
 
-  useEffect(() => {
-    const buildQuery = () => {
-      const params = new URLSearchParams();
+    if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
+    if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
 
-      if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
-      if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
+    if (filtros.modoComparacion) params.append("modoComparacion", filtros.modoComparacion);
+    if (filtros.vendedorEmpresa) params.append("vendedorEmpresa", filtros.vendedorEmpresa);
+    if (filtros.canal) params.append("canal", filtros.canal);
 
-      if (filtros.modoComparacion) {
-        params.append("modoComparacion", filtros.modoComparacion);
-      }
+    return params.toString();
+  };
 
-      if (filtros.vendedorEmpresa) {
-        params.append("vendedorEmpresa", filtros.vendedorEmpresa);
-      }
-
-      if (filtros.canal) {
-        params.append("canal", filtros.canal);
-      }
-
-      return params.toString();
-    };
-
-    const fetchData = async () => {
-      try {
-        const url = `${BACKEND_URL}/api/pv/toprentables?${buildQuery()}`;
-        const res = await apiJson(url);
-        const json = await res!.json();
-
-        const mapped: ProductoRentable[] = json.map((item: any) => ({
-          nombre: item.Nombre_Producto,
-          margen: item.Margen_Absoluto,
-          imagen: item.Imagen,
-        }));
-
-        setData(mapped);
-      } catch (error) {
-        console.error("❌ Error al obtener productos rentables:", error);
-        setData([]);
-      }
-    };
-
-    fetchData();
-  }, [filtros]);
+  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
+  const url = `${BACKEND_URL}/api/pv/toprentables?${buildQuery()}`;
+  const { datos: data, cargando: loading } = useCargaDatos<ProductoRentable[]>(
+    url,
+    async (signal) => {
+      const json = await apiJson(url, { signal });
+      return json.map((item: any) => ({
+        nombre: item.Nombre_Producto,
+        margen: item.Margen_Absoluto,
+        imagen: item.Imagen,
+      }));
+    },
+    []
+  );
 
   const categorias = data.map((item) =>
     item.nombre.length > 40 ? item.nombre.slice(0, 37) + "…" : item.nombre
@@ -135,7 +118,11 @@ const TopRentableVendedor: React.FC<Props> = ({ filtros }) => {
         </Typography>
       </Box>
 
-      {data.length > 0 ? (
+      {loading ? (
+        <Box display="flex" alignItems="center" justifyContent="center" height={260}>
+          <CircularProgress />
+        </Box>
+      ) : data.length > 0 ? (
         <ReactApexChart options={options} series={series} type="bar" height={360} />
       ) : (
         <Box

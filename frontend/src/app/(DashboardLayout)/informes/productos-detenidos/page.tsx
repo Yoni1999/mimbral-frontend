@@ -9,6 +9,7 @@ import { TrendingDown } from "@mui/icons-material";
 import ProductosEstancadosTable from "./components/ProductosEstancadosTable";
 import HeaderProductosDetenidos from "./components/HeaderProductosDetenidos";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import CustomTabs from "../components/CustomTabs";
 import * as XLSX from "xlsx";
@@ -38,19 +39,12 @@ interface ProductoEstancado {
   Stock: number;
   Imagen: string | null;
   CostoPromedioUlt3Compras: number;
-  MargenPorcentaje: number;
+  MargenPorcentaje: number | null;
 }
 
 const ProductosDetenidosPage = () => {
   const [filters, setFilters] = useState<FiltroProductos>({});
-  const [productos, setProductos] = useState<ProductoEstancado[]>([]);
-  const [stockInactivos, setStockInactivos] = useState<ProductoEstancado[]>([]);
-  const [total, setTotal] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [loadingInactivos, setLoadingInactivos] = useState<boolean>(false);
-
-  const totalPages = Math.ceil(total / limit);
 
   useEffect(() => {
     notifyInfo("Informe actualizado a diario", {
@@ -60,41 +54,41 @@ const ProductosDetenidosPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchProductos = async (filtros: FiltroProductos, pageNumber = 1) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      const offset = (pageNumber - 1) * limit;
-
-      Object.entries(filtros).forEach(([key, value]) => {
-        if (value) params.append(key, value);
-      });
-
-      params.append("offset", offset.toString());
-      params.append("limit", limit.toString());
-
-      const data = await apiJson<any>(`${BACKEND_URL}/api/productos-detenidos?${params}`);
-
-      setProductos(Array.isArray(data.data) ? data.data : []);
-      setTotal(typeof data.total === "number" ? data.total : 0);
-    } catch (error) {
-      console.error("Error al cargar productos detenidos:", error);
-    } finally {
-      setLoading(false);
-    }
+  const paramsFiltros = () => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params.append(key, value);
+    });
+    return params;
   };
 
-  const fetchStockInactivos = async (filtros: FiltroProductos = {}) => {
-    setLoadingInactivos(true);
-    try {
-      const params = new URLSearchParams();
-      Object.entries(filtros).forEach(([key, value]) => {
-        if (value) params.append(key, value);
-      });
+  // Cada tabla se identifica por su URL con filtros (y página): al cambiar se
+  // limpia al instante, se cancela lo pendiente y solo se muestra la última
+  // respuesta (ver useCargaDatos).
+  const paramsActivos = paramsFiltros();
+  paramsActivos.append("offset", ((page - 1) * limit).toString());
+  paramsActivos.append("limit", limit.toString());
+  const urlActivos = `${BACKEND_URL}/api/productos-detenidos?${paramsActivos}`;
+  const { datos: activos, cargando: loading } = useCargaDatos<{ productos: ProductoEstancado[]; total: number }>(
+    urlActivos,
+    async (signal) => {
+      const data = await apiJson<any>(urlActivos, { signal });
+      return {
+        productos: Array.isArray(data.data) ? data.data : [],
+        total: typeof data.total === "number" ? data.total : 0,
+      };
+    },
+    { productos: [], total: 0 }
+  );
+  const { productos, total } = activos;
+  const totalPages = Math.ceil(total / limit);
 
-      const data = await apiJson<any>(`${BACKEND_URL}/api/stock-detenido-ventas?${params}`);
-
-      const adaptados: ProductoEstancado[] = data.data.map((item: any) => ({
+  const urlInactivos = `${BACKEND_URL}/api/stock-detenido-ventas?${paramsFiltros()}`;
+  const { datos: stockInactivos, cargando: loadingInactivos } = useCargaDatos<ProductoEstancado[]>(
+    urlInactivos,
+    async (signal) => {
+      const data = await apiJson<any>(urlInactivos, { signal });
+      return data.data.map((item: any) => ({
         SKU: item.ItemCode,
         Producto: item.ItemName,
         PrimerNivel: item.NombrePrimerNivel,
@@ -108,14 +102,9 @@ const ProductosDetenidosPage = () => {
         CostoPromedioUlt3Compras: item.CostoPromedio,
         MargenPorcentaje: item.PorcentajeMargen,
       }));
-
-      setStockInactivos(adaptados);
-    } catch (error) {
-      console.error("Error al cargar productos inactivos con stock:", error);
-    } finally {
-      setLoadingInactivos(false);
-    }
-  };
+    },
+    []
+  );
 
   const exportarExcelActivos = async () => {
     try {
@@ -155,22 +144,16 @@ const ProductosDetenidosPage = () => {
     }
   };
 
+  // Solo cambia el estado: las cargas salen de las URLs de arriba (antes se
+  // pedía aquí y otra vez en un efecto sobre filters, dos veces por cambio).
   const handleFilterChange = (newFilters: FiltroProductos) => {
     setFilters(newFilters);
     setPage(1);
-    fetchProductos(newFilters, 1);
-    fetchStockInactivos(newFilters);
   };
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
-    fetchProductos(filters, value);
   };
-
-  useEffect(() => {
-    fetchProductos(filters, 1);
-    fetchStockInactivos(filters);
-  }, [filters]);
 
   return (
     <Box p={0}>
@@ -205,7 +188,7 @@ const ProductosDetenidosPage = () => {
                 <Typography mt={2} variant="body2" color="text.secondary">Cargando productos...</Typography>
               </Box>
             ) : (
-              <ProductosEstancadosTable data={productos} />
+              <ProductosEstancadosTable data={productos} etiquetaMargen="% Margen potencial" />
             )}
 
             {totalPages > 1 && !loading && (

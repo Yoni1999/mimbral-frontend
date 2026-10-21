@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography, Box, Paper } from "@mui/material"; // Added Paper
+import { Card, CardContent, Typography, Box, Paper, Skeleton } from "@mui/material"; // Added Paper
 import { IconArrowUpRight, IconArrowDownRight } from "@tabler/icons-react";
 
 const MetricCard = ({
@@ -8,6 +8,7 @@ const MetricCard = ({
   percentageChange,
   icon,
   elevation = 1, // Default elevation to 1 for a subtle shadow
+  cargando = false,
 }: {
   title: string;
   value: string | number;
@@ -15,6 +16,8 @@ const MetricCard = ({
   percentageChange?: number;
   icon?: React.ReactNode;
   elevation?: number;
+  /** Mientras llegan los datos del filtro actual: sin valor viejo ni ceros. */
+  cargando?: boolean;
 }) => {
   const isNegative = percentageChange !== undefined && percentageChange < 0;
 
@@ -69,10 +72,10 @@ const MetricCard = ({
               mr: 1, // Margin right to separate from percentage change
             }}
           >
-            {value}
+            {cargando ? <Skeleton width={100} /> : value}
           </Typography>
 
-          {percentageChange !== undefined && (
+          {!cargando && percentageChange !== undefined && (
             <Box
               px={0.8} // Reduced horizontal padding
               py={0.2} // Reduced vertical padding
@@ -92,7 +95,9 @@ const MetricCard = ({
         </Box>
 
         {/* 🔹 Subtitle (if available) */}
-        {subtitle && (
+        {cargando ? (
+          <Skeleton width="60%" sx={{ mt: 0.5 }} />
+        ) : subtitle && (
           <Typography
             variant="caption" // Smaller variant for subtle subtitle
             sx={{

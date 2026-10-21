@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Box,
@@ -43,6 +43,7 @@ import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 
 type ChannelItem = {
@@ -265,36 +266,26 @@ function SectionCard({
 
 const DashboardVentasPorCanalPage: React.FC = () => {
   const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<ProductItem[]>([]);
   const [selectedChannel, setSelectedChannel] = useState<string>("");
   const [stockDetailProduct, setStockDetailProduct] = useState<StockDetailProduct>(null);
 
   const queryString = useMemo(() => searchParams?.toString() ?? "", [searchParams]);
 
-  useEffect(() => {
-    const run = async () => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams(queryString);
-        params.set("page", "1");
-        params.set("pageSize", "10000");
-        params.set("sinPaginacion", "true");
-        const res = await apiJson(
-          `${BACKEND_URL}/api/informes/productos-por-canal-margen?${params.toString()}`
-        );
-        const json = await res!.json();
-        setData(Array.isArray(json?.data) ? json.data : []);
-      } catch (error) {
-        console.error("Error cargando dashboard ventas por canal:", error);
-        setData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    run();
-  }, [queryString]);
+  // La URL sale de los filtros de la dirección: si cambian se limpia al
+  // instante, se cancela lo pendiente y solo queda la última respuesta.
+  const params = new URLSearchParams(queryString);
+  params.set("page", "1");
+  params.set("pageSize", "10000");
+  params.set("sinPaginacion", "true");
+  const urlDashboard = `${BACKEND_URL}/api/informes/productos-por-canal-margen?${params.toString()}`;
+  const { datos: data, cargando: loading } = useCargaDatos<ProductItem[]>(
+    urlDashboard,
+    async (signal) => {
+      const json = await apiJson(urlDashboard, { signal });
+      return Array.isArray(json?.data) ? json.data : [];
+    },
+    []
+  );
 
   const channelSlices: ChannelSlice[] = useMemo(() => {
     const channels = new Map<string, number>();

@@ -54,28 +54,37 @@ const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
     }
   }, []);
 
+  // Lista de vendedores del canal: si se cambia de canal antes de que llegue,
+  // se cancela la anterior para que no pise a la del canal nuevo.
+  const vendedoresCtrl = React.useRef<AbortController | null>(null);
+  React.useEffect(() => () => vendedoresCtrl.current?.abort(), []);
+
   const handleChange = (key: keyof Filters, value: string) => {
+    if (key === "canal") {
+      // Fuera del actualizador de estado: ahí React puede ejecutarlo dos veces.
+      vendedoresCtrl.current?.abort();
+      const controller = new AbortController();
+      vendedoresCtrl.current = controller;
+      const url = `${BACKEND_URL}/api/oc/obvc?canal=${value}`;
+      apiJson(url, { signal: controller.signal })
+        .then((data) => {
+          if (controller.signal.aborted) return;
+          if (Array.isArray(data)) {
+            setVendedoresDisponibles(data);
+            setShowVendedorModal(true);
+          } else {
+            setVendedoresDisponibles([]);
+          }
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setVendedoresDisponibles([]);
+        });
+      setVendedorSeleccionado(null);
+    }
+
     setFiltros((prev) => {
-      let nuevoEstado = { ...prev, [key]: value };
-
-      if (key === "canal") {
-        const url = `${BACKEND_URL}/api/oc/obvc?canal=${value}`;
-        apiJson(url)
-          .then((res) => res?.json())
-          .then((data) => {
-            if (Array.isArray(data)) {
-              setVendedoresDisponibles(data);
-              setShowVendedorModal(true);
-            } else {
-              setVendedoresDisponibles([]);
-            }
-          })
-          .catch(() => setVendedoresDisponibles([]));
-
-        nuevoEstado.vendedorEmpresa = "";
-        setVendedorSeleccionado(null);
-      }
-
+      const nuevoEstado = { ...prev, [key]: value };
+      if (key === "canal") nuevoEstado.vendedorEmpresa = "";
       return nuevoEstado;
     });
   };

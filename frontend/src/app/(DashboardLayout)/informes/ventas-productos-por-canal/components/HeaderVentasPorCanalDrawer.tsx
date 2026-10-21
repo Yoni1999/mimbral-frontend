@@ -26,6 +26,7 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import DateRangeFilter, { DateRangeValue } from "../../../utilities/ventas/components/DateRangeFilter";
 import SubmitOnEnter from "../../../components/SubmitOnEnter";
@@ -125,6 +126,10 @@ const sectionLabelSx = {
   textTransform: "uppercase",
 } as const;
 
+// Adapta la respuesta de categorías / subcategorías a lo que muestran los selects.
+const aCategorias = (data: any): Categoria[] =>
+  (Array.isArray(data) ? data : []).map((c: any) => ({ codigo: c.codigo, nombre: c.nombre, imagen: c.imagen }));
+
 const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
   onFilterChange,
   currentFilters,
@@ -140,8 +145,6 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
   );
 
   const [primerNiveles, setPrimerNiveles] = useState<Categoria[]>([]);
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [subcategorias, setSubcategorias] = useState<Categoria[]>([]);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
 
   const [proveedorSearchInput, setProveedorSearchInput] = useState("");
@@ -164,13 +167,6 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
 
         setPrimerNiveles(pn || []);
         setProveedores(prov || []);
-
-        if (currentFilters?.proveedor && Array.isArray(prov)) {
-          const selected = prov.find(
-            (p: Proveedor) => p.CardCode === currentFilters.proveedor
-          );
-          if (selected) setProveedorSearchInput(selected.CardName);
-        }
       } catch (error) {
         console.error("Error fetching initial data:", error);
       } finally {
@@ -178,58 +174,45 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
       }
     };
 
+    // Listas fijas: una sola vez al montar (antes se volvían a pedir con cada
+    // filtro aplicado, porque dependían de currentFilters).
     fetchData();
-  }, [currentFilters]);
+  }, []);
 
-  const fetchCategorias = async (primerNivel: string) => {
-    try {
-      const res = await apiJson(
-        `${BACKEND_URL}/api/metas/getcat?primerNivel=${primerNivel}`
+  // Muestra el nombre del proveedor de los filtros recibidos en el buscador.
+  useEffect(() => {
+    if (currentFilters?.proveedor && proveedores.length > 0) {
+      const selected = proveedores.find(
+        (p) => p.CardCode === currentFilters.proveedor
       );
-      const data = await res!.json();
-      setCategorias(
-        (data || []).map((cat: any) => ({
-          codigo: cat.codigo_categoria,
-          nombre: cat.nombre_categoria,
-          imagen: cat.IMAGEN,
-        }))
-      );
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      setCategorias([]);
+      if (selected) setProveedorSearchInput(selected.CardName);
     }
-  };
+  }, [currentFilters, proveedores]);
 
-  const fetchSubcategorias = async (categoria: string) => {
-    try {
-      const res = await apiJson(
-        `${BACKEND_URL}/api/metas/getsub?categoria=${categoria}`
-      );
-      const data = await res!.json();
-      setSubcategorias(
-        (data || []).map((sub: any) => ({
-          codigo: sub.codigo_subcategoria,
-          nombre: sub.nombre_subcategoria,
-          imagen: sub.IMAGEN,
-        }))
-      );
-    } catch (error) {
-      console.error("Error fetching subcategories:", error);
-      setSubcategorias([]);
-    }
-  };
+  // Listas en cascada: salen de lo elegido. Si cambia la selección se cancela
+  // la carga anterior y una lista vieja no pisa a la nueva.
+  const urlCategorias = filters.primerNivel
+    ? `${BACKEND_URL}/api/resumen-categoria/mostrar-categorias?primerNivel=${filters.primerNivel}`
+    : null;
+  const { datos: categorias } = useCargaDatos<Categoria[]>(
+    urlCategorias,
+    async (signal) => aCategorias(await apiJson(urlCategorias as string, { signal })),
+    []
+  );
+  const urlSubcategorias = filters.categoria
+    ? `${BACKEND_URL}/api/resumen-categoria/tercer-nivel?categoria=${filters.categoria}`
+    : null;
+  const { datos: subcategorias } = useCargaDatos<Categoria[]>(
+    urlSubcategorias,
+    async (signal) => aCategorias(await apiJson(urlSubcategorias as string, { signal })),
+    []
+  );
 
   useEffect(() => {
-    if (filters.primerNivel) fetchCategorias(filters.primerNivel);
     setFilters((prev) => ({ ...prev, categoria: undefined, subcategoria: undefined }));
   }, [filters.primerNivel]);
 
   useEffect(() => {
-    if (filters.categoria) {
-      fetchSubcategorias(filters.categoria);
-    } else {
-      setSubcategorias([]);
-    }
     setFilters((prev) => ({ ...prev, subcategoria: undefined }));
   }, [filters.categoria]);
 
@@ -243,12 +226,9 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
       updated.primerNivel = undefined;
       updated.categoria = undefined;
       updated.subcategoria = undefined;
-      setCategorias([]);
-      setSubcategorias([]);
     } else if (key === "categoria") {
       updated.categoria = undefined;
       updated.subcategoria = undefined;
-      setSubcategorias([]);
     } else if (key === "subcategoria") {
       updated.subcategoria = undefined;
     } else if (key === "fechaInicio" || key === "fechaFin") {
@@ -309,8 +289,6 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
     setFilters(cleared);
     setFechaRange(null);
     setProveedorSearchInput("");
-    setCategorias([]);
-    setSubcategorias([]);
     onFilterChange(cleared);
     setAnchorEl(null);
   };

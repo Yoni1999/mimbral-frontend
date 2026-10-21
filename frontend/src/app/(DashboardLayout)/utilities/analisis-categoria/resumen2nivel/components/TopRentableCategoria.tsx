@@ -22,6 +22,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 
 interface Producto {
@@ -55,9 +56,7 @@ interface Props {
 }
 
 const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
-  const [data, setData] = useState<Producto[]>([]);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [sortField, setSortField] = useState<"Margen_Absoluto" | "Cantidad_Vendida" | "Margen_Unitario" | "">("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -135,27 +134,16 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
     fetchCategorias();
   }, []);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const query = buildQuery();
-        const response = await apiJson(`${BACKEND_URL}/api/resumen-categoria/top-rentables?${query}`);
-        if (response && response.ok) {
-          const result: Producto[] = await response.json();
-          setData(result);
-        } else {
-          setData([]);
-        }
-      } catch (error) {
-        console.error("❌ Error al obtener productos más rentables:", error);
-        setData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [filters]);
+  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
+  const url = `${BACKEND_URL}/api/resumen-categoria/top-rentables?${buildQuery()}`;
+  const { datos: data, cargando: loading } = useCargaDatos<Producto[]>(
+    url,
+    async (signal) => {
+      const result = await apiJson<Producto[]>(url, { signal });
+      return Array.isArray(result) ? result : [];
+    },
+    []
+  );
 
   const handleSort = (field: typeof sortField) => {
     if (sortField === field) {

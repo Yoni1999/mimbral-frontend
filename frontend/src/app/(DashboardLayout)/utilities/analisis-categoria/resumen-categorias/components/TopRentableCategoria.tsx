@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Card,
   Typography,
@@ -14,11 +14,13 @@ import {
   InputAdornment,
   Button,
   Paper,
+  CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 
 interface Producto {
@@ -47,7 +49,6 @@ interface Props {
 }
 
 const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
-  const [data, setData] = useState<Producto[]>([]);
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<"Margen_Absoluto" | "Cantidad_Vendida" | "Margen_Unitario" | "">("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -108,36 +109,29 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
 };
 
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const query = buildQuery();
-        const response = await apiJson(`${BACKEND_URL}/api/primer-nivel/top-rentables-primer-nivel?${query}`);
-        if (!response) throw new Error("Error al obtener datos");
-        const result = await response.json();
-        const filtrados = Array.isArray(result)
-          ? result.filter(
-              (item: Producto) =>
-                item &&
-                item.Nombre_Producto &&
-                item.Margen_Absoluto != null &&
-                item.Cantidad_Vendida != null
-            )
-          : [];
-        setData(filtrados);
-      } catch (error) {
-        console.error(" Error al obtener productos:", error);
-        setData([]);
-      }
-    };
-    if (
-      filters.periodo ||
-      (filters.fechaInicio && filters.fechaFin) ||
-      filters.primer_nivel
-    ) {
-      fetchData();
-    }
-  }, [filters]);
+  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
+  const hayFiltro = Boolean(
+    filters.periodo || (filters.fechaInicio && filters.fechaFin) || filters.primer_nivel
+  );
+  const url = hayFiltro
+    ? `${BACKEND_URL}/api/primer-nivel/top-rentables-primer-nivel?${buildQuery()}`
+    : null;
+  const { datos: data, cargando } = useCargaDatos<Producto[]>(
+    url,
+    async (signal) => {
+      const result = await apiJson(url as string, { signal });
+      return Array.isArray(result)
+        ? result.filter(
+            (item: Producto) =>
+              item &&
+              item.Nombre_Producto &&
+              item.Margen_Absoluto != null &&
+              item.Cantidad_Vendida != null
+          )
+        : [];
+    },
+    []
+  );
 
 
   const handleSort = (field: typeof sortField) => {
@@ -261,7 +255,14 @@ const TopRentableCategoria: React.FC<Props> = ({ filters }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {productosVisibles.map((producto, index) => (
+            {cargando && (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  <CircularProgress size={24} />
+                </TableCell>
+              </TableRow>
+            )}
+            {!cargando && productosVisibles.map((producto, index) => (
               <TableRow key={producto.Codigo_Producto}hover onClick={() => handleRowClick(producto)} sx={{ cursor: "pointer" }}>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>

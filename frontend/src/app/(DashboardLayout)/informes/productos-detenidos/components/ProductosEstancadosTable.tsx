@@ -21,7 +21,8 @@ type ProductoEstancado = {
   Stock: number;
   Imagen: string | null;
   CostoPromedioUlt3Compras: number;
-  MargenPorcentaje: number;
+  // null: sin precio de lista o sin compras, no hay margen que calcular.
+  MargenPorcentaje: number | null;
 };
 
 type SortKey =
@@ -42,7 +43,13 @@ const isFechaValida = (fecha: string | null): boolean => {
   return !!fecha && !isNaN(new Date(fecha).getTime());
 };
 
-const ProductosEstancadosTable = ({ data = [] }: { data: ProductoEstancado[] }) => {
+const ProductosEstancadosTable = ({
+  data = [],
+  etiquetaMargen = '% Margen',
+}: {
+  data: ProductoEstancado[];
+  etiquetaMargen?: string;
+}) => {
   const [sortBy, setSortBy] = useState<SortKey>('DiasSinVenta');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [searchTerm, setSearchTerm] = useState('');
@@ -91,7 +98,7 @@ const ProductosEstancadosTable = ({ data = [] }: { data: ProductoEstancado[] }) 
       'Días sin venta': item.DiasSinVenta,
       Stock: item.Stock,
       'Costo Prom. Últ. 3 Compras': item.CostoPromedioUlt3Compras,
-      '% Margen': item.MargenPorcentaje,
+      [etiquetaMargen]: item.MargenPorcentaje ?? '—',
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -146,7 +153,7 @@ const ProductosEstancadosTable = ({ data = [] }: { data: ProductoEstancado[] }) 
               <TableCell>{renderSortLabel('DiasSinVenta', 'Días sin venta')}</TableCell>
               <TableCell>{renderSortLabel('Stock', 'Stock')}</TableCell>
               <TableCell>{renderSortLabel('CostoPromedioUlt3Compras', 'Costo Prom.')}</TableCell>
-              <TableCell>{renderSortLabel('MargenPorcentaje', '% Margen')}</TableCell>
+              <TableCell>{renderSortLabel('MargenPorcentaje', etiquetaMargen)}</TableCell>
               <TableCell>Alerta</TableCell>
             </TableRow>
           </TableHead>
@@ -179,7 +186,7 @@ const ProductosEstancadosTable = ({ data = [] }: { data: ProductoEstancado[] }) 
                 <TableCell>{`${row.DiasSinVenta} días`}</TableCell>
                 <TableCell>{row.Stock}</TableCell>
                 <TableCell>{row.CostoPromedioUlt3Compras}</TableCell>
-                <TableCell>{`${row.MargenPorcentaje}%`}</TableCell>
+                <TableCell>{row.MargenPorcentaje === null || row.MargenPorcentaje === undefined ? '—' : `${row.MargenPorcentaje}%`}</TableCell>
                 <TableCell>{renderAlertaIcon(row.DiasSinVenta)}</TableCell>
               </TableRow>
             ))}

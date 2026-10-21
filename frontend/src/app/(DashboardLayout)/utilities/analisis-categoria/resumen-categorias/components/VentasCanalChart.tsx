@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Chart from "react-apexcharts";
 import {
   Typography,
@@ -16,6 +16,7 @@ import { BACKEND_URL } from "@/config";
 import type { Filters } from "./HeaderCategoria";
 import CloseIcon from "@mui/icons-material/Close";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 
 // ✅ Mapeo visual de nombre de canales
@@ -37,10 +38,6 @@ interface VentasCanalData {
 }
 
 const VentasCanalChart: React.FC<Props> = ({ filters }) => {
-  const [chartData, setChartData] = useState<number[]>([]);
-  const [labels, setLabels] = useState<string[]>([]);
-  const [rawLabels, setRawLabels] = useState<string[]>([]); // <- crudo para usar en la navegación
-  const [loading, setLoading] = useState<boolean>(true);
   const [openModal, setOpenModal] = useState<boolean>(false);
 
   const router = useRouter();
@@ -70,49 +67,25 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
     return params.toString();
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const query = buildQuery();
-
-        const response = await apiJson(
-          `${BACKEND_URL}/api/primer-nivel/ventas-canal-primer-nivel?${query}`
-        );
-
-        if (!response) throw new Error("Error al obtener datos");
-
-        const json = await response.json();
-
-        if (!json || (Array.isArray(json) && json.length === 0)) {
-          setLabels([]);
-          setRawLabels([]);
-          setChartData([]);
-          return;
-        }
-
-        const data: VentasCanalData = Array.isArray(json) ? json[0] : json;
-
-        const rawKeys = Object.keys(data);
-        const mappedKeys = rawKeys.map(
-          (key) => canalNameMap[key.toLowerCase()] || key
-        );
-
-        setRawLabels(rawKeys); // para navegación
-        setLabels(mappedKeys); // para mostrar en gráfico
-        setChartData(Object.values(data));
-      } catch (error) {
-        console.error("❌ Error al obtener datos de ventas por canal:", error);
-        setLabels([]);
-        setRawLabels([]);
-        setChartData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [filters]);
+  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
+  const url = `${BACKEND_URL}/api/primer-nivel/ventas-canal-primer-nivel?${buildQuery()}`;
+  const vacio = { labels: [] as string[], rawLabels: [] as string[], chartData: [] as number[] };
+  const { datos: canales, cargando: loading } = useCargaDatos(
+    url,
+    async (signal) => {
+      const json = await apiJson(url, { signal });
+      if (!json || (Array.isArray(json) && json.length === 0)) return vacio;
+      const data: VentasCanalData = Array.isArray(json) ? json[0] : json;
+      const rawKeys = Object.keys(data);
+      return {
+        rawLabels: rawKeys, // para navegación
+        labels: rawKeys.map((key) => canalNameMap[key.toLowerCase()] || key), // para mostrar en gráfico
+        chartData: Object.values(data) as number[],
+      };
+    },
+    vacio
+  );
+  const { labels, rawLabels, chartData } = canales;
 
   const options: ApexOptions = {
     chart: {
