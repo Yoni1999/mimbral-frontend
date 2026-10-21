@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -25,6 +25,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ProductosVendidosTable from "./components/ProductosVendidos";
 import HeaderVentasProductosDrawer from "./components/HeaderVentasProductosDrawer";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -76,10 +77,9 @@ const mapApiRowToTable = (r: any) => ({
 
 const InformeVentaPage = () => {
   const [filters, setFilters] = useState<FiltrosVentas>({ periodo: "1D", canal: "Vitex" });
-  const [productos, setProductos] = useState<any[]>([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  // La exportación también muestra el indicador de carga sobre la tabla.
+  const [exportando, setExportando] = useState(false);
   const [orden, setOrden] = useState<Order>("desc");
   const [ordenPor, setOrdenPor] = useState<OrderBy>("cantidadVendida");
 
@@ -89,8 +89,6 @@ const InformeVentaPage = () => {
 
   // CAMBIO: cantidad manual a exportar (-1 = todo)
   const [exportCount, setExportCount] = useState<number>(100);
-
-  const totalPages = Math.ceil(total / limit);
 
   const obtenerNombreUsuario = async (): Promise<string> => {
     try {
@@ -102,76 +100,74 @@ const InformeVentaPage = () => {
     }
   };
 
-  const fetchProductos = async (
-    filtros: FiltrosVentas,
-    pageNumber = 1,
-    campoOrden: OrderBy = ordenPor,
-    direccionOrden: Order = orden
-  ) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      const offset = (pageNumber - 1) * limit;
+  // URL de la tabla con filtros, página y orden. Al cambiar se limpia al
+  // instante, se cancela lo pendiente y solo se muestra la última respuesta.
+  const construirUrl = () => {
+    const params = new URLSearchParams();
+    const offset = (page - 1) * limit;
 
-      // --- construir query segun reglas del endpoint ---
-      const canalCsv = toCsvLower(filtros.canal);
-      const { periodo, fechaInicio, fechaFin, tipoEnvio } = filtros;
-      const tieneRango = hasValidRange(fechaInicio, fechaFin);
-      const tienePeriodo = !!periodo && !tieneRango;
+    // --- construir query segun reglas del endpoint ---
+    const canalCsv = toCsvLower(filters.canal);
+    const { periodo, fechaInicio, fechaFin, tipoEnvio } = filters;
+    const tieneRango = hasValidRange(fechaInicio, fechaFin);
+    const tienePeriodo = !!periodo && !tieneRango;
 
-      if (canalCsv) params.append("canal", canalCsv);
+    if (canalCsv) params.append("canal", canalCsv);
 
-      if (tieneRango) {
-        params.append("fechaInicio", String(fechaInicio));
-        params.append("fechaFin", String(fechaFin));
-      } else if (tienePeriodo) {
-        params.append("periodo", String(periodo).toLowerCase());
-      }
-
-      // forward de otros filtros
-      (["proveedor","primerNivel","categoria","subcategoria"] as const).forEach(k => {
-        const v = (filtros as any)[k] as string | undefined;
-        if (v) params.append(k, v);
-      });
-
-      // tipoEnvio solo si incluye meli y valor válido
-      const incluyeMeli = canalCsv ? canalCsv.split(",").includes("meli") : false;
-      if (incluyeMeli && (tipoEnvio === "full" || tipoEnvio === "colecta")) {
-        params.append("tipoEnvio", tipoEnvio);
-      }
-
-      // paginación/orden
-      params.append("offset", offset.toString());
-      params.append("limit", limit.toString());
-      params.append("orderBy", campoOrden);
-      params.append("order", direccionOrden);
-
-      const data = await apiJson<any>(`${BACKEND_URL}/api/obtener-productos-detallado?${params.toString()}`);
-
-      const rows = Array.isArray(data?.data) ? data.data.map(mapApiRowToTable) : [];
-      setProductos(rows);
-      setTotal(typeof data?.total === "number" ? data.total : rows.length);
-    } catch (error) {
-      console.error("Error al cargar productos vendidos:", error);
-    } finally {
-      setLoading(false);
+    if (tieneRango) {
+      params.append("fechaInicio", String(fechaInicio));
+      params.append("fechaFin", String(fechaFin));
+    } else if (tienePeriodo) {
+      params.append("periodo", String(periodo).toLowerCase());
     }
+
+    // forward de otros filtros
+    (["proveedor","primerNivel","categoria","subcategoria"] as const).forEach(k => {
+      const v = (filters as any)[k] as string | undefined;
+      if (v) params.append(k, v);
+    });
+
+    // tipoEnvio solo si incluye meli y valor válido
+    const incluyeMeli = canalCsv ? canalCsv.split(",").includes("meli") : false;
+    if (incluyeMeli && (tipoEnvio === "full" || tipoEnvio === "colecta")) {
+      params.append("tipoEnvio", tipoEnvio);
+    }
+
+    // paginación/orden
+    params.append("offset", offset.toString());
+    params.append("limit", limit.toString());
+    params.append("orderBy", ordenPor);
+    params.append("order", orden);
+
+    return `${BACKEND_URL}/api/obtener-productos-detallado?${params.toString()}`;
   };
+  const urlProductos = construirUrl();
+  const { datos: resultado, cargando: cargandoProductos } = useCargaDatos<{ productos: any[]; total: number }>(
+    urlProductos,
+    async (signal) => {
+      const data = await apiJson<any>(urlProductos, { signal });
+      const rows = Array.isArray(data?.data) ? data.data.map(mapApiRowToTable) : [];
+      return { productos: rows, total: typeof data?.total === "number" ? data.total : rows.length };
+    },
+    { productos: [], total: 0 }
+  );
+  const { productos, total } = resultado;
+  const loading = cargandoProductos || exportando;
+  const totalPages = Math.ceil(total / limit);
 
   const handleSortChange = (campo: OrderBy) => {
     const nuevoOrden = ordenPor === campo && orden === "asc" ? "desc" : "asc";
     setOrden(nuevoOrden);
     setOrdenPor(campo);
-    fetchProductos(filters, page, campo, nuevoOrden);
   };
 
   const exportarProductos = async (tipo: 'excel' | 'pdf', exportLimit: number | 'all') => {
-    setLoading(true);
+    setExportando(true);
     setOpenExportModal(false);
     try {
       const params = new URLSearchParams();
 
-      // --- mismos criterios de construcción que en fetchProductos ---
+      // --- mismos criterios de construcción que en construirUrl ---
       const canalCsv = toCsvLower(filters.canal);
       const { periodo, fechaInicio, fechaFin, tipoEnvio } = filters;
       const tieneRango = hasValidRange(fechaInicio, fechaFin);
@@ -221,7 +217,7 @@ const InformeVentaPage = () => {
     } catch (error) {
       console.error("Error al exportar productos:", error);
     } finally {
-      setLoading(false);
+      setExportando(false);
       setAnchorEl(null);
     }
   };
@@ -391,12 +387,10 @@ const InformeVentaPage = () => {
   const handleFilterChange = (newFilters: FiltrosVentas) => {
     setFilters(newFilters);
     setPage(1);
-    fetchProductos(newFilters, 1);
   };
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
-    fetchProductos(filters, value);
   };
 
   const handleOpenExportMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -417,10 +411,6 @@ const InformeVentaPage = () => {
     setOpenExportModal(false);
     setExportType(null);
   };
-
-  useEffect(() => {
-    fetchProductos(filters, 1);
-  }, []);
 
   return (
     <Box p={1}>

@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography, Box } from "@mui/material";
+import { Card, CardContent, Typography, Box, Skeleton } from "@mui/material";
 import { IconArrowUpRight, IconArrowDownRight } from "@tabler/icons-react";
 
 const MetricCard = ({
@@ -8,6 +8,7 @@ const MetricCard = ({
   percentageChange,
   icon,
   elevation = 0, // Elevación por defecto
+  cargando = false,
 }: {
   title: string;
   value: string | number;
@@ -15,6 +16,8 @@ const MetricCard = ({
   percentageChange?: number;
   icon?: React.ReactNode;
   elevation?: number;
+  /** Mientras llegan los datos del filtro actual: sin valor viejo ni ceros. */
+  cargando?: boolean;
 }) => {
   const isNegative = percentageChange !== undefined && percentageChange < 0;
 
@@ -66,10 +69,10 @@ const MetricCard = ({
               lineHeight: 1.2,
             }}
           >
-            {value}
+            {cargando ? <Skeleton width={120} /> : value}
           </Typography>
 
-          {percentageChange !== undefined && (
+          {!cargando && percentageChange !== undefined && (
             <Box
               px={1}
               py={0.3}
@@ -89,7 +92,9 @@ const MetricCard = ({
         </Box>
 
         {/* 🔹 Subtítulo estilizado */}
-        {subtitle && (
+        {cargando ? (
+          <Skeleton width="60%" sx={{ mt: 1.5 }} />
+        ) : subtitle && (
           <Typography
             variant="body2"
             sx={{

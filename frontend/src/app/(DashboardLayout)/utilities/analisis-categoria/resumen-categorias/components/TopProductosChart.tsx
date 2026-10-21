@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Card,
   CardContent,
@@ -19,6 +19,7 @@ import {
 import ExpandIcon from "@mui/icons-material/ZoomOutMap";
 import CloseIcon from "@mui/icons-material/Close";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 
 interface Filters {
@@ -44,8 +45,6 @@ interface Props {
 }
 
 const TopProductosChart: React.FC<Props> = ({ filters, onCategorySelect, nombrePrimerNivel }) => {
-  const [data, setData] = useState<Producto[]>([]);
-  const [loading, setLoading] = useState(false);
   const [openModal, setOpenModal] = useState(false);
 
   const buildQuery = () => {
@@ -71,43 +70,26 @@ const TopProductosChart: React.FC<Props> = ({ filters, onCategorySelect, nombreP
     return params.toString();
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const query = buildQuery();
-        const response = await apiJson(
-          `${BACKEND_URL}/api/primer-nivel/categorias-mas-vendidas-primer-nivel?${query}`
-        );
-
-        if (!response || !response.ok)
-          throw new Error("Error al obtener datos");
-
-        const result = await response.json();
-
-        const datosFiltrados = Array.isArray(result)
-          ? result.filter(
-              (item) =>
-                item.Nombre_Categoria !== null &&
-                item.Cantidad_Vendida !== null &&
-                item.Total_Ventas !== null &&
-                item.Codigo_Categoria !== null 
-            )
-          : [];
-
-        datosFiltrados.sort((a, b) => b.Total_Ventas - a.Total_Ventas);
-
-        setData(datosFiltrados);
-      } catch (error) {
-        console.error("❌ Error al obtener top subcategorías:", error);
-        setData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [filters]);
+  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
+  const url = `${BACKEND_URL}/api/primer-nivel/categorias-mas-vendidas-primer-nivel?${buildQuery()}`;
+  const { datos: data, cargando: loading } = useCargaDatos<Producto[]>(
+    url,
+    async (signal) => {
+      const result = await apiJson(url, { signal });
+      const datosFiltrados: Producto[] = Array.isArray(result)
+        ? result.filter(
+            (item) =>
+              item.Nombre_Categoria !== null &&
+              item.Cantidad_Vendida !== null &&
+              item.Total_Ventas !== null &&
+              item.Codigo_Categoria !== null
+          )
+        : [];
+      datosFiltrados.sort((a, b) => b.Total_Ventas - a.Total_Ventas);
+      return datosFiltrados;
+    },
+    []
+  );
 
   const formatMillones = (valor: number): string =>
     `$${(valor / 1_000_000).toFixed(2)} MM`;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -11,7 +11,9 @@ import {
   TableHead,
   TableRow,
   TableCell,
-  TableBody
+  TableBody,
+  Skeleton,
+  CircularProgress
 } from "@mui/material";
 import {
   FilterAltOutlined, Folder as FolderIcon,
@@ -34,6 +36,7 @@ import TopVendedoresChart from "./components/TopVendedoresChart";
 import ModalProveedor from './components/ModalProveedor'; 
 import FechaRotacion from "./components/FechaRotacion";
 import { apiJson } from "@/utils/apiClient";
+import { useApiDatos, useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades, calcularVariacion  } from "@/utils/format";
 
@@ -86,66 +89,50 @@ type ResumenProducto = {
 
 
 
+type StockAlmacen = Record<string, {
+  unidades: number;
+  notasVenta: number;
+  oc: number;
+  disponible: number;
+}>;
+
+type ProveedorInfo = { Proveedor_Codigo: string; Proveedor_Nombre: string; Promedio_Dias_Entrega: number };
+
+// Valores en cero de cada KPI (también lo que se muestra si no hay filas).
+const CEROS_UNIDADES = { CantidadVendida: 0, CantidadVendidaAnterior: 0, PorcentajeCambio: 0 };
+const CEROS_MARGEN = { MargenBrutoPeriodo: 0, MargenBrutoAnterior: 0, PorcentajeCambio: 0 };
+const CEROS_VENTAS = { TotalVentasPeriodo: 0, TotalVentasAnterior: 0, PorcentajeCambio: 0 };
+const CEROS_TICKET = { PromedioPorTicket: 0, PromedioAnterior: 0, PorcentajeCambio: 0 };
+const CEROS_TRANSACCIONES = { CantidadTransaccionesPeriodo: 0, CantidadTransaccionesAnterior: 0, PorcentajeCambio: 0 };
+
+/** KPI que llega como arreglo: toma los campos de la primera fila (?? 0). */
+function useFilaKpi<T extends Record<string, number>>(url: string | null, ceros: T) {
+  return useCargaDatos<T>(
+    url,
+    async (signal) => {
+      const data = await apiJson(url as string, { signal });
+      if (!Array.isArray(data) || data.length === 0) return ceros;
+      const fila = data[0];
+      return Object.fromEntries(Object.keys(ceros).map((k) => [k, fila[k] ?? 0])) as T;
+    },
+    ceros
+  );
+}
+
 const AnalisisProductoPage = () => {
   const [openDrawer, setOpenDrawer] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
-  const [resumenProducto, setResumenProducto] = useState<ResumenProducto | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [ventasMensuales, setVentasMensuales] = useState([]);
   const [modalOrdenesOpen, setModalOrdenesOpen] = useState(false);
   const [ordenesCompra, setOrdenesCompra] = useState([]);
   const [modalProveedorOpen, setModalProveedorOpen] = useState(false);
-  const [proveedorInfo, setProveedorInfo] = useState<
-  { Proveedor_Codigo: string; Proveedor_Nombre: string; Promedio_Dias_Entrega: number }[]
->([]);
-
-  const [stockPorAlmacen, setStockPorAlmacen] = useState<null | Record<string, {
-  unidades: number;
-  notasVenta: number;
-  oc: number;
-  disponible: number;}>>(null);
-  const [unidadesMesData, setUnidadesMesData] = useState<UnidadesMes[]>([]); 
 
 
   const handleOpenProveedorModal = () => {
   setModalProveedorOpen(true);
 };
 
-
-  const [margenTotal, setMargenTotal] = useState({
-    MargenBrutoPeriodo: 0,
-    MargenBrutoAnterior: 0,
-    PorcentajeCambio: 0
-  });
-  const [ventasTotal, setVentasTotal] = useState({
-  TotalVentasPeriodo: 0,
-  TotalVentasAnterior: 0,
-  PorcentajeCambio: 0
-  });
-  const[promedioTicket, setPromedioTicket] = useState({
-    PromedioPorTicket: 0,
-    PromedioAnterior: 0,
-    PorcentajeCambio: 0,
-  });
-  const [nTransacciones, setNTransacciones] = useState({
-  CantidadTransaccionesPeriodo: 0,
-  CantidadTransaccionesAnterior: 0,
-  PorcentajeCambio: 0,
-  });
-  const [unidadesVendidas, setUnidadesVendidas] = useState({
-  CantidadVendida: 0,
-  CantidadVendidaAnterior: 0,
-  PorcentajeCambio: 0,
-});
-const [detalleStock, setDetalleStock] = useState<{
-  detalleInventario: {
-    UltimoCosto: number;
-    TotalUnidades: number;
-    ValorInventario: number;
-  };
-  notasVenta: number;
-  unidadesConFallas: number;
-} | null>(null);
 const [vendedores, setVendedores] = useState<any[]>([]);
 
 const parseFechaHoraLocal = (fechaISO: string, horaSAP: number): string => {
@@ -189,29 +176,6 @@ const getDiasDesdeVenta = (fecha: string): number => {
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 };
 
-const dias = resumenProducto && resumenProducto.ultimaVenta
-  ? getDiasDesdeVenta(resumenProducto.ultimaVenta.FechaUltimaVenta)
-  : null;
-
-let Icono = null;
-let color = "default";
-let textoEstado = "Sin registros";
-
-if (dias !== null) {
-  if (dias <= 7) {
-    Icono = <CheckCircleIcon color="success" />;
-    color = "success";
-    textoEstado = "Venta reciente";
-  } else if (dias <= 20) {
-    Icono = <WarningAmberIcon color="warning" />;
-    color = "warning";
-    textoEstado = `Sin venta hace ${dias} días`;
-  } else {
-    Icono = <ReportProblemIcon color="error" />;
-    color = "error";
-    textoEstado = `Más de ${dias} días sin vender`;
-  }
-}
   const [filtros, setFiltros] = useState<{
     itemCode: string;
     temporada: string;
@@ -250,211 +214,121 @@ const handleCanalSeleccionado = (canalSeleccionado: string) => {
   }));
 };
 
+// Cada carga se identifica por su URL con los filtros: al cambiar un filtro se
+// limpia al instante, se cancela lo pendiente y solo queda la última respuesta
+// (ver useCargaDatos). Sin producto seleccionado no se pide nada.
+const itemCode = filtros.itemCode;
+const query = buildQueryFromFiltros(filtros);
+const urlPv = (endpoint: string) => (itemCode ? `${BACKEND_URL}/api/pv/${endpoint}?${query}` : null);
+const urlItem = (endpoint: string) => (itemCode ? `${BACKEND_URL}/api/${endpoint}?itemCode=${itemCode}` : null);
+
+const { datos: unidadesVendidas, cargando: cargandoUnidades } = useFilaKpi(urlPv("unidadesvendidas"), CEROS_UNIDADES);
+const { datos: margenTotal, cargando: cargandoMargen } = useFilaKpi(urlPv("margentotal"), CEROS_MARGEN);
+const { datos: ventasTotal, cargando: cargandoVentas } = useFilaKpi(urlPv("ventastotal"), CEROS_VENTAS);
+const { datos: promedioTicket, cargando: cargandoTicket } = useFilaKpi(urlPv("ticketpromedio"), CEROS_TICKET);
+
+// Transacciones no lleva temporada.
+const queryTransacciones = new URLSearchParams({
+  itemCode: filtros.itemCode || '',
+  canal: filtros.canal || '',
+  periodo: filtros.periodo || '',
+  fechaInicio: filtros.fechaInicio || '',
+  fechaFin: filtros.fechaFin || '',
+  modoComparacion: filtros.modoComparacion || ''
+}).toString();
+const { datos: nTransacciones, cargando: cargandoTransacciones } = useFilaKpi(
+  itemCode ? `${BACKEND_URL}/api/pv/transacciones?${queryTransacciones}` : null,
+  CEROS_TRANSACCIONES
+);
+
+// Datos del producto: solo dependen del itemCode.
+const { datos: resumenProducto, cargando: cargandoResumen } = useApiDatos<ResumenProducto | null>(urlItem("resumen-producto"), null);
+useApiDatos(urlItem("detalle-stock"), null);
+
+const urlStock = urlItem("stock-por-almacen");
+const { datos: stockPorAlmacen, cargando: cargandoStock } = useCargaDatos<StockAlmacen | null>(
+  urlStock,
+  async (signal) => {
+    const data = await apiJson(urlStock as string, { signal });
+
+    // 🔄 Transformar la respuesta al formato esperado por tu tabla
+    const transformed: StockAlmacen = {};
+    Object.entries(data).forEach(([codigo, valores]: [string, any]) => {
+      const key = `Almacen_${codigo.padStart(2, "0")}`; // Asegura nombres como Almacen_01
+      const stock = valores.Stock ?? 0;
+      const nc = valores.NC ?? 0;
+      const oc = valores.OC ?? 0;
+
+      transformed[key] = {
+        unidades: stock,
+        notasVenta: nc,
+        oc: oc,
+        disponible: stock - nc,
+      };
+    });
+    return transformed;
+  },
+  null
+);
+
+const urlProveedores = urlItem("tiempo-entrega-proveedores");
+const { datos: proveedorInfo } = useCargaDatos<ProveedorInfo[]>(
+  urlProveedores,
+  async (signal) => {
+    const data = await apiJson(urlProveedores as string, { signal });
+    if (!Array.isArray(data)) return [];
+    return data.map((prov: any) => ({
+      Proveedor_Codigo: prov.Proveedor_Codigo,
+      Proveedor_Nombre: prov.Proveedor_Nombre,
+      Promedio_Dias_Entrega: prov.Promedio_Dias_Entrega,
+      Total_Ordenes_Validas: prov.Total_Ordenes_Validas ?? 0
+    }));
+  },
+  []
+);
+
+const urlUnidadesMes = itemCode ? `${BACKEND_URL}/api/unidades-vendidas?${query}` : null;
+const { datos: unidadesMesData, cargando: cargandoUnidadesMes } = useCargaDatos<UnidadesMes[]>(
+  urlUnidadesMes,
+  async (signal) => {
+    const data = await apiJson(urlUnidadesMes as string, { signal });
+    if (Array.isArray(data)) return data;
+    console.warn("⚠️ Formato de datos inesperado para unidades vendidas por mes:", data);
+    return [];
+  },
+  []
+);
+
+const dias = resumenProducto && resumenProducto.ultimaVenta
+  ? getDiasDesdeVenta(resumenProducto.ultimaVenta.FechaUltimaVenta)
+  : null;
+
+let Icono = null;
+let color = "default";
+let textoEstado = "Sin registros";
+
+if (dias !== null) {
+  if (dias <= 7) {
+    Icono = <CheckCircleIcon color="success" />;
+    color = "success";
+    textoEstado = "Venta reciente";
+  } else if (dias <= 20) {
+    Icono = <WarningAmberIcon color="warning" />;
+    color = "warning";
+    textoEstado = `Sin venta hace ${dias} días`;
+  } else {
+    Icono = <ReportProblemIcon color="error" />;
+    color = "error";
+    textoEstado = `Más de ${dias} días sin vender`;
+  }
+}
+
 
 const calcularPromedioGlobal = () => {
   if (proveedorInfo.length === 0) return null;
   const total = proveedorInfo.reduce((acc, p) => acc + p.Promedio_Dias_Entrega, 0);
   return (total / proveedorInfo.length).toFixed(1);
 };
-useEffect(() => {
-  const fetchUnidadesVendidas = async () => {
-    try {
-      const query = buildQueryFromFiltros(filtros);
-      const response = await apiJson(`${BACKEND_URL}/api/pv/unidadesvendidas?${query}`);
-      if (!response) throw new Error("Error al obtener unidades vendidas");
-      const data = await response.json();
-
-      if (Array.isArray(data) && data.length > 0) {
-        setUnidadesVendidas({
-          CantidadVendida: data[0].CantidadVendida ?? 0,
-          CantidadVendidaAnterior: data[0].CantidadVendidaAnterior ?? 0,
-          PorcentajeCambio: data[0].PorcentajeCambio ?? 0
-        });
-      } else {
-        setUnidadesVendidas({
-          CantidadVendida: 0,
-          CantidadVendidaAnterior: 0,
-          PorcentajeCambio: 0
-        });
-      }
-    } catch (error) {
-      console.error("❌ Error al obtener unidades vendidas:", error);
-    }
-  };
-
-  if (filtros.itemCode) {
-    fetchUnidadesVendidas();
-  }
-}, [filtros]);
-
-  
-useEffect(() => {
-    const fetchMargenTotal = async () => {
-    try {
-        const query = buildQueryFromFiltros(filtros);
-        const response = await apiJson(`${BACKEND_URL}/api/pv/margentotal?${query}`);
-
-        if (!response) throw new Error("Error al obtener margen total");
-
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-        setMargenTotal({
-            MargenBrutoPeriodo: data[0].MargenBrutoPeriodo ?? 0,
-            MargenBrutoAnterior: data[0].MargenBrutoAnterior ?? 0,
-            PorcentajeCambio: data[0].PorcentajeCambio ?? 0
-        });
-
-        } else {
-        setMargenTotal({ MargenBrutoPeriodo: 0, MargenBrutoAnterior: 0, PorcentajeCambio: 0 });
-        }
-    } catch (error) {
-        console.error("❌ Error al obtener margen total:", error);
-    }
-    };
-
-
-  // Solo ejecutar si hay un itemCode seleccionado
-  if (filtros.itemCode) {
-    fetchMargenTotal();
-  }
-}, [filtros]);
-
-useEffect(() => {
-  const fetchVentasTotal = async () => {
-    try {
-      const query = buildQueryFromFiltros(filtros);
-      const response = await apiJson(`${BACKEND_URL}/api/pv/ventastotal?${query}`);
-      if (!response) throw new Error("Error al obtener ventas total");
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        setVentasTotal({
-            TotalVentasPeriodo: data[0].TotalVentasPeriodo ?? 0,
-            TotalVentasAnterior: data[0].TotalVentasAnterior ?? 0,
-            PorcentajeCambio: data[0].PorcentajeCambio ?? 0
-        });
-
-      } else {
-        setVentasTotal({
-          TotalVentasPeriodo: 0,
-          TotalVentasAnterior: 0,
-          PorcentajeCambio: 0
-        });
-      }
-    } catch (error) {
-      console.error("❌ Error al obtener ventas total:", error);
-    }
-  };
-
-  if (filtros.itemCode) {
-    fetchVentasTotal();
-  }
-}, [filtros]);
-useEffect(() => {
-  const fetchPromedioTicket = async () => {
-    try {
-      const query = buildQueryFromFiltros(filtros);
-      const response = await apiJson(`${BACKEND_URL}/api/pv/ticketpromedio?${query}`);
-      if (!response) throw new Error("Error al obtener ticket promedio");
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        setPromedioTicket({
-            PromedioPorTicket: data[0].PromedioPorTicket ?? 0,
-            PromedioAnterior: data[0].PromedioAnterior ?? 0,
-            PorcentajeCambio: data[0].PorcentajeCambio ?? 0
-        });
-
-      } else {
-        setPromedioTicket({
-          PromedioPorTicket: 0,
-          PromedioAnterior: 0,
-          PorcentajeCambio: 0
-        });
-      }
-    } catch (error) {
-      console.error("❌ Error al obtener ticket promedio:", error);
-    }
-  };
-
-  if (filtros.itemCode) {
-    fetchPromedioTicket();
-  }
-}, [filtros]);
-
-useEffect(() => {
-  const fetchTransacciones = async () => {
-    try {
-      const params = new URLSearchParams({
-        itemCode: filtros.itemCode || '',
-        canal: filtros.canal || '',
-        periodo: filtros.periodo || '',
-        fechaInicio: filtros.fechaInicio || '',
-        fechaFin: filtros.fechaFin || '',
-        modoComparacion: filtros.modoComparacion || ''
-      }).toString();
-
-      const res = await apiJson(`${BACKEND_URL}/api/pv/transacciones?${params}`);
-      const data = await res!.json();
-      console.log("🔍 Transacciones:", data);
-
-      // ✅ Manejo como array (como en los demás useEffect)
-      if (Array.isArray(data) && data.length > 0) {
-        setNTransacciones({
-          CantidadTransaccionesPeriodo: data[0].CantidadTransaccionesPeriodo ?? 0,
-          CantidadTransaccionesAnterior: data[0].CantidadTransaccionesAnterior ?? 0,
-          PorcentajeCambio: data[0].PorcentajeCambio ?? 0
-        });
-      } else {
-        setNTransacciones({
-          CantidadTransaccionesPeriodo: 0,
-          CantidadTransaccionesAnterior: 0,
-          PorcentajeCambio: 0
-        });
-      }
-
-    } catch (error) {
-      console.error("❌ Error al obtener transacciones:", error);
-    }
-  };
-
-  if (filtros.itemCode) {
-    fetchTransacciones();
-  }
-}, [filtros]);
-
-useEffect(() => {
-  const fetchResumenProducto = async () => {
-    try {
-      const response = await apiJson(`${BACKEND_URL}/api/resumen-producto?itemCode=${filtros.itemCode}`);
-      if (!response) throw new Error("Error al obtener el resumen del producto");
-
-      const data = await response.json();
-      setResumenProducto(data);
-    } catch (error) {
-      console.error("❌ Error al obtener resumen del producto:", error);
-    }
-  };
-
-  if (filtros.itemCode) {
-    fetchResumenProducto();
-  }
-}, [filtros.itemCode]);
-useEffect(() => {
-  const fetchDetalleStock = async () => {
-    try {
-      const response = await apiJson(`${BACKEND_URL}/api/detalle-stock?itemCode=${filtros.itemCode}`);
-      if (!response) throw new Error("Error al obtener el detalle de stock");
-
-      const data = await response.json();
-      setDetalleStock(data);
-    } catch (error) {
-      console.error("❌ Error al obtener detalle de stock:", error);
-    }
-  };
-
-  if (filtros.itemCode) {
-    fetchDetalleStock();
-  }
-}, [filtros.itemCode]);
   const handleOpenModal = async () => {
     try {
       const response = await apiJson(
@@ -479,114 +353,6 @@ useEffect(() => {
     console.error("❌ Error al cargar órdenes de compra:", error);
   }
 };
-useEffect(() => {
-  const fetchStockPorAlmacen = async () => {
-    console.log("🚀 Ejecutando fetchStockPorAlmacen con:", filtros.itemCode);
-
-    try {
-      const url = `${BACKEND_URL}/api/stock-por-almacen?itemCode=${filtros.itemCode}`;
-      const res = await apiJson(url);
-
-      if (!res || !res.ok) {
-        const text = res ? await res.text() : "No response";
-        console.error("❌ Error HTTP:", res ? res.status : "No status", text);
-        return;
-      }
-
-      const data = await res.json();
-
-      // 🔄 Transformar la respuesta al formato esperado por tu tabla
-      const transformed: Record<string, { unidades: number; notasVenta: number; oc: number; disponible: number }> = {};
-
-      Object.entries(data).forEach(([codigo, valores]: [string, any]) => {
-        const key = `Almacen_${codigo.padStart(2, "0")}`; // Asegura nombres como Almacen_01
-        const stock = valores.Stock ?? 0;
-        const nc = valores.NC ?? 0;
-        const oc = valores.OC ?? 0;
-
-        transformed[key] = {
-          unidades: stock,
-          notasVenta: nc,
-          oc: oc,
-          disponible: stock - nc,
-        };
-      });
-
-      setStockPorAlmacen(transformed);
-
-    } catch (error) {
-      console.error("❌ Error al obtener stock por almacén:", error);
-    }
-  };
-
-  if (filtros.itemCode) {
-    console.log("🧪 useEffect ACTIVO con itemCode:", filtros.itemCode);
-    fetchStockPorAlmacen();
-  }
-}, [filtros.itemCode]);
-
-
-useEffect(() => {
-  const fetchProveedores = async () => {
-    try {
-      const response = await apiJson(`${BACKEND_URL}/api/tiempo-entrega-proveedores?itemCode=${filtros.itemCode}`);
-      if (!response) throw new Error("Error al obtener proveedores");
-      const data = await response.json();
-
-      if (Array.isArray(data)) {
-        setProveedorInfo(
-          data.map((prov: any) => ({
-            Proveedor_Codigo: prov.Proveedor_Codigo,
-            Proveedor_Nombre: prov.Proveedor_Nombre,
-            Promedio_Dias_Entrega: prov.Promedio_Dias_Entrega,
-            Total_Ordenes_Validas: prov.Total_Ordenes_Validas ?? 0
-          }))
-        );
-      } else {
-        setProveedorInfo([]);
-      }
-    } catch (error) {
-      console.error("❌ Error al obtener proveedores:", error);
-    }
-  };
-
-  if (filtros.itemCode) {
-    fetchProveedores();
-  }
-}, [filtros.itemCode]);
-
-useEffect(() => {
-  const fetchUnidadesVendidasMes = async () => {
-    try {
-      // Reutiliza la función buildQueryFromFiltros para construir la URL
-      const query = buildQueryFromFiltros(filtros);
-      const response = await apiJson(`${BACKEND_URL}/api/unidades-vendidas?${query}`);
-
-      if (!response || !response.ok) {
-        throw new Error("Error al obtener unidades vendidas por mes");
-      }
-
-      const data = await response.json();
-      console.log("📊 Unidades Vendidas por Mes:", data);
-
-      if (Array.isArray(data)) {
-        setUnidadesMesData(data); // Actualiza el estado con los datos de la API
-      } else {
-        setUnidadesMesData([]); // Si no es un array, setea a vacío
-        console.warn("⚠️ Formato de datos inesperado para unidades vendidas por mes:", data);
-      }
-    } catch (error) {
-      console.error("❌ Error al obtener unidades vendidas por mes:", error);
-      setUnidadesMesData([]); // En caso de error, limpia los datos
-    }
-  };
-
-  // Solo ejecutar si hay un itemCode seleccionado
-  if (filtros.itemCode) {
-    fetchUnidadesVendidasMes();
-  }
-  // Añade 'filtros' como dependencia para que se re-ejecute cuando los filtros cambien
-}, [filtros]); // <--- Dependencia importante
 
 
 
@@ -694,6 +460,7 @@ useEffect(() => {
             value={`${formatUnidades(resumenProducto?.stockTotal?.StockTotal)} ud`}
             variation={`${resumenProducto?.cobertura?.CoberturaEnDias ? resumenProducto.cobertura.CoberturaEnDias.toFixed(1) : 0} días de cobertura`}
             variationColor="primary"
+            cargando={cargandoResumen}
             />
 
             <MetricCard
@@ -702,6 +469,7 @@ useEffect(() => {
             value={resumenProducto?.cobertura?.CoberturaEnDias?.toFixed(1) ?? "0"}
             variation={`Promedio diario Ventas: ${formatUnidades(resumenProducto?.cobertura?.PromedioDiario)} ud`}
             variationColor="success"
+            cargando={cargandoResumen}
             />
 
             <MetricCard
@@ -712,12 +480,14 @@ useEffect(() => {
                 `Anterior: ${formatUnidades(unidadesVendidas.CantidadVendidaAnterior)} (${unidadesVendidas.PorcentajeCambio > 0 ? '+' : ''}${unidadesVendidas.PorcentajeCambio.toFixed(1)}%)`
             }
             variationColor={unidadesVendidas.PorcentajeCambio >= 0 ? "success" : "error"}
+            cargando={cargandoUnidades}
             />
             <MetricCard
             icon={<LocalShippingIcon color="warning" />}
             label="Stock en tránsito"
             value={`${formatUnidades(resumenProducto?.stockTransito ?? 0)} ud`}
             variationColor="warning"
+            cargando={cargandoResumen}
             />
             <MetricCard
               icon={<CheckCircleIcon color="success" />}
@@ -759,6 +529,7 @@ useEffect(() => {
                   ? "error"
                   : "success"
               }
+              cargando={cargandoResumen}
             />
           </Box>
         </Box>
@@ -787,7 +558,8 @@ useEffect(() => {
                 </Box>
             ),
             detail: `Anterior: ${formatVentas(ventasTotal.TotalVentasAnterior)}`,
-            detailColor: 'text.secondary'
+            detailColor: 'text.secondary',
+            cargando: cargandoVentas
             },
 
             
@@ -810,7 +582,8 @@ useEffect(() => {
                 </Box>
             ),
             detail: `Anterior: ${formatVentas(margenTotal.MargenBrutoAnterior)}`,
-            detailColor: 'text.secondary'
+            detailColor: 'text.secondary',
+            cargando: cargandoMargen
             },
             {
             label: 'N° Transacciones',
@@ -831,7 +604,8 @@ useEffect(() => {
                 </Box>
             ),
             detail: `Anterior: ${nTransacciones.CantidadTransaccionesAnterior.toLocaleString("es-CL")}`,
-            detailColor: 'text.secondary'
+            detailColor: 'text.secondary',
+            cargando: cargandoTransacciones
             },
             {
             label: 'Ticket Promedio',
@@ -852,15 +626,26 @@ useEffect(() => {
                 </Box>
             ),
             detail: `Anterior: ${formatVentas(promedioTicket.PromedioAnterior)}`,
-            detailColor: 'text.secondary'
+            detailColor: 'text.secondary',
+            cargando: cargandoTicket
             }    
           ].map((item, i) => (
             <Paper key={i} variant="outlined" sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'center', borderRadius: 3 }}>
               {item.icon}
               <Box>
                 <Typography variant="subtitle2" color="text.secondary">{item.label}</Typography>
-                <Typography variant="h6" fontWeight={700}>{item.value}</Typography>
-                <Typography variant="caption" sx={{ color: item.detailColor || 'text.secondary' }}>{item.detail}</Typography>
+                {/* Mientras carga el filtro actual: sin valor viejo ni ceros */}
+                {item.cargando ? (
+                  <>
+                    <Skeleton width={120} height={32} />
+                    <Skeleton width={100} />
+                  </>
+                ) : (
+                  <>
+                    <Typography variant="h6" fontWeight={700}>{item.value}</Typography>
+                    <Typography variant="caption" sx={{ color: item.detailColor || 'text.secondary' }}>{item.detail}</Typography>
+                  </>
+                )}
               </Box>
             </Paper>
           ))}
@@ -903,7 +688,13 @@ useEffect(() => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {[
+                  {cargandoStock ? (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center">
+                        <CircularProgress size={24} />
+                      </TableCell>
+                    </TableRow>
+                  ) : [
                     { code: '01', name: 'Centro Comercial' },
                     { code: '03', name: 'Comercio Electrónico' },
                     { code: '04', name: 'Control de Pérdida' },
@@ -948,6 +739,13 @@ useEffect(() => {
         <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
           {Icono}
           <Typography fontWeight={700}>Última venta</Typography>
+          {cargandoResumen ? (
+            <>
+              <Skeleton width="80%" />
+              <Skeleton width="50%" />
+            </>
+          ) : (
+          <>
           <Typography>
             Última venta: {resumenProducto?.ultimaVenta?.FechaUltimaVenta
               ? parseFechaHoraLocal(
@@ -960,6 +758,8 @@ useEffect(() => {
           <Typography color={`${color}.main`} fontWeight={500}>
             {textoEstado}
           </Typography>
+          </>
+          )}
         </Paper>
 
 
@@ -1054,7 +854,7 @@ useEffect(() => {
       {/* NUEVO COMPONENTE: Análisis por Producto */}
       <Box mt={3}>
         <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
-          <FechaRotacion data={unidadesMesData} isLoading={false} />
+          <FechaRotacion data={unidadesMesData} isLoading={cargandoUnidadesMes} />
         </Paper>
       </Box>
             

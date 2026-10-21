@@ -9,6 +9,7 @@ import {
 import FilterListIcon from "@mui/icons-material/FilterList";
 import CloseIcon from "@mui/icons-material/Close";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 
 export interface FiltroSinVentas {
@@ -31,13 +32,15 @@ interface Props {
     currentFilters?: FiltroSinVentas;
 }
 
+// Adapta la respuesta de categorías / subcategorías a lo que muestran los selects.
+const aCategorias = (data: any): Categoria[] =>
+    (Array.isArray(data) ? data : []).map((c: any) => ({ codigo: c.codigo, nombre: c.nombre, imagen: c.imagen }));
+
 const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters }) => {
     const [open, setOpen] = useState(false);
     const [filters, setFilters] = useState<FiltroSinVentas>(() => currentFilters || { minStock: 0 });
 
     const [primerNiveles, setPrimerNiveles] = useState<Categoria[]>([]);
-    const [categorias, setCategorias] = useState<Categoria[]>([]);
-    const [subcategorias, setSubcategorias] = useState<Categoria[]>([]);
 
     // modo SKU: si hay texto en sku, el resto de filtros se desactiva
     const skuMode = Boolean((filters.sku || '').trim());
@@ -55,40 +58,27 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
         })();
     }, []);
 
-    // Si vienen filtros iniciales con jerarquías, cargar cascadas
-    useEffect(() => {
-        if (filters.primerNivel && categorias.length === 0) fetchCategorias(filters.primerNivel);
-        if (filters.categoria && subcategorias.length === 0) fetchSubcategorias(filters.categoria);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filters.primerNivel, filters.categoria]);
+    // Listas en cascada: salen de lo elegido (también de los filtros iniciales).
+    // Si cambia la selección se cancela la carga anterior y una lista vieja no
+    // pisa a la nueva.
+    const urlCategorias = filters.primerNivel
+        ? `${BACKEND_URL}/api/resumen-categoria/mostrar-categorias?primerNivel=${filters.primerNivel}`
+        : null;
+    const { datos: categorias } = useCargaDatos<Categoria[]>(
+        urlCategorias,
+        async (signal) => aCategorias(await apiJson(urlCategorias as string, { signal })),
+        []
+    );
+    const urlSubcategorias = filters.categoria
+        ? `${BACKEND_URL}/api/resumen-categoria/tercer-nivel?categoria=${filters.categoria}`
+        : null;
+    const { datos: subcategorias } = useCargaDatos<Categoria[]>(
+        urlSubcategorias,
+        async (signal) => aCategorias(await apiJson(urlSubcategorias as string, { signal })),
+        []
+    );
 
-    const fetchCategorias = async (primerNivel: string) => {
-        try {
-            const res = await apiJson(`${BACKEND_URL}/api/metas/getcat?primerNivel=${primerNivel}`);
-            const data = await res!.json();
-            setCategorias(
-                data.map((cat: any) => ({ codigo: cat.codigo_categoria, nombre: cat.nombre_categoria, imagen: cat.IMAGEN }))
-            );
-        } catch (error) {
-            console.error("Error fetching categories:", error);
-            setCategorias([]);
-        }
-    };
-
-    const fetchSubcategorias = async (categoria: string) => {
-        try {
-            const res = await apiJson(`${BACKEND_URL}/api/metas/getsub?categoria=${categoria}`);
-            const data = await res!.json();
-            setSubcategorias(
-                data.map((sub: any) => ({ codigo: sub.codigo_subcategoria, nombre: sub.nombre_subcategoria, imagen: sub.IMAGEN }))
-            );
-        } catch (error) {
-            console.error("Error fetching subcategories:", error);
-            setSubcategorias([]);
-        }
-    };
-
-    const handleChange = async (key: keyof FiltroSinVentas, value: any) => {
+    const handleChange = (key: keyof FiltroSinVentas, value: any) => {
         // Si se escribe en SKU, limpiar y desactivar el resto
         if (key === "sku") {
             const v = String(value || "").trim();
@@ -102,8 +92,6 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
                     categoria: undefined,
                     subcategoria: undefined,
                 };
-                setCategorias([]);
-                setSubcategorias([]);
                 setFilters(onlySku);
                 return;
             } else {
@@ -120,15 +108,10 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
         if (key === "primerNivel") {
             updated.categoria = undefined;
             updated.subcategoria = undefined;
-            if (value) await fetchCategorias(value as string);
-            else setCategorias([]);
-            setSubcategorias([]);
         }
 
         if (key === "categoria") {
             updated.subcategoria = undefined;
-            if (value) await fetchSubcategorias(value as string);
-            else setSubcategorias([]);
         }
 
         setFilters(updated);
@@ -149,8 +132,6 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     const handleClear = () => {
         const cleared: FiltroSinVentas = { minStock: 0, sku: undefined };
         setFilters(cleared);
-        setCategorias([]);
-        setSubcategorias([]);
         onFilterChange(cleared);
         setOpen(false);
     };

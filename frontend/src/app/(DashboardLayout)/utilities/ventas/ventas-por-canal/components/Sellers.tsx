@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Chart from "react-apexcharts";
 import { Box, CircularProgress } from "@mui/material";
 import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
 import { ApexOptions } from "apexcharts";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 
 interface VentasCanalChartProps {
@@ -21,66 +22,43 @@ const VentasCanalChart: React.FC<VentasCanalChartProps> = ({
   fechaFin,
   onVendedorSeleccionado,
 }) => {
-  const [labels, setLabels] = useState<string[]>([]);
-  const [chartData, setChartData] = useState<number[]>([]);
-  const [vendedorCodigos, setVendedorCodigos] = useState<number[]>([]);
-  const [noData, setNoData] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  // Sin canal no se pide nada (clave null). Al cambiar canal o fechas se
+  // limpia al instante y solo queda la última respuesta.
+  const params = new URLSearchParams();
+  if (canal) params.append("canal", canal);
+  if (fechaInicio && fechaFin) {
+    params.append("fechaInicio", fechaInicio);
+    params.append("fechaFin", fechaFin);
+  }
+  const url = canal ? `${BACKEND_URL}/api/canal-vendedor?${params.toString()}` : null;
 
-  useEffect(() => {
-    if (!canal) {
-      setLabels([]);
-      setChartData([]);
-      setVendedorCodigos([]);
-      setNoData(true);
-      setIsLoading(false);
-      return;
-    }
-
-    const fetchData = async () => {
+  const {
+    datos: { labels, chartData, vendedorCodigos, noData },
+    cargando: isLoading,
+  } = useCargaDatos(
+    url,
+    async (signal) => {
       try {
-        setIsLoading(true);
-        const params = new URLSearchParams();
-
-        if (canal) params.append("canal", canal);
-        if (fechaInicio && fechaFin) {
-          params.append("fechaInicio", fechaInicio);
-          params.append("fechaFin", fechaFin);
-        }
-
-        const url = `${BACKEND_URL}/api/canal-vendedor?${params.toString()}`;
-        const response = await apiJson(url);
-        const data = await response?.json();
+        const data = await apiJson(url as string, { signal });
 
         if (!Array.isArray(data) || data.length === 0) {
-          setLabels(["Sin datos"]);
-          setChartData([0.001]);
-          setVendedorCodigos([0]);
-          setNoData(true);
-          return;
+          return { labels: ["Sin datos"], chartData: [0.001], vendedorCodigos: [0], noData: true };
         }
 
-        const vendedores = data.map((item: { Nombre_Vendedor: string }) => item.Nombre_Vendedor);
-        const codigos = data.map((item: { Codigo_Vendedor: number }) => item.Codigo_Vendedor);
-        const porcentajes = data.map((item: { Porcentaje: number }) => item.Porcentaje);
-
-        setLabels(vendedores);
-        setChartData(porcentajes);
-        setVendedorCodigos(codigos);
-        setNoData(false);
+        return {
+          labels: data.map((item: { Nombre_Vendedor: string }) => item.Nombre_Vendedor),
+          chartData: data.map((item: { Porcentaje: number }) => item.Porcentaje),
+          vendedorCodigos: data.map((item: { Codigo_Vendedor: number }) => item.Codigo_Vendedor),
+          noData: false,
+        };
       } catch (error) {
-        console.error("❌ Error al obtener datos de ventas por canal:", error);
-        setLabels(["Error"]);
-        setChartData([0.001]);
-        setVendedorCodigos([0]);
-        setNoData(true);
-      } finally {
-        setIsLoading(false);
+        // Si fue cancelada, el hook descarta este resultado.
+        if (!signal.aborted) console.error("❌ Error al obtener datos de ventas por canal:", error);
+        return { labels: ["Error"], chartData: [0.001], vendedorCodigos: [0], noData: true };
       }
-    };
-
-    fetchData();
-  }, [canal, fechaInicio, fechaFin]);
+    },
+    { labels: [] as string[], chartData: [] as number[], vendedorCodigos: [] as number[], noData: true }
+  );
 
   const options: ApexOptions = {
     chart: {

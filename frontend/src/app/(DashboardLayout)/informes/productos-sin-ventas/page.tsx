@@ -16,6 +16,7 @@ import autoTable from 'jspdf-autotable';
 
 import ProductosSinVentasTable from './components/ProductosSinVentas';
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from '@/config';
 import { notifyInfo } from "@/components/ui/toast/notify";
 
@@ -51,16 +52,37 @@ export interface ProductoSinVentas {
     ocCreadoPor?: string | null;
 }
 
+type VentaSku = {
+    docNum: number;
+    docDate: string;
+    createDate: string;
+    customer: string;
+    quantity: number;
+    price: number;
+    currency: string;
+    lineTotal: number;
+};
+
+// Lo que muestra la vista tras una carga: tabla de sin ventas o ventas del SKU.
+interface ResultadoSinVentas {
+    data: ProductoSinVentas[];
+    total: number;
+    skuSalesMode: boolean;
+    skuSalesItemCode: string;
+    skuSales: VentaSku[];
+}
+
+const RESULTADO_VACIO: ResultadoSinVentas = { data: [], total: 0, skuSalesMode: false, skuSalesItemCode: '', skuSales: [] };
+
 const limit = 20;
 const ENDPOINT = '/api/informes/productos-sin-ventas';
 
 const ProductosSinVentasPage: React.FC = () => {
     // Estado principal (tabla de sin ventas)
     const [filters, setFilters] = useState<FiltroSinVentas>({ minStock: 0 });
-    const [data, setData] = useState<ProductoSinVentas[]>([]);
-    const [total, setTotal] = useState<number>(0);
     const [page, setPage] = useState<number>(1);
-    const [loading, setLoading] = useState<boolean>(false);
+    // La exportación también muestra el indicador de carga sobre la tabla.
+    const [exportando, setExportando] = useState<boolean>(false);
 
     const [orden, setOrden] = useState<Order>('desc');
     const [ordenPor, setOrdenPor] = useState<OrderBy>('stockTotal');
@@ -70,22 +92,6 @@ const ProductosSinVentasPage: React.FC = () => {
     const [openExportModal, setOpenExportModal] = useState(false);
     const [exportCount, setExportCount] = useState<number>(100);
     const [exportTarget, setExportTarget] = useState<'excel' | 'pdf'>('excel');
-
-    // estado para vista de ventas por SKU ----
-    const [skuSalesMode, setSkuSalesMode] = useState<boolean>(false);
-    const [skuSalesItemCode, setSkuSalesItemCode] = useState<string>('');
-    const [skuSales, setSkuSales] = useState<Array<{
-        docNum: number;
-        docDate: string;
-        createDate: string;
-        customer: string;
-        quantity: number;
-        price: number;
-        currency: string;
-        lineTotal: number;
-    }>>([]);
-
-    const totalPages = Math.ceil(Math.max(0, total) / limit);
 
     // Helpers
     const isYYYYMMDD = (d?: string) => !!d && /^\d{4}-\d{2}-\d{2}$/.test(d);
@@ -123,124 +129,70 @@ const ProductosSinVentasPage: React.FC = () => {
         };
     };
 
-    // Fetch principal
-    const fetchSinVentas = async (
-        filtros: FiltroSinVentas,
-        pageNumber = 1,
-        campoOrden?: OrderBy,
-        direccionOrden?: Order
-    ) => {
-        setLoading(true);
-        try {
-            const ob: OrderBy = campoOrden ?? ordenPor;
-            const od: Order = direccionOrden ?? orden;
+    // URL principal con filtros, página y orden. Al cambiar se limpia al
+    // instante, se cancela lo pendiente y solo se muestra la última respuesta.
+    const skuTrim = (filters.sku || '').trim();
+    const construirUrl = () => {
+        // Rama SKU (exclusiva). Siempre forzar order=desc al consultar por SKU
+        if (skuTrim) return `${BACKEND_URL}${ENDPOINT}?order=desc&itemCode=${encodeURIComponent(skuTrim)}`;
 
-            // Rama SKU (exclusiva)
-            const skuTrim = (filtros.sku || '').trim();
+        // Rama SIN SKU (flujo tradicional)
+        const params = new URLSearchParams();
+        if (typeof filters.minStock === 'number') params.append('minStock', String(filters.minStock));
+        if (isYYYYMMDD(filters.fechaInicio)) params.append('fechaInicio', String(filters.fechaInicio));
+        if (filters.primerNivel) params.append('primerNivel', filters.primerNivel);
+        if (filters.categoria) params.append('categoria', filters.categoria);
+        if (filters.subcategoria) params.append('subcategoria', filters.subcategoria);
+
+        params.append('page', String(page));
+        params.append('pageSize', String(limit));
+        params.append('orderBy', ordenPor);
+        params.append('order', orden);
+        return `${BACKEND_URL}${ENDPOINT}?${params.toString()}`;
+    };
+    const urlSinVentas = construirUrl();
+    const paginaPedida = page;
+
+    const { datos: resultado, cargando: cargandoSinVentas } = useCargaDatos<ResultadoSinVentas>(
+        urlSinVentas,
+        async (signal) => {
+            const json = await apiJson(urlSinVentas, { signal });
+
             if (skuTrim) {
-                // Siempre forzar order=desc al consultar por SKU
-                const res = await apiJson(
-                    `${BACKEND_URL}${ENDPOINT}?order=desc&itemCode=${encodeURIComponent(skuTrim)}`
-                );
-                if (!res) {
-                    // reset vista ventas
-                    setSkuSalesMode(false);
-                    setSkuSales([]);
-                    setSkuSalesItemCode('');
-                    setData([]);
-                    setTotal(0);
-                    return;
-                }
-                const json = await res.json();
-
-                // Toaster con el message, si viene
-                if (json?.message) {
+                // Toaster con el message, si viene (solo si sigue siendo el pedido vigente)
+                if (json?.message && !signal.aborted) {
                     notifyInfo(String(json.message), { durationMs: 8000 });
                 }
 
-
                 // si hay ventas, activamos vista de ventas y mostramos salesLast4Months ---
                 if (String(json?.mode) === 'lookupItemCodeWithSales' && Array.isArray(json?.salesLast4Months)) {
-                    setSkuSalesMode(true);
-                    setSkuSalesItemCode(String(json?.itemCode || skuTrim));
-                    setSkuSales(json.salesLast4Months as any[]);
-                    setData([]); // ocultamos tabla de sin ventas
-                    setTotal(json.salesLast4Months.length || 0);
-                    return;
+                    return {
+                        ...RESULTADO_VACIO, // ocultamos tabla de sin ventas
+                        skuSalesMode: true,
+                        skuSalesItemCode: String(json?.itemCode || skuTrim),
+                        skuSales: json.salesLast4Months as VentaSku[],
+                        total: json.salesLast4Months.length || 0,
+                    };
                 }
 
-                // Si NO hay ventas: mostramos el producto igual (data != [])
-                if (String(json?.mode) === 'lookupItemCodeNoSales') {
-                    setSkuSalesMode(false);
-                    setSkuSales([]);
-                    setSkuSalesItemCode('');
-                    const rows = Array.isArray(json?.data) ? json.data.map(mapRow) : [];
-                    setData(rows);          // muestra el producto aunque no tenga ventas
-                    const totalApi = typeof json?.total === 'number' ? json.total : undefined;
-                    setTotal(totalApi ?? rows.length);
-                    return;
-                }
-
-
-                // Si NO hay ventas (lookupItemCodeNoSales): mantener tabla de sin ventas (data puede venir vacía)
-                setSkuSalesMode(false);
-                setSkuSales([]);
-                setSkuSalesItemCode('');
+                // Si NO hay ventas (lookupItemCodeNoSales u otro modo): mostramos el
+                // producto igual en la tabla de sin ventas (data puede venir vacía)
                 const rows = Array.isArray(json?.data) ? json.data.map(mapRow) : [];
-                setData(rows);
                 const totalApi = typeof json?.total === 'number' ? json.total : undefined;
-                setTotal(totalApi ?? rows.length);
-                return;
+                return { ...RESULTADO_VACIO, data: rows, total: totalApi ?? rows.length };
             }
-
-            // Rama SIN SKU (flujo tradicional)
-            setSkuSalesMode(false);
-            setSkuSales([]);
-            setSkuSalesItemCode('');
-
-            const params = new URLSearchParams();
-            if (typeof filtros.minStock === 'number') params.append('minStock', String(filtros.minStock));
-            if (isYYYYMMDD(filtros.fechaInicio)) params.append('fechaInicio', String(filtros.fechaInicio));
-            if (filtros.primerNivel) params.append('primerNivel', filtros.primerNivel);
-            if (filtros.categoria) params.append('categoria', filtros.categoria);
-            if (filtros.subcategoria) params.append('subcategoria', filtros.subcategoria);
-
-            params.append('page', String(pageNumber));
-            params.append('pageSize', String(limit));
-            params.append('orderBy', ob);
-            params.append('order', od);
-
-            const res = await apiJson(`${BACKEND_URL}${ENDPOINT}?${params.toString()}`);
-            if (!res) {
-                setData([]);
-                setTotal(0);
-                return;
-            }
-            const json = await res.json();
 
             const rows = Array.isArray(json?.data) ? json.data.map(mapRow) : [];
-            setData(rows);
-
             const totalApi = typeof json?.total === 'number' ? json.total : undefined;
-            const estimated = (pageNumber - 1) * limit + rows.length + (rows.length === limit ? 1 : 0);
-            setTotal(totalApi ?? estimated);
-        } catch (e) {
-            console.error('Error al cargar productos sin ventas:', e);
-            setData([]);
-            setTotal(0);
-            // si hubo error, asegúrate de no quedar "pegado" en modo ventas
-            setSkuSalesMode(false);
-            setSkuSales([]);
-            setSkuSalesItemCode('');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchSinVentas(filters, 1);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filters]);
+            const estimated = (paginaPedida - 1) * limit + rows.length + (rows.length === limit ? 1 : 0);
+            return { ...RESULTADO_VACIO, data: rows, total: totalApi ?? estimated };
+        },
+        RESULTADO_VACIO
+    );
+    // si hubo error queda RESULTADO_VACIO: no se queda "pegado" en modo ventas
+    const { data, total, skuSalesMode, skuSalesItemCode, skuSales } = resultado;
+    const loading = cargandoSinVentas || exportando;
+    const totalPages = Math.ceil(Math.max(0, total) / limit);
 
     useEffect(() => {
         notifyInfo("Informe actualizado a diario", {
@@ -252,14 +204,12 @@ const ProductosSinVentasPage: React.FC = () => {
 
     const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);
-        fetchSinVentas(filters, value);
     };
 
     const handleSortChange = (campo: OrderBy) => {
         const nuevoOrden = ordenPor === campo && orden === 'asc' ? 'desc' : 'asc';
         setOrden(nuevoOrden);
         setOrdenPor(campo);
-        fetchSinVentas(filters, page, campo, nuevoOrden);
     };
 
     // Export (sin cambios de lógica respecto a lo existente)
@@ -272,7 +222,7 @@ const ProductosSinVentasPage: React.FC = () => {
     };
 
     const exportSinVentas = async (tipo: 'excel' | 'pdf', exportLimit: number | 'all') => {
-        setLoading(true);
+        setExportando(true);
         try {
             const paramsBase = new URLSearchParams();
             if (typeof filters.minStock === 'number') paramsBase.append('minStock', String(filters.minStock));
@@ -416,7 +366,7 @@ const ProductosSinVentasPage: React.FC = () => {
         } catch (e) {
             console.error('Error al exportar productos sin ventas:', e);
         } finally {
-            setLoading(false);
+            setExportando(false);
         }
     };
 

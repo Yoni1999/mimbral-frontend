@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Box,
   Typography,
@@ -33,6 +33,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { notifySuccess, notifyError } from "@/components/ui/toast/notify";
 import * as XLSX from "xlsx";
@@ -116,15 +117,10 @@ const InformeVentasPorCanalPage: React.FC = () => {
   const [filters, setFilters] = useState<FiltrosPorCanal>({});
   const [appliedFilters, setAppliedFilters] = useState<FiltrosPorCanal | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(defaultPageSize);
+  const pageSize = defaultPageSize;
   const [orderBy, setOrderBy] = useState<OrderBy>("cantidadVendida");
   const [order, setOrder] = useState<Order>("desc");
 
-  const [rows, setRows] = useState<ProductoPorCanal[]>([]);
-  const [total, setTotal] = useState(0);
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
-  const [loading, setLoading] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [shareAnchorEl, setShareAnchorEl] = useState<null | HTMLElement>(null);
   const [openExportModal, setOpenExportModal] = useState(false);
@@ -151,12 +147,6 @@ const InformeVentasPorCanalPage: React.FC = () => {
     );
   }, [detalleSearch, detalleData]);
 
-  const canalesUnion = useMemo(() => {
-    const set = new Set<string>();
-    rows.forEach((r) => r.porCanal?.forEach((c) => set.add(c.canal)));
-    return Array.from(set);
-  }, [rows]);
-
   const hasAppliedFilters = Boolean(
     appliedFilters?.periodo ||
       appliedFilters?.fechaInicio ||
@@ -170,58 +160,54 @@ const InformeVentasPorCanalPage: React.FC = () => {
       appliedFilters?.subcategoria
   );
 
-  const fetchData = async (pageToLoad = page) => {
-    setLoading(true);
-    try {
-      const sourceFilters = appliedFilters || filters;
-      const params = new URLSearchParams();
-      // filtros
-      if (sourceFilters.periodo && sourceFilters.periodo !== "RANGO") params.append("periodo", sourceFilters.periodo);
-      if (sourceFilters.periodo === "RANGO") {
-        if (sourceFilters.fechaInicio) params.append("fechaInicio", sourceFilters.fechaInicio);
-        if (sourceFilters.fechaFin) params.append("fechaFin", sourceFilters.fechaFin);
-      }
-      if (sourceFilters.proveedor) params.append("proveedor", sourceFilters.proveedor);
-      if (sourceFilters.sku) params.append("sku", sourceFilters.sku);
-      if (sourceFilters.familia) params.append("familia", sourceFilters.familia);
-      if (sourceFilters.subfamilia) params.append("subfamilia", sourceFilters.subfamilia);
-      if (sourceFilters.primerNivel) params.append("primerNivel", sourceFilters.primerNivel);
-      if (sourceFilters.categoria) params.append("categoria", sourceFilters.categoria);
-      if (sourceFilters.subcategoria) params.append("subcategoria", sourceFilters.subcategoria);
-
-      // paginación + orden
-      params.append("page", String(pageToLoad));
-      params.append("pageSize", String(pageSize));
-      params.append("orderBy", orderBy);
-      params.append("order", order);
-
-      const res = await apiJson(
-        `${BACKEND_URL}/api/informes/productos-por-canal-margen?${params.toString()}`
-      );
-      const data = await res!.json();
-
-      setRows(Array.isArray(data?.data) ? data.data : []);
-      setTotal(
-        Number(data?.meta?.total ?? data?.total ?? data?.count ?? 0)
-      );
-      if (data?.meta?.page) {
-        setPage(Number(data.meta.page));
-      }
-    } catch (e) {
-      console.error("Error fetch productos-por-canal:", e);
-      setRows([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
+  // URL de la tabla con filtros, página y orden; null hasta que haya filtros
+  // aplicados. Al cambiar se limpia al instante, se cancela lo pendiente y
+  // solo se muestra la última respuesta.
+  const construirUrl = () => {
+    const sourceFilters = appliedFilters || filters;
+    const params = new URLSearchParams();
+    // filtros
+    if (sourceFilters.periodo && sourceFilters.periodo !== "RANGO") params.append("periodo", sourceFilters.periodo);
+    if (sourceFilters.periodo === "RANGO") {
+      if (sourceFilters.fechaInicio) params.append("fechaInicio", sourceFilters.fechaInicio);
+      if (sourceFilters.fechaFin) params.append("fechaFin", sourceFilters.fechaFin);
     }
-  };
+    if (sourceFilters.proveedor) params.append("proveedor", sourceFilters.proveedor);
+    if (sourceFilters.sku) params.append("sku", sourceFilters.sku);
+    if (sourceFilters.familia) params.append("familia", sourceFilters.familia);
+    if (sourceFilters.subfamilia) params.append("subfamilia", sourceFilters.subfamilia);
+    if (sourceFilters.primerNivel) params.append("primerNivel", sourceFilters.primerNivel);
+    if (sourceFilters.categoria) params.append("categoria", sourceFilters.categoria);
+    if (sourceFilters.subcategoria) params.append("subcategoria", sourceFilters.subcategoria);
 
-  useEffect(() => {
-    if (!hasAppliedFilters) return;
-    fetchData(1);
-    setPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(appliedFilters), orderBy, order, pageSize, hasAppliedFilters]);
+    // paginación + orden
+    params.append("page", String(page));
+    params.append("pageSize", String(pageSize));
+    params.append("orderBy", orderBy);
+    params.append("order", order);
+
+    return `${BACKEND_URL}/api/informes/productos-por-canal-margen?${params.toString()}`;
+  };
+  const urlTabla = hasAppliedFilters ? construirUrl() : null;
+  const { datos: resultado, cargando: loading } = useCargaDatos<{ rows: ProductoPorCanal[]; total: number }>(
+    urlTabla,
+    async (signal) => {
+      const data = await apiJson(urlTabla as string, { signal });
+      return {
+        rows: Array.isArray(data?.data) ? data.data : [],
+        total: Number(data?.meta?.total ?? data?.total ?? data?.count ?? 0),
+      };
+    },
+    { rows: [], total: 0 }
+  );
+  const { rows, total } = resultado;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const canalesUnion = useMemo(() => {
+    const set = new Set<string>();
+    rows.forEach((r) => r.porCanal?.forEach((c) => set.add(c.canal)));
+    return Array.from(set);
+  }, [rows]);
 
   const buildDashboardUrl = () => {
     const sourceFilters = appliedFilters || filters;
@@ -284,7 +270,10 @@ const InformeVentasPorCanalPage: React.FC = () => {
     }
   };
 
+  // Filtros distintos vuelven a la página 1 (antes lo hacía un efecto después
+  // de pedir, lo que sumaba una carga más).
   const handleAppliedFiltersChange = (nextFilters: FiltrosPorCanal) => {
+    if (JSON.stringify(nextFilters) !== JSON.stringify(appliedFilters)) setPage(1);
     setFilters(nextFilters);
     setAppliedFilters(nextFilters);
   };
@@ -511,6 +500,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
             const nuevoOrden = orderBy === campo && order === "asc" ? "desc" : "asc";
             setOrder(nuevoOrden);
             setOrderBy(campo);
+            setPage(1);
           }}
           // 👉 al hacer click en el número del canal, abrimos el modal con el detalle del endpoint
           onOpenDetalle={(titulo, detalles) => {
@@ -534,7 +524,6 @@ const InformeVentasPorCanalPage: React.FC = () => {
             page={page}
             onChange={(_e, value) => {
               setPage(value);
-              fetchData(value);
             }}
             color="primary"
             shape="rounded"

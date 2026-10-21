@@ -17,6 +17,7 @@ import 'jspdf-autotable';
 import autoTable from 'jspdf-autotable';
 
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { notifyInfo } from "@/components/ui/toast/notify";
 
@@ -58,10 +59,9 @@ const limit = 20;
 const ProductosMenosRentablesPage: React.FC = () => {
     // Estado
     const [filters, setFilters] = useState<FiltroVentas>({ periodo: '7D', canal: 'Vitex' });
-    const [productos, setProductos] = useState<ProductoMenosRentable[]>([]);
-    const [total, setTotal] = useState<number>(0);
     const [page, setPage] = useState<number>(1);
-    const [loading, setLoading] = useState<boolean>(false);
+    // La exportación también muestra el indicador de carga sobre la tabla.
+    const [exportando, setExportando] = useState<boolean>(false);
 
     const [orden, setOrden] = useState<Order>('asc');
     const [ordenPor, setOrdenPor] = useState<OrderBy>('margenBruto');
@@ -72,111 +72,87 @@ const ProductosMenosRentablesPage: React.FC = () => {
     const [exportCount, setExportCount] = useState<number>(100);
     const [exportTarget, setExportTarget] = useState<'excel' | 'pdf'>('excel'); // <-- unificado
 
-    const totalPages = Math.ceil(total / limit);
+    // --- helpers locales ---
+    const isYYYYMMDD = (d?: string) => !!d && /^\d{4}-\d{2}-\d{2}$/.test(d);
+    const hasValidRange = (a?: string, b?: string) => isYYYYMMDD(a) && isYYYYMMDD(b);
 
-    // api de productos menos rentables
-    const fetchProductos = async (
-        filtros: FiltroVentas,
-        pageNumber = 1,
-        campoOrden?: OrderBy,     // override opcional
-        direccionOrden?: Order    // override opcional
-    ) => {
-        setLoading(true);
+    const parsePercent = (txt?: string | null) => {
+        if (!txt) return 0;
+        const n = Number(String(txt).replace("%", "").replace(",", ".").trim());
+        return Number.isFinite(n) ? n : 0;
+    };
+    const splitProduct = (s: string) => {
+        const [sku = "", name = ""] = (s || "").split(" / ");
+        return { sku: sku.trim(), nombre: name.trim() };
+    };
+    const splitHierarchy = (s: string) => {
+        const [nivel = "", cat = ""] = (s || "").split(" / ");
+        return { primerNivel: (nivel || "").trim(), categoria: (cat || "").trim() };
+    };
 
-        // --- helpers locales ---
-        const isYYYYMMDD = (d?: string) => !!d && /^\d{4}-\d{2}-\d{2}$/.test(d);
-        const hasValidRange = (a?: string, b?: string) => isYYYYMMDD(a) && isYYYYMMDD(b);
+    // helper local para normalizar canal a CSV en minúsculas
+    const toCsvLower = (v?: string | string[]) =>
+        Array.isArray(v)
+            ? v.map(x => String(x).trim().toLowerCase()).filter(Boolean).join(',')
+            : (v ? String(v).trim().toLowerCase() : '');
 
-        const parsePercent = (txt?: string | null) => {
-            if (!txt) return 0;
-            const n = Number(String(txt).replace("%", "").replace(",", ".").trim());
-            return Number.isFinite(n) ? n : 0;
+    // api de productos menos rentables: URL con filtros, página y orden.
+    // null = faltan los mínimos que exige la API (no se pide y la tabla queda vacía).
+    const construirUrl = (): string | null => {
+        // --- reglas mínimas exigidas por la API ---
+        const canalCsv = toCsvLower(filters.canal ?? "");
+        const periodo = filters.periodo ?? null;
+        const { fechaInicio, fechaFin } = filters;
+
+        const tieneRango = hasValidRange(fechaInicio, fechaFin);
+        const tienePeriodo = !!periodo && !tieneRango; // si hay rango, no enviamos periodo
+
+        if (!canalCsv || (!tienePeriodo && !tieneRango)) return null;
+
+        // map a campos válidos del backend
+        const orderByMap: Record<
+            OrderBy,
+            "Rentabilidad_Total" | "Cantidad_Vendida" | "Precio_Venta_Promedio" | "Costo_Promedio" | "Margen_Porcentaje"
+        > = {
+            cantidadVendida: "Cantidad_Vendida",
+            facturasUnicas: "Cantidad_Vendida",      // proxy (API no trae transacciones)
+            totalVentas: "Rentabilidad_Total",       // aprox. visual
+            margenBruto: "Rentabilidad_Total",       // idem
+            precioPromedio: "Precio_Venta_Promedio",
         };
-        const splitProduct = (s: string) => {
-            const [sku = "", name = ""] = (s || "").split(" / ");
-            return { sku: sku.trim(), nombre: name.trim() };
-        };
-        const splitHierarchy = (s: string) => {
-            const [nivel = "", cat = ""] = (s || "").split(" / ");
-            return { primerNivel: (nivel || "").trim(), categoria: (cat || "").trim() };
-        };
 
-        // --- helpers locales ---
-        const toCsvLower = (v?: string | string[]) =>
-            Array.isArray(v)
-                ? v.map(x => String(x).trim().toLowerCase()).filter(Boolean).join(',')
-                : (v ? String(v).trim().toLowerCase() : '');
+        // --- query ---
+        const params = new URLSearchParams();
+        params.append("canal", canalCsv);
+        if (tienePeriodo) params.append("periodo", String(periodo)); // no enviar si hay rango válido
+        if (tieneRango) {
+            params.append("fechaInicio", String(fechaInicio));
+            params.append("fechaFin", String(fechaFin));
+        }
+        if (filters.proveedor) params.append("proveedor", filters.proveedor);
+        if (filters.primerNivel) params.append("primerNivel", filters.primerNivel);
+        if (filters.categoria) params.append("categoria", filters.categoria);
+        if (filters.subcategoria) params.append("subcategoria", filters.subcategoria);
 
-        try {
-            // helper local para normalizar canal a CSV en minúsculas (sin mover otros helpers)
-            const toCsvLower = (v?: string | string[]) =>
-                Array.isArray(v)
-                    ? v.map(x => String(x).trim().toLowerCase()).filter(Boolean).join(',')
-                    : (v ? String(v).trim().toLowerCase() : '');
+        // paginación según tu componente
+        params.append("page", String(page));
+        params.append("pageSize", String(limit)); // usa tu limit actual (20)
 
-            // --- reglas mínimas exigidas por la API ---
-            const canalCsv = toCsvLower(filtros.canal ?? "");
-            const periodo = filtros.periodo ?? null;
-            const { fechaInicio, fechaFin } = filtros;
+        // orden
+        params.append("orderBy", orderByMap[ordenPor] ?? "Rentabilidad_Total");
+        params.append("order", orden === "asc" ? "asc" : "desc");
 
-            const tieneRango = hasValidRange(fechaInicio, fechaFin);
-            const tienePeriodo = !!periodo && !tieneRango; // si hay rango, no enviamos periodo
+        return `${BACKEND_URL}/api/informes/productos-menos-rentables?${params.toString()}`;
+    };
 
-            if (!canalCsv || (!tienePeriodo && !tieneRango)) {
-                setProductos([]);
-                setTotal(0);
-                return;
-            }
-
-            // --- orden actual (toma overrides si vienen)
-            //  ---
-            const ob: OrderBy = campoOrden ?? ordenPor;
-            const od: Order = direccionOrden ?? orden;
-
-            // map a campos válidos del backend
-            const orderByMap: Record<
-                OrderBy,
-                "Rentabilidad_Total" | "Cantidad_Vendida" | "Precio_Venta_Promedio" | "Costo_Promedio" | "Margen_Porcentaje"
-            > = {
-                cantidadVendida: "Cantidad_Vendida",
-                facturasUnicas: "Cantidad_Vendida",      // proxy (API no trae transacciones)
-                totalVentas: "Rentabilidad_Total",       // aprox. visual
-                margenBruto: "Rentabilidad_Total",       // idem
-                precioPromedio: "Precio_Venta_Promedio",
-            };
-
-            // --- query ---
-            const params = new URLSearchParams();
-            params.append("canal", canalCsv);
-            if (tienePeriodo) params.append("periodo", String(periodo)); // no enviar si hay rango válido
-            if (tieneRango) {
-                params.append("fechaInicio", String(fechaInicio));
-                params.append("fechaFin", String(fechaFin));
-            }
-            if (filtros.proveedor) params.append("proveedor", filtros.proveedor);
-            if (filtros.primerNivel) params.append("primerNivel", filtros.primerNivel);
-            if (filtros.categoria) params.append("categoria", filtros.categoria);
-            if (filtros.subcategoria) params.append("subcategoria", filtros.subcategoria);
-
-            // paginación según tu componente
-            params.append("page", String(pageNumber));
-            params.append("pageSize", String(limit)); // usa tu limit actual (20)
-
-            // orden
-            params.append("orderBy", orderByMap[ob] ?? "Rentabilidad_Total");
-            params.append("order", od === "asc" ? "asc" : "desc");
-
-            // --- llamada con token ---
-            const res = await apiJson(
-                `${BACKEND_URL}/api/informes/productos-menos-rentables?${params.toString()}`
-            );
-            if (!res) {
-                setProductos([]);
-                setTotal(0);
-                return;
-            }
-
-            const data = await res.json();
+    // Al cambiar filtro, página u orden cambia la URL: se limpia al instante,
+    // se cancela lo pendiente y solo se muestra la última respuesta.
+    const urlProductos = construirUrl();
+    const paginaPedida = page;
+    const { datos: resultado, cargando: cargandoProductos } = useCargaDatos<{ productos: ProductoMenosRentable[]; total: number }>(
+        urlProductos,
+        async (signal) => {
+            const data = await apiJson(urlProductos as string, { signal });
 
             // --- adaptación al shape de tu tabla ---
             const rows: ProductoMenosRentable[] = Array.isArray(data?.data)
@@ -202,26 +178,16 @@ const ProductosMenosRentablesPage: React.FC = () => {
                 })
                 : [];
 
-            setProductos(rows);
-
             // total: usa el de la API si viene; si no, estima para no romper paginación
             const totalApi = typeof data?.total === "number" ? data.total : undefined;
-            const estimated = (pageNumber - 1) * limit + rows.length + (rows.length === limit ? 1 : 0);
-            setTotal(totalApi ?? estimated);
-        } catch (error: any) {
-            console.error("Error al cargar productos menos rentables:", error?.message || error);
-            setProductos([]);
-            setTotal(0);
-        } finally {
-            setLoading(false);
-        }
-
-    };
-
-    useEffect(() => {
-        fetchProductos(filters, 1);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filters]);
+            const estimated = (paginaPedida - 1) * limit + rows.length + (rows.length === limit ? 1 : 0);
+            return { productos: rows, total: totalApi ?? estimated };
+        },
+        { productos: [], total: 0 }
+    );
+    const { productos, total } = resultado;
+    const loading = cargandoProductos || exportando;
+    const totalPages = Math.ceil(total / limit);
 
     useEffect(() => {
         notifyInfo("Informe actualizado a diario", {
@@ -238,14 +204,12 @@ const ProductosMenosRentablesPage: React.FC = () => {
 
     const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);
-        fetchProductos(filters, value);
     };
 
     const handleSortChange = (campo: OrderBy) => {
         const nuevoOrden = ordenPor === campo && orden === 'asc' ? 'desc' : 'asc';
         setOrden(nuevoOrden);
         setOrdenPor(campo);
-        fetchProductos(filters, page, campo, nuevoOrden);
     };
 
     // ---- Exportar ----
@@ -262,9 +226,9 @@ const ProductosMenosRentablesPage: React.FC = () => {
         // En mock exportamos desde todo el dataset ordenado actual
         // --- exportación real desde backend usando filtros vigentes ---
 
-        setLoading(true);
+        setExportando(true);
         try {
-            // helpers internos (duplicados para no mover los de fetchProductos)
+            // helpers internos (duplicados para no mover los de construirUrl)
             const toCsvLowerLocal = (v?: string | string[]) =>
                 Array.isArray(v)
                     ? v.map(x => String(x).trim().toLowerCase()).filter(Boolean).join(',')
@@ -304,7 +268,7 @@ const ProductosMenosRentablesPage: React.FC = () => {
                 } as ProductoMenosRentable;
             };
 
-            // mismos checks que fetchProductos
+            // mismos checks que construirUrl
             const canalCsv = toCsvLowerLocal(filters.canal);
             const { periodo, fechaInicio, fechaFin } = filters;
             const isYYYYMMDD = (d?: string) => !!d && /^\d{4}-\d{2}-\d{2}$/.test(d);
@@ -479,7 +443,7 @@ const ProductosMenosRentablesPage: React.FC = () => {
         } catch (err) {
             console.error('Error al exportar productos menos rentables:', err);
         } finally {
-            setLoading(false);
+            setExportando(false);
         }
     };
 

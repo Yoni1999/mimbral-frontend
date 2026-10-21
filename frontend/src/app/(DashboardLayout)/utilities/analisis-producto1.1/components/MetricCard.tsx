@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Box, Typography, Paper } from "@mui/material";
+import { Box, Typography, Paper, Skeleton } from "@mui/material";
 
 interface Props {
   icon: React.ReactNode;
@@ -9,9 +9,11 @@ interface Props {
   value: string;
   variation?: string;
   variationColor?: "success" | "error" | "warning" | "info" | "primary";
+  /** Mientras llegan los datos del filtro actual: sin valor viejo ni ceros. */
+  cargando?: boolean;
 }
 
-const MetricCard: React.FC<Props> = ({ icon, label, value, variation, variationColor = "primary" }) => {
+const MetricCard: React.FC<Props> = ({ icon, label, value, variation, variationColor = "primary", cargando = false }) => {
   return (
     <Paper
       variant="outlined"
@@ -30,8 +32,10 @@ const MetricCard: React.FC<Props> = ({ icon, label, value, variation, variationC
         {icon}
         <Typography fontWeight={600} fontSize={13}>{label}</Typography>
       </Box>
-      <Typography variant="h6" fontWeight={700}>{value}</Typography>
-      {variation && (
+      <Typography variant="h6" fontWeight={700}>{cargando ? <Skeleton width={80} /> : value}</Typography>
+      {cargando ? (
+        <Skeleton width="80%" />
+      ) : variation && (
         <Typography variant="caption" color={variationColor}>
           {variation}
         </Typography>

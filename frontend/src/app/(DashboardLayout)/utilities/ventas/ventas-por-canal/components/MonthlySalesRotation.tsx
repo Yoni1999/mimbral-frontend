@@ -1,9 +1,10 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material';
 import { formatVentas } from '@/utils/format';
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from '@/config';
 
 // --- INTERFACES ---
@@ -56,80 +57,60 @@ const canalNameMap: Record<string, string> = {
 };
 
 const ProductoAnalisisChart: React.FC<Props> = ({ filters }) => {
-  const [dataset, setDataset] = useState<ChartDatasetItem[]>([]);
-  const [series, setSeries] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [displayedCanal, setDisplayedCanal] = useState<string>('Todos los Canales');
+  // Solo depende del canal: al cambiarlo se limpia al instante y solo queda
+  // la última respuesta.
+  const queryParams = new URLSearchParams();
+  if (filters.canal && filters.canal !== '') {
+    queryParams.append('canal', filters.canal);
+  }
+  const url = `${BACKEND_URL}/api/ventas-mensuales-por-canal?${queryParams.toString()}`;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const queryParams = new URLSearchParams();
-        if (filters.canal && filters.canal !== '') {
-          queryParams.append('canal', filters.canal);
+  const {
+    datos: { dataset, series },
+    cargando: loading,
+  } = useCargaDatos(
+    url,
+    async (signal) => {
+      const apiData: ApiDataPoint[] = await apiJson(url, { signal });
+
+      const processedData: { [month: string]: ChartDatasetItem } = {};
+      const uniqueYears = new Set<string>();
+
+      MESES.forEach(month => {
+        processedData[month] = { month };
+      });
+
+      apiData.forEach(item => {
+        const year = item.Año.toString();
+        uniqueYears.add(year);
+        if (!processedData[item.Mes]) {
+          processedData[item.Mes] = { month: item.Mes };
         }
+        processedData[item.Mes][year] = item.TotalVentas;
+      });
 
-        const url = `${BACKEND_URL}/api/ventas-mensuales-por-canal?${queryParams.toString()}`;
-        const res = await apiJson(url);
-
-        if (!res?.ok) {
-          console.error(`Error HTTP: ${res?.status} ${res?.statusText}`);
-          setDataset([]);
-          setSeries([]);
-          return;
-        }
-
-        const apiData: ApiDataPoint[] = await res.json();
-
-        // 🆕 Mapeo visual del canal mostrado en subtítulo
-        const canalKey = filters.canal?.toLowerCase();
-        const canalNombreLegible = canalNameMap[canalKey] || "Todos los Canales";
-        setDisplayedCanal(canalNombreLegible);
-
-        const processedData: { [month: string]: ChartDatasetItem } = {};
-        const uniqueYears = new Set<string>();
-
-        MESES.forEach(month => {
-          processedData[month] = { month };
+      const finalDataset = MESES.map(month => {
+        const item: ChartDatasetItem = { month };
+        Array.from(uniqueYears).sort().forEach(year => {
+          item[year] = (processedData[month]?.[year] as number) || 0;
         });
+        return item;
+      });
 
-        apiData.forEach(item => {
-          const year = item.Año.toString();
-          uniqueYears.add(year);
-          if (!processedData[item.Mes]) {
-            processedData[item.Mes] = { month: item.Mes };
-          }
-          processedData[item.Mes][year] = item.TotalVentas;
-        });
+      const newSeries = Array.from(uniqueYears).sort().map(year => ({
+        dataKey: year,
+        label: year,
+        color: coloresPorAño[year] || '#CCCCCC',
+      }));
 
-        const finalDataset = MESES.map(month => {
-          const item: ChartDatasetItem = { month };
-          Array.from(uniqueYears).sort().forEach(year => {
-            item[year] = (processedData[month]?.[year] as number) || 0;
-          });
-          return item;
-        });
+      return { dataset: finalDataset, series: newSeries as any[] };
+    },
+    { dataset: [] as ChartDatasetItem[], series: [] as any[] }
+  );
 
-        const newSeries = Array.from(uniqueYears).sort().map(year => ({
-          dataKey: year,
-          label: year,
-          color: coloresPorAño[year] || '#CCCCCC',
-        }));
-
-        setDataset(finalDataset);
-        setSeries(newSeries);
-      } catch (error) {
-        console.error("❌ Error al obtener datos de ventas mensuales:", error);
-        setDataset([]);
-        setSeries([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [filters.canal]);
+  // 🆕 Mapeo visual del canal mostrado en subtítulo (sale del filtro, no espera la respuesta)
+  const canalKey = filters.canal?.toLowerCase();
+  const displayedCanal = canalNameMap[canalKey] || "Todos los Canales";
 
   return (
     <Card

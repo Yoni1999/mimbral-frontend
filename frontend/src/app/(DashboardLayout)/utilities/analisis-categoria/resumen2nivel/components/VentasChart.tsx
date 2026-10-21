@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   LineChart,
   Line,
@@ -22,6 +22,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 
 type Filters = {
@@ -37,8 +38,6 @@ type Props = {
 };
 
 const VentasChart: React.FC<Props> = ({ filters }) => {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const [openModal, setOpenModal] = useState(false);
 
   const formatValue = (value: number) => `$${(value / 1_000_000).toFixed(1)}M`;
@@ -62,38 +61,30 @@ const VentasChart: React.FC<Props> = ({ filters }) => {
     return params.toString();
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const query = buildQuery();
-        const response = await apiJson(`${BACKEND_URL}/api/resumen-categoria/ventas-canal-fecha?${query}`);
-        if (!response) throw new Error("Error al cargar datos del servidor");
-
-        const raw = await response.json();
-        const procesado = raw.map((item: any) => {
-          const fechaISO = item.Fecha;
-          return {
-            date: fechaISO.slice(0, 10),
-            chorrillo: item.Chorrillo || 0,
-            meli: item.Meli || 0,
-            falabella: item.Falabella || 0,
-            empresas: item.Empresas || 0,
-            vitex: item.Vitex || 0,
-            balmaceda: item.Balmaceda || 0,
-            orden: new Date(fechaISO).getTime(),
-          };
-        });
-        procesado.sort((a: any, b: any) => a.orden - b.orden);
-        setData(procesado);
-      } catch (error) {
-        console.error("❌ Error al cargar ventas por canal:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [filters]);
+  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
+  const url = `${BACKEND_URL}/api/resumen-categoria/ventas-canal-fecha?${buildQuery()}`;
+  const { datos: data, cargando: loading } = useCargaDatos<any[]>(
+    url,
+    async (signal) => {
+      const raw = await apiJson(url, { signal });
+      const procesado = (Array.isArray(raw) ? raw : []).map((item: any) => {
+        const fechaISO = item.Fecha;
+        return {
+          date: fechaISO.slice(0, 10),
+          chorrillo: item.Chorrillo || 0,
+          meli: item.Meli || 0,
+          falabella: item.Falabella || 0,
+          empresas: item.Empresas || 0,
+          vitex: item.Vitex || 0,
+          balmaceda: item.Balmaceda || 0,
+          orden: new Date(fechaISO).getTime(),
+        };
+      });
+      procesado.sort((a: any, b: any) => a.orden - b.orden);
+      return procesado;
+    },
+    []
+  );
 
   const ChartComponent = (height: number) => (
     <ResponsiveContainer width="100%" height={height}>

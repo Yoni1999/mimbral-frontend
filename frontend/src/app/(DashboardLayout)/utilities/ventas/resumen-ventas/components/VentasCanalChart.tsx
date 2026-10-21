@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Chart from "react-apexcharts";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { Typography } from "@mui/material";
 import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
 import { ApexOptions } from "apexcharts";
@@ -26,11 +27,6 @@ interface VentasCanalData {
 }
 
 const VentasCanalChart: React.FC<Props> = ({ filters }) => {
-  const [chartData, setChartData] = useState<number[]>([]);
-  const [labels, setLabels] = useState<string[]>([]);
-  const [rawKeys, setRawKeys] = useState<string[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-
   const router = useRouter();
 
   const canalNameMap: Record<string, string> = {
@@ -53,31 +49,24 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
     return params.toString();
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const query = buildQuery();
-        const response = await apiJson(`${BACKEND_URL}/api/ventas-canal?${query}`);
-        if (!response) return;
-
-        const data: VentasCanalData = (await response.json())[0];
-        const keys = Object.keys(data);
-
-        const newLabels = keys.map((key) => canalNameMap[key.toLowerCase()] || key);
-        const newSeries = Object.values(data);
-
-        setLabels(newLabels);
-        setChartData(newSeries);
-        setRawKeys(keys);
-      } catch (error) {
-        console.error("Error al obtener datos de ventas por canal:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [filters]);
+  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
+  const url = `${BACKEND_URL}/api/ventas-canal?${buildQuery()}`;
+  const {
+    datos: { labels, chartData, rawKeys },
+    cargando: loading,
+  } = useCargaDatos(
+    url,
+    async (signal) => {
+      const data: VentasCanalData = (await apiJson(url, { signal }))[0];
+      const keys = Object.keys(data);
+      return {
+        labels: keys.map((key) => canalNameMap[key.toLowerCase()] || key),
+        chartData: Object.values(data),
+        rawKeys: keys,
+      };
+    },
+    { labels: [] as string[], chartData: [] as number[], rawKeys: [] as string[] }
+  );
 
   const options: ApexOptions = {
     chart: {

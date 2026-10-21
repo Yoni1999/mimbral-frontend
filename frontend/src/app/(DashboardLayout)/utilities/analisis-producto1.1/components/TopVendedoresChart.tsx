@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -14,8 +14,9 @@ import {
   TableRow,
   Stack,
   TableSortLabel,
+  CircularProgress,
 } from "@mui/material";
-import { apiJson } from "@/utils/apiClient";
+import { useApiDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { formatVentas } from "@/utils/format";
 
@@ -47,7 +48,6 @@ interface Props {
 const TopVendedoresChart: React.FC<Props> = ({ filters }) => {
   const [order, setOrder] = useState<Order>("desc");
   const [orderBy, setOrderBy] = useState<OrderBy>("MargenBruto");
-  const [data, setData] = useState<Vendedor[]>([]);
 
   const handleSort = (key: OrderBy) => {
     if (orderBy === key) {
@@ -58,6 +58,16 @@ const TopVendedoresChart: React.FC<Props> = ({ filters }) => {
     }
   };
 
+  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
+  const params = new URLSearchParams();
+  if (filters.itemCode) params.append("itemCode", filters.itemCode);
+  if (filters.canal) params.append("canal", filters.canal);
+  if (filters.periodo) params.append("periodo", filters.periodo);
+  if (filters.fechaInicio) params.append("fechaInicio", filters.fechaInicio);
+  if (filters.fechaFin) params.append("fechaFin", filters.fechaFin);
+  const url = filters.itemCode ? `${BACKEND_URL}/api/canal-vendedor?${params.toString()}` : null;
+  const { datos: data, cargando } = useApiDatos<Vendedor[]>(url, []);
+
   const sortedData = useMemo(() => {
     return [...data].sort((a, b) => {
       const valA = a[orderBy] ?? 0;
@@ -65,34 +75,6 @@ const TopVendedoresChart: React.FC<Props> = ({ filters }) => {
       return order === "asc" ? valA - valB : valB - valA;
     });
   }, [data, order, orderBy]);
-
-  useEffect(() => {
-    const fetchVendedores = async () => {
-      if (!filters.itemCode) return;
-
-      try {
-        const params = new URLSearchParams();
-        params.append("itemCode", filters.itemCode);
-        if (filters.canal) params.append("canal", filters.canal);
-        if (filters.periodo) params.append("periodo", filters.periodo);
-        if (filters.fechaInicio) params.append("fechaInicio", filters.fechaInicio);
-        if (filters.fechaFin) params.append("fechaFin", filters.fechaFin);
-
-        const url = `${BACKEND_URL}/api/canal-vendedor?${params.toString()}`;
-        const response = await apiJson(url);
-
-        if (!response) throw new Error("Error al obtener datos de vendedores");
-
-        const result = await response.json();
-        setData(result);
-      } catch (error) {
-        console.error("❌ Error al obtener top vendedores:", error);
-        setData([]);
-      }
-    };
-
-    fetchVendedores();
-  }, [filters]);
 
 return (
   <Card elevation={1} sx={{ borderRadius: 0, backgroundColor: "transparent", boxShadow: "none" }}>
@@ -154,6 +136,13 @@ return (
           </TableHead>
 
           <TableBody>
+            {cargando && (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  <CircularProgress size={24} />
+                </TableCell>
+              </TableRow>
+            )}
             {sortedData.map((vendedor, index) => (
               <TableRow key={index}>
                 <TableCell>

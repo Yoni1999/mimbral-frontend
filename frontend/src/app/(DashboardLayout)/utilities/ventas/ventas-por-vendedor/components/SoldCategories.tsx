@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Card,
   CardContent,
@@ -13,12 +13,14 @@ import {
   TableRow,
   TextField,
   TableSortLabel,
+  CircularProgress,
 } from "@mui/material";
 import {
   ArrowDropUp as ArrowDropUpIcon,
   ArrowDropDown as ArrowDropDownIcon,
 } from "@mui/icons-material";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades } from "@/utils/format";
 
@@ -53,56 +55,46 @@ interface Props {
 
 const TopProductosChart: React.FC<Props> = ({ filtros }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [data, setData] = useState<Producto[]>([]);
   const [sortBy, setSortBy] = useState<"unidades" | "ventas" | "margen" | "">("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  useEffect(() => {
-    const buildQuery = () => {
-      const params = new URLSearchParams();
+  const buildQuery = () => {
+    const params = new URLSearchParams();
 
-      if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
-      if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
+    if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
+    if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
 
-      if (filtros.modoComparacion) params.append("modoComparacion", filtros.modoComparacion);
-      if (filtros.vendedorEmpresa) params.append("vendedorEmpresa", filtros.vendedorEmpresa);
-      if (filtros.canal) params.append("canal", filtros.canal);
+    if (filtros.modoComparacion) params.append("modoComparacion", filtros.modoComparacion);
+    if (filtros.vendedorEmpresa) params.append("vendedorEmpresa", filtros.vendedorEmpresa);
+    if (filtros.canal) params.append("canal", filtros.canal);
 
-      return params.toString();
-    };
+    return params.toString();
+  };
 
-    const fetchData = async () => {
-      try {
-        const query = buildQuery();
-        const url = `${BACKEND_URL}/api/pv/ventascategoria?${query}`;
-        const res = await apiJson(url);
-        const json = await res!.json();
-
-        const mapped: Producto[] = json.map((item: any) => ({
-          Codigo_Categoria: item.code,
-          Nombre_Categoria: item.Categoria,
-          Cantidad_Vendida: item.Unidades_Actual,
-          Total_Ventas: item.Ventas_Actual,
-          Imagen: item.U_Imagen,
-          Ventas_Anterior: item.Ventas_Anterior,
-          Unidades_Anterior: item.Unidades_Anterior,
-          MargenBruto_Actual: item.MargenBruto_Actual,
-          MargenBruto_Anterior: item.MargenBruto_Anterior,
-          PorcentajeCambioVentas: item.PorcentajeCambioVentas,
-          PorcentajeCambioUnidades: item.PorcentajeCambioUnidades,
-          MargenBruto_Actual_Porcentaje: item.MargenBruto_Actual_Porcentaje,
-          MargenBruto_Anterior_Porcentaje: item.MargenBruto_Anterior_Porcentaje,
-        }));
-
-        setData(mapped);
-      } catch (error) {
-        console.error("Error al obtener datos de categoría:", error);
-        setData([]);
-      }
-    };
-
-    fetchData();
-  }, [filtros]);
+  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
+  const url = `${BACKEND_URL}/api/pv/ventascategoria?${buildQuery()}`;
+  const { datos: data, cargando: loading } = useCargaDatos<Producto[]>(
+    url,
+    async (signal) => {
+      const json = await apiJson(url, { signal });
+      return json.map((item: any) => ({
+        Codigo_Categoria: item.code,
+        Nombre_Categoria: item.Categoria,
+        Cantidad_Vendida: item.Unidades_Actual,
+        Total_Ventas: item.Ventas_Actual,
+        Imagen: item.U_Imagen,
+        Ventas_Anterior: item.Ventas_Anterior,
+        Unidades_Anterior: item.Unidades_Anterior,
+        MargenBruto_Actual: item.MargenBruto_Actual,
+        MargenBruto_Anterior: item.MargenBruto_Anterior,
+        PorcentajeCambioVentas: item.PorcentajeCambioVentas,
+        PorcentajeCambioUnidades: item.PorcentajeCambioUnidades,
+        MargenBruto_Actual_Porcentaje: item.MargenBruto_Actual_Porcentaje,
+        MargenBruto_Anterior_Porcentaje: item.MargenBruto_Anterior_Porcentaje,
+      }));
+    },
+    []
+  );
 
   const handleSort = (column: "unidades" | "ventas" | "margen") => {
     if (sortBy === column) {
@@ -206,6 +198,13 @@ const TopProductosChart: React.FC<Props> = ({ filtros }) => {
               </TableRow>
             </TableHead>
             <TableBody>
+              {loading && (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                    <CircularProgress size={28} />
+                  </TableCell>
+                </TableRow>
+              )}
               {filteredData.map((row, index) => (
                 <TableRow key={index}>
                   <TableCell>

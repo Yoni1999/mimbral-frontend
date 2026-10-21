@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   LineChart,
   Line,
@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { Paper, Typography } from "@mui/material";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { formatVentas } from "@/utils/format";
 
@@ -30,9 +31,6 @@ interface Props {
 }
 
 const VentasChart: React.FC<Props> = ({ filtros }) => {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-
   const buildQuery = () => {
     const params = new URLSearchParams();
     if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
@@ -44,52 +42,43 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
     return params.toString();
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await apiJson(
-          `${BACKEND_URL}/api/primer-nivel/ventas-fecha-primer-nivel?${buildQuery()}`
-        );
-        if (!response) throw new Error("No se pudo cargar el gráfico de ventas");
-        const raw = await response.json();
+  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
+  const url = `${BACKEND_URL}/api/primer-nivel/ventas-fecha-primer-nivel?${buildQuery()}`;
+  const { datos: data, cargando: loading } = useCargaDatos<any[]>(
+    url,
+    async (signal) => {
+      const raw = await apiJson(url, { signal });
 
-        interface ProcesadoItem {
-          date: string;
-          chorrillo: number;
-          meli: number;
-          falabella: number;
-          empresas: number;
-          vitex: number;
-          balmaceda: number;
-          orden: number;
-        }
-
-        const procesado: ProcesadoItem[] = raw.map((item: any) => {
-          const fechaISO = item.Fecha;
-          return {
-            date: fechaISO.slice(0, 10),
-            chorrillo: item.Chorrillo || 0,
-            meli: item.Meli || 0,
-            falabella: item.Falabella || 0,
-            empresas: item.Empresas || 0,
-            vitex: item.Vitex || 0,
-            balmaceda: item.Balmaceda || 0,
-            orden: new Date(fechaISO).getTime(),
-          };
-        });
-
-        procesado.sort((a: ProcesadoItem, b: ProcesadoItem) => a.orden - b.orden);
-        setData(procesado);
-      } catch (error) {
-        console.error("Error al cargar ventas por canal:", error);
-      } finally {
-        setLoading(false);
+      interface ProcesadoItem {
+        date: string;
+        chorrillo: number;
+        meli: number;
+        falabella: number;
+        empresas: number;
+        vitex: number;
+        balmaceda: number;
+        orden: number;
       }
-    };
 
-    fetchData();
-  }, [filtros]);
+      const procesado: ProcesadoItem[] = raw.map((item: any) => {
+        const fechaISO = item.Fecha;
+        return {
+          date: fechaISO.slice(0, 10),
+          chorrillo: item.Chorrillo || 0,
+          meli: item.Meli || 0,
+          falabella: item.Falabella || 0,
+          empresas: item.Empresas || 0,
+          vitex: item.Vitex || 0,
+          balmaceda: item.Balmaceda || 0,
+          orden: new Date(fechaISO).getTime(),
+        };
+      });
+
+      procesado.sort((a: ProcesadoItem, b: ProcesadoItem) => a.orden - b.orden);
+      return procesado;
+    },
+    []
+  );
 
   return (
     <Paper

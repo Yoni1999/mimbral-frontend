@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Box, Grid } from "@mui/material";
 import HeaderCategoria, { Filters } from "./components/HeaderCategoria";
 import MetricCard from "../components/MetricCard";
@@ -16,7 +16,7 @@ import {
   IconStack2,
   IconBox,
 } from "@tabler/icons-react";
-import { apiJson } from "@/utils/apiClient";
+import { useApiDatos } from "@/utils/useCargaDatos";
 import { useRouter } from "next/navigation"; // ✅ Mantener router para abrir nuevas páginas
 import { BACKEND_URL } from "@/config";
 import { formatVentas, formatUnidades } from "@/utils/format";
@@ -54,41 +54,6 @@ const ResumenCategoriasPage: React.FC = () => {
   });
   
 
-  const [unidadesVendidas, setUnidadesVendidas] = useState({
-    CantidadVendida: 0,
-    CantidadVendidaAnterior: 0,
-    PorcentajeCambio: 0,
-  });
-
-  const [productosDistintos, setProductosDistintos] = useState({
-    ProductosPeriodoActual: 0,
-    ProductosPeriodoAnterior: 0,
-    PorcentajeCambio: 0,
-  });
-
-  const [notasCredito, setNotasCredito] = useState({
-    CantidadNotasCreditoPeriodo: 0,
-    CantidadNotasCreditoAnterior: 0,
-    PorcentajeCambioNotasCredito: 0,
-  });
-
-  const [transaccionesPeriodo, setTransaccionesPeriodo] = useState({
-    CantidadTransaccionesPeriodo: 0,
-    CantidadTransaccionesAnterior: 0,
-    PorcentajeCambio: 0,
-  });
-
-  const [margenVentas, setMargenVentas] = useState({
-    MargenPorcentajePeriodo: 0,
-    VariacionMargen: 0,
-  });
-
-  const [ventasPeriodo, setVentasPeriodo] = useState({
-    TotalVentasPeriodo: 0,
-    TotalVentasAnterior: 0,
-    PorcentajeCambio: 0,
-  });
-
   const getPeriodoParam = () => {
     switch (filtros.periodo) {
       case "Hoy": return "1D";
@@ -111,115 +76,17 @@ const ResumenCategoriasPage: React.FC = () => {
     return params.toString();
   };
 
-  const fetchUnidadesVendidas = async () => {
-    const query = buildQuery();
-    try {
-      const response = await apiJson(`${BACKEND_URL}/api/primer-nivel/unidades-vendidas-primer-nivel?${query}`);
-      if (response) {
-        const data = await response.json();
-        setUnidadesVendidas({
-          CantidadVendida: data.CantidadVendida || 0,
-          CantidadVendidaAnterior: data.CantidadVendidaAnterior || 0,
-          PorcentajeCambio: data.PorcentajeCambio || 0,
-        });
-      }
-    } catch (err) {
-      console.error("Error al obtener unidades vendidas:", err);
-    }
-  };
-
-  const fetchProductosDistintos = async () => {
-    const query = buildQuery();
-    try {
-      const response = await apiJson(`${BACKEND_URL}/api/primer-nivel/items-vendidos-primer-nivel?${query}`);
-      if (response) {
-        const data = await response.json();
-        setProductosDistintos({
-          ProductosPeriodoActual: data.ProductosPeriodoActual || 0,
-          ProductosPeriodoAnterior: data.ProductosPeriodoAnterior || 0,
-          PorcentajeCambio: data.PorcentajeCambio || 0,
-        });
-      }
-    } catch (err) {
-      console.error("Error al obtener productos distintos:", err);
-    }
-  };
-
-  const fetchNotasCredito = async () => {
-    const query = buildQuery();
-    try {
-      const response = await apiJson(`${BACKEND_URL}/api/primer-nivel/notas-credito-primer-nivel?${query}`);
-      if (response) {
-        const data = await response.json();
-        setNotasCredito({
-          CantidadNotasCreditoPeriodo: data.CantidadNotasCreditoPeriodo || 0,
-          CantidadNotasCreditoAnterior: data.CantidadNotasCreditoAnterior || 0,
-          PorcentajeCambioNotasCredito: data.PorcentajeCambioNotasCredito || 0,
-        });
-      }
-    } catch (err) {
-      console.error("Error al obtener notas de crédito:", err);
-    }
-  };
-
-  const fetchTransaccionesPeriodo = async () => {
-    const query = buildQuery();
-    try {
-      const response = await apiJson(`${BACKEND_URL}/api/primer-nivel/cantidad-ventas-primer-nivel?${query}`);
-      if (response) {
-        const data = await response.json();
-        setTransaccionesPeriodo({
-          CantidadTransaccionesPeriodo: data.CantidadTransaccionesPeriodo || 0,
-          CantidadTransaccionesAnterior: data.CantidadTransaccionesAnterior || 0,
-          PorcentajeCambio: data.PorcentajeCambio || 0,
-        });
-      }
-    } catch (err) {
-      console.error("Error al obtener transacciones por período:", err);
-    }
-  };
-
-  const fetchMargenVentasPeriodo = async () => {
-    const query = buildQuery();
-    try {
-      const response = await apiJson(`${BACKEND_URL}/api/primer-nivel/margen-primer-nivel?${query}`);
-      if (response) {
-        const data = await response.json();
-        setMargenVentas({
-          MargenPorcentajePeriodo: data.MargenPorcentajePeriodo ?? 0,
-          VariacionMargen: data.VariacionMargen ?? 0,
-        });
-      }
-    } catch (err) {
-      console.error("Error al obtener margen de ventas:", err);
-    }
-  };
-
-  const fetchVentasPeriodo = async () => {
-    const query = buildQuery();
-    try {
-      const response = await apiJson(`${BACKEND_URL}/api/primer-nivel/ventas-primer-nivel?${query}`);
-      if (response) {
-        const data = await response.json();
-        setVentasPeriodo({
-          TotalVentasPeriodo: data.TotalVentasPeriodo ?? 0,
-          TotalVentasAnterior: data.TotalVentasAnterior ?? 0,
-          PorcentajeCambio: data.PorcentajeCambio ?? 0,
-        });
-      }
-    } catch (err) {
-      console.error("Error al obtener ventas por período:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchUnidadesVendidas();
-    fetchProductosDistintos();
-    fetchNotasCredito();
-    fetchTransaccionesPeriodo();
-    fetchMargenVentasPeriodo();
-    fetchVentasPeriodo();
-  }, [filtros]);
+  // Cada tarjeta se identifica por su URL con los filtros: al cambiar un
+  // filtro se limpia al instante, se cancela lo pendiente y solo se muestra
+  // la respuesta del filtro actual (ver useCargaDatos).
+  const query = buildQuery();
+  const url = (endpoint: string) => `${BACKEND_URL}/api/primer-nivel/${endpoint}?${query}`;
+  const { datos: unidadesVendidas, cargando: cargandoUnidades } = useApiDatos<any>(url("unidades-vendidas-primer-nivel"), {});
+  const { datos: productosDistintos, cargando: cargandoProductos } = useApiDatos<any>(url("items-vendidos-primer-nivel"), {});
+  const { datos: notasCredito, cargando: cargandoNotas } = useApiDatos<any>(url("notas-credito-primer-nivel"), {});
+  const { datos: transaccionesPeriodo, cargando: cargandoTransacciones } = useApiDatos<any>(url("cantidad-ventas-primer-nivel"), {});
+  const { datos: margenVentas, cargando: cargandoMargen } = useApiDatos<any>(url("margen-primer-nivel"), {});
+  const { datos: ventasPeriodo, cargando: cargandoVentas } = useApiDatos<any>(url("ventas-primer-nivel"), {});
 
   return (
     <Box sx={{ p: 1}}>
@@ -231,44 +98,50 @@ const ResumenCategoriasPage: React.FC = () => {
             {[
               {
                 title: "Ventas",
-                value: formatVentas(ventasPeriodo.TotalVentasPeriodo),
-                subtitle: `Anterior: ${formatVentas(ventasPeriodo.TotalVentasAnterior)}`,
-                percentageChange: ventasPeriodo.PorcentajeCambio,
+                value: formatVentas(ventasPeriodo.TotalVentasPeriodo ?? 0),
+                subtitle: `Anterior: ${formatVentas(ventasPeriodo.TotalVentasAnterior ?? 0)}`,
+                percentageChange: ventasPeriodo.PorcentajeCambio ?? 0,
+                cargando: cargandoVentas,
                 icon: <IconCurrencyDollar />,
               },
               {
                 title: "Margen Ventas",
-                value: `${margenVentas.MargenPorcentajePeriodo}%`,
-                subtitle: `Variación: ${margenVentas.VariacionMargen}%`,
-                percentageChange: margenVentas.VariacionMargen,
+                value: `${margenVentas.MargenPorcentajePeriodo ?? 0}%`,
+                subtitle: `Variación: ${margenVentas.VariacionMargen ?? 0}%`,
+                percentageChange: margenVentas.VariacionMargen ?? 0,
+                cargando: cargandoMargen,
                 icon: <IconTrendingUp />,
               },
               {
                 title: "Cantidad de Ventas",
-                value: formatUnidades(transaccionesPeriodo.CantidadTransaccionesPeriodo),
-                subtitle: `Anterior: ${formatUnidades(transaccionesPeriodo.CantidadTransaccionesAnterior)}`,
-                percentageChange: transaccionesPeriodo.PorcentajeCambio,
+                value: formatUnidades(transaccionesPeriodo.CantidadTransaccionesPeriodo ?? 0),
+                subtitle: `Anterior: ${formatUnidades(transaccionesPeriodo.CantidadTransaccionesAnterior ?? 0)}`,
+                percentageChange: transaccionesPeriodo.PorcentajeCambio ?? 0,
+                cargando: cargandoTransacciones,
                 icon: <IconShoppingCart />,
               },
               {
                 title: "Notas de Crédito",
-                value: notasCredito.CantidadNotasCreditoPeriodo,
-                subtitle: `Anterior: ${formatUnidades(notasCredito.CantidadNotasCreditoAnterior)}`,
-                percentageChange: notasCredito.PorcentajeCambioNotasCredito,
+                value: notasCredito.CantidadNotasCreditoPeriodo ?? 0,
+                subtitle: `Anterior: ${formatUnidades(notasCredito.CantidadNotasCreditoAnterior ?? 0)}`,
+                percentageChange: notasCredito.PorcentajeCambioNotasCredito ?? 0,
+                cargando: cargandoNotas,
                 icon: <IconCreditCard />,
               },
               {
                 title: "Ítems Vendidos",
-                value: formatUnidades(productosDistintos.ProductosPeriodoActual),
-                subtitle: `Anterior: ${formatUnidades(productosDistintos.ProductosPeriodoAnterior)}`,
-                percentageChange: productosDistintos.PorcentajeCambio,
+                value: formatUnidades(productosDistintos.ProductosPeriodoActual ?? 0),
+                subtitle: `Anterior: ${formatUnidades(productosDistintos.ProductosPeriodoAnterior ?? 0)}`,
+                percentageChange: productosDistintos.PorcentajeCambio ?? 0,
+                cargando: cargandoProductos,
                 icon: <IconStack2 />,
               },
               {
                 title: "Unidades Vendidas",
-                value: formatUnidades(unidadesVendidas.CantidadVendida),
-                subtitle: `Anterior: ${formatUnidades(unidadesVendidas.CantidadVendidaAnterior)}`,
-                percentageChange: unidadesVendidas.PorcentajeCambio,
+                value: formatUnidades(unidadesVendidas.CantidadVendida ?? 0),
+                subtitle: `Anterior: ${formatUnidades(unidadesVendidas.CantidadVendidaAnterior ?? 0)}`,
+                percentageChange: unidadesVendidas.PorcentajeCambio ?? 0,
+                cargando: cargandoUnidades,
                 icon: <IconBox />,
               },
             ].map((card, index) => (
@@ -279,6 +152,7 @@ const ResumenCategoriasPage: React.FC = () => {
                   subtitle={card.subtitle}
                   percentageChange={card.percentageChange}
                   icon={card.icon}
+                  cargando={card.cargando}
                 />
               </Grid>
             ))}

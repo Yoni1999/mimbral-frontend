@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Card,
   CardContent,
@@ -17,6 +17,7 @@ import {
 import ExpandIcon from "@mui/icons-material/ZoomOutMap";
 import CloseIcon from "@mui/icons-material/Close";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 
 interface Filters {
@@ -41,8 +42,6 @@ interface Props {
 }
 
 const TopProductosChart: React.FC<Props> = ({ filters }) => {
-  const [data, setData] = useState<Producto[]>([]);
-  const [loading, setLoading] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [sortField, setSortField] = useState<"Cantidad_Vendida" | "Total_Ventas" | "Nombre_SubCategoria" | "NumTransacciones" | "">("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -57,22 +56,6 @@ const TopProductosChart: React.FC<Props> = ({ filters }) => {
   }
 };
 
-const sortedData = [...data].sort((a, b) => {
-  if (!sortField) return 0;
-
-  const valA = a[sortField];
-  const valB = b[sortField];
-
-  if (typeof valA === "string" && typeof valB === "string") {
-    return sortDirection === "asc"
-      ? valA.localeCompare(valB)
-      : valB.localeCompare(valA);
-  }
-
-  return sortDirection === "asc"
-    ? (valA as number) - (valB as number)
-    : (valB as number) - (valA as number);
-});
 
   const mapPeriodo = (nombre: string): string => {
     const mapa: Record<string, string> = {
@@ -114,43 +97,45 @@ const sortedData = [...data].sort((a, b) => {
     return params.toString();
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const query = buildQuery();
-        const response = await apiJson(
-          `${BACKEND_URL}/api/resumen-categoria/top-subcategorias?${query}`
-        );
+  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
+  const url = `${BACKEND_URL}/api/resumen-categoria/top-subcategorias?${buildQuery()}`;
+  const { datos: data, cargando: loading } = useCargaDatos<Producto[]>(
+    url,
+    async (signal) => {
+      const result = await apiJson(url, { signal });
 
-        if (!response || !response.ok)
-          throw new Error("Error al obtener datos");
+      const datosFiltrados: Producto[] = Array.isArray(result)
+        ? result.filter(
+            (item) =>
+              item.Nombre_SubCategoria !== null &&
+              item.Cantidad_Vendida !== null &&
+              item.Total_Ventas !== null &&
+              item.Codigo_SubCategoria !== null
+          )
+        : [];
 
-        const result = await response.json();
+      datosFiltrados.sort((a, b) => b.Total_Ventas - a.Total_Ventas);
+      return datosFiltrados;
+    },
+    []
+  );
 
-        const datosFiltrados = Array.isArray(result)
-          ? result.filter(
-              (item) =>
-                item.Nombre_SubCategoria !== null &&
-                item.Cantidad_Vendida !== null &&
-                item.Total_Ventas !== null &&
-                item.Codigo_SubCategoria !== null
-            )
-          : [];
+const sortedData = [...data].sort((a, b) => {
+  if (!sortField) return 0;
 
-        datosFiltrados.sort((a, b) => b.Total_Ventas - a.Total_Ventas);
+  const valA = a[sortField];
+  const valB = b[sortField];
 
-        setData(datosFiltrados);
-      } catch (error) {
-        console.error("❌ Error al obtener top subcategorías:", error);
-        setData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (typeof valA === "string" && typeof valB === "string") {
+    return sortDirection === "asc"
+      ? valA.localeCompare(valB)
+      : valB.localeCompare(valA);
+  }
 
-    fetchData();
-  }, [filters]);
+  return sortDirection === "asc"
+    ? (valA as number) - (valB as number)
+    : (valB as number) - (valA as number);
+});
 
   const formatMillones = (valor: number): string =>
     `$${(valor / 1_000_000).toFixed(2)} MM`;

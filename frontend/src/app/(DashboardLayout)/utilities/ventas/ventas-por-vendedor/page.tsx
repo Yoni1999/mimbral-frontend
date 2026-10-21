@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Box, Grid, Paper, CircularProgress, Typography } from "@mui/material";
 import HeaderVendedor, { Filters } from "./components/Header";
 import MetricCard from "./components/Cards";
@@ -9,6 +9,7 @@ import TopProductosChart from "./components/SoldCategories";
 import VentasCanalChart from "./components/FormaPago";
 import {IconCurrencyDollar,IconTrendingUp,IconBox,IconStack2,IconShoppingCart,IconCreditCard} from "@tabler/icons-react";
 import { apiJson } from "@/utils/apiClient";
+import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { useSearchParams } from "next/navigation";
 import SeccionTitulo from "@/app/(DashboardLayout)/utilities/ventas/resumen-ventas/components/SeccionTitulo";
@@ -24,63 +25,26 @@ const TopRentableVendedor = dynamic(
   { ssr: false }
 );
 
+// --- Helpers para extraer el primer elemento de un array o un objeto vacío ---
+const primeroOVacio = async (url: string, signal: AbortSignal) => {
+  const data = await apiJson(url, { signal });
+  return Array.isArray(data) && data.length > 0 ? data[0] : {};
+};
+
 const VentasVendedorPage: React.FC = () => {
-  // --- Estados de Filtros y Carga ---
-  const [filtros, setFiltros] = useState<Filters>({
-    vendedorEmpresa: "",
-    fechaInicio: "",
-    fechaFin: "",
-    modoComparacion: "",
-    canal: "",
-  });
+  const searchParams = useSearchParams();
 
-  const [cargandoFiltros, setCargandoFiltros] = useState(true);
+  // --- Estado de Filtros ---
+  // Se inicializa desde la URL en el primer render: antes un efecto los volvía
+  // a fijar después de montar y eso disparaba una segunda carga completa.
+  const [filtros, setFiltros] = useState<Filters>(() => ({
+    fechaInicio: searchParams?.get("fechaInicio") || "",
+    fechaFin: searchParams?.get("fechaFin") || "",
+    vendedorEmpresa: searchParams?.get("vendedor") || "",
+    modoComparacion: searchParams?.get("modoComparacion") || "",
+    canal: searchParams?.get("canal") || "",
+  }));
 
-  // --- Estados de Datos de KPIs ---
-  const [ventasTotal, setVentasTotal] = useState({
-    TotalVentasPeriodo: 0,
-    TotalVentasAnterior: 0,
-    PorcentajeCambio: 0,
-  });
-
-  const [margenTotal, setMargenTotal] = useState({
-    MargenBrutoPeriodo: 0,
-    TotalVentasAnterior: 0, 
-    MargenBrutoAnterior: 0,
-    PorcentajeCambio: 0,
-  });
-
-  const [productosDistintos, setProductosDistintos] = useState({
-    ProductosPeriodoActual: 0,
-    ProductosPeriodoAnterior: 0,
-    PorcentajeCambio: 0,
-  });
-
-  const [unidadesTotal, setUnidadesTotal] = useState({
-    CantidadVendida: 0,
-    CantidadVendidaAnterior: 0,
-    PorcentajeCambio: 0,
-  });
-
-  const [nTransacciones, setNTransacciones] = useState({
-    CantidadTransaccionesPeriodo: 0,
-    CantidadTransaccionesAnterior: 0,
-    PorcentajeCambio: 0,
-  });
-
-  const [notasCreditoTotal, setNotasCreditoTotal] = useState({
-    CantidadNotasCreditoPeriodo: 0,
-    CantidadNotasCreditoAnterior: 0,
-    PorcentajeCambioNotasCredito: 0,
-  });
-
-  const [formasPagoData, setFormasPagoData] = useState<
-    {
-      PayDueMonth: string;
-      CantidadFacturas: number;
-      TotalVentas: number;
-    }[]
-  >([]);
   // --- Función para construir la query string de la API ---
   const buildQuery = (currentFiltros: Filters) => {
     const params = new URLSearchParams();
@@ -104,238 +68,126 @@ const VentasVendedorPage: React.FC = () => {
     return params.toString();
   };
 
-  // --- Helper para extraer el primer elemento de un array o un objeto vacío ---
-  const extractFirstOrEmpty = async (response: Response) => {
-    const data = await response.json();
-    return Array.isArray(data) && data.length > 0 ? data[0] : {};
-  };
-
-  // --- Funciones para fetching de datos de APIs ---
-  const fetchVentasTotal = async (currentFiltros: Filters) => {
-    const query = buildQuery(currentFiltros);
-    const fullUrl = `${BACKEND_URL}/api/pv/ventastotal?${query}`;
-    console.log("🌐 URL Ventas Totales:", fullUrl);
-    try {
-      const response = await apiJson(fullUrl);
-      if (response) {
-        const datos = await extractFirstOrEmpty(response);
-        setVentasTotal({
-          TotalVentasPeriodo: datos.TotalVentasPeriodo || 0,
-          TotalVentasAnterior: datos.TotalVentasAnterior || 0,
-          PorcentajeCambio: datos.PorcentajeCambio || 0,
-        });
-      }
-    } catch (err) {
-      console.error("❌ Error de red al obtener ventas totales:", err);
-    }
-  };
-
-  const fetchMargenTotal = async (currentFiltros: Filters) => {
-    const query = buildQuery(currentFiltros);
-    const fullUrl = `${BACKEND_URL}/api/pv/margentotal?${query}`;
-    console.log("🌐 URL Margen Total:", fullUrl);
-    try {
-      const response = await apiJson(fullUrl);
-      if (response) {
-        const datos = await extractFirstOrEmpty(response);
-        setMargenTotal({
-          MargenBrutoPeriodo: datos.MargenBrutoPeriodo || 0,
-          MargenBrutoAnterior: datos.MargenBrutoAnterior || 0,
-          TotalVentasAnterior: datos.TotalVentasAnterior || 0, // Asegúrate que esta propiedad exista si la necesitas
-          PorcentajeCambio: datos.PorcentajeCambio || 0,
-        });
-      }
-    } catch (err) {
-      console.error("❌ Error al obtener el margen total:", err);
-    }
-  };
-
-  const fetchProductosDistintos = async (currentFiltros: Filters) => {
-    const query = buildQuery(currentFiltros);
-    const fullUrl = `${BACKEND_URL}/api/pv/productosdistintos?${query}`;
-    console.log("🌐 URL Productos Distintos:", fullUrl);
-    try {
-      const response = await apiJson(fullUrl);
-      if (response) {
-        const data = await extractFirstOrEmpty(response);
-        setProductosDistintos({
-          ProductosPeriodoActual: data.ProductosPeriodoActual || 0,
-          ProductosPeriodoAnterior: data.ProductosPeriodoAnterior || 0,
-          PorcentajeCambio: data.PorcentajeCambio || 0,
-        });
-      }
-    } catch (err) {
-      console.error("❌ Error al obtener productos distintos:", err);
-    }
-  };
-
-  const fetchUnidadesTotal = async (currentFiltros: Filters) => {
-    const query = buildQuery(currentFiltros);
-    const fullUrl = `${BACKEND_URL}/api/pv/unidadesvendidas?${query}`;
-    console.log("🌐 URL Unidades Vendidas:", fullUrl);
-    try {
-      const response = await apiJson(fullUrl);
-      if (response) {
-        const data = await extractFirstOrEmpty(response);
-        setUnidadesTotal({
-          CantidadVendida: data.CantidadVendida || 0,
-          CantidadVendidaAnterior: data.CantidadVendidaAnterior || 0,
-          PorcentajeCambio: data.PorcentajeCambio || 0,
-        });
-      }
-    } catch (err) {
-      console.error("❌ Error al obtener unidades vendidas:", err);
-    }
-  };
-
-  const fetchNTransacciones = async (currentFiltros: Filters) => {
-    const query = buildQuery(currentFiltros);
-    const fullUrl = `${BACKEND_URL}/api/pv/transacciones?${query}`;
-    console.log("🌐 URL Transacciones:", fullUrl);
-    try {
-      const response = await apiJson(fullUrl);
-      if (response) {
-        const datos = await extractFirstOrEmpty(response);
-        setNTransacciones({
-          CantidadTransaccionesPeriodo: datos.CantidadTransaccionesPeriodo || 0,
-          CantidadTransaccionesAnterior: datos.CantidadTransaccionesAnterior || 0,
-          PorcentajeCambio: datos.PorcentajeCambio || 0,
-        });
-      }
-    } catch (err) {
-      console.error("❌ Error al obtener numero de transacciones:", err);
-    }
-  };
-
-  const fetchNotasCreditoTotal = async (currentFiltros: Filters) => {
-    const query = buildQuery(currentFiltros);
-    const fullUrl = `${BACKEND_URL}/api/pv/notascreditopv?${query}`;
-    console.log("🌐 URL Notas de Crédito:", fullUrl);
-    try {
-      const response = await apiJson(fullUrl);
-      if (response) {
-        const data = await response.json(); // asumo que esta API podría devolver un array o un objeto
-        // Si Notas de Crédito devuelve un objeto directamente, no un array de 1 elemento,
-        // entonces data.CantidadNotasCreditoPeriodo es directo.
-        // Si devuelve un array, necesitarías: const datos = Array.isArray(data) && data.length > 0 ? data[0] : {};
-        // Para consistencia con extractFirstOrEmpty:
-        const datos = Array.isArray(data) && data.length > 0 ? data[0] : (typeof data === 'object' && data !== null ? data : {});
-
-        setNotasCreditoTotal({
-          CantidadNotasCreditoPeriodo: datos.CantidadNotasCreditoPeriodo || 0,
-          CantidadNotasCreditoAnterior: datos.CantidadNotasCreditoAnterior || 0,
-          PorcentajeCambioNotasCredito: datos.PorcentajeCambioNotasCredito || 0,
-        });
-      }
-    } catch (err) {
-      console.error("❌ Error al obtener notas de credito:", err);
-    }
-  };
-
-  // --- NUEVA FUNCIÓN DE FETCHING para Formas de Pago ---
-  const fetchFormasPago = async (currentFiltros: Filters) => {
-    const query = buildQuery(currentFiltros);
-    const fullUrl = `${BACKEND_URL}/api/oc/formas-pago?${query}`;
-    console.log("🌐 URL Formas de Pago:", fullUrl);
-    try {
-      const response = await apiJson(fullUrl);
-      if (response) {
-        const data = await response.json();
-        // Esperamos un array de objetos
-        if (Array.isArray(data)) {
-          setFormasPagoData(data);
-          console.log("✅ Datos de Formas de Pago recibidos:", data);
-        } else {
-          console.warn(
-            "⚠️ Formato inesperado para datos de Formas de Pago:",
-            data
-          );
-          setFormasPagoData([]); // Asegura que el estado sea un array vacío
-        }
-      }
-    } catch (err) {
-      console.error("❌ Error al obtener Formas de Pago:", err);
-    }
-  };
-
-  const searchParams = useSearchParams();
-
-  // --- Efecto para inicializar filtros desde URL y cargar datos iniciales ---
-  useEffect(() => {
-    setCargandoFiltros(true);
-    const filtrosIniciales: Filters = {
-      fechaInicio: searchParams?.get("fechaInicio") || "",
-      fechaFin: searchParams?.get("fechaFin") || "",
-      vendedorEmpresa: searchParams?.get("vendedor") || "",
-      modoComparacion: searchParams?.get("modoComparacion") as
-        | Filters["modoComparacion"]
-        | "",
-      canal: searchParams?.get("canal") || "",
-    };
-
-    setFiltros(filtrosIniciales);
-    setCargandoFiltros(false);
-
-    // Llamadas a las APIs iniciales
-    fetchVentasTotal(filtrosIniciales);
-    fetchMargenTotal(filtrosIniciales);
-    fetchNTransacciones(filtrosIniciales);
-    fetchProductosDistintos(filtrosIniciales);
-    fetchUnidadesTotal(filtrosIniciales);
-    fetchNotasCreditoTotal(filtrosIniciales);
-    fetchFormasPago(filtrosIniciales); // Llamada a la nueva API
-  }, [searchParams, setFiltros, setCargandoFiltros]);
-
-  // --- Efecto para recargar datos cuando los filtros cambian (después de la carga inicial) ---
-  useEffect(() => {
-    if (!cargandoFiltros) {
-      fetchVentasTotal(filtros);
-      fetchMargenTotal(filtros);
-      fetchNTransacciones(filtros);
-      fetchProductosDistintos(filtros);
-      fetchUnidadesTotal(filtros);
-      fetchNotasCreditoTotal(filtros);
-      fetchFormasPago(filtros); // Llamada a la nueva API (se refrescará con los demás, aunque no dependa de filtros)
-    }
-  }, [filtros, cargandoFiltros]); // Dependencias para re-ejecutar
-
-  // --- Función para llamar a todas las APIs (usada por el botón "Aplicar") ---
-  const fetchAllData = (currentFiltros: Filters) => {
-    fetchVentasTotal(currentFiltros);
-    fetchMargenTotal(currentFiltros);
-    fetchProductosDistintos(currentFiltros);
-    fetchUnidadesTotal(currentFiltros);
-    fetchNTransacciones(currentFiltros);
-    fetchNotasCreditoTotal(currentFiltros);
-    fetchFormasPago(currentFiltros);
-// Incluida para refresco manual también
-  };
-
-  // --- Cálculos para las nuevas MetricCards de Formas de Pago ---
-  const totalFacturasFormasPago = formasPagoData.reduce(
-    (sum, item) => sum + item.CantidadFacturas,
-    0
-  );
-  const totalVentasFormasPago = formasPagoData.reduce(
-    (sum, item) => sum + item.TotalVentas,
-    0
+  // --- Datos de KPIs ---
+  // Cada bloque se identifica por su URL con los filtros: al cambiar un
+  // filtro se limpia al instante, se cancela lo pendiente y solo se muestra
+  // la respuesta del filtro actual (ver useCargaDatos). El vendedor es
+  // opcional: sin él se muestran los totales del canal.
+  const query = buildQuery(filtros);
+  const urlVentas = `${BACKEND_URL}/api/pv/ventastotal?${query}`;
+  const { datos: ventasTotal, cargando: loadingVentasTotal } = useCargaDatos(
+    urlVentas,
+    async (signal) => {
+      const datos = await primeroOVacio(urlVentas, signal);
+      return {
+        TotalVentasPeriodo: datos.TotalVentasPeriodo || 0,
+        TotalVentasAnterior: datos.TotalVentasAnterior || 0,
+        PorcentajeCambio: datos.PorcentajeCambio || 0,
+      };
+    },
+    { TotalVentasPeriodo: 0, TotalVentasAnterior: 0, PorcentajeCambio: 0 }
   );
 
-  // --- Loading states for MetricCards (set to false if not implemented) ---
-  const loadingVentasTotal = false;
-  const loadingMargenTotal = false;
-  const loadingProductosDistintos = false;
-  const loadingUnidadesTotal = false;
-  const loadingNTransacciones = false;
-  const loadingNotasCreditoTotal = false;
-  const loadingFormasPagoData = false;
+  const urlMargen = `${BACKEND_URL}/api/pv/margentotal?${query}`;
+  const { datos: margenTotal, cargando: loadingMargenTotal } = useCargaDatos(
+    urlMargen,
+    async (signal) => {
+      const datos = await primeroOVacio(urlMargen, signal);
+      return {
+        MargenBrutoPeriodo: datos.MargenBrutoPeriodo || 0,
+        MargenBrutoAnterior: datos.MargenBrutoAnterior || 0,
+        TotalVentasAnterior: datos.TotalVentasAnterior || 0,
+        PorcentajeCambio: datos.PorcentajeCambio || 0,
+      };
+    },
+    { MargenBrutoPeriodo: 0, TotalVentasAnterior: 0, MargenBrutoAnterior: 0, PorcentajeCambio: 0 }
+  );
+
+  const urlProductos = `${BACKEND_URL}/api/pv/productosdistintos?${query}`;
+  const { datos: productosDistintos, cargando: loadingProductosDistintos } = useCargaDatos(
+    urlProductos,
+    async (signal) => {
+      const data = await primeroOVacio(urlProductos, signal);
+      return {
+        ProductosPeriodoActual: data.ProductosPeriodoActual || 0,
+        ProductosPeriodoAnterior: data.ProductosPeriodoAnterior || 0,
+        PorcentajeCambio: data.PorcentajeCambio || 0,
+      };
+    },
+    { ProductosPeriodoActual: 0, ProductosPeriodoAnterior: 0, PorcentajeCambio: 0 }
+  );
+
+  const urlUnidades = `${BACKEND_URL}/api/pv/unidadesvendidas?${query}`;
+  const { datos: unidadesTotal, cargando: loadingUnidadesTotal } = useCargaDatos(
+    urlUnidades,
+    async (signal) => {
+      const data = await primeroOVacio(urlUnidades, signal);
+      return {
+        CantidadVendida: data.CantidadVendida || 0,
+        CantidadVendidaAnterior: data.CantidadVendidaAnterior || 0,
+        PorcentajeCambio: data.PorcentajeCambio || 0,
+      };
+    },
+    { CantidadVendida: 0, CantidadVendidaAnterior: 0, PorcentajeCambio: 0 }
+  );
+
+  const urlTransacciones = `${BACKEND_URL}/api/pv/transacciones?${query}`;
+  const { datos: nTransacciones, cargando: loadingNTransacciones } = useCargaDatos(
+    urlTransacciones,
+    async (signal) => {
+      const datos = await primeroOVacio(urlTransacciones, signal);
+      return {
+        CantidadTransaccionesPeriodo: datos.CantidadTransaccionesPeriodo || 0,
+        CantidadTransaccionesAnterior: datos.CantidadTransaccionesAnterior || 0,
+        PorcentajeCambio: datos.PorcentajeCambio || 0,
+      };
+    },
+    { CantidadTransaccionesPeriodo: 0, CantidadTransaccionesAnterior: 0, PorcentajeCambio: 0 }
+  );
+
+  const urlNotas = `${BACKEND_URL}/api/pv/notascreditopv?${query}`;
+  const { datos: notasCreditoTotal, cargando: loadingNotasCreditoTotal } = useCargaDatos(
+    urlNotas,
+    async (signal) => {
+      // Puede venir como array de un elemento o como objeto directo.
+      const data = await apiJson(urlNotas, { signal });
+      const datos = Array.isArray(data) && data.length > 0 ? data[0] : (typeof data === 'object' && data !== null ? data : {});
+      return {
+        CantidadNotasCreditoPeriodo: datos.CantidadNotasCreditoPeriodo || 0,
+        CantidadNotasCreditoAnterior: datos.CantidadNotasCreditoAnterior || 0,
+        PorcentajeCambioNotasCredito: datos.PorcentajeCambioNotasCredito || 0,
+      };
+    },
+    { CantidadNotasCreditoPeriodo: 0, CantidadNotasCreditoAnterior: 0, PorcentajeCambioNotasCredito: 0 }
+  );
+
+  // --- Formas de Pago ---
+  const urlFormasPago = `${BACKEND_URL}/api/oc/formas-pago?${query}`;
+  const { datos: formasPagoData, cargando: loadingFormasPagoData } = useCargaDatos<
+    {
+      PayDueMonth: string;
+      CantidadFacturas: number;
+      TotalVentas: number;
+    }[]
+  >(
+    urlFormasPago,
+    async (signal) => {
+      const data = await apiJson(urlFormasPago, { signal });
+      // Esperamos un array de objetos
+      if (Array.isArray(data)) return data;
+      console.warn("⚠️ Formato inesperado para datos de Formas de Pago:", data);
+      return [];
+    },
+    []
+  );
 
 return (
       <Box sx={{ p: 3 }}>
         <HeaderVendedor
           filtros={filtros}
           setFiltros={setFiltros}
-          onAplicar={() => fetchAllData(filtros)}
+          // Los datos se recargan solos al cambiar los filtros.
+          onAplicar={() => {}}
         />
 
         {/* --- Sección de Métricas Principales (MetricCards) --- */}
@@ -352,7 +204,7 @@ return (
                   value: formatVentas(ventasTotal.TotalVentasPeriodo),
                   subtitle: `Periodo Ant: ${formatVentas(ventasTotal.TotalVentasAnterior)}`,
                   percentageChange: ventasTotal.PorcentajeCambio,
-                  isLoading: loadingVentasTotal,
+                  cargando: loadingVentasTotal,
                   icon: <IconCurrencyDollar />,
                 },
                 {
@@ -360,7 +212,7 @@ return (
                   value: formatVentas(margenTotal.MargenBrutoPeriodo),
                   subtitle: `Periodo Ant: ${formatVentas(margenTotal.MargenBrutoAnterior)}`,
                   percentageChange: margenTotal.PorcentajeCambio,
-                  isLoading: loadingMargenTotal,
+                  cargando: loadingMargenTotal,
                   icon: <IconTrendingUp />,
                 },
                 {
@@ -368,7 +220,7 @@ return (
                   value: formatUnidades(productosDistintos.ProductosPeriodoActual),
                   subtitle: `Periodo Ant: ${formatUnidades(productosDistintos.ProductosPeriodoAnterior)}`,
                   percentageChange: productosDistintos.PorcentajeCambio,
-                  isLoading: loadingProductosDistintos,
+                  cargando: loadingProductosDistintos,
                   icon: <IconBox />,
                 },
                 {
@@ -376,7 +228,7 @@ return (
                   value: formatUnidades(unidadesTotal.CantidadVendida),
                   subtitle: `Periodo Ant: ${formatUnidades(unidadesTotal.CantidadVendidaAnterior)}`,
                   percentageChange: unidadesTotal.PorcentajeCambio,
-                  isLoading: loadingUnidadesTotal,
+                  cargando: loadingUnidadesTotal,
                   icon: <IconStack2 />,
                 },
                 {
@@ -384,7 +236,7 @@ return (
                   value: formatUnidades(nTransacciones.CantidadTransaccionesPeriodo),
                   subtitle: `Periodo Ant: ${formatUnidades(nTransacciones.CantidadTransaccionesAnterior)}`,
                   percentageChange: nTransacciones.PorcentajeCambio,
-                  isLoading: loadingNTransacciones,
+                  cargando: loadingNTransacciones,
                   icon: <IconShoppingCart />,
                 },
                 {
@@ -392,28 +244,12 @@ return (
                   value: formatUnidades(notasCreditoTotal.CantidadNotasCreditoPeriodo),
                   subtitle: `Periodo Ant: ${formatUnidades(notasCreditoTotal.CantidadNotasCreditoAnterior)}`,
                   percentageChange: notasCreditoTotal.PorcentajeCambioNotasCredito,
-                  isLoading: loadingNotasCreditoTotal,
+                  cargando: loadingNotasCreditoTotal,
                   icon: <IconCreditCard />,
                 },
               ].map((card, index) => (
                 <Grid item xs={12} sm={6} md={2} lg={2} key={index}> {/* Ajuste de tamaño para 4 cards por fila en md/lg */}
-                  {card.isLoading ? (
-                    <Paper
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        height: 120, // Altura consistente con MetricCard
-                        borderRadius: 2,
-                        boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
-                        backgroundColor: "#f5f5f5",
-                      }}
-                    >
-                      <CircularProgress />
-                    </Paper>
-                  ) : (
-                    <MetricCard {...card} />
-                  )}
+                  <MetricCard {...card} />
                 </Grid>
               ))}
             </Grid>
@@ -429,7 +265,13 @@ return (
             />
           </Grid>
           <Grid item xs={12} md={5}>
-            <VentasCanalChart data={formasPagoData} /> {/* Pasando solo data */}
+            {loadingFormasPagoData ? (
+              <Paper sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, borderRadius: 2 }}>
+                <CircularProgress />
+              </Paper>
+            ) : (
+              <VentasCanalChart data={formasPagoData} />
+            )}
           </Grid>
           <Grid item xs={12} md={7}>
             <TopProductosChart filtros={filtros} />
