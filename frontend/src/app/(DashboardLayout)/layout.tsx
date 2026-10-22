@@ -1,6 +1,6 @@
 "use client";
 import { styled, Container, Box } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "@/app/(DashboardLayout)/layout/header/Header";
 import Sidebar from "@/app/(DashboardLayout)/layout/sidebar/Sidebar";
 import FloatingHelpAgent from "@/components/agent/FloatingHelpAgent";
@@ -20,6 +20,12 @@ const PageWrapper = styled("div")(() => ({
   flexDirection: "column",
   zIndex: 1,
   backgroundColor: "#f4f4f5",
+  // Sin esto el contenedor se estira al ancho mínimo de su contenido y la
+  // página entera se desplaza hacia el lado. Con "clip" lo que no cabe se
+  // ajusta dentro de cada panel (no crea contenedor de scroll: los
+  // encabezados fijos de las tablas siguen funcionando).
+  minWidth: 0,
+  overflowX: "clip",
 }));
 
 interface Props {
@@ -29,6 +35,10 @@ interface Props {
 export default function RootLayout({ children }: Props) {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  // Las vistas se dibujan solo en el navegador: leen lo que el usuario dejó
+  // buscado (localStorage) al crearse, sin diferencias con el servidor.
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
 
   return (
     <MainWrapper className="mainwrapper">
@@ -46,7 +56,7 @@ export default function RootLayout({ children }: Props) {
           maxWidth={false}
           sx={{ paddingTop: "20px", px: { xs: 2, md: 4, xl: 6 } }}
         >
-          <Box sx={{ minHeight: "calc(100vh - 170px)" }}>{children}</Box>
+          <Box sx={{ minHeight: "calc(100vh - 170px)" }}>{montado ? children : null}</Box>
         </Container>
       </PageWrapper>
 

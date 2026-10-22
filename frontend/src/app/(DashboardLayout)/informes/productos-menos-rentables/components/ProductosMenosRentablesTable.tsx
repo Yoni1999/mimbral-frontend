@@ -183,7 +183,7 @@ const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ord
               </StyledHeadCell>
 
               <StyledHeadCell>Stock Actual</StyledHeadCell>
-              <StyledHeadCell>Stock Chorrillo</StyledHeadCell>
+              <StyledHeadCell>Stock Chorrillos</StyledHeadCell>
               <StyledHeadCell>OC (On Order)</StyledHeadCell>
             </TableRow>
           </TableHead>

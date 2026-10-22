@@ -5,6 +5,9 @@ import { useState } from "react";
 interface CustomTabsProps {
   tabLabels: string[];
   tabContents: React.ReactNode[];
+  /** Pestaña activa controlada desde fuera (p. ej. para recordarla). */
+  value?: number;
+  onChange?: (value: number) => void;
 }
 
 function a11yProps(index: number) {
@@ -35,11 +38,14 @@ const CustomTabPanel = ({
   );
 };
 
-export default function CustomTabs({ tabLabels, tabContents }: CustomTabsProps) {
-  const [value, setValue] = useState(0);
+export default function CustomTabs({ tabLabels, tabContents, value: valueExterno, onChange }: CustomTabsProps) {
+  const [valueInterno, setValue] = useState(0);
+  // Una pestaña guardada fuera de rango (si cambian las pestañas) vuelve a la primera.
+  const value = valueExterno !== undefined && valueExterno < tabLabels.length ? valueExterno : valueInterno;
 
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
+    onChange?.(newValue);
   };
 
   return (

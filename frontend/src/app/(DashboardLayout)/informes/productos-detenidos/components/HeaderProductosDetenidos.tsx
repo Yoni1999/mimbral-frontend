@@ -39,8 +39,8 @@ interface Proveedor {
 
 interface Props {
   onFilterChange: (filters: FiltroProductos) => void;
-  // It's good practice to pass currentFilters down for initial state sync
-  currentFilters?: FiltroProductos;
+  // Filtros vigentes (los recordados por la vista): el encabezado parte de ellos.
+  currentFilters?: Partial<FiltroProductos>;
 }
 
 // Adapta la respuesta de categorías / subcategorías a lo que muestran los selects.
@@ -49,16 +49,16 @@ const aCategorias = (data: any): Categoria[] =>
 
 const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters }) => {
   const [openDrawer, setOpenDrawer] = useState(false);
-  // Initialize filters with currentFilters if provided, otherwise default to "7D"
-  // Initialize almacenes as an empty array if not provided
-  const [filters, setFilters] = useState<FiltroProductos>(currentFilters || { periodo: "1M", almacenes: [] });
+  // Parte de los filtros vigentes (al volver a la vista muestra lo consultado);
+  // sin ellos, "1M" y sin almacenes como siempre.
+  const [filters, setFilters] = useState<FiltroProductos>(() => ({ periodo: "1M", almacenes: [], ...currentFilters }));
 
   const [primerNiveles, setPrimerNiveles] = useState<Categoria[]>([]);
 
   // State for all fetched suppliers
   const [allProveedores, setAllProveedores] = useState<Proveedor[]>([]);
   // State for the text in the supplier search input
-  const [proveedorSearchInput, setProveedorSearchInput] = useState("");
+  const [proveedorSearchInput, setProveedorSearchInput] = useState(currentFilters?.proveedor ?? "");
   // State to manage loading indicator for suppliers
   const [loadingProveedores, setLoadingProveedores] = useState(false);
   // State to control visibility of supplier suggestion list
@@ -90,23 +90,15 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     { value: "13", label: "Reservado full" },
   ];
 
-  // Sync internal state with external filters when currentFilters changes
+  // Con un proveedor ya elegido, su nombre reemplaza al código en el buscador
+  // apenas llega la lista. (Antes un efecto sobre currentFilters reponía los
+  // filtros al llegar la lista y borraba lo que se estaba editando.)
   useEffect(() => {
-    // Ensure almacenes is an array, even if undefined in currentFilters
-    setFilters(currentFilters ? { ...currentFilters, almacenes: currentFilters.almacenes || [] } : { periodo: "1M", almacenes: [] });
-    // Also update the supplier search input if a supplier is already selected
-    if (currentFilters?.proveedor) {
-      const selectedProv = allProveedores.find(p => p.CardCode === currentFilters.proveedor);
-      if (selectedProv) {
-        setProveedorSearchInput(selectedProv.CardName);
-      } else {
-        // If the selected supplier is not in allProveedores yet, fetch it or set input to code
-        setProveedorSearchInput(currentFilters.proveedor); // Fallback to code
-      }
-    } else {
-      setProveedorSearchInput("");
-    }
-  }, [currentFilters, allProveedores]); // Added allProveedores to dependencies
+    const elegido = allProveedores.find(p => p.CardCode === filters.proveedor);
+    if (elegido) setProveedorSearchInput(elegido.CardName);
+    // Solo al llegar la lista: después el buscador es del usuario.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allProveedores]);
 
   // Fetch Primer Nivel Categories on component mount
   useEffect(() => {
@@ -141,9 +133,11 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     []
   );
 
-  // Fetch all suppliers only once or when the drawer opens for the first time
+  // La lista de proveedores se pide una vez: al abrir el panel, o al montar si
+  // ya hay un proveedor elegido (para mostrar su nombre y no el código).
+  const necesitaProveedores = openDrawer || Boolean(filters.proveedor);
   const fetchAllProveedores = useCallback(async () => {
-    if (allProveedores.length === 0 && openDrawer) { // Only fetch if not already fetched and drawer is open
+    if (allProveedores.length === 0 && necesitaProveedores) {
       setLoadingProveedores(true);
       try {
         const res = await apiJson(`${BACKEND_URL}/api/obtenerproveedores`);
@@ -155,13 +149,13 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
         setLoadingProveedores(false);
       }
     }
-  }, [allProveedores.length, openDrawer]);
+  }, [allProveedores.length, necesitaProveedores]);
 
   useEffect(() => {
-    if (openDrawer) {
+    if (necesitaProveedores) {
       fetchAllProveedores();
     }
-  }, [openDrawer, fetchAllProveedores]);
+  }, [necesitaProveedores, fetchAllProveedores]);
 
 
   const handleChange = (key: keyof FiltroProductos, value: string | string[]) => {

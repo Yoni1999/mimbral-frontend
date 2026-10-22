@@ -2,7 +2,7 @@
 import { useState, useEffect, type ElementType } from "react";
 import { useRouter } from "next/navigation";
 import { alpha, keyframes } from "@mui/material/styles";
-import { Box, Button, Card, CardContent, Chip, Grid, Stack, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Chip, Grid, Skeleton, Stack, Typography } from "@mui/material";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import {
   IconTrendingUp,
@@ -13,6 +13,9 @@ import {
   IconUsersGroup,
   IconArrowRight,
 } from "@tabler/icons-react";
+import { BACKEND_URL } from "@/config";
+import { formatUnidades, formatVentas } from "@/utils/format";
+import { useApiDatos } from "@/utils/useCargaDatos";
 
 const floatIn = keyframes`
   0% {
@@ -28,8 +31,6 @@ const floatIn = keyframes`
 const launcherItems = [
   {
     title: "Resumen Ventas",
-    value: "500K",
-    description: "Resumen de ventas totales",
     route: "/utilities/ventas/resumen-ventas",
     icon: IconTrendingUp,
     accent: "#2563eb",
@@ -37,8 +38,6 @@ const launcherItems = [
   },
   {
     title: "Ventas por Canal",
-    value: "300K",
-    description: "Analisis de ventas por canal comercial",
     route: "/utilities/ventas/ventas-por-canal",
     icon: IconChartBar,
     accent: "#0f766e",
@@ -46,17 +45,13 @@ const launcherItems = [
   },
   {
     title: "Analisis Categorias",
-    value: "132 Categorias",
-    description: "Analisis de ventas por categoria",
-    route: "/utilities/analisis-categoria/resumen-categorias",
+    route: "/utilities/analisis-categoria",
     icon: IconShoppingCart,
     accent: "#dc2626",
     softAccent: "rgba(220, 38, 38, 0.10)",
   },
   {
     title: "Analisis Por Producto",
-    value: "200K",
-    description: "Analiza ventas por SKU",
     route: "/utilities/analisis-producto1.1",
     icon: IconBox,
     accent: "#7c3aed",
@@ -64,8 +59,6 @@ const launcherItems = [
   },
   {
     title: "Administrador de Metas",
-    value: "250K",
-    description: "Periodos, objetivos y cumplimiento por vendedor y canal",
     route: "/metas",
     icon: IconCategory,
     accent: "#ea580c",
@@ -73,8 +66,6 @@ const launcherItems = [
   },
   {
     title: "Ventas por Vendedor",
-    value: "100K",
-    description: "Analisis de ventas por vendedor",
     route: "/utilities/ventas/ventas-por-vendedor",
     icon: IconUsersGroup,
     accent: "#0f766e",
@@ -82,10 +73,101 @@ const launcherItems = [
   },
 ];
 
+
+const NOMBRE_CANAL: Record<string, string> = {
+  Empresas: "Empresas",
+  Chorrillo: "Chorrillos",
+  Balmaceda: "Balmaceda",
+  Vitex: "Vtex",
+  Meli: "Mercado Libre",
+  Falabella: "Falabella",
+};
+
+// Cuentas de vendedor que en SAP representan un canal, no a una persona
+// (mismas listas que las reglas de canal del back).
+const CUENTAS_DE_CANAL = new Set([355, 398, 426, 364, 371, 401, 397]);
+
+const aFecha = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+const variacion = (pct: number | null | undefined) =>
+  typeof pct === "number" ? `${pct > 0 ? "+" : ""}${pct.toFixed(1)}% vs período anterior` : "";
+
+/** Datos reales del mes en curso para cada tarjeta del inicio. */
+function useResumenInicio() {
+  const hoy = new Date();
+  const desde = aFecha(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
+  const hasta = aFecha(hoy);
+  const mes = `fechaInicio=${desde}&fechaFin=${hasta}`;
+  const api = (ruta: string) => `${BACKEND_URL}/api/${ruta}`;
+
+  const ventas = useApiDatos<any>(api(`ventas-periodo?${mes}`), {});
+  // ventas-canal solo respeta las fechas si no se le manda periodo.
+  const canales = useApiDatos<any[]>(api(`ventas-canal?${mes}`), []);
+  const categorias = useApiDatos<any[]>(api("resumen-categoria/mostrar-categorias"), []);
+  const productos = useApiDatos<any>(api(`productos-distintos-periodo?${mes}`), {});
+  const metas = useApiDatos<any>(api("goals/summary"), {});
+  const vendedores = useApiDatos<any[]>(api(`top-vendedores?${mes}`), []);
+
+  const fila = Array.isArray(canales.datos) ? canales.datos[0] : null;
+  const [canalTop, ventaCanalTop] = fila
+    ? (Object.entries(fila) as [string, number][]).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0] ?? []
+    : [];
+  // top-vendedores no viene ordenado por venta: se ordena antes de elegir.
+  const vendedorTop = (Array.isArray(vendedores.datos) ? [...vendedores.datos] : [])
+    .sort((a, b) => (b.TotalVentas ?? 0) - (a.TotalVentas ?? 0))
+    .find((v) => !CUENTAS_DE_CANAL.has(Number(v.SlpCode)));
+  const sinDato = "—";
+
+  return {
+    "Resumen Ventas": {
+      cargando: ventas.cargando,
+      value: ventas.error ? sinDato : formatVentas(ventas.datos.TotalVentasPeriodo ?? 0),
+      description: ventas.error
+        ? "No se pudo cargar la venta del mes"
+        : `Venta neta del mes · ${variacion(ventas.datos.PorcentajeCambio)}`,
+    },
+    "Ventas por Canal": {
+      cargando: canales.cargando,
+      value: canalTop ? `${NOMBRE_CANAL[canalTop] || canalTop}` : sinDato,
+      description: canalTop
+        ? `Canal con más venta del mes: ${formatVentas(ventaCanalTop ?? 0)}`
+        : "Sin ventas por canal en el mes",
+    },
+    "Analisis Categorias": {
+      cargando: categorias.cargando,
+      value: categorias.error ? sinDato : `${formatUnidades(categorias.datos.length)} Categorias`,
+      description: "Analisis de ventas por categoria",
+    },
+    "Analisis Por Producto": {
+      cargando: productos.cargando,
+      value: productos.error ? sinDato : `${formatUnidades(productos.datos.ProductosPeriodoActual ?? 0)} SKU`,
+      description: productos.error
+        ? "No se pudo cargar los productos del mes"
+        : `Vendidos en el mes · ${variacion(productos.datos.PorcentajeCambio)}`,
+    },
+    "Administrador de Metas": {
+      cargando: metas.cargando,
+      value: metas.error ? sinDato : `${formatUnidades(metas.datos.activeGoals ?? 0)} activas`,
+      description: metas.datos.activePeriod?.name
+        ? `Período activo: ${metas.datos.activePeriod.name}`
+        : "Periodos, objetivos y cumplimiento por vendedor y canal",
+    },
+    "Ventas por Vendedor": {
+      cargando: vendedores.cargando,
+      value: vendedorTop ? formatVentas(vendedorTop.TotalVentas ?? 0) : sinDato,
+      description: vendedorTop
+        ? `Vendedor con más venta del mes: ${vendedorTop.Nombre}`
+        : "Analisis de ventas por vendedor",
+    },
+  } as Record<string, { cargando: boolean; value: string; description: string }>;
+}
+
 function LauncherCard({
   title,
   value,
   description,
+  cargando,
   route,
   icon: Icon,
   accent,
@@ -95,6 +177,7 @@ function LauncherCard({
   title: string;
   value: string;
   description: string;
+  cargando: boolean;
   route: string;
   icon: ElementType;
   accent: string;
@@ -186,10 +269,10 @@ function LauncherCard({
             {title}
           </Typography>
           <Typography variant="h4" fontWeight={900} sx={{ mt: 1, color: accent }}>
-            {value}
+            {cargando ? <Skeleton width="60%" /> : value}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {description}
+            {cargando ? <Skeleton width="85%" /> : description}
           </Typography>
         </Box>
 
@@ -231,6 +314,7 @@ function LauncherCard({
 const Dashboard = () => {
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
+  const resumen = useResumenInicio();
 
   useEffect(() => {
     setIsClient(true);
@@ -273,7 +357,11 @@ const Dashboard = () => {
           <Grid container spacing={2.5}>
             {launcherItems.map((item) => (
               <Grid item xs={12} sm={6} md={4} key={item.title}>
-                <LauncherCard {...item} onClick={(route) => router.push(route)} />
+                <LauncherCard
+                  {...item}
+                  {...resumen[item.title]}
+                  onClick={(route) => router.push(route)}
+                />
               </Grid>
             ))}
           </Grid>

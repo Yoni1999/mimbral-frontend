@@ -202,7 +202,7 @@ const ProductosVendidos = ({
                 Stock Actual
               </StyledTableCell>
 
-              <StyledTableCell>Stock Chorrillo</StyledTableCell>
+              <StyledTableCell>Stock Chorrillos</StyledTableCell>
               <StyledTableCell>OC (On Order)</StyledTableCell>
             </TableRow>
           </TableHead>

@@ -9,6 +9,7 @@ import {
   Popover,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
@@ -25,6 +26,11 @@ interface DateRangeFilterProps {
   value: DateRangeValue | null;
   onChange: (value: DateRangeValue | null) => void;
   label?: string;
+  /** Versión de 34 px para barras de filtros compactas. */
+  compacto?: boolean;
+  /** Solo el ícono del calendario (el rango elegido se lee en el título de la
+   *  vista y en el tooltip); abre el mismo selector. */
+  soloIcono?: boolean;
 }
 
 const DAYS_ES = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"];
@@ -43,7 +49,7 @@ const MONTHS_ES = [
   "Diciembre",
 ];
 
-function toDateStr(date: Date): string {
+export function toDateStr(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
@@ -103,7 +109,20 @@ function formatShort(date: Date | null): string {
   return `${date.getDate()} ${MONTHS_ES[date.getMonth()].slice(0, 3)} ${date.getFullYear()}`;
 }
 
-function buildPresets(today: Date) {
+/** Texto del rango. En compacto se abrevia: "20 Oct 2026" si es un día,
+ *  "1 Sep – 30 Sep 2026" si es del mismo año. */
+function textoRango(inicio: string, fin: string, compacto: boolean): string {
+  const a = parseDate(inicio) ?? null;
+  const b = parseDate(fin) ?? null;
+  if (!compacto || !a || !b) return `${formatShort(a)} - ${formatShort(b)}`;
+  if (isSameDay(a, b)) return formatShort(a);
+  if (a.getFullYear() === b.getFullYear()) {
+    return `${a.getDate()} ${MONTHS_ES[a.getMonth()].slice(0, 3)} – ${formatShort(b)}`;
+  }
+  return `${formatShort(a)} – ${formatShort(b)}`;
+}
+
+export function buildPresets(today: Date) {
   const y = today.getFullYear();
   const m = today.getMonth();
   const d = today.getDate();
@@ -286,6 +305,8 @@ export default function DateRangeFilter({
   value,
   onChange,
   label = "Rango de Fecha",
+  compacto = false,
+  soloIcono = false,
 }: DateRangeFilterProps) {
   const today = useMemo(() => new Date(), []);
   const presets = useMemo(() => buildPresets(today), [today]);
@@ -352,20 +373,42 @@ export default function DateRangeFilter({
     setAnchorEl(null);
   };
 
-  const triggerText = hasValue
-    ? `${formatShort(parseDate(value?.start ?? "") ?? null)} - ${formatShort(parseDate(value?.end ?? "") ?? null)}`
-    : "Hoy";
+  const triggerText = hasValue ? textoRango(value?.start ?? "", value?.end ?? "", compacto) : "Hoy";
 
   return (
     <>
-      <Typography variant="caption" sx={{ color: "#475569", fontWeight: 700, ml: 0.2, letterSpacing: 0.2 }}>
-        {label}
-      </Typography>
+      {soloIcono ? (
+        <Tooltip title={hasValue ? `${label}: ${textoRango(value?.start ?? "", value?.end ?? "", false)}` : label}>
+          <IconButton
+            aria-label={label}
+            onClick={handleOpen}
+            sx={{
+              width: 34,
+              height: 34,
+              borderRadius: "10px",
+              border: "1px solid",
+              borderColor: open ? "#2563eb" : "#e5e7eb",
+              bgcolor: open ? "#eff4ff" : "#fff",
+              color: open ? "#2563eb" : "#475569",
+              "&:hover": { borderColor: "#cbd5e1", bgcolor: "#f8fafc" },
+            }}
+          >
+            <CalendarMonthOutlinedIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
+      ) : (
+      <>
+      {!compacto && (
+        <Typography variant="caption" sx={{ color: "#475569", fontWeight: 700, ml: 0.2, letterSpacing: 0.2 }}>
+          {label}
+        </Typography>
+      )}
 
       <TextField
         fullWidth
         size="small"
         value={triggerText}
+        inputProps={{ "aria-label": label }}
         onClick={handleOpen}
         placeholder="Hoy"
         InputProps={{
@@ -387,10 +430,11 @@ export default function DateRangeFilter({
             </IconButton>
           ) : null,
           sx: {
-            height: 42,
+            height: compacto ? 34 : 42,
+            fontSize: compacto ? 13.5 : undefined,
             cursor: "pointer",
             bgcolor: "#fff",
-            borderRadius: 1.75,
+            borderRadius: compacto ? "10px" : 1.75,
             "& .MuiInputBase-input": {
               cursor: "pointer",
               color: hasValue ? "#0f172a" : "#64748b",
@@ -398,9 +442,9 @@ export default function DateRangeFilter({
           },
         }}
         sx={{
-          mt: 0.6,
+          mt: compacto ? 0 : 0.6,
           "& .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#cbd5e1",
+            borderColor: compacto ? "#e5e7eb" : "#cbd5e1",
           },
           "&:hover .MuiOutlinedInput-notchedOutline": {
             borderColor: "#94a3b8",
@@ -410,6 +454,8 @@ export default function DateRangeFilter({
           },
         }}
       />
+      </>
+      )}
 
       <Popover
         open={open}

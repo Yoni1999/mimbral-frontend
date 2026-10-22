@@ -1,15 +1,13 @@
 "use client";
 
 import React from "react";
-import Chart from "react-apexcharts";
+import { useRouter } from "next/navigation";
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
-import { Typography } from "@mui/material";
-import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
-import { ApexOptions } from "apexcharts";
-import { useRouter } from "next/navigation";
 import { BACKEND_URL } from "@/config";
-import { formatVentas } from "@/utils/format";
+import { CANALES, Panel, formatoMonto, formatoPesos, formatoPorcentaje, tinta } from "../../components/estilo";
+import ListaBarras from "../../components/ListaBarras";
+import { Box } from "@mui/material";
 
 interface Props {
   filters: {
@@ -22,21 +20,11 @@ interface Props {
   };
 }
 
-interface VentasCanalData {
-  [key: string]: number;
-}
-
+/** Participación de cada canal en la venta del período. Barras ordenadas en
+ *  vez de donut: con 6 canales se compara mejor el tamaño, y nombre, monto y
+ *  porcentaje quedan escritos junto a cada barra. */
 const VentasCanalChart: React.FC<Props> = ({ filters }) => {
   const router = useRouter();
-
-  const canalNameMap: Record<string, string> = {
-    empresas: "Empresas",
-    chorrillo: "Chorrillo",
-    balmaceda: "Balmaceda",
-    vitex: "Vtex",
-    meli: "Mercado Libre",
-    falabella: "Falabella",
-  };
 
   const buildQuery = () => {
     const params = new URLSearchParams();
@@ -51,67 +39,40 @@ const VentasCanalChart: React.FC<Props> = ({ filters }) => {
 
   // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
   const url = `${BACKEND_URL}/api/ventas-canal?${buildQuery()}`;
-  const {
-    datos: { labels, chartData, rawKeys },
-    cargando: loading,
-  } = useCargaDatos(
+  const { datos: filas, cargando } = useCargaDatos(
     url,
     async (signal) => {
-      const data: VentasCanalData = (await apiJson(url, { signal }))[0];
-      const keys = Object.keys(data);
-      return {
-        labels: keys.map((key) => canalNameMap[key.toLowerCase()] || key),
-        chartData: Object.values(data),
-        rawKeys: keys,
-      };
+      const data: Record<string, number> = (await apiJson(url, { signal }))?.[0] || {};
+      return CANALES.map((c) => ({ ...c, venta: Number(data[c.clave]) || 0 })).sort((a, b) => b.venta - a.venta);
     },
-    { labels: [] as string[], chartData: [] as number[], rawKeys: [] as string[] }
+    [] as { clave: string; nombre: string; color: string; venta: number }[]
   );
 
-  const options: ApexOptions = {
-    chart: {
-      type: "donut",
-      toolbar: { show: false },
-      events: {
-        dataPointSelection: (event, chartContext, config) => {
-          const indexClicked = config.dataPointIndex;
-          const canalOriginal = rawKeys[indexClicked];
-          router.push(`/utilities/ventas/ventas-por-canal?canal=${encodeURIComponent(canalOriginal)}`);
-        },
-      },
-    },
-    labels,
-    colors: ["#9583ff", "#ff914a", "#f0d45f", "#45914b", "#284270", "#d93a3a"],
-    tooltip: {
-      y: {
-        formatter: (val: number) => formatVentas(val),
-      },
-    },
-    responsive: [
-      {
-        breakpoint: 480,
-        options: {
-          chart: { width: 200 },
-          legend: { position: "bottom" },
-        },
-      },
-    ],
-  };
+  const total = filas.reduce((s, f) => s + f.venta, 0);
+  const irAlCanal = (clave: string) =>
+    router.push(`/utilities/ventas/ventas-por-canal?canal=${encodeURIComponent(clave)}`);
 
   return (
-    <DashboardCard
-      title="Ventas por Canal"
-      sx={{ backgroundColor: "#ffffff", height: 420 }}
-      elevation={1}
-    >
-      {loading ? (
-        <Typography variant="body1">Cargando gráfico...</Typography>
-      ) : (
-        <Chart options={options} series={chartData} type="donut" width="100%" height={300} />
-      )}
-    </DashboardCard>
+    <Panel titulo="Ventas por canal" descripcion={cargando ? "Cargando…" : `Total del período: ${formatoMonto(total)}`}>
+      <ListaBarras
+        cargando={cargando}
+        onSeleccionar={(item) => irAlCanal(item.clave)}
+        items={filas.map((f) => ({
+          clave: f.clave,
+          etiqueta: f.nombre,
+          valor: f.venta,
+          texto: formatoMonto(f.venta),
+          color: f.color,
+          detalle: (
+            <Box component="span" sx={{ color: tinta.tenue, fontSize: 13, minWidth: 44, textAlign: "right" }}>
+              {formatoPorcentaje(total ? (f.venta / total) * 100 : 0)}
+            </Box>
+          ),
+          tooltip: `${f.nombre}: ${formatoPesos(f.venta)} · clic para ver el detalle del canal`,
+        }))}
+      />
+    </Panel>
   );
 };
 
 export default VentasCanalChart;
-

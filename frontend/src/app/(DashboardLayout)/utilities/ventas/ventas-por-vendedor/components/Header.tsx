@@ -1,22 +1,14 @@
 "use client";
 
 import React from "react";
-import {
-  Box,
-  Grid,
-  Typography,
-  FormControl,
-  Select,
-  MenuItem,
-  Button,
-  Dialog,
-} from "@mui/material";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import { Autocomplete, Avatar, Box, Button, FormControl, MenuItem, Popover, Select, Stack, TextField, Typography } from "@mui/material";
+import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
 import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
-import DateRangeFilter, {
-  DateRangeValue,
-} from "../../components/DateRangeFilter";
+import DateRangeFilter, { DateRangeValue } from "../../components/DateRangeFilter";
+import RangosRapidos, { etiquetaRango, rangoInicial } from "../../components/RangosRapidos";
+import FrescuraDatos from "../../components/FrescuraDatos";
+import { BotonLimpiar, ChipFiltro, canalPorClave, controlSx, etiquetaControlSx, tarjetaSx, tinta } from "../../components/estilo";
 
 export interface Filters {
   vendedorEmpresa: string;
@@ -26,408 +18,246 @@ export interface Filters {
   canal: string;
 }
 
-interface HeaderVendedorProps {
-  filtros: Filters;
-  setFiltros: React.Dispatch<React.SetStateAction<Filters>>;
-  onAplicar: () => void;
+/** Canales con vendedores propios (los marketplaces no tienen vendedor). */
+const CANALES_VENDEDOR = [
+  { clave: "chorrillo", api: "Chorrillo" },
+  { clave: "empresas", api: "Empresas" },
+  { clave: "balmaceda", api: "Balmaceda" },
+] as const;
+
+const nombreCanal = (clave: string) => canalPorClave(clave)?.nombre ?? clave;
+
+const COMPARACIONES = [
+  { valor: "", etiqueta: "Período anterior" },
+  { valor: "MismoPeriodoAnoAnterior", etiqueta: "Mismo período año anterior" },
+];
+
+export interface Vendedor {
+  codigo: string;
+  nombre: string;
+  cargo: string;
+  imagen?: string;
+  canal: string;
 }
 
-const HeaderVendedor: React.FC<HeaderVendedorProps> = ({
-  filtros,
-  setFiltros,
-  onAplicar,
-}) => {
-  const [vendedoresDisponibles, setVendedoresDisponibles] = React.useState<any[]>([]);
-  const [vendedorSeleccionado, setVendedorSeleccionado] = React.useState<{
-    nombre: string;
-    memo: string;
-    imagen: string;
-  } | null>(null);
+interface Props {
+  filtros: Filters;
+  setFiltros: React.Dispatch<React.SetStateAction<Filters>>;
+}
 
-  const [openDialog, setOpenDialog] = React.useState(false);
-  const [showCanalWarning, setShowCanalWarning] = React.useState(false);
-  const [showVendedorModal, setShowVendedorModal] = React.useState(false);
+/** Barra de filtros de Ventas por vendedor. Cada cambio se aplica al
+ *  instante. El vendedor se busca por nombre en la lista de los canales con
+ *  vendedores (o del canal elegido); sin vendedor se ven los totales. */
+const HeaderVendedor: React.FC<Props> = ({ filtros, setFiltros }) => {
+  const [vendedores, setVendedores] = React.useState<Vendedor[]>([]);
+  const [cargandoVendedores, setCargandoVendedores] = React.useState(false);
+  const [filtrosAnchor, setFiltrosAnchor] = React.useState<HTMLElement | null>(null);
 
+  // Lista de vendedores: la del canal elegido o la de los tres canales. Si
+  // cambia el canal antes de que llegue, se cancela la anterior.
   React.useEffect(() => {
-    if (!filtros.canal) {
-      setShowCanalWarning(true);
-    }
-  }, []);
-
-  // Lista de vendedores del canal: si se cambia de canal antes de que llegue,
-  // se cancela la anterior para que no pise a la del canal nuevo.
-  const vendedoresCtrl = React.useRef<AbortController | null>(null);
-  React.useEffect(() => () => vendedoresCtrl.current?.abort(), []);
-
-  const handleChange = (key: keyof Filters, value: string) => {
-    if (key === "canal") {
-      // Fuera del actualizador de estado: ahí React puede ejecutarlo dos veces.
-      vendedoresCtrl.current?.abort();
-      const controller = new AbortController();
-      vendedoresCtrl.current = controller;
-      const url = `${BACKEND_URL}/api/oc/obvc?canal=${value}`;
-      apiJson(url, { signal: controller.signal })
-        .then((data) => {
-          if (controller.signal.aborted) return;
-          if (Array.isArray(data)) {
-            setVendedoresDisponibles(data);
-            setShowVendedorModal(true);
-          } else {
-            setVendedoresDisponibles([]);
-          }
-        })
-        .catch(() => {
-          if (!controller.signal.aborted) setVendedoresDisponibles([]);
-        });
-      setVendedorSeleccionado(null);
-    }
-
-    setFiltros((prev) => {
-      const nuevoEstado = { ...prev, [key]: value };
-      if (key === "canal") nuevoEstado.vendedorEmpresa = "";
-      return nuevoEstado;
+    const controller = new AbortController();
+    const canales = filtros.canal ? CANALES_VENDEDOR.filter((c) => c.clave === filtros.canal) : CANALES_VENDEDOR;
+    setCargandoVendedores(true);
+    Promise.all(
+      canales.map((c) =>
+        apiJson(`${BACKEND_URL}/api/oc/obvc?canal=${c.api}`, { signal: controller.signal })
+          .then((data: any[]) =>
+            (Array.isArray(data) ? data : []).map((v) => ({
+              codigo: String(v.SlpCode),
+              nombre: v.SlpName,
+              cargo: v.Memo,
+              imagen: v.U_Imagen || undefined,
+              canal: c.clave,
+            }))
+          )
+          .catch(() => [] as Vendedor[])
+      )
+    ).then((listas) => {
+      if (controller.signal.aborted) return;
+      setVendedores(listas.flat().sort((a, b) => a.canal.localeCompare(b.canal) || a.nombre.localeCompare(b.nombre)));
+      setCargandoVendedores(false);
     });
-  };
+    return () => controller.abort();
+  }, [filtros.canal]);
 
-  const handleDateChange = (range: DateRangeValue | null) => {
-    setFiltros((prev) => ({
-      ...prev,
-      fechaInicio: range?.start || "",
-      fechaFin: range?.end || "",
-    }));
-  };
+  const vendedor = vendedores.find((v) => v.codigo === String(filtros.vendedorEmpresa)) ?? null;
 
-  React.useEffect(() => {
-    if (!filtros.vendedorEmpresa || !Array.isArray(vendedoresDisponibles)) {
-      setVendedorSeleccionado(null);
-      return;
-    }
+  const cambiar = (cambios: Partial<Filters>) => setFiltros((prev) => ({ ...prev, ...cambios }));
 
-    const vendedor = vendedoresDisponibles.find(
-      (v) => v.SlpCode === filtros.vendedorEmpresa
-    );
+  const handleDateChange = (range: DateRangeValue | null) =>
+    cambiar(range ? { fechaInicio: range.start, fechaFin: range.end } : rangoInicial());
 
-    if (vendedor) {
-      setVendedorSeleccionado({
-        nombre: vendedor.SlpName,
-        memo: vendedor.Memo,
-        imagen: vendedor.U_Imagen,
-      });
-    } else {
-      setVendedorSeleccionado(null);
-    }
-  }, [filtros.vendedorEmpresa, vendedoresDisponibles]);
+  const limpiar = () => setFiltros({ vendedorEmpresa: "", modoComparacion: "", canal: "", ...rangoInicial() });
 
-  const handleClear = () => {
-    setFiltros({
-      vendedorEmpresa: "",
-      fechaInicio: "",
-      fechaFin: "",
-      modoComparacion: "",
-      canal: "",
-    });
-    setVendedorSeleccionado(null);
-    setVendedoresDisponibles([]);
-  };
-
-  const selectSx = {
-    mt: 0.6,
-    height: 42,
-    bgcolor: "#fff",
-    borderRadius: 1.75,
-    fontSize: "0.94rem",
-    color: "#334155",
-    "& .MuiSelect-select": {
-      display: "flex",
-      alignItems: "center",
-      py: 0,
-      px: 1.5,
-    },
-    "& .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#cbd5e1",
-    },
-    "&:hover .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#94a3b8",
-    },
-    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#2563eb",
-    },
-    "& .MuiSelect-icon": {
-      color: "#64748b",
-    },
-  } as const;
-
-  const fieldLabelSx = {
-    color: "#475569",
-    fontWeight: 700,
-    ml: 0.2,
-    letterSpacing: 0.2,
-  } as const;
+  const rango = etiquetaRango(filtros.fechaInicio, filtros.fechaFin);
+  const enEstadoInicial = !filtros.canal && !filtros.vendedorEmpresa && !filtros.modoComparacion && rango === "Ayer";
 
   return (
-    <>
-      <Dialog open={showCanalWarning}>
-        <Box p={3} textAlign="center" minWidth={360}>
-          <Typography variant="h6" fontWeight={600} mb={2}>
-            ¡Para Analizar un vendedor primero debes elegir su canal de ventas!
-          </Typography>
-
-          <Grid container spacing={4} justifyContent="center">
-            {[
-              { canal: "chorrillo", label: "Chorrillo", img: "https://mimbralb2c.vtexassets.com/assets/vtex.file-manager-graphql/images/e9a60107-d732-4cc3-a62f-d5fe5679b440___b7a7fd376ceb91d394f43267c7936901.jpg" },
-              { canal: "empresas", label: "Empresas", img: "https://cdn-icons-png.flaticon.com/512/3135/3135695.png" },
-              { canal: "balmaceda", label: "Balmaceda", img: "https://mimbralb2c.vtexassets.com/assets/vtex.file-manager-graphql/images/8862c350-c93b-4af7-9ee7-c5f56bb98b22___91d6e40eb7d601487470b5aa6d0cb3da.jpg" },
-            ].map(({ canal, label, img }) => (
-              <Grid item xs={12} sm={4} key={canal}>
-                <Box
-                  onClick={() => {
-                    handleChange("canal", canal);
-                    setShowCanalWarning(false);
-                  }}
-                  sx={{
-                    border: "2px solid #ccc",
-                    borderRadius: 2,
-                    p: 1,
-                    cursor: "pointer",
-                    transition: "0.3s",
-                    "&:hover": { borderColor: "#284270", boxShadow: 3 },
-                  }}
-                >
-                  <img
-                    src={img}
-                    alt={label}
-                    style={{ width: "100%", height: 100, objectFit: "cover", borderRadius: 8 }}
-                  />
-                  <Typography mt={1} fontWeight={600}>{label}</Typography>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
-
-          <Typography variant="body2" color="text.secondary" mt={3}>
-            Esta selección es necesaria para continuar.
-          </Typography>
+    <Box sx={{ ...tarjetaSx, position: "relative", mb: 2, px: { xs: 1.5, md: 2 }, py: 1.25 }}>
+      <FrescuraDatos />
+      <Stack direction={{ xs: "column", xl: "row" }} spacing={1.25} alignItems={{ xs: "stretch", xl: "center" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 190, flexShrink: 0 }}>
+          {vendedor && (
+            <Avatar src={vendedor.imagen} alt="" sx={{ width: 34, height: 34, fontSize: 14, bgcolor: "#eff4ff", color: tinta.acento }}>
+              {vendedor.nombre.charAt(0)}
+            </Avatar>
+          )}
+          <Box sx={{ minWidth: 0 }}>
+            <Typography noWrap sx={{ fontSize: 16, fontWeight: 800, color: tinta.primaria, letterSpacing: "-0.01em", lineHeight: 1.2 }}>
+              {vendedor ? vendedor.nombre : "Ventas por vendedor"}
+            </Typography>
+            <Typography noWrap sx={{ fontSize: 11.5, color: tinta.secundaria }}>
+              <strong style={{ color: tinta.primaria }}>
+                {vendedor ? vendedor.cargo : filtros.canal ? nombreCanal(filtros.canal) : "Todos los vendedores"}
+              </strong>{" "}
+              · <strong style={{ color: tinta.primaria }}>{rango}</strong>
+            </Typography>
+          </Box>
         </Box>
-      </Dialog>
 
-      <Dialog open={showVendedorModal} onClose={() => setShowVendedorModal(false)}>
-        <Box p={3}>
-          <Typography variant="h6" fontWeight={600} mb={2}>
-            Selecciona un vendedor asociado al canal
-          </Typography>
-          <Grid container spacing={2}>
-            {vendedoresDisponibles.map((vendedor) => (
-              <Grid item xs={12} sm={6} md={4} key={vendedor.SlpCode}>
-                <Box
-                  onClick={() => {
-                    handleChange("vendedorEmpresa", vendedor.SlpCode);
-                    setShowVendedorModal(false);
-                  }}
-                  sx={{
-                    border: "1px solid #ccc",
-                    borderRadius: 2,
-                    p: 2,
-                    textAlign: "center",
-                    cursor: "pointer",
-                    "&:hover": { backgroundColor: "#f5f5f5" },
-                  }}
-                >
-                  <img
-                    src={vendedor.U_Imagen || "https://res.cloudinary.com/dhzahos7u/image/upload/v1747075685/sin_imagen_hz1c4d.jpg"}
-                    alt={vendedor.SlpName}
-                    style={{
-                      width: 66,
-                      height: 66,
-                      objectFit: "cover",
-                      borderRadius: "50%",
-                      marginBottom: 8,
-                    }}
-                  />
-                  <Typography fontWeight={600}>{vendedor.SlpName}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {vendedor.Memo}
-                  </Typography>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <RangosRapidos
+            fechaInicio={filtros.fechaInicio}
+            fechaFin={filtros.fechaFin}
+            onElegir={(fechaInicio, fechaFin) => cambiar({ fechaInicio, fechaFin })}
+          >
+            {filtros.modoComparacion && (
+              <ChipFiltro etiqueta="vs año anterior" onQuitar={() => cambiar({ modoComparacion: "" })} />
+            )}
+          </RangosRapidos>
         </Box>
-      </Dialog>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md">
-        <Box
-          p={2}
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          sx={{ backgroundColor: "#fff" }}
-        >
-          <img
-            src={
-              vendedorSeleccionado?.imagen ||
-              "https://res.cloudinary.com/dhzahos7u/image/upload/v1747075685/sin_imagen_hz1c4d.jpg"
-            }
-            alt="Imagen ampliada"
-            style={{
-              maxWidth: "100%",
-              maxHeight: "80vh",
-              borderRadius: 8,
-              boxShadow: "0 0 12px rgba(0,0,0,0.3)",
-            }}
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }} sx={{ flexShrink: 0 }}>
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <Select
+              value={filtros.canal}
+              displayEmpty
+              inputProps={{ "aria-label": "Canal" }}
+              // Al cambiar de canal se suelta el vendedor si no es de ese canal.
+              onChange={(e) => {
+                const canal = e.target.value;
+                cambiar({ canal, vendedorEmpresa: !canal || vendedor?.canal === canal ? filtros.vendedorEmpresa : "" });
+              }}
+              sx={controlSx}
+            >
+              <MenuItem value="">Todos los canales</MenuItem>
+              {CANALES_VENDEDOR.map((c) => (
+                <MenuItem key={c.clave} value={c.clave}>
+                  <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: canalPorClave(c.clave)?.color, mr: 1, display: "inline-block" }} />
+                  {nombreCanal(c.clave)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Autocomplete
+            size="small"
+            sx={{ minWidth: 230 }}
+            options={vendedores}
+            value={vendedor}
+            loading={cargandoVendedores}
+            groupBy={filtros.canal ? undefined : (v) => nombreCanal(v.canal)}
+            getOptionLabel={(v) => v.nombre}
+            isOptionEqualToValue={(a, b) => a.codigo === b.codigo}
+            onChange={(_, v) => cambiar({ vendedorEmpresa: v?.codigo ?? "" })}
+            noOptionsText="Sin vendedores"
+            loadingText="Cargando vendedores…"
+            renderOption={(props, v) => (
+              <Box component="li" {...props} key={v.codigo} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Avatar src={v.imagen} alt="" sx={{ width: 24, height: 24, fontSize: 11 }}>
+                  {v.nombre.charAt(0)}
+                </Avatar>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography noWrap sx={{ fontSize: 13, fontWeight: 600 }}>{v.nombre}</Typography>
+                  <Typography noWrap sx={{ fontSize: 11, color: tinta.tenue }}>{v.cargo}</Typography>
+                </Box>
+              </Box>
+            )}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Todos los vendedores"
+                inputProps={{ ...params.inputProps, "aria-label": "Vendedor" }}
+                sx={{ "& .MuiOutlinedInput-root": { ...controlSx, py: "0 !important" } }}
+              />
+            )}
           />
-        </Box>
-      </Dialog>
 
-      <Box
-        sx={{
-          mb: 2,
-          px: 2,
-          py: 2,
-          backgroundColor: "rgba(255, 255, 255, 0.5)",
-          borderRadius: 1,
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-          backdropFilter: "blur(6px)",
-          border: "1px solid rgba(255, 255, 255, 0.3)",
+          <DateRangeFilter
+            value={filtros.fechaInicio && filtros.fechaFin ? { start: filtros.fechaInicio, end: filtros.fechaFin } : null}
+            onChange={handleDateChange}
+            label="Rango de fecha"
+            soloIcono
+          />
+
+          <Button
+            variant="outlined"
+            startIcon={<IconAdjustmentsHorizontal size={16} />}
+            onClick={(e) => setFiltrosAnchor(e.currentTarget)}
+            sx={{
+              textTransform: "none",
+              borderRadius: "10px",
+              height: 34,
+              px: 1.5,
+              whiteSpace: "nowrap",
+              borderColor: filtros.modoComparacion ? tinta.acento : tinta.borde,
+              color: filtros.modoComparacion ? tinta.acento : tinta.primaria,
+              fontWeight: 600,
+              fontSize: 13,
+              "&:hover": { borderColor: "#cbd5e1", bgcolor: tinta.fondoSuave },
+            }}
+          >
+            Filtros
+          </Button>
+
+          <BotonLimpiar onClick={limpiar} disabled={enEstadoInicial} />
+        </Stack>
+      </Stack>
+
+      <Popover
+        open={!!filtrosAnchor}
+        anchorEl={filtrosAnchor}
+        onClose={() => setFiltrosAnchor(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            p: 2.5,
+            width: 320,
+            borderRadius: "14px",
+            border: `1px solid ${tinta.borde}`,
+            boxShadow: "0 20px 50px rgba(15, 23, 42, 0.16)",
+          },
         }}
       >
-        <Grid container alignItems="center" spacing={2}>
-          <Grid item xs={12} md={3}>
-            <Box display="flex" alignItems="center" gap={1.5}>
-              <img
-                src={
-                  vendedorSeleccionado?.imagen ||
-                  "https://res.cloudinary.com/dhzahos7u/image/upload/v1747075685/sin_imagen_hz1c4d.jpg"
-                }
-                alt="Foto del vendedor"
-                onClick={() => setOpenDialog(true)}
-                style={{
-                  width: 66,
-                  height: 66,
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  border: "1px solid #ccc",
-                  cursor: "pointer",
-                }}
-              />
-              <Box>
-                <Typography variant="h6" fontWeight={700}>
-                  {vendedorSeleccionado?.nombre || "Todos los vendedores"}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {vendedorSeleccionado?.memo || "Vendedores"}
-                </Typography>
-              </Box>
-            </Box>
-          </Grid>
-
-          <Grid item xs={12} md={9}>
-            <Grid container spacing={1.5} justifyContent="flex-end">
-              <Grid item xs={12} sm={4} md={2.4}>
-                <FormControl fullWidth size="small">
-                  <Typography variant="caption" sx={fieldLabelSx}>
-                    Canal
-                  </Typography>
-                  <Select
-                    value={filtros.canal || ""}
-                    onChange={(e) => handleChange("canal", e.target.value)}
-                    displayEmpty
-                    sx={selectSx}
-                  >
-                    <MenuItem value="">
-                      <em>Todos</em>
-                    </MenuItem>
-                    <MenuItem value="chorrillo">Chorrillo</MenuItem>
-                    <MenuItem value="empresas">Empresas</MenuItem>
-                    <MenuItem value="balmaceda">Balmaceda</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={5} md={2.4}>
-                <FormControl fullWidth size="small">
-                  <Typography variant="caption" sx={fieldLabelSx}>
-                    Vendedor
-                  </Typography>
-                  <Select
-                    value={filtros.vendedorEmpresa}
-                    onChange={(e) =>
-                      handleChange("vendedorEmpresa", e.target.value)
-                    }
-                    displayEmpty
-                    sx={selectSx}
-                  >
-                    <MenuItem value="">
-                      <em>Todos</em>
-                    </MenuItem>
-                    {Array.isArray(vendedoresDisponibles) &&
-                      vendedoresDisponibles.map((vendedor) => (
-                        <MenuItem
-                          key={vendedor.SlpCode}
-                          value={vendedor.SlpCode}
-                        >
-                          {vendedor.SlpName}
-                        </MenuItem>
-                      ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={4} md={2.4}>
-                <DateRangeFilter
-                  value={
-                    filtros.fechaInicio && filtros.fechaFin
-                      ? { start: filtros.fechaInicio, end: filtros.fechaFin }
-                      : null
-                  }
-                  onChange={handleDateChange}
-                  label="Rango de Fecha"
-                />
-              </Grid>
-
-              <Grid item xs={6} sm={3} md={1.5}>
-                <FormControl fullWidth size="small">
-                  <Typography variant="caption" sx={fieldLabelSx}>
-                    Comparar con
-                  </Typography>
-                  <Select
-                    value={filtros.modoComparacion}
-                    onChange={(e) =>
-                      handleChange("modoComparacion", e.target.value)
-                    }
-                    displayEmpty
-                    sx={selectSx}
-                  >
-                    <MenuItem value="">
-                      <em>Seleccionar</em>
-                    </MenuItem>
-                    <MenuItem value="PeriodoAnterior">Periodo anterior</MenuItem>
-                    <MenuItem value="MismoPeriodoAnoAnterior">
-                      Mismo período año anterior
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={6} sm={3} md={1.5}>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  size="small"
-                  fullWidth
-                  onClick={handleClear}
-                  startIcon={<DeleteOutlineIcon />}
-                  sx={{ height: 42, borderRadius: 1.75, textTransform: "none" }}
-                >
-                  Limpiar
-                </Button>
-              </Grid>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Box>
-    </>
+        <Typography sx={{ fontSize: 15, fontWeight: 700, color: tinta.primaria }}>Filtros</Typography>
+        <Typography sx={{ fontSize: 12.5, color: tinta.secundaria, mb: 2 }}>
+          Contra qué período se calculan las variaciones.
+        </Typography>
+        <Typography sx={etiquetaControlSx}>Comparar con</Typography>
+        <FormControl fullWidth size="small">
+          <Select
+            value={filtros.modoComparacion}
+            displayEmpty
+            inputProps={{ "aria-label": "Comparar con" }}
+            onChange={(e) => {
+              cambiar({ modoComparacion: e.target.value });
+              setFiltrosAnchor(null);
+            }}
+            sx={controlSx}
+          >
+            {COMPARACIONES.map((c) => (
+              <MenuItem key={c.valor} value={c.valor}>
+                {c.etiqueta}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Popover>
+    </Box>
   );
 };
 
 export default HeaderVendedor;
-

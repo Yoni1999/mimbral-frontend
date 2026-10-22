@@ -1,48 +1,34 @@
 "use client";
 
-import { useState } from "react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
-import {
-  Grid,
-  Paper,
-  CircularProgress,
-  Box,
-} from "@mui/material";
+import { Grid, Skeleton, Box } from "@mui/material";
 import VentasChart from "./components/VentasChart";
-import MetricCard from "./components/MetricCard";
+import MetricCard from "../components/MetricCard";
 import CategoriasBarChart from "./components/CategoriasBarChart";
-import dynamic from "next/dynamic";
-import SeccionTitulo from "./components/SeccionTitulo";
+import SeccionTitulo from "../components/SeccionTitulo";
 import { apiJson } from "@/utils/apiClient";
 import { useApiDatos, useCargaDatos } from "@/utils/useCargaDatos";
 import { IconCurrencyDollar, IconTrendingUp, IconCreditCard, IconShoppingCart, IconStack2, IconBox, } from "@tabler/icons-react";
 import TopRentabilidadMinima from "./components/Top10RentabilidadMinima";
-import FotoDelDiaHeader, { Filters } from "./components/FotoDelDiaHeader";
+import FotoDelDiaHeader, { Filters, filtrosIniciales } from "./components/FotoDelDiaHeader";
 import { BACKEND_URL } from "@/config";
-import { formatVentas, formatUnidades } from "@/utils/format";
+import { formatUnidades } from "@/utils/format";
+import { canalPorClave, formatoMonto, formatoPorcentaje } from "../components/estilo";
+import { conPeriodoRapido, etiquetaRango, resolverPeriodoRapido } from "../components/RangosRapidos";
+import { useDetalleTarjetas } from "../components/detalle/useDetalleTarjetas";
+import { useEstadoVista } from "@/utils/estadoVista";
 import ProductosVendidos from "./components/ProductosVendidos";
 import TopVendedoresChart from "./components/Top10Vendedores";
 
-const VentasCanalChart = dynamic(() => import("./components/VentasCanalChart"), {
-  ssr: false, 
-});
-const TopProductosChart = dynamic(() => import("./components/Top10Vendedores"), {
-  ssr: false,
-});
-const RentabilidadChart = dynamic(() => import("./components/Top10RentabilidadChart"), {
-  ssr: false,
-});
+import VentasCanalChart from "./components/VentasCanalChart";
+import RentabilidadChart from "./components/Top10RentabilidadChart";
 
 const ResumenVentas = () => {
-  const [filtros, setFiltros] = useState<Filters>({
-    canal: "", 
-    temporada: "",
-    fechaInicio: "",
-    fechaFin: "",
-    sku: "",
-    familia: "",
-    subfamilia: "",
-    comparacion: "",
+  // Recuerda lo buscado (al volver a la vista o reabrir la pestaña sigue
+  // ahí); la primera vez abre en "Ayer". Ver useEstadoVista.
+  const [filtros, setFiltros] = useEstadoVista<Filters>("resumen-ventas", filtrosIniciales, {
+    serializar: conPeriodoRapido,
+    restaurar: resolverPeriodoRapido,
   });
 
   const buildQuery = () => {
@@ -138,141 +124,139 @@ const ResumenVentas = () => {
     totalVentas: item.Total_Ventas,
   }));
 
-  // Mientras un bloque carga se muestra el indicador en lugar del dato viejo.
-  const conCarga = (bloque: { cargando: boolean }, contenido: React.ReactNode, alto = 300) =>
+  // Mientras un bloque carga se muestra un esqueleto del alto del panel en
+  // lugar del dato viejo.
+  const conCarga = (bloque: { cargando: boolean }, contenido: React.ReactNode, alto = 420) =>
     !tarjetasListas || bloque.cargando ? (
-      <Paper
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          height: alto,
-          borderRadius: 2,
-          boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
-        }}
-      >
-        <CircularProgress />
-      </Paper>
+      <Skeleton variant="rounded" height={alto} sx={{ borderRadius: "14px" }} />
     ) : (
       contenido
     );
 
+  const tarjetas = [
+    {
+      title: "Ventas",
+      value: formatoMonto(ventasHoy.TotalVentasPeriodo),
+      subtitle: `vs ${formatoMonto(ventasHoy.PromedioVentasPeriodo)}`,
+      percentageChange: ventasHoy.PorcentajeCambio,
+      cargando: cargandoVentas,
+      icon: <IconCurrencyDollar />,
+    },
+    {
+      title: "Margen de ventas",
+      value: formatoPorcentaje(margenBrutoHoy.MargenPorcentajePeriodo, 2),
+      // VariacionMargen es la diferencia en puntos: margen actual − anterior.
+      subtitle: `vs ${formatoPorcentaje(
+        (margenBrutoHoy.MargenPorcentajePeriodo ?? 0) - (margenBrutoHoy.VariacionMargen ?? 0),
+        2
+      )}`,
+      percentageChange: margenBrutoHoy.VariacionMargen,
+      cargando: cargandoMargen,
+      icon: <IconTrendingUp />,
+    },
+    {
+      title: "Cantidad de ventas",
+      value: formatUnidades(transaccionHoy.CantidadTransaccionesHoy),
+      subtitle: `vs ${formatUnidades(transaccionHoy.CantidadTransaccionesAyer)}`,
+      percentageChange: transaccionHoy.PorcentajeCambio,
+      cargando: cargandoTransacciones,
+      icon: <IconShoppingCart />,
+    },
+    {
+      title: "Notas de crédito",
+      value: formatUnidades(Notascredito.CantidadNotasCreditoPeriodo),
+      subtitle: `vs ${formatUnidades(Notascredito.CantidadNotasCreditoAnterior)}`,
+      percentageChange: Notascredito.PorcentajeCambioNotasCredito,
+      // Más notas de crédito es peor: la subida se pinta en rojo.
+      masEsMejor: false,
+      cargando: cargandoNotas,
+      icon: <IconCreditCard />,
+    },
+    {
+      title: "Ítems vendidos",
+      value: formatUnidades(productosDistintos.ProductosPeriodoActual),
+      subtitle: `vs ${formatUnidades(productosDistintos.ProductosPeriodoAnterior)}`,
+      percentageChange: productosDistintos.PorcentajeCambio,
+      cargando: cargandoProductos,
+      icon: <IconStack2 />,
+    },
+    {
+      title: "Unidades vendidas",
+      value: formatUnidades(unidadesVendidas.CantidadVendida),
+      subtitle: `vs ${formatUnidades(unidadesVendidas.CantidadVendidaAnterior)}`,
+      percentageChange: unidadesVendidas.PorcentajeCambio,
+      cargando: cargandoUnidades,
+      icon: <IconBox />,
+    },
+  ];
+
+  // Detalle de las tarjetas: mismos filtros que ellas.
+  const detalleTarjetas = useDetalleTarjetas(
+    {
+      fechaInicio: filtros.fechaInicio,
+      fechaFin: filtros.fechaFin,
+      canal: filtros.canal,
+      sku: filtros.sku,
+      familia: filtros.familia,
+      subfamilia: filtros.subfamilia,
+    },
+    [
+      filtros.temporada || etiquetaRango(filtros.fechaInicio, filtros.fechaFin),
+      filtros.canal ? `Canal: ${canalPorClave(filtros.canal)?.nombre ?? filtros.canal}` : "Todos los canales",
+      filtros.sku ? `SKU: ${filtros.sku}` : "",
+      filtros.familia ? `Familia: ${filtros.familia}` : "",
+      filtros.subfamilia ? `Subfamilia: ${filtros.subfamilia}` : "",
+    ].filter(Boolean)
+  );
+
   return (
     <PageContainer title="Resumen Ventas" description="Resumen de las ventas">
-      <Box sx={{ p: 0}}>
-        <FotoDelDiaHeader onFilterChange={(f) => setFiltros(f)} />
+      <Box sx={{ maxWidth: 1680, mx: "auto" }}>
+        <FotoDelDiaHeader valorInicial={filtros} onFilterChange={(f) => setFiltros(f)} />
+
         <Grid container spacing={2}>
-      <Grid item xs={12}>
-        <Grid container spacing={2}>
-          {[
-            {
-              title: "Ventas",
-              value: formatVentas(ventasHoy.TotalVentasPeriodo),
-              subtitle: `Periodo Anterior: ${formatVentas(
-                ventasHoy.PromedioVentasPeriodo
-              )}`,
-              percentageChange: ventasHoy.PorcentajeCambio,
-              cargando: cargandoVentas,
-              icon: <IconCurrencyDollar />,
-            },
-            {
-              title: "Margen Ventas",
-              value: `${margenBrutoHoy.MargenPorcentajePeriodo}%`,
-              subtitle: `Variación: ${margenBrutoHoy.VariacionMargen}%`,
-              percentageChange: margenBrutoHoy.VariacionMargen,
-              cargando: cargandoMargen,
-              icon: <IconTrendingUp />,
-            },
-            {
-              title: "Cantidad de Ventas",
-              value: formatUnidades(transaccionHoy.CantidadTransaccionesHoy),
-              subtitle: `Periodo Anterior: ${formatUnidades(transaccionHoy.CantidadTransaccionesAyer)}`,
-              percentageChange: transaccionHoy.PorcentajeCambio,
-              cargando: cargandoTransacciones,
-              icon: <IconShoppingCart />,
-            },
-            {
-              title: "Notas de Crédito",
-              value: formatUnidades(Notascredito.CantidadNotasCreditoPeriodo),
-              subtitle: `Periodo Anterior: ${formatUnidades(Notascredito.CantidadNotasCreditoAnterior)}`,
-              percentageChange: Notascredito.PorcentajeCambioNotasCredito,
-              cargando: cargandoNotas,
-              icon: <IconCreditCard />,
-            },
-            {
-              title: "Ítems Vendidos",
-              value: formatUnidades(productosDistintos.ProductosPeriodoActual),
-              subtitle: `Periodo Anterior: ${formatUnidades(productosDistintos.ProductosPeriodoAnterior)}`,
-              percentageChange: productosDistintos.PorcentajeCambio,
-              cargando: cargandoProductos,
-              icon: <IconStack2 />,
-            },
-            {
-              title: "Unidades Vendidas",
-              value: formatUnidades(unidadesVendidas.CantidadVendida),
-              subtitle: `Periodo Anterior: ${formatUnidades(unidadesVendidas.CantidadVendidaAnterior)}`,
-              percentageChange: unidadesVendidas.PorcentajeCambio,
-              cargando: cargandoUnidades,
-              icon: <IconBox />,
-            },
-          ].map((card, index) => (
-            <Grid item xs={12} sm={6} md={4} lg={2} key={index}> 
-              <MetricCard
-                title={card.title}
-                value={card.value}
-                subtitle={card.subtitle}
-                percentageChange={card.percentageChange}
-                icon={card.icon}
-                elevation={1}
-                cargando={card.cargando}
-              />
+          {tarjetas.map((card) => (
+            <Grid item xs={12} sm={6} md={4} xl={2} key={card.title}>
+              <MetricCard {...card} onClick={detalleTarjetas.alPulsar(card.title)} />
             </Grid>
           ))}
-        </Grid>
-      </Grid>
 
-      <Grid item xs={12}>
-        <SeccionTitulo
-          title="Análisis de Ventas"
-          infoRight="Visualización de tendencias y distribución de ventas."
-        />
-      </Grid>
-        <Grid item xs={12} md={5}> {/* Side-by-side with main chart for channel insights */}
-          <VentasCanalChart filters={filtros} />
+          <Grid item xs={12}>
+            <SeccionTitulo title="Canales" infoRight="Participación de cada canal y su tendencia diaria." />
+          </Grid>
+          <Grid item xs={12} lg={4.5}>
+            <VentasCanalChart filters={filtros} />
+          </Grid>
+          <Grid item xs={12} lg={7.5}>
+            <VentasChart filtros={filtros} />
+          </Grid>
+
+          <Grid item xs={12}>
+            <SeccionTitulo title="Categorías y vendedores" infoRight="Dónde está el margen y quién vende más." />
+          </Grid>
+          <Grid item xs={12} xl={5.5}>
+            {conCarga(categorias, <CategoriasBarChart data={categorias.datos} />)}
+          </Grid>
+          <Grid item xs={12} xl={6.5}>
+            {conCarga(vendedores, <TopVendedoresChart data={vendedores.datos} />)}
+          </Grid>
+
+          <Grid item xs={12}>
+            <SeccionTitulo title="Productos" infoRight="Más rentables, menos rentables y más vendidos." />
+          </Grid>
+          <Grid item xs={12} xl={5}>
+            {conCarga(rentabilidad, <RentabilidadChart data={rentabilidad.datos} />, 480)}
+          </Grid>
+          <Grid item xs={12} xl={7}>
+            {conCarga(rentabilidadMinima, <TopRentabilidadMinima data={rentabilidadMinima.datos} />, 480)}
+          </Grid>
+          <Grid item xs={12}>
+            {conCarga(detalle, <ProductosVendidos data={detalleTransformado} />, 560)}
+          </Grid>
         </Grid>
-        <Grid item xs={12} md={7}> {/* Main sales chart takes more space */}
-          <VentasChart filtros={filtros} />
-        </Grid>
-        <Grid item xs={12}>
-          <SeccionTitulo
-            title="Rendimiento por Categoría y Vendedores"
-            infoRight="Análisis del desempeño de las categorías de productos."
-          />
-        </Grid>
-        <Grid item xs={12} md={5.5}> {/* Full width for category bar chart */}
-          {conCarga(categorias, <CategoriasBarChart data={categorias.datos} />)}
-        </Grid>
-        <Grid item xs={12} md={6.5}> {/* Top sellers chart next to category performance */}
-          {conCarga(vendedores, <TopVendedoresChart data={vendedores.datos} />)}
-        </Grid>
-        <Grid item xs={12}>
-          <SeccionTitulo
-            title="Rendimiento de Productos"
-            infoRight="Desglose por productos más vendidos y rentables."
-          />
-        </Grid>
-        <Grid item xs={12} md={7}> {/* Top selling products chart */}
-          {conCarga(rentabilidadMinima, <TopRentabilidadMinima data={rentabilidadMinima.datos} />)}
-        </Grid>
-        <Grid item xs={12} md={5}> {/* Rentability chart next to top sellers */}
-          {conCarga(rentabilidad, <RentabilidadChart data={rentabilidad.datos} />)}
-        </Grid>
-        <Grid item xs={12}> {/* Full width for detailed product table */}
-          {conCarga(detalle, <ProductosVendidos data={detalleTransformado} />, 400)}
-        </Grid>
-      </Grid>
-  </Box>
-</PageContainer>
+      </Box>
+      {detalleTarjetas.ventana}
+    </PageContainer>
   );
 };
 export default ResumenVentas;

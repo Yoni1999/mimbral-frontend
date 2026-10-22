@@ -1,66 +1,48 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { Box, Grid, Tab, Tabs } from "@mui/material";
+import { IconBox, IconCurrencyDollar, IconReceipt, IconShoppingCart, IconStack2, IconTrendingUp } from "@tabler/icons-react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
-import SeccionTitulo from "../resumen-ventas/components/SeccionTitulo";
-import { Grid, Paper, CircularProgress, Box, Typography, FormControlLabel, Checkbox, } from "@mui/material";
-import MetricCard from "./components/Cards";
-import FechaRotacion from "./components/MonthlySalesRotation";
-import HeaderFilters, { Filters } from "./components/Header";
-import ClientesFrecuentesTable from "./components/FrequentCustomers";
-import dynamic from "next/dynamic";
-import { formatUnidades, formatVentas } from "@/utils/format";
+import { formatUnidades } from "@/utils/format";
 import { useApiDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
-import { IconCurrencyDollar, IconTrendingUp, IconStack2, IconBox, IconShoppingCart, } from "@tabler/icons-react";
+import SeccionTitulo from "../components/SeccionTitulo";
+import MetricCard from "../components/MetricCard";
+import { conPeriodoRapido, etiquetaRango, rangoInicial, resolverPeriodoRapido } from "../components/RangosRapidos";
+import { useEstadoVista } from "@/utils/estadoVista";
+import { canalPorClave, formatoMonto, formatoPorcentaje, pestanasSx } from "../components/estilo";
+import { useDetalleTarjetas } from "../components/detalle/useDetalleTarjetas";
+import HeaderFilters, { Filters } from "./components/Header";
+import VendedoresDelCanal from "./components/Sellers";
+import VentasMensuales from "./components/MonthlySalesRotation";
+import ClientesFrecuentesTable from "./components/FrequentCustomers";
+import TopProductosChart from "./components/Top10SoldProducts";
+import VentasPorCategoriaChart from "./components/SalesByCategory";
 import ProductosVendidos from "./components/SoldProducts";
 
-const VentasCanalChart = dynamic(() => import("./components/Sellers"), {
-  ssr: false,
-});
-const TopProductosChart = dynamic(
-  () => import("./components/Top10SoldProducts"),
-  {
-    ssr: false,
-  }
-);
-const VentasPorCategoriaChart = dynamic(
-  () => import("./components/SalesByCategory"),
-  {
-    ssr: false,
-  }
-);
+/** Variación porcentual entre dos montos; null si no hay base. */
+const variacion = (actual: number, anterior: number) =>
+  anterior ? ((actual - anterior) / anterior) * 100 : null;
 
 const VentasPorCanal = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [filters, setFilters] = useState<Filters>(() => {
-    const canalParam = searchParams?.get("canal") || "";
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("filtrosVentasCanal");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          // Prioriza el canal de la URL si existe, de lo contrario usa el de localStorage, luego el por defecto.
-          return {
-            ...parsed,
-            canal: canalParam || parsed.canal || "",
-            fechaInicio: parsed.fechaInicio || "",
-            fechaFin: parsed.fechaFin || "",
-          };
-        } catch (e) {
-          console.error("❌ Error al parsear filtros almacenados:", e);
-        }
-      }
-    }
-    // Si no hay filtros guardados o hubo un error, retorna el estado inicial por defecto
-    return {
-      canal: canalParam, // Canal de la URL o vacío
-      fechaInicio: "",
-      fechaFin: "",
-    };
+  // Recuerda lo buscado (al volver a la vista o reabrir la pestaña sigue
+  // ahí); la primera vez abre en "Ayer". El canal de la URL (p. ej. al
+  // venir desde Resumen de ventas) manda sobre lo guardado.
+  const canalParam = searchParams?.get("canal") || "";
+  const [filters, setFilters] = useEstadoVista<Filters>("ventas-por-canal", () => ({ canal: "", ...rangoInicial() }), {
+    serializar: conPeriodoRapido,
+    restaurar: (guardado) => {
+      const f = resolverPeriodoRapido<Filters>(guardado);
+      return {
+        canal: canalParam || f.canal || "",
+        ...(f.fechaInicio && f.fechaFin ? { fechaInicio: f.fechaInicio, fechaFin: f.fechaFin } : rangoInicial()),
+      };
+    },
   });
 
   useEffect(() => {
@@ -70,256 +52,190 @@ const VentasPorCanal = () => {
     }
   }, [router]);
 
-  const [selectedVendedor, setSelectedVendedor] = useState<number | null>(
-    null
-  );
+  // Pestaña abierta y vendedor elegido también se recuerdan.
+  const [vista, setVista] = useEstadoVista<{
+    pestana: "resumen" | "productos";
+    vendedor: { codigo: number; nombre: string } | null;
+  }>("ventas-por-canal:vista", () => ({ pestana: "resumen", vendedor: null }), {
+    // Un vendedor guardado solo vale si se vuelve al mismo canal.
+    restaurar: (g) => (canalParam && canalParam !== filters.canal ? { ...g, vendedor: null } : g),
+  });
+  const { pestana, vendedor } = vista;
+  const setVendedor = (v: { codigo: number; nombre: string } | null) => setVista((x) => ({ ...x, vendedor: v }));
+  const setPestana = (p: "resumen" | "productos") => setVista((x) => ({ ...x, pestana: p }));
+
+  const handleFilterChange = (newFilters: Filters) => {
+    setFilters(newFilters);
+    setVendedor(null); // otro canal o rango: el vendedor elegido ya no aplica
+  };
+
   // Cada bloque se identifica por su URL con los filtros: al cambiar un
   // filtro (o el vendedor) se limpia al instante, se cancela lo pendiente y
   // solo se muestra la respuesta del filtro actual (ver useCargaDatos).
   const query = new URLSearchParams(
     Object.fromEntries(
-      Object.entries({ ...filters, vendedorEmpresa: selectedVendedor })
-        .filter(([_, value]) => value !== undefined && value !== null && value !== "") // Filtra valores nulos, indefinidos y cadenas vacías
+      Object.entries({ ...filters, vendedorEmpresa: vendedor?.codigo })
+        .filter(([_, value]) => value !== undefined && value !== null && value !== "")
         .map(([key, value]) => [key, String(value)])
     )
   ).toString();
   const url = (endpoint: string) => `${BACKEND_URL}/api/${endpoint}?${query}`;
+  const enResumen = pestana === "resumen";
+  const urlResumen = (endpoint: string) => (enResumen ? url(endpoint) : null);
 
-  const ventasHoyRes = useApiDatos<any>(url("ventas-periodo"), null);
-  const transaccionesRes = useApiDatos<any>(url("transacciones-periodo"), null);
-  const unidadesRes = useApiDatos<any>(url("unidades-vendidas-periodo"), null);
-  const productosRes = useApiDatos<any>(url("productos-distintos-periodo"), null);
-  const margenRes = useApiDatos<any>(url("margen/bruto-periodo"), null);
-  const topProductosRes = useApiDatos<any>(url("top-productos"), null);
-  const ventasCategoriaRes = useApiDatos<any>(url("categorias/ventas-categoria"), null);
+  const ventas = useApiDatos<any>(urlResumen("ventas-periodo"), {});
+  const transacciones = useApiDatos<any>(urlResumen("transacciones-periodo"), {});
+  const unidades = useApiDatos<any>(urlResumen("unidades-vendidas-periodo"), {});
+  const productos = useApiDatos<any>(urlResumen("productos-distintos-periodo"), {});
+  const margen = useApiDatos<any>(urlResumen("margen/bruto-periodo"), {});
+  const topProductos = useApiDatos<any[]>(urlResumen("top-productos"), []);
+  const ventasCategoria = useApiDatos<any[]>(urlResumen("categorias/ventas-categoria"), []);
 
-  // Si la respuesta viene vacía (o falló) se usa la estructura por defecto.
-  const data = {
-    ventasHoy: ventasHoyRes.datos || { TotalVentasPeriodo: 0, TotalVentasAnterior: 0, PorcentajeCambio: 0 },
-    transaccionesPeriodo: transaccionesRes.datos || { CantidadTransaccionesPeriodo: 0, CantidadTransaccionesAnterior: 0, PorcentajeCambio: 0 },
-    unidadesVendidas: unidadesRes.datos || { CantidadVendida: 0, CantidadVendidaAnterior: 0, PorcentajeCambio: 0 },
-    productosDistintos: productosRes.datos || { ProductosPeriodoActual: 0, ProductosPeriodoAnterior: 0, PorcentajeCambio: 0 },
-    margenBruto: margenRes.datos || { TotalVentasPeriodo: 0, MargenBrutoPeriodo: 0, MargenBrutoAnterior: 0, PorcentajeCambio: 0 },
-    topProductos: (topProductosRes.datos || []) as any[],
-    ventasCategoria: (ventasCategoriaRes.datos || []) as any[],
-  };
+  const ticket = (venta?: number, tx?: number) => (venta && tx ? venta / tx : 0);
+  const ticketActual = ticket(ventas.datos.TotalVentasPeriodo, transacciones.datos.CantidadTransaccionesPeriodo);
+  const ticketAnterior = ticket(ventas.datos.TotalVentasAnterior, transacciones.datos.CantidadTransaccionesAnterior);
 
-  const handleFilterChange = (newFilters: Filters) => {
-    setFilters(newFilters);
-    setSelectedVendedor(null); // Reinicia el vendedor al cambiar los filtros principales
-    // Guarda siempre los filtros actualizados en localStorage
-    if (typeof window !== "undefined") {
-      localStorage.setItem("filtrosVentasCanal", JSON.stringify(newFilters));
-    }
-  };
-  const [mostrarProductos, setMostrarProductos] = useState(false);
+  // Margen como porcentaje de la venta, igual que en Resumen de ventas.
+  const pct = (margen?: number, venta?: number) => (venta ? ((margen ?? 0) / venta) * 100 : null);
+  const margenActual = pct(margen.datos.MargenBrutoPeriodo, margen.datos.TotalVentasPeriodo);
+  const margenAnterior = pct(margen.datos.MargenBrutoAnterior, margen.datos.TotalVentasAnterior);
+
+  const tarjetas = [
+    {
+      title: "Ventas",
+      value: formatoMonto(ventas.datos.TotalVentasPeriodo),
+      subtitle: `vs ${formatoMonto(ventas.datos.TotalVentasAnterior)}`,
+      percentageChange: ventas.datos.PorcentajeCambio,
+      cargando: ventas.cargando,
+      icon: <IconCurrencyDollar />,
+    },
+    {
+      title: "Margen de ventas",
+      value: formatoPorcentaje(margenActual, 2),
+      subtitle: `vs ${formatoPorcentaje(margenAnterior, 2)} · ${formatoMonto(margen.datos.MargenBrutoPeriodo)} de margen`,
+      // Margen actual menos el anterior, como en Resumen. (PorcentajeCambio de
+      // margen/bruto-periodo es la variación de la venta, no del margen.)
+      percentageChange: margenActual != null && margenAnterior != null ? margenActual - margenAnterior : undefined,
+      cargando: margen.cargando,
+      icon: <IconTrendingUp />,
+    },
+    {
+      title: "Unidades vendidas",
+      value: formatUnidades(unidades.datos.CantidadVendida),
+      subtitle: `vs ${formatUnidades(unidades.datos.CantidadVendidaAnterior)}`,
+      percentageChange: unidades.datos.PorcentajeCambio,
+      cargando: unidades.cargando,
+      icon: <IconStack2 />,
+    },
+    {
+      title: "Ítems vendidos",
+      value: formatUnidades(productos.datos.ProductosPeriodoActual),
+      subtitle: `vs ${formatUnidades(productos.datos.ProductosPeriodoAnterior)}`,
+      percentageChange: productos.datos.PorcentajeCambio,
+      cargando: productos.cargando,
+      icon: <IconBox />,
+    },
+    {
+      title: "Cantidad de ventas",
+      value: formatUnidades(transacciones.datos.CantidadTransaccionesPeriodo),
+      subtitle: `vs ${formatUnidades(transacciones.datos.CantidadTransaccionesAnterior)}`,
+      percentageChange: transacciones.datos.PorcentajeCambio,
+      cargando: transacciones.cargando,
+      icon: <IconShoppingCart />,
+    },
+    {
+      title: "Ticket promedio",
+      value: formatoMonto(ticketActual),
+      subtitle: `vs ${formatoMonto(ticketAnterior)}`,
+      // Antes mostraba la variación de la cantidad de ventas.
+      percentageChange: variacion(ticketActual, ticketAnterior) ?? undefined,
+      cargando: ventas.cargando || transacciones.cargando,
+      icon: <IconReceipt />,
+    },
+  ];
+
+  // Detalle de las tarjetas: canal, período y vendedor elegido.
+  const detalleTarjetas = useDetalleTarjetas(
+    {
+      fechaInicio: filters.fechaInicio,
+      fechaFin: filters.fechaFin,
+      canal: filters.canal,
+      vendedorEmpresa: vendedor?.codigo,
+    },
+    [
+      etiquetaRango(filters.fechaInicio, filters.fechaFin),
+      filters.canal ? `Canal: ${canalPorClave(filters.canal)?.nombre ?? filters.canal}` : "Todos los canales",
+      vendedor ? `Vendedor: ${vendedor.nombre}` : "",
+    ].filter(Boolean)
+  );
 
   return (
-      <PageContainer
-        title="Ventas por Canal"
-        description="Resumen de ventas filtradas por canal, período y rango de fechas"
-      >
-        <Box sx={{ p: 0 }}>
-          <Box sx={{ mb: 1, display: "flex", justifyContent: "flex-end", px: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              {filters.fechaInicio && filters.fechaFin ? `Filtrando por rango: ${filters.fechaInicio} al ${filters.fechaFin}` : "Viendo datos de hoy"}
-            </Typography>
-          </Box>
+    <PageContainer title="Ventas por Canal" description="Resumen de ventas filtradas por canal, período y rango de fechas">
+      <Box sx={{ maxWidth: 1680, mx: "auto" }}>
+        <HeaderFilters
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          vendedor={vendedor}
+          onQuitarVendedor={() => setVendedor(null)}
+        />
 
-          <HeaderFilters filters={filters} onFilterChange={handleFilterChange} />
+        <Tabs
+          value={pestana}
+          onChange={(_, v) => setPestana(v)}
+          sx={pestanasSx}
+        >
+          <Tab value="resumen" label="Resumen del canal" />
+          <Tab value="productos" label="Productos vendidos" />
+        </Tabs>
 
-          <Box sx={{ mt: 2, px: 2 }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={mostrarProductos}
-                  onChange={(e) => setMostrarProductos(e.target.checked)}
-                  name="verProductos"
-                  color="primary"
-                />
-              }
-              label={
-                <Typography variant="body1" sx={{ cursor: "pointer" }}>
-                  Ver ventas productos detallados
-                </Typography>
-              }
-            />
-          </Box>
-
-          {mostrarProductos ? (
-            <Box mt={4}>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  {/* ProductosVendidos pide sus datos y maneja su propia carga. */}
-                  <ProductosVendidos
-                    filters={{
-                      ...filters,
-                      vendedor: selectedVendedor,
-                    }}
-                  />
-                </Grid>
+        {pestana === "productos" ? (
+          <ProductosVendidos filters={{ ...filters, vendedor: vendedor?.codigo ?? null }} />
+        ) : (
+          <Grid container spacing={2}>
+            {tarjetas.map((card) => (
+              <Grid item xs={12} sm={6} md={4} xl={2} key={card.title}>
+                <MetricCard {...card} onClick={detalleTarjetas.alPulsar(card.title)} />
               </Grid>
-            </Box>
-          ) : (
-            <>
-              <Grid container spacing={2} mt={2}>
-                <Grid item xs={12}>
-                  <SeccionTitulo
-                    title="Métricas Clave del Canal"
-                    infoRight="Información detallada del desempeño de ventas del canal seleccionado."
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Grid container spacing={2}>
-                    {[
-                      {
-                        title: "Ventas",
-                        value: formatVentas(data.ventasHoy.TotalVentasPeriodo),
-                        subtitle: `Anterior: ${formatVentas(
-                          data.ventasHoy.TotalVentasAnterior
-                        )}`,
-                        percentageChange: data.ventasHoy.PorcentajeCambio,
-                        cargando: ventasHoyRes.cargando,
-                        icon: <IconCurrencyDollar />,
-                      },
-                      {
-                        title: "Margen Bruto",
-                        value: formatVentas(data.margenBruto.MargenBrutoPeriodo),
-                        subtitle: `Anterior: ${formatVentas(
-                          data.margenBruto.MargenBrutoAnterior
-                        )}`,
-                        percentageChange: data.margenBruto.PorcentajeCambio,
-                        cargando: margenRes.cargando,
-                        icon: <IconTrendingUp />,
-                      },
-                      {
-                        title: `Unidades Vendidas `,
-                        value: formatUnidades(
-                          data.unidadesVendidas.CantidadVendida
-                        ),
-                        subtitle: `Anterior: ${formatUnidades(
-                          data.unidadesVendidas.CantidadVendidaAnterior
-                        )}`,
-                        percentageChange:
-                          data.unidadesVendidas.PorcentajeCambio,
-                        cargando: unidadesRes.cargando,
-                        icon: <IconStack2 />,
-                      },
-                      {
-                        title: `Ítems Vendidos `,
-                        value: formatUnidades(
-                          data.productosDistintos.ProductosPeriodoActual
-                        ),
-                        subtitle: `Anterior: ${formatUnidades(
-                          data.productosDistintos.ProductosPeriodoAnterior
-                        )}`,
-                        percentageChange:
-                          data.productosDistintos.PorcentajeCambio,
-                        cargando: productosRes.cargando,
-                        icon: <IconBox />,
-                      },
-                      {
-                        title: `Cantidad de Ventas`,
-                        value: formatUnidades(
-                          data.transaccionesPeriodo.CantidadTransaccionesPeriodo
-                        ),
-                        subtitle: `Anterior: ${formatUnidades(
-                          data.transaccionesPeriodo.CantidadTransaccionesAnterior
-                        )}`,
-                        percentageChange:
-                          data.transaccionesPeriodo.PorcentajeCambio,
-                        cargando: transaccionesRes.cargando,
-                        icon: <IconShoppingCart />,
-                      },
-                      {
-                        title: `Tickets Promedio `,
-                        value: formatVentas(
-                          (data.ventasHoy.TotalVentasPeriodo /
-                            data.transaccionesPeriodo.CantidadTransaccionesPeriodo) ||
-                            0
-                        ), // Calcula el ticket promedio
-                        subtitle: `Anterior: ${formatVentas(
-                          (data.ventasHoy.TotalVentasAnterior /
-                            data.transaccionesPeriodo.CantidadTransaccionesAnterior) ||
-                            0
-                        )}`,
-                        percentageChange:
-                          data.transaccionesPeriodo.PorcentajeCambio, // Puedes ajustar si tienes una métrica específica
-                        cargando: ventasHoyRes.cargando || transaccionesRes.cargando,
-                        icon: <IconShoppingCart />,
-                      },
-                    ].map((card, index) => (
-                      <Grid item xs={12} sm={6} md={4} lg={2} key={index}>
-                        <MetricCard {...card} />
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Grid>
-              </Grid>
+            ))}
 
-              {/* --- Sección de Gráficos de Análisis por Canal --- */}
-              <Grid container spacing={2} mt={2}>
-                <Grid item xs={12}>
-                  <SeccionTitulo
-                    title="Análisis Detallado por Canal"
-                    infoRight="Visualización de ventas por canal, productos y categorías."
-                  />
-                </Grid>
-                <Grid item xs={12} md={6} lg={5}>
-                  {/* VentasCanalChart pide sus datos y maneja su propia carga. */}
-                  <VentasCanalChart
-                    canal={filters.canal}
-                    fechaInicio={filters.fechaInicio}
-                    fechaFin={filters.fechaFin}
-                    onVendedorSeleccionado={(vendedor) =>
-                      setSelectedVendedor(vendedor)
-                    }
-                  />
-                </Grid>
-                <Grid item xs={12} md={6} lg={7}>
-                  {/* FechaRotacion pide sus datos y maneja su propia carga. */}
-                  <FechaRotacion filters={{ ...filters }} />
-                </Grid>
-                <Grid item xs={12}>
-                  {/* ClientesFrecuentesTable pide sus datos y maneja su propia carga. */}
-                  <ClientesFrecuentesTable
-                    filters={{
-                      ...filters,
-                      vendedor: selectedVendedor,
-                    }}
-                  />
-                </Grid>
-              </Grid>
+            <Grid item xs={12}>
+              <SeccionTitulo title="Vendedores y estacionalidad" infoRight="Quién vende en el canal y cómo va el año contra los anteriores." />
+            </Grid>
+            <Grid item xs={12} lg={5}>
+              <VendedoresDelCanal
+                canal={filters.canal}
+                fechaInicio={filters.fechaInicio}
+                fechaFin={filters.fechaFin}
+                seleccionado={vendedor?.codigo ?? null}
+                onVendedorSeleccionado={setVendedor}
+              />
+            </Grid>
+            <Grid item xs={12} lg={7}>
+              <VentasMensuales filters={filters} />
+            </Grid>
 
-              {/* --- Segunda Fila de Gráficos (siempre visible con las métricas clave) --- */}
-              <Grid container spacing={2} mt={2}>
-                <Grid item xs={12} md={6}>
-                  {/* TopProductosChart recibe los datos de la página; mientras cargan, indicador. */}
-                  {topProductosRes.cargando ? (
-                    <Paper sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, borderRadius: 2 }}>
-                      <CircularProgress />
-                    </Paper>
-                  ) : (
-                    <TopProductosChart data={data.topProductos} />
-                  )}
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  {/* VentasPorCategoriaChart similar a TopProductosChart. */}
-                  {ventasCategoriaRes.cargando ? (
-                    <Paper sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, borderRadius: 2 }}>
-                      <CircularProgress />
-                    </Paper>
-                  ) : (
-                    <VentasPorCategoriaChart data={data.ventasCategoria} />
-                  )}
-                </Grid>
-              </Grid>
-            </>
-          )}
-        </Box>
-      </PageContainer>
+            <Grid item xs={12}>
+              <SeccionTitulo title="Clientes" infoRight="Los que más compraron en el período." />
+            </Grid>
+            <Grid item xs={12}>
+              <ClientesFrecuentesTable filters={{ ...filters, vendedor: vendedor?.codigo ?? null }} />
+            </Grid>
+
+            <Grid item xs={12}>
+              <SeccionTitulo title="Productos y categorías" infoRight="Qué se vende en el canal." />
+            </Grid>
+            <Grid item xs={12} lg={6}>
+              <TopProductosChart data={topProductos.datos} cargando={topProductos.cargando} />
+            </Grid>
+            <Grid item xs={12} lg={6}>
+              <VentasPorCategoriaChart data={ventasCategoria.datos} cargando={ventasCategoria.cargando} />
+            </Grid>
+          </Grid>
+        )}
+      </Box>
+      {detalleTarjetas.ventana}
+    </PageContainer>
   );
 };
 
 export default VentasPorCanal;
-

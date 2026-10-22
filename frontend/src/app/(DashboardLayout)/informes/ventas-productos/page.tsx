@@ -26,6 +26,7 @@ import ProductosVendidosTable from "./components/ProductosVendidos";
 import HeaderVentasProductosDrawer from "./components/HeaderVentasProductosDrawer";
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
+import { useEstadoVista } from "@/utils/estadoVista";
 import { BACKEND_URL } from "@/config";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -76,12 +77,17 @@ const mapApiRowToTable = (r: any) => ({
 });
 
 const InformeVentaPage = () => {
-  const [filters, setFilters] = useState<FiltrosVentas>({ periodo: "1D", canal: "Vitex" });
-  const [page, setPage] = useState(1);
+  // Filtros, página y orden se recuerdan al cambiar de vista y volver; el
+  // período es relativo ("1D", "7D"…) o un rango a mano: va tal cual.
+  const [vista, setVista] = useEstadoVista<{ filters: FiltrosVentas; page: number; orden: Order; ordenPor: OrderBy }>(
+    "informe-ventas-productos",
+    () => ({ filters: { periodo: "1D", canal: "Vitex" }, page: 1, orden: "desc", ordenPor: "cantidadVendida" })
+  );
+  const { filters, page, orden, ordenPor } = vista;
+  const setFilters = (f: FiltrosVentas) => setVista((v) => ({ ...v, filters: f }));
+  const setPage = (p: number) => setVista((v) => ({ ...v, page: p }));
   // La exportación también muestra el indicador de carga sobre la tabla.
   const [exportando, setExportando] = useState(false);
-  const [orden, setOrden] = useState<Order>("desc");
-  const [ordenPor, setOrdenPor] = useState<OrderBy>("cantidadVendida");
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openExportModal, setOpenExportModal] = useState(false);
@@ -157,8 +163,7 @@ const InformeVentaPage = () => {
 
   const handleSortChange = (campo: OrderBy) => {
     const nuevoOrden = ordenPor === campo && orden === "asc" ? "desc" : "asc";
-    setOrden(nuevoOrden);
-    setOrdenPor(campo);
+    setVista((v) => ({ ...v, orden: nuevoOrden, ordenPor: campo }));
   };
 
   const exportarProductos = async (tipo: 'excel' | 'pdf', exportLimit: number | 'all') => {
@@ -236,7 +241,7 @@ const InformeVentaPage = () => {
       "Margen Bruto": item.margenBruto,
       "% Margen": item.margenPorcentaje,
       "Stock Canal": item.stockCanal,
-      "Stock Chorrillo": item.stockChorrillo,
+      "Stock Chorrillos": item.stockChorrillo,
       "OC (On Order)": item.stockOnOrder,
     }));
 
@@ -349,7 +354,7 @@ const InformeVentaPage = () => {
         { key: "cantidadVendida", label: "Cantidad Vendida" },
         { key: "facturasUnicas", label: "Transacciones" },
         { key: "stockCanal", label: "Stock Canal" },
-        { key: "stockChorrillo", label: "Stock Chorrillo" },
+        { key: "stockChorrillo", label: "Stock Chorrillos" },
         { key: "stockOnOrder", label: "OC (On Order)" },
       ];
 

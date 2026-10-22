@@ -52,26 +52,7 @@ const Menuitems = [
     id: uniqueId(),
     title: "Análisis por Categoría",
     icon: IconHierarchy3,
-    subMenu: [
-      {
-        id: uniqueId(),
-        title: "Primer Nivel",
-        icon: IconChartLine,
-        href: "/utilities/analisis-categoria/resumen-categorias",
-      },
-      {
-        id: uniqueId(),
-        title: "Segundo Nivel",
-        icon: IconChartDonut,
-        href: "/utilities/analisis-categoria/resumen2nivel",
-      },
-      {
-        id: uniqueId(),
-        title: "Tercer Nivel",
-        icon: IconChartPie,
-        href: "/utilities/analisis-categoria/resumen3nivel",
-      },
-    ],
+    href: "/utilities/analisis-categoria",
   },
   {
     id: uniqueId(),

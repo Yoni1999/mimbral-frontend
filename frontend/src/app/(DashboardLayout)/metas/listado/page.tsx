@@ -11,7 +11,7 @@ import {
   TextField,
   Tooltip,
 } from "@mui/material";
-import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import { DataGrid, type GridColDef, type GridSortModel } from "@mui/x-data-grid";
 import { IconEye, IconPencil, IconBan, IconTrash, IconPlus, IconListDetails, IconUser, IconBuildingStore } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
@@ -22,6 +22,8 @@ import ConfirmarAccionModal from "@/modules/metas/components/ConfirmarAccionModa
 import { cancelarMeta, eliminarMeta, listarMetas, listarPeriodos } from "@/modules/metas/services/metas.client";
 import type { Goal, GoalPeriod } from "@/modules/metas/types";
 import { notifyError, notifySuccess } from "@/components/ui/toast/notify";
+import { useEstadoVista } from "@/utils/estadoVista";
+import { campoDe } from "@/modules/metas/campoVista";
 
 const TIPOS_RESPONSABLE = [{ value: "", label: "Todos" }, { value: "SELLER", label: "Vendedor" }, { value: "SALES_CHANNEL", label: "Canal de venta" }];
 const TIPOS_META = [{ value: "", label: "Todas" }, { value: "SALES_AMOUNT", label: "Monto de venta" }, { value: "SKU_QUANTITY", label: "Cantidad SKU" }];
@@ -35,9 +37,18 @@ export default function ListadoMetasPage() {
   const [metas, setMetas] = useState<Goal[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
-  const [filtrosAplicados, setFiltrosAplicados] = useState(FILTROS_VACIOS);
-  const [borrador, setBorrador] = useState(FILTROS_VACIOS);
+  // Recuerda filtros aplicados, página y orden al volver a la vista o reabrir
+  // la pestaña; los campos del formulario parten mostrando lo aplicado.
+  const [vista, setVista] = useEstadoVista("metas-listado", () => ({
+    filtrosAplicados: FILTROS_VACIOS,
+    paginationModel: { page: 0, pageSize: 10 },
+    sortModel: [] as GridSortModel,
+  }));
+  const { filtrosAplicados, paginationModel, sortModel } = vista;
+  const setFiltrosAplicados = campoDe(setVista, "filtrosAplicados");
+  const setPaginationModel = campoDe(setVista, "paginationModel");
+  const setSortModel = campoDe(setVista, "sortModel");
+  const [borrador, setBorrador] = useState(filtrosAplicados);
   const [accion, setAccion] = useState<{ tipo: "cancel" | "delete"; meta: Goal } | null>(null);
 
   useEffect(() => {
@@ -202,6 +213,8 @@ export default function ListadoMetasPage() {
                 paginationMode="server"
                 paginationModel={paginationModel}
                 onPaginationModelChange={setPaginationModel}
+                sortModel={sortModel}
+                onSortModelChange={setSortModel}
                 pageSizeOptions={[10, 20, 50]}
                 disableRowSelectionOnClick
               />

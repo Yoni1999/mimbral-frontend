@@ -106,7 +106,7 @@ const channelLabelMap: Record<string, string> = {
   falabella: "Falabella",
   balmaceda: "Balmaceda",
   vitex: "Vtex",
-  chorrillo: "Chorrillo",
+  chorrillo: "Chorrillos",
   empresas: "Empresas",
 };
 

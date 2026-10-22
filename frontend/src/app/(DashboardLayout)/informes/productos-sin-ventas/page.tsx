@@ -17,6 +17,7 @@ import autoTable from 'jspdf-autotable';
 import ProductosSinVentasTable from './components/ProductosSinVentas';
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
+import { useEstadoVista } from "@/utils/estadoVista";
 import { BACKEND_URL } from '@/config';
 import { notifyInfo } from "@/components/ui/toast/notify";
 
@@ -78,14 +79,17 @@ const limit = 20;
 const ENDPOINT = '/api/informes/productos-sin-ventas';
 
 const ProductosSinVentasPage: React.FC = () => {
-    // Estado principal (tabla de sin ventas)
-    const [filters, setFilters] = useState<FiltroSinVentas>({ minStock: 0 });
-    const [page, setPage] = useState<number>(1);
+    // Estado principal (tabla de sin ventas). Filtros (también el SKU), página
+    // y orden se recuerdan al cambiar de vista y volver.
+    const [vista, setVista] = useEstadoVista<{ filters: FiltroSinVentas; page: number; orden: Order; ordenPor: OrderBy }>(
+        'informe-sin-ventas',
+        () => ({ filters: { minStock: 0 }, page: 1, orden: 'desc', ordenPor: 'stockTotal' })
+    );
+    const { filters, page, orden, ordenPor } = vista;
+    const setFilters = (f: FiltroSinVentas) => setVista((v) => ({ ...v, filters: f }));
+    const setPage = (p: number) => setVista((v) => ({ ...v, page: p }));
     // La exportación también muestra el indicador de carga sobre la tabla.
     const [exportando, setExportando] = useState<boolean>(false);
-
-    const [orden, setOrden] = useState<Order>('desc');
-    const [ordenPor, setOrdenPor] = useState<OrderBy>('stockTotal');
 
     // Export
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -208,8 +212,7 @@ const ProductosSinVentasPage: React.FC = () => {
 
     const handleSortChange = (campo: OrderBy) => {
         const nuevoOrden = ordenPor === campo && orden === 'asc' ? 'desc' : 'asc';
-        setOrden(nuevoOrden);
-        setOrdenPor(campo);
+        setVista((v) => ({ ...v, orden: nuevoOrden, ordenPor: campo }));
     };
 
     // Export (sin cambios de lógica respecto a lo existente)

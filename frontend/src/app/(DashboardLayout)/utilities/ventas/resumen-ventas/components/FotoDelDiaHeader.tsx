@@ -1,13 +1,11 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
+import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
 import {
   Box,
   Button,
-  Divider,
-  FormControl,
+    FormControl,
   Grid,
   MenuItem,
   Popover,
@@ -16,10 +14,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import dayjs from "dayjs";
-import DateRangeFilter, {
-  DateRangeValue,
-} from "./DateRangeFilter";
+import DateRangeFilter, { DateRangeValue } from "./DateRangeFilter";
+import { BotonLimpiar, CANALES, ChipFiltro, controlSx, etiquetaControlSx as etiquetaSx, tarjetaSx, tinta } from "../../components/estilo";
+import RangosRapidos, { etiquetaRango, rangoInicial, TEMPORADAS } from "../../components/RangosRapidos";
+import FrescuraDatos from "../../components/FrescuraDatos";
 
 export interface Filters {
   canal: string;
@@ -34,430 +32,268 @@ export interface Filters {
 
 interface Props {
   onFilterChange: (filters: Filters) => void;
+  /** Filtros con que abre (los que el usuario dejó buscados). */
+  valorInicial?: Filters;
 }
 
-const temporadaRangos: Record<string, { inicio: string; fin: string }> = {
-  "Verano 2024": { inicio: "2024-01-01", fin: "2024-03-20" },
-  "Otoño 2024": { inicio: "2024-03-21", fin: "2024-06-20" },
-  "Invierno 2024": { inicio: "2024-06-21", fin: "2024-09-22" },
-  "Primavera 2024": { inicio: "2024-09-23", fin: "2024-12-21" },
-  "Verano 2025": { inicio: "2025-01-01", fin: "2025-03-20" },
-  "Otoño 2025": { inicio: "2025-03-21", fin: "2025-06-20" },
-  "Invierno 2025": { inicio: "2025-06-21", fin: "2025-09-22" },
-  "Primavera 2025": { inicio: "2025-09-23", fin: "2025-12-21" },
-};
-
-const canalSlpMap: Record<string, number> = {
-  Empresas: 1,
-  Chorrillo: 2,
-  Balmaceda: 3,
-  Vitex: 4,
-  Meli: 5,
-  Falabella: 6,
-};
-
-const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
-  const [filters, setFilters] = useState<Filters>({
+/** La vista abre en "Ayer": la copia de SAP se carga a las 04:00, así que
+ *  "Hoy" casi no tiene ventas durante el día. */
+export const filtrosIniciales = (): Filters => {
+  return {
     canal: "",
     temporada: "",
-    fechaInicio: "",
-    fechaFin: "",
+    ...rangoInicial(),
+    sku: "",
+    familia: "",
+    subfamilia: "",
     comparacion: "",
-  });
+  };
+};
+
+const NOMBRE_CANAL: Record<string, string> = Object.fromEntries(CANALES.map((c) => [c.clave, c.nombre]));
+
+const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange, valorInicial }) => {
+  const [filters, setFilters] = useState<Filters>(() => valorInicial ?? filtrosIniciales());
   const [filtrosAnchorEl, setFiltrosAnchorEl] = useState<HTMLElement | null>(null);
-  const [busquedaSku, setBusquedaSku] = useState("");
-  const [busquedaFamilia, setBusquedaFamilia] = useState("");
-  const [busquedaSubfamilia, setBusquedaSubfamilia] = useState("");
-  const [comparacionVisual, setComparacionVisual] = useState("");
+  const [busquedaSku, setBusquedaSku] = useState(valorInicial?.sku ?? "");
+  const [busquedaFamilia, setBusquedaFamilia] = useState(valorInicial?.familia ?? "");
+  const [busquedaSubfamilia, setBusquedaSubfamilia] = useState(valorInicial?.subfamilia ?? "");
+  const [comparacionVisual, setComparacionVisual] = useState<string>(valorInicial?.comparacion ?? "");
 
   const filtrosAbiertos = Boolean(filtrosAnchorEl);
+  const resumen = useMemo(
+    () => (filters.temporada ? `Temporada ${filters.temporada}` : etiquetaRango(filters.fechaInicio, filters.fechaFin)),
+    [filters.fechaInicio, filters.fechaFin, filters.temporada]
+  );
 
-  const resumen = useMemo(() => {
-    if (filters.temporada) return `Temporada: ${filters.temporada}`;
-    if (filters.fechaInicio && filters.fechaFin) {
-      return `Rango: ${dayjs(filters.fechaInicio).format("DD/MM/YYYY")} al ${dayjs(filters.fechaFin).format("DD/MM/YYYY")}`;
-    }
-    return "Hoy";
-  }, [filters.fechaInicio, filters.fechaFin, filters.temporada]);
+  const emitir = (updated: Filters) => {
+    setFilters(updated);
+    onFilterChange(updated);
+  };
 
   const handleChange = (key: keyof Filters, value: string) => {
     let updated: Filters = { ...filters, [key]: value };
 
     if (key === "temporada") {
-      const fechas = temporadaRangos[value];
+      const fechas = TEMPORADAS[value];
       updated = fechas
-        ? {
-            ...updated,
-            fechaInicio: fechas.inicio,
-            fechaFin: fechas.fin,
-          }
-        : {
-            ...updated,
-            fechaInicio: "",
-            fechaFin: "",
-          };
+        ? { ...updated, fechaInicio: fechas.inicio, fechaFin: fechas.fin }
+        : { ...updated, ...rangoInicial() };
     }
 
     if (key === "fechaInicio" || key === "fechaFin") {
-      updated = {
-        ...updated,
-        temporada: "",
-      };
+      updated = { ...updated, temporada: "" };
     }
 
-    setFilters(updated);
-    onFilterChange(updated);
+    emitir(updated);
   };
 
   const handleDateChange = (range: DateRangeValue | null) => {
-    const updated: Filters = {
+    emitir({
       ...filters,
       temporada: "",
-      fechaInicio: range?.start ?? "",
-      fechaFin: range?.end ?? "",
-    };
-    setFilters(updated);
-    onFilterChange(updated);
+      ...(range ? { fechaInicio: range.start, fechaFin: range.end } : rangoInicial()),
+    });
   };
 
+  const aplicarRapido = (fechaInicio: string, fechaFin: string) =>
+    emitir({ ...filters, temporada: "", fechaInicio, fechaFin });
+
+  // Limpiar vuelve al estado con que abre la vista ("Ayer", sin filtros).
   const handleClear = () => {
-    const cleared: Filters = {
-      canal: "",
-      temporada: "",
-      fechaInicio: "",
-      fechaFin: "",
-      sku: "",
-      familia: "",
-      subfamilia: "",
-      comparacion: "",
-    };
-    setFilters(cleared);
     setBusquedaSku("");
     setBusquedaFamilia("");
     setBusquedaSubfamilia("");
     setComparacionVisual("");
-    onFilterChange(cleared);
-  };
-
-  const abrirFiltros = (event: React.MouseEvent<HTMLElement>) => {
-    setFiltrosAnchorEl(event.currentTarget);
-  };
-
-  const cerrarFiltros = () => {
-    setFiltrosAnchorEl(null);
+    emitir(filtrosIniciales());
   };
 
   const aplicarFiltrosAdicionales = () => {
-    const updated: Filters = {
+    emitir({
       ...filters,
       sku: busquedaSku.trim(),
       familia: busquedaFamilia.trim(),
       subfamilia: busquedaSubfamilia.trim(),
       comparacion: (comparacionVisual || "") as Filters["comparacion"],
-    };
-
-    setFilters(updated);
-    onFilterChange(updated);
-    cerrarFiltros();
+    });
+    setFiltrosAnchorEl(null);
   };
 
-  const tieneFiltros =
-    !!filters.canal ||
-    !!filters.temporada ||
-    !!filters.fechaInicio ||
-    !!filters.fechaFin ||
-    !!filters.sku ||
-    !!filters.familia ||
-    !!filters.subfamilia ||
-    !!filters.comparacion;
+  const quitar = (claves: (keyof Filters)[]) => {
+    const updated = { ...filters };
+    claves.forEach((k) => ((updated as any)[k] = ""));
+    if (claves.includes("temporada")) Object.assign(updated, rangoInicial());
+    if (claves.includes("sku")) setBusquedaSku("");
+    if (claves.includes("familia")) setBusquedaFamilia("");
+    if (claves.includes("subfamilia")) setBusquedaSubfamilia("");
+    if (claves.includes("comparacion")) setComparacionVisual("");
+    emitir(updated);
+  };
+
+  const activos: { etiqueta: string; claves: (keyof Filters)[] }[] = [
+    filters.canal && { etiqueta: `Canal: ${NOMBRE_CANAL[filters.canal] || filters.canal}`, claves: ["canal"] },
+    filters.temporada && { etiqueta: `Temporada: ${filters.temporada}`, claves: ["temporada"] },
+    filters.sku && { etiqueta: `SKU: ${filters.sku}`, claves: ["sku"] },
+    filters.familia && { etiqueta: `Familia: ${filters.familia}`, claves: ["familia"] },
+    filters.subfamilia && { etiqueta: `Subfamilia: ${filters.subfamilia}`, claves: ["subfamilia"] },
+    filters.comparacion && { etiqueta: `Comparando con: ${filters.comparacion}`, claves: ["comparacion"] },
+  ].filter(Boolean) as { etiqueta: string; claves: (keyof Filters)[] }[];
+
+  const enEstadoInicial = activos.length === 0 && !filters.temporada && resumen === "Ayer";
 
   return (
-    <Box
-      sx={{
-        mb: 2,
-        px: { xs: 1.5, md: 2.25 },
-        py: { xs: 1.5, md: 1.75 },
-        background: "linear-gradient(180deg, #ffffff 0%, #fbfcff 100%)",
-        borderRadius: 2,
-        boxShadow: "0 8px 30px rgba(15, 23, 42, 0.06)",
-        border: "1px solid rgba(148, 163, 184, 0.18)",
-      }}
-    >
-      <Grid container alignItems="center" justifyContent="space-between" spacing={2}>
-        <Grid item xs={12} md={2}>
-          <Box
+    <Box sx={{ ...tarjetaSx, position: "relative", mb: 2, px: { xs: 1.5, md: 2 }, py: 1.25 }}>
+      <FrescuraDatos />
+      <Stack direction={{ xs: "column", xl: "row" }} spacing={1.25} alignItems={{ xs: "stretch", xl: "center" }}>
+        <Box sx={{ minWidth: 170, flexShrink: 0 }}>
+          <Typography sx={{ fontSize: 16, fontWeight: 800, color: tinta.primaria, letterSpacing: "-0.01em", lineHeight: 1.2 }}>
+            Resumen de ventas
+          </Typography>
+          <Typography sx={{ fontSize: 11.5, color: tinta.secundaria }}>
+            <strong style={{ color: tinta.primaria }}>{resumen}</strong>
+          </Typography>
+        </Box>
+
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <RangosRapidos
+            fechaInicio={filters.fechaInicio}
+            fechaFin={filters.fechaFin}
+            inactivo={!!filters.temporada}
+            onElegir={aplicarRapido}
+          >
+            {activos
+              .filter((a) => !a.claves.includes("canal") && !a.claves.includes("temporada"))
+              .map((a) => (
+                <ChipFiltro key={a.etiqueta} etiqueta={a.etiqueta} onQuitar={() => quitar(a.claves)} />
+              ))}
+          </RangosRapidos>
+        </Box>
+
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }} sx={{ flexShrink: 0 }}>
+          <FormControl size="small" sx={{ minWidth: 165 }}>
+            <Select
+              value={filters.canal}
+              onChange={(e) => handleChange("canal", e.target.value)}
+              displayEmpty
+              inputProps={{ "aria-label": "Canal" }}
+              sx={controlSx}
+            >
+              <MenuItem value="">Todos los canales</MenuItem>
+              {CANALES.map((c) => (
+                <MenuItem key={c.clave} value={c.clave}>
+                  <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: c.color, mr: 1, display: "inline-block" }} />
+                  {c.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <Select
+              value={filters.temporada}
+              onChange={(e) => handleChange("temporada", e.target.value)}
+              displayEmpty
+              inputProps={{ "aria-label": "Temporada" }}
+              sx={controlSx}
+            >
+              <MenuItem value="">Sin temporada</MenuItem>
+              {Object.keys(TEMPORADAS).map((season) => (
+                <MenuItem key={season} value={season}>
+                  {season}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <DateRangeFilter
+            value={filters.fechaInicio && filters.fechaFin ? { start: filters.fechaInicio, end: filters.fechaFin } : null}
+            onChange={handleDateChange}
+            label="Rango de fecha"
+            soloIcono
+          />
+
+          <Button
+            variant="outlined"
+            startIcon={<IconAdjustmentsHorizontal size={16} />}
+            onClick={(e) => setFiltrosAnchorEl(e.currentTarget)}
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              pl: 1,
-              borderLeft: "4px solid #1976d2",
+              textTransform: "none",
+              borderRadius: "10px",
+              height: 34,
+              px: 1.5,
+              whiteSpace: "nowrap",
+              borderColor: tinta.borde,
+              color: tinta.primaria,
+              fontWeight: 600,
+              fontSize: 13,
+              "&:hover": { borderColor: "#cbd5e1", bgcolor: tinta.fondoSuave },
             }}
           >
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                fontSize: "1rem",
-                color: "#0f172a",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                lineHeight: 1.1,
-              }}
-            >
-              Resumen Ventas
-            </Typography>
-            <Typography variant="body2" sx={{ color: "#64748b", mt: 0.5, fontSize: "0.78rem" }}>
-              Estás viendo datos de: <strong>{resumen}</strong>
-            </Typography>
-          </Box>
-        </Grid>
-
-        <Grid item xs={12} md={10}>
-          <Stack
-            direction={{ xs: "column", xl: "row" }}
-            spacing={1.5}
-            alignItems={{ xs: "stretch", xl: "flex-end" }}
-            justifyContent="space-between"
-          >
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={1.5}
-              sx={{ flex: 1, width: "100%" }}
-              alignItems="flex-end"
-            >
-              <Box sx={{ minWidth: { xs: "100%", sm: 160, lg: 185 }, flex: 1 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "#475569", fontWeight: 700, ml: 0.2, letterSpacing: 0.2 }}
-                >
-                  Canal
-                </Typography>
-                <FormControl fullWidth size="small" sx={{ mt: 0.6 }}>
-                  <Select
-                    value={filters.canal}
-                    onChange={(e) => handleChange("canal", e.target.value)}
-                    displayEmpty
-                    sx={{
-                      height: 42,
-                      bgcolor: "#fff",
-                      borderRadius: 1.75,
-                      "& .MuiOutlinedInput-notchedOutline": { borderColor: "#cbd5e1" },
-                      "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#94a3b8" },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#2563eb" },
-                    }}
-                  >
-                    <MenuItem value="">
-                      <em>Canal</em>
-                    </MenuItem>
-                    {Object.keys(canalSlpMap).map((canal) => {
-                      let label = canal;
-                      if (label === "Meli") label = "Mercado Libre";
-                      if (label === "Vitex") label = "Vtex";
-                      if (label === "Chorrillo") label = "Chorrillos";
-
-                      return (
-                        <MenuItem key={canal} value={canal}>
-                          {label}
-                        </MenuItem>
-                      );
-                    })}
-                  </Select>
-                </FormControl>
-              </Box>
-
-              <Box sx={{ minWidth: { xs: "100%", sm: 160, lg: 185 }, flex: 1 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "#475569", fontWeight: 700, ml: 0.2, letterSpacing: 0.2 }}
-                >
-                  Temporada
-                </Typography>
-                <FormControl fullWidth size="small" sx={{ mt: 0.6 }}>
-                  <Select
-                    value={filters.temporada}
-                    onChange={(e) => handleChange("temporada", e.target.value)}
-                    displayEmpty
-                    sx={{
-                      height: 42,
-                      bgcolor: "#fff",
-                      borderRadius: 1.75,
-                      "& .MuiOutlinedInput-notchedOutline": { borderColor: "#cbd5e1" },
-                      "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#94a3b8" },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#2563eb" },
-                    }}
-                  >
-                    <MenuItem value="">
-                      <em>Temporada</em>
-                    </MenuItem>
-                    {Object.keys(temporadaRangos).map((season) => (
-                      <MenuItem key={season} value={season}>
-                        {season}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-
-              <Box sx={{ minWidth: { xs: "100%", sm: 200, lg: 260 }, flex: 1.25 }}>
-                <DateRangeFilter value={filters.fechaInicio && filters.fechaFin ? { start: filters.fechaInicio, end: filters.fechaFin } : null} onChange={handleDateChange} label="Rango de Fecha" />
-              </Box>
-            </Stack>
-
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
-              <Button
-                variant="outlined"
-                startIcon={<FilterAltOutlinedIcon />}
-                onClick={abrirFiltros}
-                sx={{
-                  textTransform: "none",
-                  borderRadius: 999,
-                  px: 2.1,
-                  height: 40,
-                  borderColor: "#cbd5e1",
-                  color: "#334155",
-                  bgcolor: "#fff",
-                  fontWeight: 600,
-                  boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
-                  "&:hover": {
-                    borderColor: "#94a3b8",
-                    bgcolor: "#f8fafc",
-                  },
-                }}
-              >
-                Filtros
-              </Button>
-
-              <Button
-                onClick={handleClear}
-                startIcon={<DeleteOutlineIcon />}
-                disabled={!tieneFiltros}
-                sx={{
-                  textTransform: "none",
-                  color: "#cbd5e1",
-                  fontWeight: 500,
-                  "&.Mui-disabled": {
-                    color: "#cbd5e1",
-                  },
-                }}
-              >
-                Limpiar
-              </Button>
-            </Stack>
-          </Stack>
-        </Grid>
-      </Grid>
+            Más filtros
+          </Button>
+          <BotonLimpiar onClick={handleClear} disabled={enEstadoInicial} />
+        </Stack>
+      </Stack>
 
       <Popover
         open={filtrosAbiertos}
         anchorEl={filtrosAnchorEl}
-        onClose={cerrarFiltros}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        onClose={() => setFiltrosAnchorEl(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
         PaperProps={{
           sx: {
             mt: 1,
-            p: 2.25,
-            width: { xs: 340, sm: 580, md: 680 },
-            borderRadius: 3,
-            border: "1px solid rgba(148, 163, 184, 0.22)",
-            background: "linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)",
-            boxShadow: "0 24px 60px rgba(15, 23, 42, 0.18)",
+            p: 2.5,
+            width: { xs: 340, sm: 560 },
+            borderRadius: "14px",
+            border: `1px solid ${tinta.borde}`,
+            boxShadow: "0 20px 50px rgba(15, 23, 42, 0.16)",
           },
         }}
       >
         <Stack spacing={2}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: "#0f172a", fontWeight: 700, mb: 1, fontSize: "0.98rem" }}>
-              Opciones adicionales
+            <Typography sx={{ fontSize: 15, fontWeight: 700, color: tinta.primaria }}>Más filtros</Typography>
+            <Typography sx={{ fontSize: 12.5, color: tinta.secundaria }}>
+              Acotan todas las tarjetas, gráficos y tablas de la vista.
             </Typography>
-            <Divider />
           </Box>
 
           <Grid container spacing={1.5}>
             <Grid item xs={12} sm={6}>
-              <Typography variant="caption" sx={{ color: "#475569", fontWeight: 700, ml: 0.2 }}>
-                Comparando con
-              </Typography>
-              <FormControl fullWidth size="small" sx={{ mt: 0.6 }}>
+              <Typography sx={etiquetaSx}>Comparando con</Typography>
+              <FormControl fullWidth size="small">
                 <Select
                   value={comparacionVisual}
                   onChange={(e) => setComparacionVisual(e.target.value)}
                   displayEmpty
-                  sx={{
-                    height: 42,
-                    bgcolor: "#fff",
-                    borderRadius: 1.75,
-                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "#cbd5e1" },
-                  }}
+                  sx={controlSx}
                 >
-                  <MenuItem value="">
-                    <em>Seleccionar</em>
-                  </MenuItem>
+                  <MenuItem value="">Período anterior (por defecto)</MenuItem>
                   <MenuItem value="Periodo anterior">Periodo anterior</MenuItem>
                   <MenuItem value="Mismo período año anterior">Mismo período año anterior</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <Typography variant="caption" sx={{ color: "#475569", fontWeight: 700, ml: 0.2 }}>
-                Buscar SKU
-              </Typography>
-              <TextField
-                fullWidth
-                size="small"
-                sx={{
-                  mt: 0.6,
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 1.75,
-                    backgroundColor: "#fff",
-                  },
-                }}
-                placeholder="SKU"
-                value={busquedaSku}
-                onChange={(e) => setBusquedaSku(e.target.value)}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <Typography variant="caption" sx={{ color: "#475569", fontWeight: 700, ml: 0.2 }}>
-                Buscar familia
-              </Typography>
-              <TextField
-                fullWidth
-                size="small"
-                sx={{
-                  mt: 0.6,
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 1.75,
-                    backgroundColor: "#fff",
-                  },
-                }}
-                placeholder="Familia"
-                value={busquedaFamilia}
-                onChange={(e) => setBusquedaFamilia(e.target.value)}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <Typography variant="caption" sx={{ color: "#475569", fontWeight: 700, ml: 0.2 }}>
-                Buscar subfamilia
-              </Typography>
-              <TextField
-                fullWidth
-                size="small"
-                sx={{
-                  mt: 0.6,
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 1.75,
-                    backgroundColor: "#fff",
-                  },
-                }}
-                placeholder="Subfamilia"
-                value={busquedaSubfamilia}
-                onChange={(e) => setBusquedaSubfamilia(e.target.value)}
-              />
-            </Grid>
+            {[
+              { label: "SKU", value: busquedaSku, set: setBusquedaSku },
+              { label: "Familia", value: busquedaFamilia, set: setBusquedaFamilia },
+              { label: "Subfamilia", value: busquedaSubfamilia, set: setBusquedaSubfamilia },
+            ].map((campo) => (
+              <Grid item xs={12} sm={6} key={campo.label}>
+                <Typography sx={etiquetaSx}>{campo.label}</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder={campo.label}
+                  value={campo.value}
+                  onChange={(e) => campo.set(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && aplicarFiltrosAdicionales()}
+                  sx={{ "& .MuiOutlinedInput-root": controlSx }}
+                />
+              </Grid>
+            ))}
           </Grid>
 
           <Stack direction="row" justifyContent="space-between" spacing={1}>
@@ -468,41 +304,26 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange }) => {
                 setBusquedaSubfamilia("");
                 setComparacionVisual("");
               }}
-              sx={{
-                textTransform: "none",
-                color: "#64748b",
-                borderRadius: 999,
-                px: 2,
-              }}
+              sx={{ textTransform: "none", color: tinta.secundaria, borderRadius: "10px" }}
             >
               Limpiar campos
             </Button>
-            <Button
-              onClick={aplicarFiltrosAdicionales}
-              variant="contained"
-              sx={{
-                textTransform: "none",
-                borderRadius: 999,
-                px: 2,
-                boxShadow: "none",
-              }}
-            >
-              Aplicar
-            </Button>
-          </Stack>
-
-          <Stack direction="row" justifyContent="flex-end" spacing={1}>
-            <Button
-              onClick={cerrarFiltros}
-              sx={{
-                textTransform: "none",
-                color: "#334155",
-                borderRadius: 999,
-                px: 2,
-              }}
-            >
-              Cerrar
-            </Button>
+            <Stack direction="row" spacing={1}>
+              <Button
+                onClick={() => setFiltrosAnchorEl(null)}
+                sx={{ textTransform: "none", color: tinta.secundaria, borderRadius: "10px" }}
+              >
+                Cerrar
+              </Button>
+              <Button
+                onClick={aplicarFiltrosAdicionales}
+                variant="contained"
+                disableElevation
+                sx={{ textTransform: "none", borderRadius: "10px", px: 2.5, fontWeight: 700 }}
+              >
+                Aplicar
+              </Button>
+            </Stack>
           </Stack>
         </Stack>
       </Popover>

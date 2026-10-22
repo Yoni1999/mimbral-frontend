@@ -8,7 +8,7 @@ import {
   MenuItem,
   TextField,
 } from "@mui/material";
-import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import { DataGrid, type GridColDef, type GridSortModel } from "@mui/x-data-grid";
 import { IconPlus, IconTargetArrow, IconCalendarStats, IconGauge, IconBan } from "@tabler/icons-react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import BlankCard from "@/app/(DashboardLayout)/components/shared/BlankCard";
@@ -18,6 +18,8 @@ import MetaMetricCard from "@/modules/metas/components/MetaMetricCard";
 import { listarMetas, listarPeriodos, obtenerResumenMetas } from "@/modules/metas/services/metas.client";
 import type { Goal, GoalPeriod, GoalsSummary } from "@/modules/metas/types";
 import { notifyError } from "@/components/ui/toast/notify";
+import { useEstadoVista } from "@/utils/estadoVista";
+import { campoDe } from "@/modules/metas/campoVista";
 
 const TIPOS_RESPONSABLE = [
   { value: "", label: "Todos" },
@@ -41,9 +43,16 @@ export default function ResumenMetasPage() {
   const [metas, setMetas] = useState<Goal[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
-
-  const [filtros, setFiltros] = useState({ periodId: "", targetType: "", goalType: "", status: "" });
+  // Recuerda filtros, página y orden al volver a la vista o reabrir la pestaña.
+  const [vista, setVista] = useEstadoVista("metas", () => ({
+    filtros: { periodId: "", targetType: "", goalType: "", status: "" },
+    paginationModel: { page: 0, pageSize: 10 },
+    sortModel: [] as GridSortModel,
+  }));
+  const { filtros, paginationModel, sortModel } = vista;
+  const setFiltros = campoDe(setVista, "filtros");
+  const setPaginationModel = campoDe(setVista, "paginationModel");
+  const setSortModel = campoDe(setVista, "sortModel");
 
   useEffect(() => {
     listarPeriodos({ pageSize: 100 })
@@ -181,6 +190,8 @@ export default function ResumenMetasPage() {
                 paginationMode="server"
                 paginationModel={paginationModel}
                 onPaginationModelChange={setPaginationModel}
+                sortModel={sortModel}
+                onSortModelChange={setSortModel}
                 pageSizeOptions={[10, 20, 50]}
                 disableRowSelectionOnClick
                 density="comfortable"

@@ -1,5 +1,7 @@
 import { BACKEND_URL } from "@/config";
 import { getPlataformaId } from "@/modules/auth/utils/auth.storage";
+import { limpiarEstadosVista } from "@/utils/estadoVista";
+import { olvidarDatosCargados } from "@/utils/memoriaDatos";
 // export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://
 type ApiAuthMode = "none" | "optional" | "required";
 
@@ -38,6 +40,10 @@ export function getStoredToken(): string | null {
 export function clearStoredToken() {
   if (!isBrowser()) return;
   localStorage.removeItem("token");
+  // Al cerrar sesión (o vencer) se olvida lo buscado y lo cargado: el
+  // próximo usuario en este navegador parte de cero.
+  limpiarEstadosVista();
+  olvidarDatosCargados();
 }
 
 function shouldTreatAsPublic(endpoint: string): boolean {

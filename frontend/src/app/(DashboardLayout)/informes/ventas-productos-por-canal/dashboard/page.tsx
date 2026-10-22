@@ -44,6 +44,7 @@ import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
+import { useEstadoVista } from "@/utils/estadoVista";
 import { BACKEND_URL } from "@/config";
 
 type ChannelItem = {
@@ -105,7 +106,7 @@ const channelLabelMap: Record<string, string> = {
   falabella: "Falabella",
   balmaceda: "Balmaceda",
   vitex: "Vtex",
-  chorrillo: "Chorrillo",
+  chorrillo: "Chorrillos",
   empresas: "Empresas",
 };
 
@@ -266,10 +267,22 @@ function SectionCard({
 
 const DashboardVentasPorCanalPage: React.FC = () => {
   const searchParams = useSearchParams();
-  const [selectedChannel, setSelectedChannel] = useState<string>("");
   const [stockDetailProduct, setStockDetailProduct] = useState<StockDetailProduct>(null);
 
   const queryString = useMemo(() => searchParams?.toString() ?? "", [searchParams]);
+
+  // Los filtros vienen en la dirección (la URL manda). Se recuerda solo el
+  // canal elegido en el gráfico, y vale únicamente para esa misma consulta.
+  const [canalElegido, setCanalElegido] = useEstadoVista<{ consulta: string; canal: string }>(
+    "informe-ventas-por-canal:dashboard",
+    () => ({ consulta: queryString, canal: "" })
+  );
+  const selectedChannel = canalElegido.consulta === queryString ? canalElegido.canal : "";
+  const setSelectedChannel = (siguiente: string | ((actual: string) => string)) =>
+    setCanalElegido({
+      consulta: queryString,
+      canal: typeof siguiente === "function" ? siguiente(selectedChannel) : siguiente,
+    });
 
   // La URL sale de los filtros de la dirección: si cambian se limpia al
   // instante, se cancela lo pendiente y solo queda la última respuesta.

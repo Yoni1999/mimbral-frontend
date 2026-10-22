@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { apiJson } from "@/utils/apiClient";
+import { enMemoria, recordar } from "@/utils/memoriaDatos";
 
 type Estado<T> = {
   clave: string | null;
@@ -21,6 +22,8 @@ type Estado<T> = {
  * - Si el filtro se vuelve a emitir con los mismos valores, la clave no
  *   cambia y no se vuelve a pedir.
  * - `clave` en null: los filtros todavía no están listos; no se pide nada.
+ * - Si la misma clave se cargó hace poco (ver VIGENCIA_MS), se muestra al
+ *   instante sin volver a pedirla.
  */
 export function useCargaDatos<T>(
   clave: string | null,
@@ -31,15 +34,20 @@ export function useCargaDatos<T>(
   const cargarRef = useRef(cargar);
   cargarRef.current = cargar;
 
-  const [estado, setEstado] = useState<Estado<T>>({
-    clave: null,
-    datos: inicial,
-    cargando: clave !== null,
-    error: null,
+  const [estado, setEstado] = useState<Estado<T>>(() => {
+    const previo = enMemoria(clave);
+    return previo
+      ? { clave, datos: previo.datos as T, cargando: false, error: null }
+      : { clave: null, datos: inicial, cargando: clave !== null, error: null };
   });
 
   useEffect(() => {
     if (clave === null) return;
+    const previo = enMemoria(clave);
+    if (previo) {
+      setEstado({ clave, datos: previo.datos as T, cargando: false, error: null });
+      return;
+    }
     const controller = new AbortController();
     setEstado({ clave, datos: inicialRef.current, cargando: true, error: null });
 
@@ -47,6 +55,7 @@ export function useCargaDatos<T>(
       .current(controller.signal)
       .then((datos) => {
         if (!controller.signal.aborted) {
+          recordar(clave, datos);
           setEstado({ clave, datos, cargando: false, error: null });
         }
       })
@@ -62,6 +71,8 @@ export function useCargaDatos<T>(
   // Entre el cambio de filtros y el efecto hay un render: en ese render el
   // estado todavía es del filtro anterior, así que se muestra vacío y cargando.
   if (estado.clave !== clave) {
+    const previo = enMemoria(clave);
+    if (previo) return { datos: previo.datos as T, cargando: false, error: null };
     return { datos: inicialRef.current, cargando: clave !== null, error: null };
   }
   return estado;
