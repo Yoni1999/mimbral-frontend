@@ -1,22 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Box, Collapse, IconButton, Typography,
-  Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Avatar, Stack, Paper,
-  CircularProgress, Pagination
-} from "@mui/material";
-
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-
+import { Box, Pagination, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
-import { formatVentas } from "@/utils/format";
 import { BACKEND_URL } from "@/config";
+import { BarraParticipacion, ChipMargen, Panel, formatoPesos, tablaSx, tinta, Columnas, TextoCelda } from "../../components/estilo";
 
-// Interfaces
 interface Filtros {
   canal: string;
   fechaInicio: string;
@@ -24,104 +14,33 @@ interface Filtros {
   vendedor?: number | null;
 }
 
+/** El back entrega algunas cifras con su apertura por canal. */
+type PorCanal = { total: number | null; porCanal?: { canal: string; valor: number }[] };
+
 interface ProductoDetallado {
   sku: string;
   nombre: string;
   imagen: string;
   primerNivel: string;
   categoria: string;
-  cantidadVendida: number;
+  cantidadVendida: number | PorCanal;
   totalVentas: number;
-  precioPromedio: number;
-  costoTotal: number;
-  margenBruto: number;
+  precioPromedio: number | PorCanal;
+  margenBruto: number | PorCanal;
   margenPorcentaje: number;
-  stock: number;
+  stockCanal: number | PorCanal | null;
 }
+
+const cifra = (v: number | PorCanal | null | undefined): number | null =>
+  v == null ? null : typeof v === "number" ? v : v.total ?? null;
 
 interface Props {
   filters: Filtros;
 }
 
-// Fila colapsable
-function Row({ row }: { row: ProductoDetallado }) {
-  const [open, setOpen] = useState(false);
+const SIN_IMAGEN = "https://res.cloudinary.com/dhzahos7u/image/upload/v1748960388/producto_sin_imagen_vqaps4.jpg";
 
-  return (
-    <>
-      <TableRow>
-        <TableCell>
-          <IconButton size="small" onClick={() => setOpen(!open)}>
-            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-          </IconButton>
-        </TableCell>
-        <TableCell>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Avatar src={row.imagen} alt={row.nombre} />
-            <Box>
-              <Typography fontWeight={600} variant="body2">{row.nombre}</Typography>
-              <Typography variant="caption" color="text.secondary">SKU: {row.sku}</Typography>
-            </Box>
-          </Stack>
-        </TableCell>
-        <TableCell align="right">
-          <Typography variant="body2">{row.primerNivel}</Typography>
-          <Typography variant="caption" color="text.secondary">{row.categoria}</Typography>
-        </TableCell>
-        <TableCell align="right">{row.cantidadVendida}</TableCell>
-        <TableCell align="right">{formatVentas(row.totalVentas)}</TableCell>
-        <TableCell align="right">{formatVentas(row.precioPromedio)}</TableCell>
-        <TableCell align="right">
-          <Typography variant="body2">{formatVentas(row.margenBruto)}</Typography>
-          <Typography variant="caption" color="text.secondary">
-            ({row.margenPorcentaje.toFixed(1)}%)
-          </Typography>
-        </TableCell>
-      </TableRow>
-
-      <TableRow>
-        <TableCell colSpan={7} style={{ paddingBottom: 0, paddingTop: 0 }}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
-              {/* Historial de ventas */}
-              <Box mt={3}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Historial de ventas
-                </Typography>
-
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Cliente</TableCell>
-                      <TableCell align="right">Cantidad comprada</TableCell>
-                      <TableCell align="right">Total venta</TableCell>
-                      <TableCell align="right">N° veces que compró</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {/* Aquí puedes reemplazar con un .map si conectas una API */}
-                    <TableRow>
-                      <TableCell>Juan Pérez</TableCell>
-                      <TableCell align="right">12</TableCell>
-                      <TableCell align="right">{formatVentas(54000)}</TableCell>
-                      <TableCell align="right">3</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>María López</TableCell>
-                      <TableCell align="right">5</TableCell>
-                      <TableCell align="right">{formatVentas(22500)}</TableCell>
-                      <TableCell align="right">1</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </Box>
-          </Collapse>
-        </TableCell>
-      </TableRow>
-    </>
-  );
-}
-
-// Componente principal
+/** Todos los productos vendidos en el canal, de 100 en 100. */
 const ProductosVendidos: React.FC<Props> = ({ filters }) => {
   const [page, setPage] = useState(1);
   const rowsPerPage = 100;
@@ -152,7 +71,7 @@ const ProductosVendidos: React.FC<Props> = ({ filters }) => {
 
   const {
     datos: { productos, totalProductos },
-    cargando: loading,
+    cargando,
   } = useCargaDatos(
     url,
     async (signal) => {
@@ -165,57 +84,90 @@ const ProductosVendidos: React.FC<Props> = ({ filters }) => {
     { productos: [] as ProductoDetallado[], totalProductos: 0 }
   );
 
+  const maxVenta = Math.max(0, ...productos.map((p) => p.totalVentas || 0));
+  const paginas = Math.ceil(totalProductos / rowsPerPage);
+
   return (
-    <Box mt={2}>
-      <Typography variant="h6" fontWeight="bold" mb={1}>
-        Productos más vendidos
-      </Typography>
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight={300}>
-          <CircularProgress />
-        </Box>
+    <Panel
+      titulo="Productos vendidos"
+      descripcion={
+        cargando
+          ? "Cargando…"
+          : `${totalProductos.toLocaleString("es-CL")} productos · mostrando ${(offset + 1).toLocaleString("es-CL")}–${(offset + productos.length).toLocaleString("es-CL")}`
+      }
+    >
+      {cargando ? (
+        Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} height={52} />)
       ) : productos.length === 0 ? (
-        <Typography align="center">No se encontraron productos</Typography>
+        <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 6, textAlign: "center" }}>No se encontraron productos.</Typography>
       ) : (
         <>
-          <Typography variant="subtitle2" mb={1}>
-            Mostrando {productos.length} de {totalProductos} productos
-          </Typography>
-
-          <TableContainer component={Paper}>
-            <Table size="small" stickyHeader>
+          <TableContainer sx={{ maxHeight: 640, mx: -2.5, width: "auto", overflowX: "hidden" }}>
+            <Table size="small" stickyHeader sx={tablaSx}>
+          <Columnas anchos={[26, 16, 9, 13, 10, 11, 8, 7]} />
               <TableHead>
                 <TableRow>
-                  <TableCell />
-                  <TableCell>Producto</TableCell>
-                  <TableCell align="right">Primer Nivel / Categoría</TableCell>
+                  <TableCell sx={{ pl: 2.5 }}>Producto</TableCell>
+                  <TableCell>Primer nivel / Categoría</TableCell>
                   <TableCell align="right">Cantidad</TableCell>
-                  <TableCell align="right">Total Ventas</TableCell>
-                  <TableCell align="right">Precio Promedio</TableCell>
-                  <TableCell align="right">Margen Bruto</TableCell>
+                  <TableCell align="right">Total ventas</TableCell>
+                  <TableCell align="right">Precio prom.</TableCell>
+                  <TableCell align="right">Margen bruto</TableCell>
+                  <TableCell align="right">% Margen</TableCell>
+                  <TableCell align="right" sx={{ pr: 2.5 }}>Stock</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {productos.map((row) => (
-                  <Row key={row.sku} row={row} />
+                  <TableRow key={row.sku}>
+                    <TableCell sx={{ pl: 2.5 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+                        <Box
+                          component="img"
+                          src={row.imagen || SIN_IMAGEN}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null;
+                            target.src = SIN_IMAGEN;
+                          }}
+                          alt=""
+                          sx={{ width: 30, height: 30, objectFit: "contain", borderRadius: "8px", border: `1px solid ${tinta.borde}`, bgcolor: "#fff", flexShrink: 0 }}
+                        />
+                        <TextoCelda texto={row.nombre} secundario={row.sku} />
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <TextoCelda texto={row.primerNivel || "—"} secundario={row.categoria || "—"} fuerte={false} />
+                    </TableCell>
+                    <TableCell align="right">{(cifra(row.cantidadVendida) ?? 0).toLocaleString("es-CL")}</TableCell>
+                    <TableCell align="right">
+                      {formatoPesos(row.totalVentas)}
+                      <Box sx={{ mt: 0.5 }}>
+                        <BarraParticipacion valor={row.totalVentas || 0} maximo={maxVenta} />
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right">{formatoPesos(cifra(row.precioPromedio) ?? 0)}</TableCell>
+                    <TableCell align="right">{formatoPesos(cifra(row.margenBruto) ?? 0)}</TableCell>
+                    <TableCell align="right">
+                      <ChipMargen valor={row.margenPorcentaje} />
+                    </TableCell>
+                    <TableCell align="right" sx={{ pr: 2.5 }}>
+                      {cifra(row.stockCanal) != null ? cifra(row.stockCanal)!.toLocaleString("es-CL") : "—"}
+                    </TableCell>
+                  </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
-
-          <Box mt={2} mb={4} display="flex" justifyContent="center">
-            <Pagination
-              count={Math.ceil(totalProductos / rowsPerPage)}
-              page={paginaActual}
-              onChange={(_, newPage) => setPage(newPage)}
-              color="primary"
-            />
-          </Box>
+          {paginas > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+              <Pagination count={paginas} page={paginaActual} onChange={(_, p) => setPage(p)} color="primary" shape="rounded" />
+            </Box>
+          )}
         </>
       )}
-    </Box>
+    </Panel>
   );
 };
 
 export default ProductosVendidos;
-

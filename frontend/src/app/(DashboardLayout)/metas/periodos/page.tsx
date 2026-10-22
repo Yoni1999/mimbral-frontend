@@ -11,7 +11,7 @@ import {
   TextField,
   Tooltip,
 } from "@mui/material";
-import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import { DataGrid, type GridColDef, type GridSortModel } from "@mui/x-data-grid";
 import { IconEye, IconPencil, IconLock, IconBan, IconTrash, IconPlus, IconCalendarStats } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
@@ -22,6 +22,8 @@ import ConfirmarAccionModal from "@/modules/metas/components/ConfirmarAccionModa
 import { cancelarPeriodo, cerrarPeriodo, eliminarPeriodo, listarPeriodos } from "@/modules/metas/services/metas.client";
 import type { GoalPeriod, PeriodStatus } from "@/modules/metas/types";
 import { notifyError, notifySuccess } from "@/components/ui/toast/notify";
+import { useEstadoVista } from "@/utils/estadoVista";
+import { campoDe } from "@/modules/metas/campoVista";
 
 const ESTADOS: { value: PeriodStatus | ""; label: string }[] = [
   { value: "", label: "Todos" },
@@ -35,8 +37,17 @@ export default function PeriodosPage() {
   const [periodos, setPeriodos] = useState<GoalPeriod[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
-  const [filtrosAplicados, setFiltrosAplicados] = useState({ search: "", startDate: "", endDate: "", status: "" });
+  // Recuerda filtros aplicados, página y orden al volver a la vista o reabrir
+  // la pestaña; los campos del formulario parten mostrando lo aplicado.
+  const [vista, setVista] = useEstadoVista("metas-periodos", () => ({
+    filtrosAplicados: { search: "", startDate: "", endDate: "", status: "" },
+    paginationModel: { page: 0, pageSize: 10 },
+    sortModel: [] as GridSortModel,
+  }));
+  const { filtrosAplicados, paginationModel, sortModel } = vista;
+  const setFiltrosAplicados = campoDe(setVista, "filtrosAplicados");
+  const setPaginationModel = campoDe(setVista, "paginationModel");
+  const setSortModel = campoDe(setVista, "sortModel");
   const [borrador, setBorrador] = useState(filtrosAplicados);
   const [accion, setAccion] = useState<{ tipo: "close" | "cancel" | "delete"; periodo: GoalPeriod } | null>(null);
 
@@ -184,6 +195,8 @@ export default function PeriodosPage() {
                 paginationMode="server"
                 paginationModel={paginationModel}
                 onPaginationModelChange={setPaginationModel}
+                sortModel={sortModel}
+                onSortModelChange={setSortModel}
                 pageSizeOptions={[10, 20, 50]}
                 disableRowSelectionOnClick
               />

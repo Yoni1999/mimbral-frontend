@@ -1,21 +1,7 @@
 "use client";
-
 import React, { useMemo, useState } from "react";
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Avatar,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Stack,
-  TableSortLabel,
-} from "@mui/material";
-import { formatVentas } from "@/utils/format";
+import { Avatar, Box, Table, TableBody, TableCell, TableHead, TableRow, TableSortLabel, Typography } from "@mui/material";
+import { BarraParticipacion, ChipMargen, formatoMonto, tablaSx, tinta, Panel, Columnas, TextoCelda } from "../../components/estilo";
 
 interface Vendedor {
   Nombre: string;
@@ -25,7 +11,6 @@ interface Vendedor {
   MargenBruto: number;
   MargenPorcentaje: number;
   TotalVentas?: number;
-  
 }
 
 type Order = "asc" | "desc";
@@ -35,9 +20,18 @@ interface Props {
   data: Vendedor[];
 }
 
+const iniciales = (nombre: string) =>
+  nombre
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase();
+
 const TopVendedoresChart: React.FC<Props> = ({ data }) => {
   const [order, setOrder] = useState<Order>("desc");
-  const [orderBy, setOrderBy] = useState<OrderBy>("MargenBruto");
+  const [orderBy, setOrderBy] = useState<OrderBy>("TotalVentas");
 
   const handleSort = (key: OrderBy) => {
     if (orderBy === key) {
@@ -49,113 +43,71 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
   };
 
   const sortedData = useMemo(() => {
-    return [...data].sort((a, b) => {
+    return [...(Array.isArray(data) ? data : [])].sort((a, b) => {
       const valA = a[orderBy] ?? 0;
       const valB = b[orderBy] ?? 0;
       return order === "asc" ? valA - valB : valB - valA;
     });
   }, [data, order, orderBy]);
 
+  const maxVenta = Math.max(0, ...sortedData.map((v) => v.TotalVentas ?? 0));
+
+  const columna = (key: OrderBy, label: string, ultima = false) => (
+    <TableCell align="right" sx={ultima ? { pr: 2.5 } : undefined} sortDirection={orderBy === key ? order : false}>
+      <TableSortLabel active={orderBy === key} direction={orderBy === key ? order : "desc"} onClick={() => handleSort(key)}>
+        {label}
+      </TableSortLabel>
+    </TableCell>
+  );
+
   return (
-    <Card elevation={1} sx={{ borderRadius: 2, p: 2, background: "#fff" }}>
-      <CardContent>
-        <Typography variant="h6" fontWeight="bold" mb={2}>
-          Top 10 Vendedores
-        </Typography>
-
-        <Box sx={{ maxHeight: 307.5, overflowY: "auto" }}>
-          <Table size="small" stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell>Vendedor</TableCell>
-
-                <TableCell align="right" sortDirection={orderBy === "UnidadesVendidas" ? order : false}>
-                  <TableSortLabel
-                    active={orderBy === "UnidadesVendidas"}
-                    direction={order}
-                    onClick={() => handleSort("UnidadesVendidas")}
-                  >
-                    Unidades
-                  </TableSortLabel>
+    <Panel titulo="Top 10 vendedores" descripcion="Ordenable por cualquier columna">
+      <Box sx={{ maxHeight: 360, overflowY: "auto", overflowX: "hidden", mx: -2.5 }}>
+        <Table size="small" stickyHeader sx={tablaSx}>
+          <Columnas anchos={[30, 18, 13, 10, 15, 14]} />
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ pl: 2.5 }}>Vendedor</TableCell>
+              {columna("TotalVentas", "Ventas")}
+              {columna("UnidadesVendidas", "Unidades")}
+              {columna("Items", "Ítems")}
+              {columna("MargenBruto", "Margen bruto")}
+              {columna("MargenPorcentaje", "% Margen", true)}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {sortedData.map((vendedor) => (
+              <TableRow key={vendedor.Nombre}>
+                <TableCell sx={{ pl: 2.5 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Avatar
+                      src={vendedor.Imagen || undefined}
+                      alt={vendedor.Nombre}
+                      sx={{ width: 26, height: 26, fontSize: 11, fontWeight: 700, bgcolor: "#eff4ff", color: tinta.acento, flexShrink: 0 }}
+                    >
+                      {iniciales(vendedor.Nombre || "")}
+                    </Avatar>
+                    <TextoCelda texto={vendedor.Nombre} />
+                  </Box>
                 </TableCell>
-
-                <TableCell align="right" sortDirection={orderBy === "TotalVentas" ? order : false}>
-                  <TableSortLabel
-                    active={orderBy === "TotalVentas"}
-                    direction={order}
-                    onClick={() => handleSort("TotalVentas")}
-                  >
-                    Total Ventas
-                  </TableSortLabel>
+                <TableCell align="right">
+                  {vendedor.TotalVentas ? formatoMonto(vendedor.TotalVentas) : "—"}
+                  <Box sx={{ mt: 0.5 }}>
+                    <BarraParticipacion valor={vendedor.TotalVentas ?? 0} maximo={maxVenta} />
+                  </Box>
                 </TableCell>
-
-
-                <TableCell align="right" sortDirection={orderBy === "Items" ? order : false}>
-                  <TableSortLabel
-                    active={orderBy === "Items"}
-                    direction={order}
-                    onClick={() => handleSort("Items")}
-                  >
-                    Ítems
-                  </TableSortLabel>
-                </TableCell>
-
-                <TableCell align="right" sortDirection={orderBy === "MargenBruto" ? order : false}>
-                  <TableSortLabel
-                    active={orderBy === "MargenBruto"}
-                    direction={order}
-                    onClick={() => handleSort("MargenBruto")}
-                  >
-                    Margen Bruto
-                  </TableSortLabel>
-                </TableCell>
-
-                <TableCell align="right" sortDirection={orderBy === "MargenPorcentaje" ? order : false}>
-                  <TableSortLabel
-                    active={orderBy === "MargenPorcentaje"}
-                    direction={order}
-                    onClick={() => handleSort("MargenPorcentaje")}
-                  >
-                    %
-                  </TableSortLabel>
+                <TableCell align="right">{(vendedor.UnidadesVendidas ?? 0).toLocaleString("es-CL")}</TableCell>
+                <TableCell align="right">{(vendedor.Items ?? 0).toLocaleString("es-CL")}</TableCell>
+                <TableCell align="right">{formatoMonto(vendedor.MargenBruto)}</TableCell>
+                <TableCell align="right" sx={{ pr: 2.5 }}>
+                  <ChipMargen valor={vendedor.MargenPorcentaje} />
                 </TableCell>
               </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {sortedData.map((vendedor, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Avatar src={vendedor.Imagen} alt={vendedor.Nombre} />
-                      <Typography variant="body2" fontWeight={500}>
-                        {vendedor.Nombre}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-
-                  <TableCell align="right">{vendedor.UnidadesVendidas}</TableCell>
-
-                  <TableCell align="right">
-                    {vendedor.TotalVentas ? formatVentas(vendedor.TotalVentas) : "-"}
-                  </TableCell>
-
-                  <TableCell align="right">{vendedor.Items}</TableCell>
-
-                  <TableCell align="right">
-                    {formatVentas(vendedor.MargenBruto)}
-                  </TableCell>
-
-                  <TableCell align="right">
-                    {vendedor.MargenPorcentaje.toFixed(1).replace(".", ",")}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Box>
-      </CardContent>
-    </Card>
+            ))}
+          </TableBody>
+        </Table>
+      </Box>
+    </Panel>
   );
 };
 

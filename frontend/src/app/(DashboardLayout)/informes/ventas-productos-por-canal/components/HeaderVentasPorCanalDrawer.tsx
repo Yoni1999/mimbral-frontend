@@ -208,14 +208,6 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
     []
   );
 
-  useEffect(() => {
-    setFilters((prev) => ({ ...prev, categoria: undefined, subcategoria: undefined }));
-  }, [filters.primerNivel]);
-
-  useEffect(() => {
-    setFilters((prev) => ({ ...prev, subcategoria: undefined }));
-  }, [filters.categoria]);
-
   const handleChipDelete = (key: keyof FiltrosPorCanal) => {
     const updated: FiltrosPorCanal = { ...filters };
 
@@ -609,9 +601,14 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
                 <Select
                   value={filters.primerNivel || ""}
                   onChange={(e) =>
+                    // Cambiar el nivel limpia lo de abajo. (Antes lo hacía un
+                    // efecto que también corría al montar y borraba la
+                    // categoría recordada.)
                     setFilters({
                       ...filters,
                       primerNivel: e.target.value || undefined,
+                      categoria: undefined,
+                      subcategoria: undefined,
                     })
                   }
                   sx={selectSx}
@@ -639,6 +636,7 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
                       setFilters({
                         ...filters,
                         categoria: e.target.value || undefined,
+                        subcategoria: undefined,
                       })
                     }
                     sx={selectSx}

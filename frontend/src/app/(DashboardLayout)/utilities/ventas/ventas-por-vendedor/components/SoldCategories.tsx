@@ -1,300 +1,176 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
-  Card,
-  CardContent,
-  Typography,
   Box,
+  InputAdornment,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
-  TextField,
   TableSortLabel,
-  CircularProgress,
+  TextField,
+  Typography,
 } from "@mui/material";
-import {
-  ArrowDropUp as ArrowDropUpIcon,
-  ArrowDropDown as ArrowDropDownIcon,
-} from "@mui/icons-material";
+import { IconSearch } from "@tabler/icons-react";
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
-import { formatVentas, formatUnidades } from "@/utils/format";
+import { useEstadoVista } from "@/utils/estadoVista";
+import {
+  BarraParticipacion,
+  ChipMargen,
+  ChipVariacion,
+  Columnas,
+  Panel,
+  TextoCelda,
+  controlSx,
+  formatoMonto,
+  tablaSx,
+  tinta,
+} from "../../components/estilo";
+import type { Filters } from "./Header";
+import { consultaVendedor } from "./consulta";
 
-
-interface Producto {
-  Codigo_Categoria: string;
-  Nombre_Categoria: string;
-  Cantidad_Vendida: number;
-  Total_Ventas: number;
-  Imagen?: string;
-  Ventas_Anterior: number;
-  Unidades_Anterior: number;
-  MargenBruto_Actual: number;
-  MargenBruto_Anterior: number;
-  PorcentajeCambioVentas: number;
-  PorcentajeCambioUnidades: number;
-  MargenBruto_Actual_Porcentaje: number;
-  MargenBruto_Anterior_Porcentaje: number;
+interface Categoria {
+  codigo: string;
+  nombre: string;
+  unidades: number;
+  ventas: number;
+  margenPorcentaje: number;
+  cambioUnidades: number | null;
+  cambioVentas: number | null;
 }
 
-interface Filters {
-  vendedorEmpresa: string;
-  fechaInicio: string;
-  fechaFin: string;
-  modoComparacion: string;
-  canal: string;
-}
+type Orden = "unidades" | "ventas" | "margen";
 
-interface Props {
-  filtros: Filters;
-}
+const CAMPO: Record<Orden, keyof Categoria> = { unidades: "unidades", ventas: "ventas", margen: "margenPorcentaje" };
 
-const TopProductosChart: React.FC<Props> = ({ filtros }) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"unidades" | "ventas" | "margen" | "">("");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+/** Categorías vendidas en el período, con búsqueda y orden por columna. */
+const CategoriasVendidas: React.FC<{ filtros: Filters }> = ({ filtros }) => {
+  // Búsqueda y orden se recuerdan al volver a la vista.
+  const [vista, setVista] = useEstadoVista<{ searchTerm: string; sortBy: Orden | ""; sortDirection: "asc" | "desc" }>(
+    "ventas-por-vendedor:vista",
+    () => ({ searchTerm: "", sortBy: "ventas", sortDirection: "desc" })
+  );
+  const { searchTerm, sortDirection } = vista;
+  const sortBy: Orden = vista.sortBy || "ventas";
 
-  const buildQuery = () => {
-    const params = new URLSearchParams();
-
-    if (filtros.fechaInicio) params.append("fechaInicio", filtros.fechaInicio);
-    if (filtros.fechaFin) params.append("fechaFin", filtros.fechaFin);
-
-    if (filtros.modoComparacion) params.append("modoComparacion", filtros.modoComparacion);
-    if (filtros.vendedorEmpresa) params.append("vendedorEmpresa", filtros.vendedorEmpresa);
-    if (filtros.canal) params.append("canal", filtros.canal);
-
-    return params.toString();
-  };
-
-  // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
-  const url = `${BACKEND_URL}/api/pv/ventascategoria?${buildQuery()}`;
-  const { datos: data, cargando: loading } = useCargaDatos<Producto[]>(
+  const url = `${BACKEND_URL}/api/pv/ventascategoria?${consultaVendedor(filtros)}`;
+  const { datos, cargando } = useCargaDatos<Categoria[]>(
     url,
     async (signal) => {
       const json = await apiJson(url, { signal });
-      return json.map((item: any) => ({
-        Codigo_Categoria: item.code,
-        Nombre_Categoria: item.Categoria,
-        Cantidad_Vendida: item.Unidades_Actual,
-        Total_Ventas: item.Ventas_Actual,
-        Imagen: item.U_Imagen,
-        Ventas_Anterior: item.Ventas_Anterior,
-        Unidades_Anterior: item.Unidades_Anterior,
-        MargenBruto_Actual: item.MargenBruto_Actual,
-        MargenBruto_Anterior: item.MargenBruto_Anterior,
-        PorcentajeCambioVentas: item.PorcentajeCambioVentas,
-        PorcentajeCambioUnidades: item.PorcentajeCambioUnidades,
-        MargenBruto_Actual_Porcentaje: item.MargenBruto_Actual_Porcentaje,
-        MargenBruto_Anterior_Porcentaje: item.MargenBruto_Anterior_Porcentaje,
+      return (Array.isArray(json) ? json : []).map((item: any) => ({
+        codigo: String(item.code ?? item.Categoria),
+        nombre: item.Categoria || "Sin categoría",
+        unidades: Number(item.Unidades_Actual) || 0,
+        ventas: Number(item.Ventas_Actual) || 0,
+        margenPorcentaje: Number(item.MargenBruto_Actual_Porcentaje) || 0,
+        cambioUnidades: item.PorcentajeCambioUnidades ?? null,
+        cambioVentas: item.PorcentajeCambioVentas ?? null,
       }));
     },
     []
   );
 
-  const handleSort = (column: "unidades" | "ventas" | "margen") => {
-    if (sortBy === column) {
-      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortBy(column);
-      setSortDirection("desc");
-    }
-  };
+  const ordenar = (columna: Orden) =>
+    setVista((v) => ({
+      ...v,
+      sortBy: columna,
+      sortDirection: sortBy === columna && v.sortDirection === "desc" ? "asc" : "desc",
+    }));
 
-  const formatMillones = (valor: number): string => `$${(valor / 1_000_000).toFixed(2)} MM`;
+  const filas = datos
+    .filter((c) => c.nombre.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      const dif = (a[CAMPO[sortBy]] as number) - (b[CAMPO[sortBy]] as number);
+      return sortDirection === "asc" ? dif : -dif;
+    });
+  const maxVenta = Math.max(0, ...datos.map((c) => c.ventas));
 
-  const sortedData = [...data].sort((a, b) => {
-    let fieldA = 0;
-    let fieldB = 0;
-
-    switch (sortBy) {
-      case "unidades":
-        fieldA = a.Cantidad_Vendida;
-        fieldB = b.Cantidad_Vendida;
-        break;
-      case "ventas":
-        fieldA = a.Total_Ventas;
-        fieldB = b.Total_Ventas;
-        break;
-      case "margen":
-        fieldA = a.MargenBruto_Actual_Porcentaje;
-        fieldB = b.MargenBruto_Actual_Porcentaje;
-        break;
-      default:
-        return 0;
-    }
-
-    return sortDirection === "asc" ? fieldA - fieldB : fieldB - fieldA;
-  });
-
-  const filteredData = sortedData.filter((row) =>
-    row.Nombre_Categoria.toLowerCase().includes(searchTerm.toLowerCase())
+  const encabezado = (columna: Orden, texto: string) => (
+    <TableCell align="right" sortDirection={sortBy === columna ? sortDirection : false}>
+      <TableSortLabel active={sortBy === columna} direction={sortBy === columna ? sortDirection : "desc"} onClick={() => ordenar(columna)}>
+        {texto}
+      </TableSortLabel>
+    </TableCell>
   );
 
   return (
-    <Card
-      elevation={0}
-      sx={{
-        borderRadius: 2,
-        background: "#fff",
-        border: "1px solid #e0e0e0",
-        height: 490,
-        display: "flex",
-        flexDirection: "column",
-      }}
+    <Panel
+      titulo="Categorías vendidas"
+      descripcion={cargando ? "Cargando…" : `${datos.length.toLocaleString("es-CL")} categorías en el período`}
+      accion={
+        <TextField
+          size="small"
+          placeholder="Buscar categoría"
+          value={searchTerm}
+          onChange={(e) => setVista((v) => ({ ...v, searchTerm: e.target.value }))}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <IconSearch size={15} color={tinta.tenue} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ width: 200, "& .MuiOutlinedInput-root": controlSx }}
+        />
+      }
     >
-      <CardContent sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <Box display="flex" alignItems="center" justifyContent="space-between" gap={2}>
-          <Typography variant="h6" color="primary" fontWeight={600}>
-            Categorías Vendidas
-          </Typography>
-          <Box sx={{ flexGrow: 1 }} />
-          <TextField
-            placeholder="Buscar categoría..."
-            size="small"
-            variant="outlined"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ width: "200px" }}
-          />
-        </Box>
-
-        <Box sx={{ flex: 1, overflowY: "auto", overflowX: "auto", mt: 1 }}>
-          <Table stickyHeader size="small">
+      {cargando ? (
+        Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} height={44} />)
+      ) : filas.length === 0 ? (
+        <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 6, textAlign: "center" }}>
+          {datos.length === 0 ? "Sin ventas en el período." : "Ninguna categoría coincide con la búsqueda."}
+        </Typography>
+      ) : (
+        <TableContainer sx={{ maxHeight: 520, mx: -2.5, width: "auto", overflowX: "hidden" }}>
+          <Table size="small" stickyHeader sx={tablaSx}>
+            <Columnas anchos={[40, 20, 25, 15]} />
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: "bold" }}>Categoría</TableCell>
-                <TableCell align="right" sx={{ fontWeight: "bold" }}>
-                  <TableSortLabel
-                    active={sortBy === "unidades"}
-                    direction={sortDirection}
-                    onClick={() => handleSort("unidades")}
-                  >
-                    Unidades
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: "bold" }}>
-                  <TableSortLabel
-                    active={sortBy === "ventas"}
-                    direction={sortDirection}
-                    onClick={() => handleSort("ventas")}
-                  >
-                    Ventas
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: "bold" }}>
-                  <TableSortLabel
-                    active={sortBy === "margen"}
-                    direction={sortDirection}
-                    onClick={() => handleSort("margen")}
-                  >
-                    Margen Bruto
-                  </TableSortLabel>
-                </TableCell>
+                <TableCell>Categoría</TableCell>
+                {encabezado("unidades", "Unidades")}
+                {encabezado("ventas", "Ventas")}
+                {encabezado("margen", "% Margen")}
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                    <CircularProgress size={28} />
-                  </TableCell>
-                </TableRow>
-              )}
-              {filteredData.map((row, index) => (
-                <TableRow key={index}>
+              {filas.map((c) => (
+                <TableRow key={c.codigo}>
                   <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      {row.Imagen ? (
-                        <img
-                          src={row.Imagen}
-                          alt={row.Nombre_Categoria}
-                          style={{
-                            width: 38,
-                            height: 38,
-                            objectFit: "cover",
-                            borderRadius: 6,
-                          }}
-                        />
-                      ) : (
-                        <Box sx={{ width: 38, height: 38, backgroundColor: "#eee", borderRadius: 4 }} />
-                      )}
-                      <Typography variant="body2" fontWeight={500}>
-                        {row.Nombre_Categoria}
-                      </Typography>
+                    <TextoCelda texto={c.nombre} />
+                  </TableCell>
+                  <TableCell align="right">
+                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.25 }}>
+                      {c.unidades.toLocaleString("es-CL")}
+                      <ChipVariacion valor={c.cambioUnidades} />
                     </Box>
                   </TableCell>
-
                   <TableCell align="right">
-                    <Typography fontWeight={500}>{formatUnidades(row.Cantidad_Vendida)}</Typography>
-                    <Box display="flex" justifyContent="flex-end" alignItems="center" gap={0.5}>
-                      {row.PorcentajeCambioUnidades > 0 ? (
-                        <ArrowDropUpIcon sx={{ color: "success.main", fontSize: 20 }} />
-                      ) : row.PorcentajeCambioUnidades < 0 ? (
-                        <ArrowDropDownIcon sx={{ color: "error.main", fontSize: 20 }} />
-                      ) : null}
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color:
-                            row.PorcentajeCambioUnidades > 0
-                              ? "success.main"
-                              : row.PorcentajeCambioUnidades < 0
-                                ? "error.main"
-                                : "text.secondary",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {row.PorcentajeCambioUnidades?.toFixed(1)}%
-                      </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.75 }}>
+                      {formatoMonto(c.ventas)}
+                      <ChipVariacion valor={c.cambioVentas} />
+                    </Box>
+                    <Box sx={{ mt: 0.5 }}>
+                      <BarraParticipacion valor={c.ventas} maximo={maxVenta} />
                     </Box>
                   </TableCell>
-
                   <TableCell align="right">
-                    <Typography fontWeight={500}>{formatVentas(row.Total_Ventas)}</Typography>
-                  </TableCell>
-
-                  <TableCell align="right">
-                    <Box display="flex" flexDirection="column" alignItems="flex-end">
-                      <Box display="flex" alignItems="center" gap={0.5}>
-                        <Typography fontWeight={500}>
-                          {row.MargenBruto_Actual_Porcentaje?.toFixed(2)}%
-                        </Typography>
-                        {row.PorcentajeCambioVentas > 0 ? (
-                          <ArrowDropUpIcon sx={{ color: "success.main", fontSize: 20 }} />
-                        ) : row.PorcentajeCambioVentas < 0 ? (
-                          <ArrowDropDownIcon sx={{ color: "error.main", fontSize: 20 }} />
-                        ) : null}
-                      </Box>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color:
-                            row.PorcentajeCambioVentas > 0
-                              ? "success.main"
-                              : row.PorcentajeCambioVentas < 0
-                                ? "error.main"
-                                : "text.secondary",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {row.PorcentajeCambioVentas?.toFixed(1)}%
-                      </Typography>
-                    </Box>
+                    <ChipMargen valor={c.margenPorcentaje} />
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </Box>
-      </CardContent>
-    </Card>
+        </TableContainer>
+      )}
+    </Panel>
   );
 };
 
-export default TopProductosChart;
-
+export default CategoriasVendidas;

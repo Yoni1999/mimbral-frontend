@@ -1,100 +1,66 @@
 "use client";
-import React from "react";
-import Chart from "react-apexcharts";
-import { Card, CardContent, Typography, Box } from "@mui/material";
-import { ApexOptions } from "apexcharts";
 
-// Definir los tipos de datos esperados
+import React from "react";
+import { Box } from "@mui/material";
+import ListaBarras from "../../components/ListaBarras";
+import { ChipMargen, Panel, cifraSx, formatoPesos, formatoPorcentaje } from "../../components/estilo";
+
 interface Producto {
+  Codigo_Producto?: string;
   Nombre_Producto: string;
   Cantidad_Vendida: number;
+  Total_Ventas?: number;
+  Margen_Porcentaje?: number;
 }
 
 interface Props {
   data: Producto[];
+  cargando?: boolean;
 }
 
-const TopProductosChart: React.FC<Props> = ({ data }) => {
-  const safeData = Array.isArray(data) ? data : [];
-
-  // 🔹 Determinar el valor máximo de ventas para normalizar el color
-  const maxVentas = Math.max(...safeData.map((item) => item.Cantidad_Vendida), 1);
-
-  // 🔥 Función para generar degradado de color según el nivel de ventas
-  const getColor = (valor: number) => {
-    const intensidad = Math.round((valor / maxVentas) * 100); // Normaliza entre 0 y 100
-    return `rgba(255, 111, 145, ${0.3 + 0.7 * (intensidad / 100)})`; // 🔥 Más intensidad en productos más vendidos
-  };
-
-  // 🔹 Configuración del gráfico
-  const options: ApexOptions = {
-    chart: {
-      type: "bar",
-      toolbar: { show: false },
-      background: "transparent",
-    },
-    colors: safeData.map((item) => getColor(item.Cantidad_Vendida)), // 🔥 Asigna colores dinámicos
-    xaxis: {
-      categories: safeData.map((item) => item.Nombre_Producto),
-      labels: { style: { fontSize: "12px", colors: "#333" } },
-    },
-    plotOptions: {
-      bar: {
-        horizontal: true,
-        columnWidth: "60%",
-        borderRadius: 6,
-      },
-    },
-    grid: {
-      borderColor: "#e0e0e0",
-      strokeDashArray: 5,
-    },
-    tooltip: {
-      theme: "dark",
-      y: { formatter: (val: number) => `${val.toLocaleString()} unidades` },
-      marker: {
-        show: true,
-      },
-      fixed: {
-        enabled: false, // permite que se sobreponga naturalmente
-      },
-    },
-    dataLabels: {
-      enabled: true,
-      style: { fontSize: "12px", colors: ["#fff"] },
-      offsetX: 10,
-      formatter: (val) => `${val} u.`,
-    },
-  };
-
-  const series = [
-    {
-      name: "Cantidad Vendida",
-      data: safeData.map((item) => item.Cantidad_Vendida),
-    },
-  ];
-
+/** Los 10 productos con más unidades vendidas en el canal. */
+const TopProductosChart: React.FC<Props> = ({ data, cargando = false }) => {
+  const productos = (Array.isArray(data) ? data : []).slice(0, 10);
   return (
-    <Card
-      sx={{
-        borderRadius: 4,
-        boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
-        background: "#fff",
-        p: 2,
-        position: "relative",   // 💡 permite que el tooltip se renderice sobre el card
-        overflow: "visible",    // 💡 importante para que el tooltip no se recorte
-      }}
-    >
-      <CardContent>
-        <Typography variant="h6" fontWeight="bold" color="text.primary" mb={2}>
-          Top 10 Productos Más Vendidos
-        </Typography>
-
-        <Box sx={{ position: "relative", zIndex: 1 }}>
-          <Chart options={options} series={series} type="bar" height={400} />
-        </Box>
-      </CardContent>
-    </Card>
+    <Panel titulo="Top 10 productos más vendidos" descripcion="Por unidades vendidas en el período">
+      <ListaBarras
+        cargando={cargando}
+        filasCargando={10}
+        numerado
+        items={productos.map((p, i) => ({
+          clave: p.Codigo_Producto || `${p.Nombre_Producto}-${i}`,
+          etiqueta: p.Nombre_Producto,
+          valor: p.Cantidad_Vendida,
+          texto: `${(p.Cantidad_Vendida ?? 0).toLocaleString("es-CL")} u.`,
+          detalle: p.Margen_Porcentaje != null ? <ChipMargen valor={p.Margen_Porcentaje} /> : undefined,
+          tooltip: (
+            <Box sx={{ fontSize: 12, lineHeight: 1.6, ...cifraSx }}>
+              <strong>{p.Nombre_Producto}</strong>
+              {p.Codigo_Producto && (
+                <>
+                  <br />
+                  SKU {p.Codigo_Producto}
+                </>
+              )}
+              <br />
+              Unidades: {(p.Cantidad_Vendida ?? 0).toLocaleString("es-CL")}
+              {p.Total_Ventas != null && (
+                <>
+                  <br />
+                  Ventas: {formatoPesos(p.Total_Ventas)}
+                </>
+              )}
+              {p.Margen_Porcentaje != null && (
+                <>
+                  <br />
+                  Margen: {formatoPorcentaje(p.Margen_Porcentaje)}
+                </>
+              )}
+            </Box>
+          ),
+        }))}
+      />
+    </Panel>
   );
 };
 

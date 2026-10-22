@@ -1,21 +1,10 @@
 "use client";
 
 import React from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Legend,
-} from "recharts";
-import { Paper, Typography } from "@mui/material";
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
-import { formatVentas } from "@/utils/format";
+import TendenciaCanales, { Punto, puntosDeTendencia } from "../../components/TendenciaCanales";
 
 export interface Filters {
   fechaInicio: string;
@@ -44,96 +33,13 @@ const VentasChart: React.FC<Props> = ({ filtros }) => {
 
   // Al cambiar un filtro se limpia al instante y solo queda la última respuesta.
   const url = `${BACKEND_URL}/api/primer-nivel/ventas-fecha-primer-nivel?${buildQuery()}`;
-  const { datos: data, cargando: loading } = useCargaDatos<any[]>(
+  const { datos: data, cargando } = useCargaDatos<Punto[]>(
     url,
-    async (signal) => {
-      const raw = await apiJson(url, { signal });
-
-      interface ProcesadoItem {
-        date: string;
-        chorrillo: number;
-        meli: number;
-        falabella: number;
-        empresas: number;
-        vitex: number;
-        balmaceda: number;
-        orden: number;
-      }
-
-      const procesado: ProcesadoItem[] = raw.map((item: any) => {
-        const fechaISO = item.Fecha;
-        return {
-          date: fechaISO.slice(0, 10),
-          chorrillo: item.Chorrillo || 0,
-          meli: item.Meli || 0,
-          falabella: item.Falabella || 0,
-          empresas: item.Empresas || 0,
-          vitex: item.Vitex || 0,
-          balmaceda: item.Balmaceda || 0,
-          orden: new Date(fechaISO).getTime(),
-        };
-      });
-
-      procesado.sort((a: ProcesadoItem, b: ProcesadoItem) => a.orden - b.orden);
-      return procesado;
-    },
+    async (signal) => puntosDeTendencia(await apiJson(url, { signal })),
     []
   );
 
-  return (
-    <Paper
-      elevation={1}
-      sx={{
-        width: "100%",
-        p: 3,
-        borderRadius: 2,
-        display: "flex",
-        flexDirection: "column",
-        gap: 2,
-      }}
-    >
-      <Typography variant="h6" sx={{ fontWeight: 600, color: "#333" }}>
-        Ventas por Canal
-      </Typography>
-
-      {loading ? (
-        <Typography align="center">Cargando datos...</Typography>
-      ) : (
-        <ResponsiveContainer width="100%" height={335}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
-            <XAxis
-              dataKey="date"
-              tick={{ fontSize: 12, fill: "#666" }}
-              tickFormatter={(d) => d.split("-").reverse().join("/")}
-            />
-            <YAxis tick={{ fontSize: 12, fill: "#666" }} tickFormatter={formatVentas} />
-            <Tooltip formatter={formatVentas} />
-            <Legend verticalAlign="top" height={36} />
-            {[
-              { key: "chorrillo", color: "#284270", name: "Chorrillo" },
-              { key: "meli", color: "#d93a3a", name: "Mercado Libre" },
-              { key: "falabella", color: "#f0d45f", name: "Falabella" },
-              { key: "empresas", color: "#45914b", name: "Empresas" },
-              { key: "vitex", color: "#9583ff", name: "Vtex" },
-              { key: "balmaceda", color: "#ff914a", name: "Balmaceda" },
-            ].map((line) => (
-              <Line
-                key={line.key}
-                type="monotone"
-                dataKey={line.key}
-                stroke={line.color}
-                strokeWidth={1.5}
-                dot={false}
-                name={line.name}
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      )}
-    </Paper>
-  );
+  return <TendenciaCanales datos={data} cargando={cargando} />;
 };
 
 export default VentasChart;
-

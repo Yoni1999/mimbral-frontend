@@ -34,6 +34,8 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
+import { useEstadoVista } from "@/utils/estadoVista";
+import { conPeriodoRapido, resolverPeriodoRapido } from "../../utilities/ventas/components/RangosRapidos";
 import { BACKEND_URL } from "@/config";
 import { notifySuccess, notifyError } from "@/components/ui/toast/notify";
 import * as XLSX from "xlsx";
@@ -50,6 +52,9 @@ import VentasPorCanalTable, {
 } from "./components/VentasPorCanalTable";
 
 const defaultPageSize = 60;
+
+// Sin filtros aplicados (constante: el encabezado la recibe como inicial).
+const SIN_FILTROS: FiltrosPorCanal = {};
 
 const formatNumber = (n?: number) =>
   typeof n === "number" ? n.toLocaleString("es-CL") : "-";
@@ -114,12 +119,23 @@ const getPeriodoFechasLabel = (filters: FiltrosPorCanal) => {
 };
 
 const InformeVentasPorCanalPage: React.FC = () => {
-  const [filters, setFilters] = useState<FiltrosPorCanal>({});
-  const [appliedFilters, setAppliedFilters] = useState<FiltrosPorCanal | null>(null);
-  const [page, setPage] = useState(1);
+  // Filtros aplicados, página y orden se recuerdan al cambiar de vista y
+  // volver. Un rango que coincide con un acceso rápido ("Ayer", "Este mes"…)
+  // se guarda como tal y vuelve con las fechas de hoy.
+  const [vista, setVista] = useEstadoVista<{
+    appliedFilters: FiltrosPorCanal | null;
+    page: number;
+    orderBy: OrderBy;
+    order: Order;
+  }>("informe-ventas-por-canal", () => ({ appliedFilters: null, page: 1, orderBy: "cantidadVendida", order: "desc" }), {
+    serializar: (v) => ({ ...v, appliedFilters: v.appliedFilters && conPeriodoRapido(v.appliedFilters) }),
+    restaurar: (g) => ({ ...g, appliedFilters: g.appliedFilters && resolverPeriodoRapido<FiltrosPorCanal>(g.appliedFilters) }),
+  });
+  const { appliedFilters, page, orderBy, order } = vista;
+  // filters y appliedFilters siempre cambian juntos (handleAppliedFiltersChange).
+  const filters = appliedFilters ?? SIN_FILTROS;
+  const setPage = (p: number) => setVista((v) => ({ ...v, page: p }));
   const pageSize = defaultPageSize;
-  const [orderBy, setOrderBy] = useState<OrderBy>("cantidadVendida");
-  const [order, setOrder] = useState<Order>("desc");
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [shareAnchorEl, setShareAnchorEl] = useState<null | HTMLElement>(null);
@@ -274,8 +290,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
   // de pedir, lo que sumaba una carga más).
   const handleAppliedFiltersChange = (nextFilters: FiltrosPorCanal) => {
     if (JSON.stringify(nextFilters) !== JSON.stringify(appliedFilters)) setPage(1);
-    setFilters(nextFilters);
-    setAppliedFilters(nextFilters);
+    setVista((v) => ({ ...v, appliedFilters: nextFilters }));
   };
 
   // ===== Exportaciones =====
@@ -498,9 +513,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
           ordenPorActual={orderBy}
           onSortChange={(campo) => {
             const nuevoOrden = orderBy === campo && order === "asc" ? "desc" : "asc";
-            setOrder(nuevoOrden);
-            setOrderBy(campo);
-            setPage(1);
+            setVista((v) => ({ ...v, order: nuevoOrden, orderBy: campo, page: 1 }));
           }}
           // 👉 al hacer click en el número del canal, abrimos el modal con el detalle del endpoint
           onOpenDetalle={(titulo, detalles) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   Box, Typography, Divider,
   Pagination, CircularProgress, Button
@@ -10,6 +10,7 @@ import ProductosEstancadosTable from "./components/ProductosEstancadosTable";
 import HeaderProductosDetenidos from "./components/HeaderProductosDetenidos";
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
+import { useEstadoVista } from "@/utils/estadoVista";
 import { BACKEND_URL } from "@/config";
 import CustomTabs from "../components/CustomTabs";
 import * as XLSX from "xlsx";
@@ -43,8 +44,15 @@ interface ProductoEstancado {
 }
 
 const ProductosDetenidosPage = () => {
-  const [filters, setFilters] = useState<FiltroProductos>({});
-  const [page, setPage] = useState<number>(1);
+  // Filtros, página y pestaña se recuerdan al cambiar de vista y volver. El
+  // período es relativo ("1M", "3M"…) o un rango elegido a mano: va tal cual.
+  const [vista, setVista] = useEstadoVista<{ filters: FiltroProductos; page: number; pestana: number }>(
+    "informe-productos-detenidos",
+    () => ({ filters: {}, page: 1, pestana: 0 })
+  );
+  const { filters, page, pestana } = vista;
+  const setFilters = (f: FiltroProductos) => setVista((v) => ({ ...v, filters: f }));
+  const setPage = (p: number) => setVista((v) => ({ ...v, page: p }));
 
   useEffect(() => {
     notifyInfo("Informe actualizado a diario", {
@@ -159,6 +167,8 @@ const ProductosDetenidosPage = () => {
     <Box p={0}>
       <CustomTabs
         tabLabels={["Activos para compras", "Inactivos para compra con stock"]}
+        value={pestana}
+        onChange={(p) => setVista((v) => ({ ...v, pestana: p }))}
         tabContents={[
           <React.Fragment key="tab-activos">
             <Typography variant="h4" fontWeight="bold" gutterBottom display="flex" alignItems="center">
@@ -170,7 +180,7 @@ const ProductosDetenidosPage = () => {
               Este reporte muestra los productos que no han tenido ventas desde hace varios días, con información detallada sobre inventario y margen.
             </Typography>
 
-            <HeaderProductosDetenidos onFilterChange={handleFilterChange} />
+            <HeaderProductosDetenidos onFilterChange={handleFilterChange} currentFilters={filters} />
             <Divider sx={{ my: 3 }} />
 
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -214,7 +224,7 @@ const ProductosDetenidosPage = () => {
               Productos que tienen stock disponible, pero están desactivados para compras y no tienen ventas recientes.
             </Typography>
 
-            <HeaderProductosDetenidos onFilterChange={handleFilterChange} />
+            <HeaderProductosDetenidos onFilterChange={handleFilterChange} currentFilters={filters} />
             <Divider sx={{ my: 3 }} />
 
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>

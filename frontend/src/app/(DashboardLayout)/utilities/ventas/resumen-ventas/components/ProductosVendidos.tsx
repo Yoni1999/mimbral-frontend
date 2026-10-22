@@ -1,12 +1,15 @@
 'use client';
+
 import React, { useState } from 'react';
 import {
-  Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Paper, Typography, Box, TextField, TableSortLabel, Button, Stack
+  Box, Button, InputAdornment, Table, TableBody, TableCell, TableContainer, TableHead,
+  TableRow, TableSortLabel, TextField, Typography,
 } from '@mui/material';
+import { IconArrowRight, IconDownload, IconSearch } from '@tabler/icons-react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { useRouter } from 'next/navigation';
+import { BarraParticipacion, ChipMargen, EncabezadoPanel, formatoPesos, tablaSx, tarjetaSx, tinta, Columnas, TextoCelda } from '../../components/estilo';
 
 type ProductoVendido = {
   imagen: string;
@@ -35,6 +38,8 @@ type OrderBy =
   | 'precioPromedio'
   | 'totalVentas';
 
+const SIN_IMAGEN = 'https://res.cloudinary.com/dhzahos7u/image/upload/v1748960388/producto_sin_imagen_vqaps4.jpg';
+
 const ProductosVendidos = ({ data }: Props) => {
   const [busqueda, setBusqueda] = useState('');
   const [order, setOrder] = useState<Order>('desc');
@@ -42,8 +47,8 @@ const ProductosVendidos = ({ data }: Props) => {
   const router = useRouter();
 
   const handleSort = (campo: OrderBy) => {
-    const isAsc = orderBy === campo && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
+    const isDesc = orderBy === campo && order === 'desc';
+    setOrder(isDesc ? 'asc' : 'desc');
     setOrderBy(campo);
   };
 
@@ -59,6 +64,8 @@ const ProductosVendidos = ({ data }: Props) => {
     if (valA > valB) return order === 'asc' ? 1 : -1;
     return 0;
   });
+
+  const maxVenta = Math.max(0, ...sortedData.map((p) => p.totalVentas || 0));
 
   const exportToExcel = () => {
     const excelData = sortedData.map((row) => ({
@@ -77,159 +84,118 @@ const ProductosVendidos = ({ data }: Props) => {
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'ProductosVendidos');
+
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
     saveAs(blob, 'productos_vendidos.xlsx');
   };
 
-  const TablaContenido = () => (
-    <Table stickyHeader>
-      <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-        <TableRow>
-          <TableCell>Imagen</TableCell>
-          <TableCell>Producto (SKU)</TableCell>
-          <TableCell>Primer Nivel</TableCell>
-          <TableCell>Categoría</TableCell>
-          <TableCell sortDirection={orderBy === 'cantidadVendida' ? order : false}>
-            <TableSortLabel
-              active={orderBy === 'cantidadVendida'}
-              direction={orderBy === 'cantidadVendida' ? order : 'asc'}
-              onClick={() => handleSort('cantidadVendida')}
-            >
-              Cant. Vendida
-            </TableSortLabel>
-          </TableCell>
-          <TableCell sortDirection={orderBy === 'totalVentas' ? order : false}>
-            <TableSortLabel
-              active={orderBy === 'totalVentas'}
-              direction={orderBy === 'totalVentas' ? order : 'asc'}
-              onClick={() => handleSort('totalVentas')}
-            >
-              Total Ventas
-            </TableSortLabel>
-          </TableCell>
-          <TableCell sortDirection={orderBy === 'margenPorcentaje' ? order : false}>
-            <TableSortLabel
-              active={orderBy === 'margenPorcentaje'}
-              direction={orderBy === 'margenPorcentaje' ? order : 'asc'}
-              onClick={() => handleSort('margenPorcentaje')}
-            >
-              % Margen
-            </TableSortLabel>
-          </TableCell>
-          <TableCell sortDirection={orderBy === 'stock' ? order : false}>
-            <TableSortLabel
-              active={orderBy === 'stock'}
-              direction={orderBy === 'stock' ? order : 'asc'}
-              onClick={() => handleSort('stock')}
-            >
-              Stock Total
-            </TableSortLabel>
-          </TableCell>
-          <TableCell sortDirection={orderBy === 'margenBruto' ? order : false}>
-            <TableSortLabel
-              active={orderBy === 'margenBruto'}
-              direction={orderBy === 'margenBruto' ? order : 'asc'}
-              onClick={() => handleSort('margenBruto')}
-            >
-              Margen Bruto
-            </TableSortLabel>
-          </TableCell>
-          <TableCell sortDirection={orderBy === 'precioPromedio' ? order : false}>
-            <TableSortLabel
-              active={orderBy === 'precioPromedio'}
-              direction={orderBy === 'precioPromedio' ? order : 'asc'}
-              onClick={() => handleSort('precioPromedio')}
-            >
-              Precio Prom. Venta
-            </TableSortLabel>
-          </TableCell>
-        </TableRow>
-      </TableHead>
-
-      <TableBody>
-        {sortedData.map((row, idx) => (
-          <TableRow key={idx}>
-            <TableCell>
-              <Box
-                component="img"
-                src={row.imagen}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.onerror = null;
-                  target.src =
-                    'https://res.cloudinary.com/dhzahos7u/image/upload/v1748960388/producto_sin_imagen_vqaps4.jpg';
-                }}
-                alt=""
-                width={50}
-                height={50}
-                sx={{
-                  objectFit: 'contain',
-                  borderRadius: 1,
-                  border: '1px solid #e0e0e0',
-                  backgroundColor: '#fff',
-                  maxWidth: 50,
-                  maxHeight: 50,
-                  display: 'block',
-                }}
-              />
-            </TableCell>
-
-            <TableCell>
-              <Typography fontWeight={600}>{row.nombre}</Typography>
-              <Typography variant="caption" color="textSecondary">{row.sku}</Typography>
-            </TableCell>
-            <TableCell>{row.primerNivel}</TableCell>
-            <TableCell>{row.categoria}</TableCell>
-            <TableCell>{row.cantidadVendida}</TableCell>
-            <TableCell>${row.totalVentas.toLocaleString('es-CL')}</TableCell>
-            <TableCell>{`${row.margenPorcentaje}%`}</TableCell>
-            <TableCell>{row.stock}</TableCell>
-            <TableCell>${row.margenBruto.toLocaleString('es-CL')}</TableCell>
-            <TableCell>${row.precioPromedio.toLocaleString('es-CL')}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+  const columna = (campo: OrderBy, label: string) => (
+    <TableCell align="right" sortDirection={orderBy === campo ? order : false}>
+      <TableSortLabel active={orderBy === campo} direction={orderBy === campo ? order : 'desc'} onClick={() => handleSort(campo)}>
+        {label}
+      </TableSortLabel>
+    </TableCell>
   );
 
   return (
-    <Box mt={3}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-        <Typography variant="h6" fontWeight={600}>
-          Top 50 Productos más Vendidos ({filteredData.length})
-        </Typography>
-        <Button variant="outlined" onClick={exportToExcel}>
-          Exportar a Excel
-        </Button>
-      </Stack>
+    <Box sx={{ ...tarjetaSx, p: 2.5 }}>
+      <EncabezadoPanel
+        titulo="Top 50 productos más vendidos"
+        descripcion={`${filteredData.length} productos${busqueda ? ' con ese criterio' : ''}`}
+        accion={
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <TextField
+              size="small"
+              placeholder="Buscar por nombre o SKU"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconSearch size={16} color={tinta.tenue} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ width: 260, '& .MuiOutlinedInput-root': { borderRadius: '10px', height: 36, fontSize: 13.5 } }}
+            />
+            <Button
+              variant="outlined"
+              startIcon={<IconDownload size={16} />}
+              onClick={exportToExcel}
+              sx={{ textTransform: 'none', borderRadius: '10px', height: 36, borderColor: tinta.borde, color: tinta.primaria, fontWeight: 600 }}
+            >
+              Exportar a Excel
+            </Button>
+          </Box>
+        }
+      />
 
-      <Box mb={2}>
-        <TextField
-          label="Buscar por nombre o SKU"
-          variant="outlined"
-          size="small"
-          sx={{ width: 250 }}
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-        />
-      </Box>
-
-      <TableContainer
-        component={Paper}
-        sx={{
-          borderRadius: 2,
-          maxHeight: 530,
-          overflowY: 'auto',
-        }}
-      >
-        {TablaContenido()}
+      <TableContainer sx={{ maxHeight: 560, mx: -2.5, width: 'auto', overflowX: 'hidden' }}>
+        <Table size="small" stickyHeader sx={tablaSx}>
+          <Columnas anchos={[26, 16, 9, 13, 9, 11, 9, 7]} />
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ pl: 2.5 }}>Producto</TableCell>
+              <TableCell>Primer nivel / Categoría</TableCell>
+              {columna('cantidadVendida', 'Cant. vendida')}
+              {columna('totalVentas', 'Total ventas')}
+              {columna('margenPorcentaje', '% Margen')}
+              {columna('margenBruto', 'Margen bruto')}
+              {columna('precioPromedio', 'Precio prom.')}
+              <TableCell align="right" sx={{ pr: 2.5 }} sortDirection={orderBy === 'stock' ? order : false}>
+                <TableSortLabel active={orderBy === 'stock'} direction={orderBy === 'stock' ? order : 'desc'} onClick={() => handleSort('stock')}>
+                  Stock
+                </TableSortLabel>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {sortedData.map((row) => (
+              <TableRow key={row.sku}>
+                <TableCell sx={{ pl: 2.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                    <Box
+                      component="img"
+                      src={row.imagen || SIN_IMAGEN}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = SIN_IMAGEN;
+                      }}
+                      alt=""
+                      sx={{ width: 30, height: 30, objectFit: 'contain', borderRadius: '8px', border: `1px solid ${tinta.borde}`, bgcolor: '#fff', flexShrink: 0 }}
+                    />
+                    <TextoCelda texto={row.nombre} secundario={row.sku} />
+                  </Box>
+                </TableCell>
+                <TableCell>
+                  <TextoCelda texto={row.primerNivel || '—'} secundario={row.categoria || '—'} fuerte={false} />
+                </TableCell>
+                <TableCell align="right">{(row.cantidadVendida ?? 0).toLocaleString('es-CL')}</TableCell>
+                <TableCell align="right">
+                  {formatoPesos(row.totalVentas)}
+                  <Box sx={{ mt: 0.5 }}>
+                    <BarraParticipacion valor={row.totalVentas || 0} maximo={maxVenta} />
+                  </Box>
+                </TableCell>
+                <TableCell align="right">
+                  <ChipMargen valor={row.margenPorcentaje} />
+                </TableCell>
+                <TableCell align="right">{formatoPesos(row.margenBruto)}</TableCell>
+                <TableCell align="right">{formatoPesos(row.precioPromedio)}</TableCell>
+                <TableCell align="right" sx={{ pr: 2.5 }}>{(row.stock ?? 0).toLocaleString('es-CL')}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </TableContainer>
 
-      <Box mt={3} display="flex" justifyContent="center">
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1.5 }}>
         <Button
+          endIcon={<IconArrowRight size={16} />}
           onClick={() => router.push('/informes/ventas-productos')}
-          sx={{ mt: 2, textTransform: "none", fontWeight: 500 }}
+          sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '10px' }}
         >
           Ver más productos
         </Button>

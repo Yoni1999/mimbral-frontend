@@ -1,94 +1,67 @@
 "use client";
 
 import React from "react";
-import dynamic from "next/dynamic";
-import { ApexOptions } from "apexcharts";
-import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
-import { useTheme, useMediaQuery } from "@mui/material";
+import { Skeleton, Typography } from "@mui/material";
+import BarraApilada, { Tramo } from "../../components/BarraApilada";
+import { CANALES, Panel, cifraSx, formatoMonto, tinta } from "../../components/estilo";
 
-const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
-
-interface FormasPagoItem {
+export interface FormaPagoItem {
   PayDueMonth: string;
   CantidadFacturas: number;
+  TotalVentas: number;
 }
 
-interface VentasCanalChartProps {
-  data: FormasPagoItem[];
-}
+/** Hasta 5 formas de pago con color propio; el resto se agrupa en "Otras".
+ *  Colores en orden fijo de la paleta validada de canales. */
+const MAXIMO = 5;
+const COLORES = CANALES.map((c) => c.color);
+const COLOR_OTRAS = "#94a3b8";
 
-const VentasCanalChart: React.FC<VentasCanalChartProps> = ({ data }) => {
-  const theme = useTheme();
+const facturas = (n: number) => `${n.toLocaleString("es-CL")} facturas`;
 
-  // 📱 Breakpoints de MUI
-  const isXs = useMediaQuery(theme.breakpoints.down("sm")); // <600px
-  const isSm = useMediaQuery(theme.breakpoints.between("sm", "md")); // 600px - 900px
-  const isMd = useMediaQuery(theme.breakpoints.between("md", "lg")); // 900px - 1200px
-  const isLg = useMediaQuery(theme.breakpoints.up("lg")); // >=1200px
+/** Distribución de la venta por condición de pago (contado, 30 días…): una
+ *  barra apilada con el total arriba y la leyenda con monto y porcentaje. */
+const FormasPago: React.FC<{ data: FormaPagoItem[]; cargando: boolean }> = ({ data, cargando }) => {
+  const ordenadas = data
+    .map((f) => ({ nombre: f.PayDueMonth || "Sin condición", venta: Number(f.TotalVentas) || 0, facturas: Number(f.CantidadFacturas) || 0 }))
+    .filter((f) => f.venta > 0)
+    .sort((a, b) => b.venta - a.venta);
 
-  const labels = data.map((item) => item.PayDueMonth);
-  const chartData = data.map((item) => item.CantidadFacturas);
-
-  // 📊 Ajuste del tamaño del gráfico según tamaño de pantalla
-  const chartWidth = isXs ? 250 : isSm ? 300 : isMd ? 400 : 500;
-
-  const options: ApexOptions = {
-    chart: {
-      type: "donut",
-      toolbar: { show: false },
-      width: chartWidth, // opcional, Apex puede autoescalar
-    },
-    labels: labels,
-    colors: ["#1E88E5", "#43A047", "#FDD835", "#E53935", "#8E24AA", "#FB8C00", "#546E7A"],
-    tooltip: {
-      y: {
-        formatter: (val: number) => val.toLocaleString("es-CL"),
-      },
-    },
-    legend: {
-      position: "bottom",
-    },
-    responsive: [
-      {
-        breakpoint: 1200,
-        options: {
-          chart: { width: 400 },
-        },
-      },
-      {
-        breakpoint: 900,
-        options: {
-          chart: { width: 300 },
-        },
-      },
-      {
-        breakpoint: 600,
-        options: {
-          chart: { width: 250 },
-        },
-      },
-    ],
-  };
+  const resto = ordenadas.slice(MAXIMO);
+  const tramos: Tramo[] = [
+    ...ordenadas.slice(0, MAXIMO).map((f, i) => ({ clave: f.nombre, nombre: f.nombre, valor: f.venta, color: COLORES[i], detalle: facturas(f.facturas) })),
+    ...(resto.length
+      ? [
+          {
+            clave: "otras",
+            nombre: `Otras (${resto.length})`,
+            valor: resto.reduce((s, f) => s + f.venta, 0),
+            color: COLOR_OTRAS,
+            detalle: facturas(resto.reduce((s, f) => s + f.facturas, 0)),
+          },
+        ]
+      : []),
+  ];
+  const total = tramos.reduce((s, t) => s + t.valor, 0);
 
   return (
-    <DashboardCard
-      title="Formas de Pago"
-      elevation={0}
-      sx={{
-        backgroundColor: "#fff",
-        color: "primary.main",
-        borderRadius: 2,
-        border: "1px solid #e0e0e0",
-        p: 0,
-        height: "auto",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-      }}
-    >
-      <Chart options={options} series={chartData} type="donut" width={chartWidth} />
-    </DashboardCard>
+    <Panel titulo="Distribución por forma de pago" descripcion="Ventas del período">
+      {cargando ? (
+        <>
+          <Skeleton width={140} height={40} />
+          <Skeleton variant="rounded" height={14} sx={{ my: 2, borderRadius: 999 }} />
+          <Skeleton height={90} />
+        </>
+      ) : tramos.length === 0 ? (
+        <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 4, textAlign: "center" }}>Sin ventas en el período.</Typography>
+      ) : (
+        <>
+          <Typography sx={{ fontSize: 26, fontWeight: 750, color: tinta.primaria, lineHeight: 1.1, ...cifraSx }}>{formatoMonto(total)}</Typography>
+          <BarraApilada tramos={tramos} />
+        </>
+      )}
+    </Panel>
   );
 };
 
-export default VentasCanalChart;
+export default FormasPago;

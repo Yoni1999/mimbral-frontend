@@ -18,6 +18,7 @@ import autoTable from 'jspdf-autotable';
 
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
+import { useEstadoVista } from "@/utils/estadoVista";
 import { BACKEND_URL } from "@/config";
 import { notifyInfo } from "@/components/ui/toast/notify";
 
@@ -57,14 +58,17 @@ export interface ProductoMenosRentable {
 const limit = 20;
 
 const ProductosMenosRentablesPage: React.FC = () => {
-    // Estado
-    const [filters, setFilters] = useState<FiltroVentas>({ periodo: '7D', canal: 'Vitex' });
-    const [page, setPage] = useState<number>(1);
+    // Estado. Filtros, página y orden se recuerdan al cambiar de vista y
+    // volver; el período es relativo ("7D", "1M"…) o un rango a mano: va tal cual.
+    const [vista, setVista] = useEstadoVista<{ filters: FiltroVentas; page: number; orden: Order; ordenPor: OrderBy }>(
+        'informe-menos-rentables',
+        () => ({ filters: { periodo: '7D', canal: 'Vitex' }, page: 1, orden: 'asc', ordenPor: 'margenBruto' })
+    );
+    const { filters, page, orden, ordenPor } = vista;
+    const setFilters = (f: FiltroVentas) => setVista((v) => ({ ...v, filters: f }));
+    const setPage = (p: number) => setVista((v) => ({ ...v, page: p }));
     // La exportación también muestra el indicador de carga sobre la tabla.
     const [exportando, setExportando] = useState<boolean>(false);
-
-    const [orden, setOrden] = useState<Order>('asc');
-    const [ordenPor, setOrdenPor] = useState<OrderBy>('margenBruto');
 
     // Export
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -208,8 +212,7 @@ const ProductosMenosRentablesPage: React.FC = () => {
 
     const handleSortChange = (campo: OrderBy) => {
         const nuevoOrden = ordenPor === campo && orden === 'asc' ? 'desc' : 'asc';
-        setOrden(nuevoOrden);
-        setOrdenPor(campo);
+        setVista((v) => ({ ...v, orden: nuevoOrden, ordenPor: campo }));
     };
 
     // ---- Exportar ----
@@ -374,7 +377,7 @@ const ProductosMenosRentablesPage: React.FC = () => {
                         '% Margen': item.margenPorcentaje,
                         'Precio Promedio': item.precioPromedio,
                         'Stock Canal': item.stockCanal,
-                        'Stock Chorrillo': item.stockChorrillo ?? 'N/A',
+                        'Stock Chorrillos': item.stockChorrillo ?? 'N/A',
                         'OC (On Order)': item.stockOnOrder ?? 'N/A',
                     }))
                 );
@@ -414,7 +417,7 @@ const ProductosMenosRentablesPage: React.FC = () => {
                     startY: infoBlockBottom + 12,
                     head: [[
                         '#', 'SKU', 'Nombre', 'Primer Nivel', 'Categoría', 'Cant.', 'Transac.',
-                        'Total', 'Margen', '%', 'Precio', 'Stock', 'Chorrillo', 'OC'
+                        'Total', 'Margen', '%', 'Precio', 'Stock', 'Chorrillos', 'OC'
                     ]],
                     body: rows.map((item, idx) => [
                         idx + 1,
@@ -511,7 +514,7 @@ const ProductosMenosRentablesPage: React.FC = () => {
             { key: "margenPorcentaje", label: "% Margen" },
             { key: "precioPromedio", label: "Precio" },
             { key: "stockCanal", label: "Stock" },
-            { key: "stockChorrillo", label: "Chorrillo" },
+            { key: "stockChorrillo", label: "Chorrillos" },
             { key: "stockOnOrder", label: "OC (On Order)" },
         ];
 
