@@ -14,15 +14,11 @@ import {
 } from "@mui/material";
 import PropTypes from "prop-types";
 import Link from "next/link";
-import { IconRefresh, IconBellRinging, IconMenu } from "@tabler/icons-react";
+import { IconRefresh, IconBellRinging } from "@tabler/icons-react";
 import { apiJson } from "@/utils/apiClient";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
-interface ItemType {
-  toggleMobileSidebar: (event: React.MouseEvent<HTMLElement>) => void;
-}
-
-const Header = ({ toggleMobileSidebar }: ItemType) => {
+const Header = () => {
   const [ultimaFecha, setUltimaFecha] = useState<string | null>(null);
   const [ultimaHora, setUltimaHora] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -72,25 +68,15 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
   return (
     <>
       <AppBar position="sticky" color="default" elevation={1} sx={{ background: "linear-gradient(#ffffff)" }}>
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between", borderRadius: "18px", position: "relative" }}>
-          {/* Solo tiene sentido en pantallas chicas: en escritorio (lg+) el
-              sidebar ya es permanente (ver Sidebar.tsx), asi que este boton
-              no abria nada -quedaba como un control muerto en el header. */}
-          <IconButton
-            color="inherit"
-            aria-label="menu"
-            onClick={toggleMobileSidebar}
-            sx={{ display: { xs: "inline-flex", lg: "none" } }}
-          >
-            <IconMenu width="40" height="30" />
-          </IconButton>
-
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between", borderRadius: "18px", position: "relative", px: { xs: 1, sm: 2 }, minHeight: { xs: 56 } }}>
           {/* Centrado absoluto respecto a TODA la barra: con flex normal, el
               hamburger (oculto en escritorio) y el stack de indicadores/iconos
               a la derecha no pesan lo mismo, asi que un centrado por flexbox
               quedaba corrido hacia la izquierda. */}
           <Box
             sx={{
+              // En celular no cabe junto a los indicadores: el nombre ya está en la barra de abajo.
+              display: { xs: "none", md: "block" },
               position: "absolute",
               left: "50%",
               top: "50%",
@@ -117,7 +103,8 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
             spacing={0.5}
             alignItems="center"
             divider={<Divider orientation="vertical" flexItem />}
-            sx={{ mr: 2 }}
+            // En celular, una línea que se desliza de lado si no caben los cinco.
+            sx={{ mr: { xs: 0.5, sm: 2 }, flex: { xs: 1, md: "0 0 auto" }, minWidth: 0, overflowX: "auto", scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" } }}
           >
             {[
               { key: "dolar", label: "USD", color: "success.main" },
@@ -138,7 +125,7 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
                   size="large"
                   color="inherit"
                   onClick={(e) => abrirPopoverIndicador(e, indicador)}
-                  sx={{ flexDirection: "column", px: 1.5 }}
+                  sx={{ flexDirection: "column", px: { xs: 1, sm: 1.5 }, py: { xs: 0.5, sm: 1 }, flexShrink: 0 }}
                 >
                   <Typography variant="caption" color="text.secondary">
                     {item.label}
@@ -167,7 +154,7 @@ const Header = ({ toggleMobileSidebar }: ItemType) => {
               <IconRefresh size="21" stroke="1.5" />
             </IconButton>
 
-            <IconButton size="large" aria-label="show notifications" color="inherit">
+            <IconButton size="large" aria-label="show notifications" color="inherit" sx={{ display: { xs: "none", sm: "inline-flex" } }}>
               <Badge variant="dot" color="primary">
                 <IconBellRinging size="21" stroke="1.5" />
               </Badge>

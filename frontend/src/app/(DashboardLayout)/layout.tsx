@@ -33,8 +33,6 @@ interface Props {
 }
 
 export default function RootLayout({ children }: Props) {
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   // Las vistas se dibujan solo en el navegador: leen lo que el usuario dejó
   // buscado (localStorage) al crearse, sin diferencias con el servidor.
   const [montado, setMontado] = useState(false);
@@ -42,19 +40,16 @@ export default function RootLayout({ children }: Props) {
 
   return (
     <MainWrapper className="mainwrapper">
-      <Sidebar
-        isSidebarOpen={isSidebarOpen}
-        isMobileSidebarOpen={isMobileSidebarOpen}
-        onSidebarClose={() => setMobileSidebarOpen(false)}
-      />
+      <Sidebar />
 
       <PageWrapper className="page-wrapper">
-        <Header toggleMobileSidebar={() => setMobileSidebarOpen(true)} />
+        <Header />
 
         <Container
           disableGutters
           maxWidth={false}
-          sx={{ paddingTop: "20px", px: { xs: 2, md: 4, xl: 6 } }}
+          // En celular, aire abajo para que la barra de navegación no tape lo último.
+          sx={{ paddingTop: { xs: "12px", sm: "20px" }, px: { xs: 1.5, sm: 2, md: 4, xl: 6 }, pb: { xs: "calc(80px + env(safe-area-inset-bottom, 0px))", sm: 0 } }}
         >
           <Box sx={{ minHeight: "calc(100vh - 170px)" }}>{montado ? children : null}</Box>
         </Container>

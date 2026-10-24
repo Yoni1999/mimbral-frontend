@@ -28,7 +28,11 @@ import type { IdServiceSession } from "@/modules/auth/types/auth.types";
  * Perfil y Configuraciones ahora son items normales del menu (MenuItems.tsx);
  * aca solo queda identidad + salir, igual que el pie del sidebar de FrontOms.
  */
-export default function SidebarUserMenu({ collapsed }: { collapsed: boolean }) {
+/**
+ * `enLista` (pestaña «Más» del celular): la persona arriba y «Cerrar sesión»
+ * a la vista, como fila, en vez del popover al tocar el avatar.
+ */
+export default function SidebarUserMenu({ collapsed, enLista = false, extra }: { collapsed: boolean; enLista?: boolean; extra?: React.ReactNode }) {
   const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -99,6 +103,72 @@ export default function SidebarUserMenu({ collapsed }: { collapsed: boolean }) {
   if (!session) return null;
 
   const nombreCompleto = session.nombre || session.correo;
+
+  const dialogoSalir = (
+    <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+      <DialogTitle>¿Cerrar sesión?</DialogTitle>
+      <DialogContent>
+        <DialogContentText>¿Estás seguro de que deseas cerrar tu sesión?</DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setOpenDialog(false)} color="inherit">
+          Cancelar
+        </Button>
+        <LoadingButton onClick={handleConfirmLogout} color="primary" variant="contained" loading={isLoggingOut}>
+          Cerrar sesión
+        </LoadingButton>
+      </DialogActions>
+    </Dialog>
+  );
+
+  if (enLista) {
+    return (
+      <>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1.5 }}>
+          <Avatar src={avatarUrl} sx={{ width: 44, height: 44 }}>
+            {!avatarUrl && iniciales}
+          </Avatar>
+          <Box minWidth={0}>
+            <Typography sx={{ fontSize: 16, fontWeight: 700 }} noWrap>
+              {nombreCompleto}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" noWrap>
+              {session.correo}
+            </Typography>
+          </Box>
+        </Box>
+        {extra}
+        <Box
+          component="button"
+          type="button"
+          onClick={handleLogoutClick}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            minHeight: 56,
+            width: "100%",
+            px: 2,
+            border: 0,
+            borderRadius: "16px",
+            bgcolor: "transparent",
+            font: "inherit",
+            fontSize: 16,
+            fontWeight: 500,
+            color: "#b42318",
+            cursor: "pointer",
+            "&:active": { bgcolor: "#fef3f2" },
+          }}
+        >
+          <Box sx={{ width: 36, height: 36, borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#fef3f2" }}>
+            <LogoutIcon fontSize="small" />
+          </Box>
+          Cerrar sesión
+        </Box>
+        {dialogoSalir}
+      </>
+    );
+  }
 
   return (
     <>
@@ -184,20 +254,7 @@ export default function SidebarUserMenu({ collapsed }: { collapsed: boolean }) {
         </Box>
       </Popover>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>¿Cerrar sesión?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>¿Estás seguro de que deseas cerrar tu sesión?</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} color="inherit">
-            Cancelar
-          </Button>
-          <LoadingButton onClick={handleConfirmLogout} color="primary" variant="contained" loading={isLoggingOut}>
-            Cerrar sesión
-          </LoadingButton>
-        </DialogActions>
-      </Dialog>
+      {dialogoSalir}
     </>
   );
 }

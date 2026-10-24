@@ -1,7 +1,7 @@
 // Menú de Análisis 360: la misma forma que el rail de FrontOms (módulo con
 // nombre corto de una palabra; el submenú se abre como panel al costado).
-// MODULOS es la única fuente: el rail de escritorio la usa tal cual y el
-// drawer móvil (Menuitems, abajo) se deriva de ella.
+// MODULOS es la única fuente: la usan el rail de escritorio (RailSidebar) y la
+// barra de celular (MobileBottomNav).
 import {
   IconHome2,
   IconTrendingUp,
@@ -22,7 +22,6 @@ import {
   IconDatabase,
   IconMessage2,
 } from "@tabler/icons-react";
-import { uniqueId } from "lodash";
 
 export type Pagina = { titulo: string; href: string; icon: any };
 export type Grupo = { titulo: string; paginas: Pagina[] };
@@ -136,17 +135,3 @@ export function moduloActivo(path: string): Modulo | undefined {
   }
   return mejor?.m;
 }
-
-// Drawer móvil: la lista de siempre (ítem con submenú desplegable), armada desde MODULOS.
-const Menuitems = MODULOS.map((m) => ({
-  id: uniqueId(),
-  title: m.titulo,
-  icon: m.icon,
-  href: m.href,
-  subMenu: m.grupos
-    ? paginasDe(m).map((p) => ({ id: uniqueId(), title: p.titulo, icon: p.icon, href: p.href }))
-    : undefined,
-  subheader: undefined as string | undefined,
-}));
-
-export default Menuitems;

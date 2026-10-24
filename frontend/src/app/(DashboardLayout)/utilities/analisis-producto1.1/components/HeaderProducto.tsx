@@ -2,7 +2,6 @@
 
 import React from "react";
 import { Box, Button, FormControl, MenuItem, Popover, Select, Stack, Typography } from "@mui/material";
-import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
 import DateRangeFilter, { DateRangeValue } from "@/app/(DashboardLayout)/utilities/ventas/components/DateRangeFilter";
 import RangosRapidos, { TEMPORADAS, etiquetaRango, rangoInicial } from "@/app/(DashboardLayout)/utilities/ventas/components/RangosRapidos";
 import FrescuraDatos from "@/app/(DashboardLayout)/utilities/ventas/components/FrescuraDatos";
@@ -14,6 +13,9 @@ import {
   etiquetaControlSx,
   tarjetaSx,
   tinta,
+  filaControlesSx,
+  IconoFiltros,
+  SoloMovil,
 } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
 import SelectorProducto, { FotoProducto, ProductoElegido } from "./SelectorProducto";
 
@@ -58,6 +60,36 @@ const HeaderProducto: React.FC<Props> = ({ filtros, setFiltros, selectorAbierto,
   const enEstadoInicial = !filtros.canal && !filtros.temporada && !filtros.modoComparacion && rango === "Ayer";
   const filtrosActivos = !!filtros.temporada || !!filtros.modoComparacion;
 
+  // Selectores de la fila; en celular van dentro del panel de filtros (ver SoloMovil).
+  const selectores = (
+    <>
+      <SelectorProducto
+        producto={producto}
+        onElegir={(p) => cambiar({ producto: p })}
+        abierto={selectorAbierto}
+        setAbierto={setSelectorAbierto}
+      />
+
+      <FormControl size="small" sx={{ minWidth: 160 }}>
+        <Select
+          value={filtros.canal}
+          displayEmpty
+          inputProps={{ "aria-label": "Canal" }}
+          onChange={(e) => cambiar({ canal: e.target.value })}
+          sx={controlSx}
+        >
+          <MenuItem value="">Todos los canales</MenuItem>
+          {CANALES.map((c) => (
+            <MenuItem key={c.clave} value={c.clave}>
+              <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: c.color, mr: 1, display: "inline-block" }} />
+              {c.nombre}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </>
+  );
+
   return (
     <Box sx={{ ...tarjetaSx, position: "relative", mb: 2, px: { xs: 1.5, md: 2 }, py: 1.25 }}>
       <FrescuraDatos />
@@ -92,31 +124,8 @@ const HeaderProducto: React.FC<Props> = ({ filtros, setFiltros, selectorAbierto,
           </RangosRapidos>
         </Box>
 
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }} sx={{ flexShrink: 0 }}>
-          <SelectorProducto
-            producto={producto}
-            onElegir={(p) => cambiar({ producto: p })}
-            abierto={selectorAbierto}
-            setAbierto={setSelectorAbierto}
-          />
-
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <Select
-              value={filtros.canal}
-              displayEmpty
-              inputProps={{ "aria-label": "Canal" }}
-              onChange={(e) => cambiar({ canal: e.target.value })}
-              sx={controlSx}
-            >
-              <MenuItem value="">Todos los canales</MenuItem>
-              {CANALES.map((c) => (
-                <MenuItem key={c.clave} value={c.clave}>
-                  <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: c.color, mr: 1, display: "inline-block" }} />
-                  {c.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+        <Stack direction="row" spacing={1} alignItems="center" useFlexGap sx={filaControlesSx}>
+          {selectores}
 
           <DateRangeFilter
             value={filtros.fechaInicio && filtros.fechaFin ? { start: filtros.fechaInicio, end: filtros.fechaFin } : null}
@@ -127,7 +136,7 @@ const HeaderProducto: React.FC<Props> = ({ filtros, setFiltros, selectorAbierto,
 
           <Button
             variant="outlined"
-            startIcon={<IconAdjustmentsHorizontal size={16} />}
+            startIcon={<IconoFiltros activos={!!filtros.canal} />}
             onClick={(e) => setFiltrosAnchor(e.currentTarget)}
             sx={{
               textTransform: "none",
@@ -142,7 +151,7 @@ const HeaderProducto: React.FC<Props> = ({ filtros, setFiltros, selectorAbierto,
               "&:hover": { borderColor: "#cbd5e1", bgcolor: tinta.fondoSuave },
             }}
           >
-            Filtros
+            <span className="boton-texto">Filtros</span>
           </Button>
 
           <BotonLimpiar onClick={limpiar} disabled={enEstadoInicial} />
@@ -161,6 +170,9 @@ const HeaderProducto: React.FC<Props> = ({ filtros, setFiltros, selectorAbierto,
       >
         <Typography sx={{ fontSize: 15, fontWeight: 700, color: tinta.primaria }}>Filtros</Typography>
         <Typography sx={{ fontSize: 12.5, color: tinta.secundaria, mb: 2 }}>Acotan todas las pestañas de la vista.</Typography>
+        <Box sx={{ mb: 1.5 }}>
+          <SoloMovil>{selectores}</SoloMovil>
+        </Box>
         <Stack spacing={1.5}>
           <Box>
             <Typography sx={etiquetaControlSx}>Temporada</Typography>
