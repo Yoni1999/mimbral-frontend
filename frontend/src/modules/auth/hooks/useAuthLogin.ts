@@ -21,10 +21,10 @@ function friendlyMessage(error: IdServiceApiError): string {
   const status = error.status;
 
   if (status === 409 || error.forceLogin) {
-    return raw || "Ya existe una sesion activa. Deseas cerrarla e iniciar una nueva?";
+    return raw || "Ya existe una sesión activa. ¿Deseas cerrarla e iniciar una nueva?";
   }
   if (raw) return raw;
-  if (status === 401) return "Credenciales invalidas. Revisa tu usuario y contrasena.";
+  if (status === 401) return "Credenciales inválidas. Revisa tu usuario y contraseña.";
   if (status === 403) return "Tu usuario no tiene permisos para acceder a esta plataforma.";
   if (status === 429) return "Demasiados intentos. Espera unos minutos antes de reintentar.";
   if (status === 0 || error.codigo === "NETWORK_ERROR") {

@@ -137,14 +137,17 @@
   color: #94a3b8;
 }
 
-.eyeButton {
+/* Dentro del campo, a la derecha. Con `.inputWrap` delante gana a los estilos
+   de MUI (ButtonBase pone position: relative y dejaba el ojo bajo el campo). */
+.inputWrap .eyeButton {
   position: absolute;
-  right: -8px;
-  top: 4px;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   color: #334155;
 }
 
-.eyeButton:disabled {
+.inputWrap .eyeButton:disabled {
   color: #cbd5e1;
 }
 

@@ -9,7 +9,7 @@ import type { IdServiceApiError } from "@/modules/auth/types/auth.types";
 import styles from "../Recuperar.module.css";
 
 const FRIENDLY_SAVE_ERROR =
-  "No pudimos actualizar tu contrasena. Codigo OTP invalido, expirado o ya usado.";
+  "No pudimos actualizar tu contraseña. Código OTP inválido, expirado o ya usado.";
 
 function SetNewPasswordForm() {
   const router = useRouter();
@@ -36,11 +36,11 @@ function SetNewPasswordForm() {
     setOkMsg(null);
 
     if (!pwd.trim() || !confirm.trim()) {
-      setError("Ingresa y confirma tu contrasena nueva.");
+      setError("Ingresa y confirma tu contraseña nueva.");
       return;
     }
     if (pwd !== confirm) {
-      setError("Las contrasenas no coinciden.");
+      setError("Las contraseñas no coinciden.");
       return;
     }
 
@@ -68,13 +68,13 @@ function SetNewPasswordForm() {
     <div className={styles.page}>
       <div className={styles.content}>
         <div className={styles.brand}>
-          <p className={styles.brandTitle}>Analisis 360</p>
+          <p className={styles.brandTitle}>Análisis 360</p>
         </div>
 
         <form className={styles.card} onSubmit={onSubmit}>
-          <h1 className={styles.heading}>Elige una contrasena nueva</h1>
+          <h1 className={styles.heading}>Elige una contraseña nueva</h1>
           <p className={styles.subheading}>
-            Usa una contrasena segura. Te mostraremos las reglas exactas si el servidor la rechaza.
+            Usa una contraseña segura. Te mostraremos las reglas exactas si el servidor la rechaza.
           </p>
 
           <div className={styles.field}>
@@ -97,7 +97,7 @@ function SetNewPasswordForm() {
                 edge="end"
                 size="small"
                 className={styles.eyeButton}
-                aria-label={showPwd ? "Ocultar contrasena" : "Mostrar contrasena"}
+                aria-label={showPwd ? "Ocultar contraseña" : "Mostrar contraseña"}
               >
                 {showPwd ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
               </IconButton>
@@ -106,7 +106,7 @@ function SetNewPasswordForm() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="confirm">
-              Confirmar contrasena
+              Confirmar contraseña
             </label>
             <div className={styles.inputWrap}>
               <input
@@ -124,7 +124,7 @@ function SetNewPasswordForm() {
                 edge="end"
                 size="small"
                 className={styles.eyeButton}
-                aria-label={showConfirm ? "Ocultar confirmacion" : "Mostrar confirmacion"}
+                aria-label={showConfirm ? "Ocultar confirmación" : "Mostrar confirmación"}
               >
                 {showConfirm ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
               </IconButton>

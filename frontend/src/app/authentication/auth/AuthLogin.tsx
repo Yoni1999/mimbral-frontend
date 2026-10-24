@@ -68,11 +68,11 @@ const AuthLogin = () => {
 
       <div className={styles.content}>
         <div className={styles.brand}>
-          <p className={styles.brandTitle}>Analisis 360</p>
+          <p className={styles.brandTitle}>Análisis 360</p>
         </div>
 
         <form className={styles.card} onSubmit={onSubmit}>
-          <h2 className={styles.cardHeading}>Inicia sesion con tu cuenta</h2>
+          <h2 className={styles.cardHeading}>Inicia sesión con tu cuenta</h2>
 
           {motivoLogout && (
             <div className={`${styles.alert} ${styles.info}`} role="status">
@@ -106,7 +106,7 @@ const AuthLogin = () => {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="password">
-              Contrasena
+              Contraseña
             </label>
             <div className={styles.inputWrap}>
               <input
@@ -119,7 +119,7 @@ const AuthLogin = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className={styles.input}
-                placeholder={passwordEnabled ? "Ingresa tu contrasena" : "Primero valida tu correo o RUT"}
+                placeholder={passwordEnabled ? "Ingresa tu contraseña" : "Primero valida tu correo o RUT"}
               />
               <IconButton
                 type="button"
@@ -128,6 +128,7 @@ const AuthLogin = () => {
                 size="small"
                 disabled={!passwordEnabled}
                 className={styles.eyeButton}
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
               >
                 {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
               </IconButton>
@@ -135,7 +136,7 @@ const AuthLogin = () => {
 
             {!passwordEnabled && (
               <p className={styles.hint}>
-                La contrasena se habilita cuando el correo o RUT tiene formato valido.
+                La contraseña se habilita cuando el correo o RUT tiene un formato válido.
               </p>
             )}
           </div>
@@ -149,7 +150,7 @@ const AuthLogin = () => {
                   className={styles.forceLoginButton}
                   onClick={() => void handleForceLogin()}
                 >
-                  Cerrar sesion e iniciar nueva
+                  Cerrar sesión e iniciar una nueva
                 </button>
               )}
             </div>
@@ -159,14 +160,14 @@ const AuthLogin = () => {
             {loading ? "Cargando..." : "Ingresar"}
           </button>
 
-          <div className={styles.divider}>O tambien</div>
+          <div className={styles.divider}>O también</div>
 
           <div className={styles.secondaryRow}>
             <span className={styles.secondaryButton} title="Los usuarios los crea un administrador">
               Crear cuenta
             </span>
             <Link href="/authentication/recuperar" className={styles.recoverLink}>
-              Olvide mi contrasena
+              Olvidé mi contraseña
             </Link>
           </div>
         </form>
