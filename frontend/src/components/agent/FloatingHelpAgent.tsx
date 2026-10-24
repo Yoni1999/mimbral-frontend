@@ -12,11 +12,14 @@ import {
   IconSend,
   IconSparkles,
   IconTable,
+  IconThumbDown,
+  IconThumbUp,
   IconX,
 } from "@tabler/icons-react";
 import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import { useEstadoVista } from "@/utils/estadoVista";
+import { getIdServiceSession } from "@/modules/auth/utils/auth.storage";
 import { formatoPesos, formatoPorcentaje, tablaSx, tinta } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
 import { descargarExcel } from "@/app/(DashboardLayout)/utilities/ventas/components/detalle/comun";
 
@@ -47,6 +50,8 @@ interface Respuesta {
   contexto?: Record<string, unknown>;
   /** "Descargar excel": el agente repite la tabla y el front la descarga sola. */
   descargar?: boolean;
+  /** Identifica la respuesta en el registro del agente, para valorarla. */
+  vueltaId?: string;
 }
 interface Mensaje {
   de: "usuario" | "agente";
@@ -55,23 +60,36 @@ interface Mensaje {
   enlace?: Respuesta["enlace"];
   sugerencias?: Sugerencia[];
   error?: boolean;
+  vueltaId?: string;
+  /** 👍 = 1, 👎 = -1. */
+  valoracion?: 1 | -1;
 }
 
 const FILAS_GUARDADAS = 60;
 const MENSAJES_GUARDADOS = 40;
 
-const BIENVENIDA: Mensaje = {
-  de: "agente",
-  texto:
-    "¡Hola! Soy el asistente de **Análisis 360**. Pregúntame por ventas, márgenes, clientes, productos, vendedores, stock o notas de crédito, o pídeme un informe para descargar en Excel.",
-  sugerencias: [
-    { texto: "¿Cuánto vendimos ayer?" },
-    { texto: "Ventas de este mes por canal" },
-    { texto: "Top 10 productos de este mes" },
-    { texto: "Notas de crédito de este mes por motivo" },
-    { texto: "Quiero un informe" },
-    { texto: "¿Qué puedes hacer?" },
-  ],
+/** "MAURICIO ANDRÉS CANCINO" → "Mauricio"; sin sesión o sin nombre → null. */
+function primerNombre(): string | null {
+  const p = (getIdServiceSession()?.nombre ?? "").trim().split(/\s+/)[0];
+  if (!p || p.includes("@") || p.length < 2) return null;
+  return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
+}
+
+/** El saludo inicial, con el nombre de quien inició sesión. */
+const bienvenida = (): Mensaje => {
+  const nombre = primerNombre();
+  return {
+    de: "agente",
+    texto: `¡Hola${nombre ? `, ${nombre}` : ""}! Soy el asistente de **Análisis 360**. Pregúntame por ventas, márgenes, clientes, productos, vendedores, stock o notas de crédito, o pídeme un informe para descargar en Excel.`,
+    sugerencias: [
+      { texto: "¿Cuánto vendimos ayer?" },
+      { texto: "Ventas de este mes por canal" },
+      { texto: "Top 10 productos de este mes" },
+      { texto: "Notas de crédito de este mes por motivo" },
+      { texto: "Quiero un informe" },
+      { texto: "¿Qué puedes hacer?" },
+    ],
+  };
 };
 
 // ── Formatos ────────────────────────────────────────────────────────────────
@@ -184,8 +202,8 @@ export default function FloatingHelpAgent() {
   const [pensando, setPensando] = React.useState(false);
   const [tablaCompleta, setTablaCompleta] = React.useState<{ tabla: Tabla; filas: Record<string, unknown>[] } | null>(null);
   const [descargando, setDescargando] = React.useState<number | null>(null);
-  const [estado, setEstado] = useEstadoVista<{ mensajes: Mensaje[]; contexto: Record<string, unknown> }>("agente", () => ({
-    mensajes: [BIENVENIDA],
+  const [estado, setEstado] = useEstadoVista<{ mensajes: Mensaje[]; contexto: Record<string, unknown>; avisosDia?: string }>("agente", () => ({
+    mensajes: [bienvenida()],
     contexto: {},
   }));
   const finRef = React.useRef<HTMLDivElement | null>(null);
@@ -197,6 +215,50 @@ export default function FloatingHelpAgent() {
       entradaRef.current?.focus();
     }
   }, [abierto, estado.mensajes.length, pensando]);
+
+  // Al abrir el chat por primera vez en el día, el agente cuenta lo que vale la pena mirar.
+  React.useEffect(() => {
+    const hoy = new Date().toLocaleDateString("en-CA");
+    if (!abierto || estado.avisosDia === hoy) return;
+    setEstado((e) => ({ ...e, avisosDia: hoy }));
+    apiJson(`${BACKEND_URL}/api/agente/avisos`)
+      .then((r: { avisos?: { texto: string; mensaje: string }[] }) => {
+        const avisos = r?.avisos ?? [];
+        if (!avisos.length) return;
+        const nombre = primerNombre();
+        setEstado((e) => ({
+          ...e,
+          mensajes: [
+            ...e.mensajes,
+            {
+              de: "agente" as const,
+              texto: `${nombre ? `${nombre}, esto` : "Esto"} es lo que veo hoy:\n${avisos.map((a) => `• ${a.texto}`).join("\n")}`,
+              sugerencias: avisos.map((a) => ({ texto: a.mensaje, mensaje: a.mensaje })),
+            },
+          ].slice(-MENSAJES_GUARDADOS),
+        }));
+      })
+      .catch(() => {
+        /* sin avisos: el chat funciona igual */
+      });
+    // Solo al abrir; avisosDia evita repetirlo en el día.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abierto]);
+
+  /** 👍 / 👎 de una respuesta; volver a pulsar el mismo la quita. */
+  const valorar = (i: number, valor: 1 | -1) => {
+    const m = estado.mensajes[i];
+    if (!m?.vueltaId) return;
+    const nuevo = m.valoracion === valor ? undefined : valor;
+    setEstado((e) => ({ ...e, mensajes: e.mensajes.map((x, j) => (j === i ? { ...x, valoracion: nuevo } : x)) }));
+    apiJson(`${BACKEND_URL}/api/agente/valoracion`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vueltaId: m.vueltaId, valor: nuevo ?? 0 }),
+    }).catch(() => {
+      /* la valoración es opcional: si falla, no se interrumpe la conversación */
+    });
+  };
 
   const enviar = async (mensaje: string, accion?: Record<string, unknown>, mostrar?: string) => {
     const visible = (mostrar ?? mensaje).trim();
@@ -215,7 +277,7 @@ export default function FloatingHelpAgent() {
       setEstado((e) => ({
         mensajes: [
           ...e.mensajes,
-          { de: "agente" as const, texto: r.texto, tabla: tabla as Tabla | undefined, enlace: r.enlace, sugerencias: r.sugerencias },
+          { de: "agente" as const, texto: r.texto, tabla: tabla as Tabla | undefined, enlace: r.enlace, sugerencias: r.sugerencias, vueltaId: r.vueltaId },
         ].slice(-MENSAJES_GUARDADOS),
         contexto: r.contexto ?? e.contexto,
       }));
@@ -231,7 +293,7 @@ export default function FloatingHelpAgent() {
     }
   };
 
-  const reiniciar = () => setEstado({ mensajes: [BIENVENIDA], contexto: {} });
+  const reiniciar = () => setEstado((e) => ({ mensajes: [bienvenida()], contexto: {}, avisosDia: e.avisosDia }));
 
   const verTabla = async (tabla: Tabla) => {
     setTablaCompleta({ tabla, filas: tabla.filas });
@@ -276,7 +338,7 @@ export default function FloatingHelpAgent() {
             <IconSparkles size={20} />
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography sx={{ fontWeight: 800, fontSize: 15, lineHeight: 1.2 }}>Asistente de Análisis 360</Typography>
-              <Typography sx={{ fontSize: 11.5, opacity: 0.85 }}>Datos de la copia de SAP · montos netos sin IVA</Typography>
+              <Typography sx={{ fontSize: 11.5, opacity: 0.85 }}>Datos de SAP, Mercado Libre y Falabella</Typography>
             </Box>
             <Tooltip title="Nueva conversación">
               <IconButton size="small" onClick={reiniciar} sx={{ color: "#fff" }} aria-label="Nueva conversación">
@@ -344,6 +406,21 @@ export default function FloatingHelpAgent() {
                       >
                         {m.enlace.texto}
                       </Button>
+                    )}
+
+                    {m.vueltaId && (
+                      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.25, mt: 0.5 }}>
+                        <Tooltip title="Buena respuesta">
+                          <IconButton size="small" onClick={() => valorar(i, 1)} aria-label="Buena respuesta" sx={{ color: m.valoracion === 1 ? "#067647" : tinta.secundaria, p: 0.4 }}>
+                            <IconThumbUp size={15} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Mala respuesta">
+                          <IconButton size="small" onClick={() => valorar(i, -1)} aria-label="Mala respuesta" sx={{ color: m.valoracion === -1 ? "#b42318" : tinta.secundaria, p: 0.4 }}>
+                            <IconThumbDown size={15} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     )}
 
                     {/* Solo la última respuesta ofrece sus botones: las viejas ya no aplican al contexto. */}
