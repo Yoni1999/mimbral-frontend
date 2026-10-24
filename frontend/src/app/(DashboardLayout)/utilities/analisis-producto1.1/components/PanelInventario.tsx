@@ -76,11 +76,11 @@ export default function PanelInventario({ sku }: { sku: string }) {
     <>
       <Grid container spacing={2} sx={{ mb: 2 }}>
         {tarjetas.map((t) => (
-          <Grid item xs={12} sm={6} lg={2.4} key={t.title}>
+          <Grid item xs={6} sm={6} lg={2.4} key={t.title}>
             <MetricCard {...t} cargando={resumen.cargando} />
           </Grid>
         ))}
-        <Grid item xs={12} sm={6} lg={2.4}>
+        <Grid item xs={6} sm={6} lg={2.4}>
           <MetricCard
             title="Última venta"
             value={resumen.cargando ? "" : `${fecha(r?.ultimaVenta?.FechaUltimaVenta)} ${hora(r?.ultimaVenta?.HoraUltimaVenta)}`}

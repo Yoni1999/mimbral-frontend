@@ -509,7 +509,7 @@ const DashboardVentasPorCanalPage: React.FC = () => {
       </Box>
 
       <Grid container spacing={2} mb={2}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={6} md={3}>
           <MetricCard
             title="Ventas netas (CLP)"
             value={formatMoney(totals.sales)}
@@ -518,7 +518,7 @@ const DashboardVentasPorCanalPage: React.FC = () => {
             loading={loading}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={6} md={3}>
           <MetricCard
             title="Ventas (unidades)"
             value={formatUnits(totals.units)}
@@ -527,7 +527,7 @@ const DashboardVentasPorCanalPage: React.FC = () => {
             loading={loading}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={6} md={3}>
           <MetricCard
             title="Margen bruto"
             value={formatMoney(totals.margin)}
@@ -536,7 +536,7 @@ const DashboardVentasPorCanalPage: React.FC = () => {
             loading={loading}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} sm={6} md={3}>
           <MetricCard
             title="SKUs"
             value={formatUnits(totals.skuCount)}

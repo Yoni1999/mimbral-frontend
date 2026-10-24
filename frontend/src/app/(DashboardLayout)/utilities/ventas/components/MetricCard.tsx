@@ -60,10 +60,11 @@ const MetricCard = ({
       <Box
         className="ver-detalle"
         sx={{
+          // En celular no hay hover: el aviso no aparece y no tapa el título.
+          display: { xs: "none", sm: "inline-flex" },
           position: "absolute",
           top: 8,
           right: 8,
-          display: "inline-flex",
           alignItems: "center",
           gap: 0.25,
           fontSize: 11,
@@ -99,13 +100,30 @@ const MetricCard = ({
           {icon}
         </Box>
       )}
-      <Typography noWrap sx={{ fontSize: 12.5, fontWeight: 600, color: tinta.secundaria, flex: 1, minWidth: 0 }}>
+      <Typography
+        sx={{
+          fontSize: { xs: 12, sm: 12.5 },
+          fontWeight: 600,
+          color: tinta.secundaria,
+          flex: 1,
+          minWidth: 0,
+          lineHeight: 1.25,
+          // En celular (dos por línea) el título puede ir en dos líneas en vez de cortarse.
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: { xs: "normal", sm: "nowrap" },
+          display: { xs: "-webkit-box", sm: "block" },
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+        }}
+      >
         {title}
       </Typography>
     </Box>
 
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
-      <Typography noWrap sx={{ fontSize: 20, fontWeight: 750, color: tinta.primaria, lineHeight: 1.15, minWidth: 0, ...cifraSx }}>
+    {/* En celular la tarjeta va de a dos por línea: la variación baja bajo la cifra. */}
+    <Box sx={{ display: "flex", alignItems: { xs: "flex-start", sm: "center" }, flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", gap: { xs: 0.5, sm: 1 } }}>
+      <Typography noWrap sx={{ fontSize: { xs: 18, sm: 20 }, fontWeight: 750, maxWidth: "100%", color: tinta.primaria, lineHeight: 1.15, minWidth: 0, ...cifraSx }}>
         {cargando ? <Skeleton width={110} /> : value}
       </Typography>
       {!cargando && <ChipVariacion valor={percentageChange} masEsMejor={masEsMejor} unidad={unidadVariacion} />}
