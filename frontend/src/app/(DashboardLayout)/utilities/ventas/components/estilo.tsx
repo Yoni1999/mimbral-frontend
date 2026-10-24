@@ -1,7 +1,8 @@
 // Línea visual común de Resumen de ventas: colores, formatos y estilos que
 // comparten las tarjetas, gráficos y tablas de la vista.
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
-import { IconArrowDownRight, IconArrowUpRight, IconMinus, IconTrash, IconX } from "@tabler/icons-react";
+import React from "react";
+import { Badge, Box, Button, IconButton, Popover, Tooltip, Typography } from "@mui/material";
+import { IconAdjustmentsHorizontal, IconArrowDownRight, IconArrowUpRight, IconMinus, IconTrash, IconX } from "@tabler/icons-react";
 
 export const tinta = {
   primaria: "#0f172a",
@@ -283,6 +284,22 @@ export const controlSx = {
   "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: tinta.acento },
 } as const;
 
+/**
+ * Fila de controles de los filtros (canal, calendario, filtros, limpiar). En
+ * celular va en una o dos líneas en vez de un control por línea: los selects
+ * se reparten el ancho y el botón de filtros queda solo con su ícono.
+ */
+export const filaControlesSx = {
+  flexShrink: 0,
+  flexWrap: { xs: "wrap", sm: "nowrap" },
+  // En celular los selectores no van en la fila: están dentro del botón de filtros (ver SoloMovil).
+  "& > .MuiFormControl-root": { display: { xs: "none", sm: "inline-flex" } },
+  "& > .MuiAutocomplete-root": { display: { xs: "none", sm: "block" } },
+  "& .boton-texto": { display: { xs: "none", sm: "inline" } },
+  "& .MuiButton-root:has(.boton-texto)": { minWidth: { xs: 36 }, px: { xs: 1, sm: 1.5 } },
+  "& .MuiButton-root:has(.boton-texto) .MuiButton-startIcon": { mr: { xs: 0, sm: 1 }, ml: { xs: 0, sm: -0.5 } },
+} as const;
+
 export const etiquetaControlSx = { fontSize: 12, fontWeight: 600, color: tinta.secundaria, mb: 0.5 } as const;
 
 /** Selector de una opción en píldoras, con el mismo aspecto que los accesos
@@ -330,6 +347,61 @@ export function Pildoras<T extends string>({
         );
       })}
     </Box>
+  );
+}
+
+/**
+ * Los selectores de la fila (canal, temporada, vendedor…) repetidos dentro del
+ * panel de filtros, solo en celular: ahí la fila deja solo los períodos, el
+ * calendario, el botón de filtros y limpiar.
+ */
+export function SoloMovil({ children }: { children: React.ReactNode }) {
+  return (
+    <Box sx={{ display: { xs: "flex", sm: "none" }, flexDirection: "column", gap: 1.25, "& > *": { width: "100% !important", minWidth: "0 !important" } }}>
+      {children}
+    </Box>
+  );
+}
+
+/** Punto azul sobre el ícono de filtros en celular cuando hay un filtro escondido en el panel. */
+export function IconoFiltros({ activos }: { activos: boolean }) {
+  return (
+    <Badge variant="dot" color="primary" invisible={!activos} sx={{ "& .MuiBadge-badge": { display: { sm: "none" } } }}>
+      <IconAdjustmentsHorizontal size={16} />
+    </Badge>
+  );
+}
+
+/** Botón de filtros solo para celular, en vistas que en escritorio no lo necesitan. */
+export function FiltrosMovil({ activos, children }: { activos: boolean; children: React.ReactNode }) {
+  const [ancla, setAncla] = React.useState<HTMLElement | null>(null);
+  return (
+    <>
+      <Button
+        variant="outlined"
+        aria-label="Filtros"
+        onClick={(e) => setAncla(e.currentTarget)}
+        sx={{ display: { xs: "inline-flex", sm: "none" }, minWidth: 36, height: 34, px: 1, borderRadius: "10px", borderColor: tinta.borde, color: tinta.primaria }}
+      >
+        <IconoFiltros activos={activos} />
+      </Button>
+      <Popover
+        open={!!ancla}
+        anchorEl={ancla}
+        onClose={() => setAncla(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        PaperProps={{ sx: { mt: 1, p: 2, width: 320, maxWidth: "calc(100vw - 24px)", borderRadius: "14px", border: `1px solid ${tinta.borde}` } }}
+      >
+        <Typography sx={{ fontSize: 15, fontWeight: 700, color: tinta.primaria, mb: 1.5 }}>Filtros</Typography>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, "& > *": { width: "100% !important", minWidth: "0 !important" } }}>{children}</Box>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+          <Button onClick={() => setAncla(null)} variant="contained" disableElevation sx={{ textTransform: "none", borderRadius: "10px", fontWeight: 700 }}>
+            Listo
+          </Button>
+        </Box>
+      </Popover>
+    </>
   );
 }
 

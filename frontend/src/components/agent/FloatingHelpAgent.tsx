@@ -102,21 +102,30 @@ function valor(v: unknown, tipo: Columna["tipo"]) {
   return String(v);
 }
 
+/** **negrita** (también dentro de una cursiva). */
+function ConNegritas({ texto }: { texto: string }) {
+  return (
+    <>
+      {texto.split(/(\*\*[^*]+\*\*)/g).map((parte, j) =>
+        parte.startsWith("**") && parte.endsWith("**") ? <strong key={j}>{parte.slice(2, -2)}</strong> : <React.Fragment key={j}>{parte}</React.Fragment>
+      )}
+    </>
+  );
+}
+
 /** **negrita**, _cursiva_ y saltos de línea; nada de HTML. */
 function TextoAgente({ texto }: { texto: string }) {
   return (
     <>
       {texto.split("\n").map((linea, i) => (
         <Box key={i} component="span" sx={{ display: "block", mt: i ? 0.5 : 0 }}>
-          {linea.split(/(\*\*[^*]+\*\*|_[^_]+_)/g).map((parte, j) =>
-            parte.startsWith("**") && parte.endsWith("**") ? (
-              <strong key={j}>{parte.slice(2, -2)}</strong>
-            ) : parte.startsWith("_") && parte.endsWith("_") && parte.length > 2 ? (
+          {linea.split(/(_[^_]+_)/g).map((parte, j) =>
+            parte.startsWith("_") && parte.endsWith("_") && parte.length > 2 ? (
               <Box key={j} component="em" sx={{ color: tinta.secundaria }}>
-                {parte.slice(1, -1)}
+                <ConNegritas texto={parte.slice(1, -1)} />
               </Box>
             ) : (
-              <React.Fragment key={j}>{parte}</React.Fragment>
+              <ConNegritas key={j} texto={parte} />
             )
           )}
         </Box>
@@ -208,6 +217,13 @@ export default function FloatingHelpAgent() {
   }));
   const finRef = React.useRef<HTMLDivElement | null>(null);
   const entradaRef = React.useRef<HTMLInputElement | null>(null);
+
+  // En celular el agente se abre desde la barra de abajo (ver MobileBottomNav).
+  React.useEffect(() => {
+    const alternar = () => setAbierto((a) => !a);
+    window.addEventListener("agente:alternar", alternar);
+    return () => window.removeEventListener("agente:alternar", alternar);
+  }, []);
 
   React.useEffect(() => {
     if (abierto) {
@@ -317,16 +333,18 @@ export default function FloatingHelpAgent() {
   const ultimoAgente = [...estado.mensajes].reverse().find((m) => m.de === "agente");
 
   return (
-    <Box sx={{ position: "fixed", right: 20, bottom: 20, zIndex: 1300, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1.25 }}>
+    // En celular (xs) el panel ocupa toda la pantalla y no hay botón flotante:
+    // se abre desde «Agente» en la barra de abajo.
+    <Box sx={{ position: "fixed", right: { xs: 0, sm: 20 }, bottom: { xs: 0, sm: 20 }, zIndex: 1300, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1.25 }}>
       {abierto && (
         <Box
           sx={{
-            width: grande ? { xs: "calc(100vw - 24px)", md: "min(1100px, calc(100vw - 48px))" } : { xs: "calc(100vw - 24px)", sm: 440 },
-            height: grande ? "calc(100vh - 110px)" : { xs: "calc(100vh - 120px)", sm: 620 },
-            maxHeight: "calc(100vh - 100px)",
+            width: grande ? { xs: "100vw", sm: "calc(100vw - 24px)", md: "min(1100px, calc(100vw - 48px))" } : { xs: "100vw", sm: 440 },
+            height: grande ? { xs: "100dvh", sm: "calc(100vh - 110px)" } : { xs: "100dvh", sm: 620 },
+            maxHeight: { xs: "100dvh", sm: "calc(100vh - 100px)" },
             bgcolor: "#fff",
-            borderRadius: "18px",
-            border: `1px solid ${tinta.borde}`,
+            borderRadius: { xs: 0, sm: "18px" },
+            border: { xs: "none", sm: `1px solid ${tinta.borde}` },
             boxShadow: "0 24px 60px rgba(15, 23, 42, 0.22)",
             display: "flex",
             flexDirection: "column",
@@ -334,11 +352,11 @@ export default function FloatingHelpAgent() {
           }}
         >
           {/* Encabezado */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 2, py: 1.25, background: "linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%)", color: "#fff" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 2, py: 1.25, pt: { xs: "max(10px, env(safe-area-inset-top))", sm: 1.25 }, background: "linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%)", color: "#fff" }}>
             <IconSparkles size={20} />
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography sx={{ fontWeight: 800, fontSize: 15, lineHeight: 1.2 }}>Asistente de Análisis 360</Typography>
-              <Typography sx={{ fontSize: 11.5, opacity: 0.85 }}>Datos de SAP, Mercado Libre y Falabella</Typography>
+              <Typography sx={{ fontSize: 11.5, opacity: 0.85, display: { xs: "none", sm: "block" } }}>Datos de SAP, Mercado Libre y Falabella</Typography>
             </Box>
             <Tooltip title="Nueva conversación">
               <IconButton size="small" onClick={reiniciar} sx={{ color: "#fff" }} aria-label="Nueva conversación">
@@ -346,7 +364,7 @@ export default function FloatingHelpAgent() {
               </IconButton>
             </Tooltip>
             <Tooltip title={grande ? "Achicar" : "Agrandar"}>
-              <IconButton size="small" onClick={() => setGrande((g) => !g)} sx={{ color: "#fff" }} aria-label={grande ? "Achicar" : "Agrandar"}>
+              <IconButton size="small" onClick={() => setGrande((g) => !g)} sx={{ color: "#fff", display: { xs: "none", sm: "inline-flex" } }} aria-label={grande ? "Achicar" : "Agrandar"}>
                 {grande ? <IconArrowsMinimize size={17} /> : <IconArrowsMaximize size={17} />}
               </IconButton>
             </Tooltip>
@@ -425,7 +443,7 @@ export default function FloatingHelpAgent() {
 
                     {/* Solo la última respuesta ofrece sus botones: las viejas ya no aplican al contexto. */}
                     {esUltimo && m.sugerencias && m.sugerencias.length > 0 && (
-                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1 }}>
+                      <Box sx={{ display: "flex", flexWrap: { xs: "nowrap", sm: "wrap" }, overflowX: { xs: "auto", sm: "visible" }, scrollbarWidth: "none", "& > *": { flexShrink: 0 }, gap: 0.75, mt: 1, pb: { xs: 0.5, sm: 0 } }}>
                         {m.sugerencias.map((s, j) => (
                           <Box
                             key={j}
@@ -473,7 +491,7 @@ export default function FloatingHelpAgent() {
               e.preventDefault();
               enviar(texto);
             }}
-            sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.25, borderTop: `1px solid ${tinta.borde}` }}
+            sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.25, pb: { xs: "max(10px, env(safe-area-inset-bottom))", sm: 1.25 }, borderTop: `1px solid ${tinta.borde}` }}
           >
             <InputBase
               inputRef={entradaRef}
@@ -481,7 +499,8 @@ export default function FloatingHelpAgent() {
               onChange={(e) => setTexto(e.target.value)}
               placeholder="Pregunta algo: «venta de ayer en Falabella», «top 10 clientes de octubre»…"
               fullWidth
-              sx={{ px: 1.5, py: 0.75, border: `1px solid ${tinta.borde}`, borderRadius: "12px", fontSize: 13.5, "&.Mui-focused": { borderColor: tinta.acento } }}
+              // 16 px en celular: con menos, Safari de iOS hace zoom al escribir.
+              sx={{ px: 1.5, py: 0.75, border: `1px solid ${tinta.borde}`, borderRadius: "12px", fontSize: { xs: 16, sm: 13.5 }, "&.Mui-focused": { borderColor: tinta.acento } }}
             />
             <IconButton type="submit" disabled={pensando || !texto.trim()} aria-label="Enviar" sx={{ bgcolor: tinta.acento, color: "#fff", borderRadius: "12px", "&:hover": { bgcolor: "#1d4ed8" }, "&.Mui-disabled": { bgcolor: "#cbd5e1", color: "#fff" } }}>
               <IconSend size={18} />
@@ -494,7 +513,7 @@ export default function FloatingHelpAgent() {
         variant="contained"
         onClick={() => setAbierto((a) => !a)}
         startIcon={abierto ? <IconX size={18} /> : <IconSparkles size={18} />}
-        sx={{ borderRadius: 999, px: 2.25, py: 1, textTransform: "none", fontWeight: 700, bgcolor: "#1e3a8a", boxShadow: "0 10px 24px rgba(30, 58, 138, 0.35)", "&:hover": { bgcolor: "#1e40af" } }}
+        sx={{ display: { xs: "none", sm: "inline-flex" }, borderRadius: 999, px: 2.25, py: 1, textTransform: "none", fontWeight: 700, bgcolor: "#1e3a8a", boxShadow: "0 10px 24px rgba(30, 58, 138, 0.35)", "&:hover": { bgcolor: "#1e40af" } }}
       >
         {abierto ? "Cerrar" : "Agente"}
       </Button>

@@ -44,14 +44,14 @@ const launcherItems = [
     softAccent: "rgba(15, 118, 110, 0.10)",
   },
   {
-    title: "Analisis Categorias",
+    title: "Análisis por categoría",
     route: "/utilities/analisis-categoria",
     icon: IconShoppingCart,
     accent: "#dc2626",
     softAccent: "rgba(220, 38, 38, 0.10)",
   },
   {
-    title: "Analisis Por Producto",
+    title: "Análisis por producto",
     route: "/utilities/analisis-producto1.1",
     icon: IconBox,
     accent: "#7c3aed",
@@ -134,12 +134,12 @@ function useResumenInicio() {
         ? `Canal con más venta del mes: ${formatVentas(ventaCanalTop ?? 0)}`
         : "Sin ventas por canal en el mes",
     },
-    "Analisis Categorias": {
+    "Análisis por categoría": {
       cargando: categorias.cargando,
       value: categorias.error ? sinDato : `${formatUnidades(categorias.datos.length)} Categorias`,
-      description: "Analisis de ventas por categoria",
+      description: "Análisis de ventas por categoría",
     },
-    "Analisis Por Producto": {
+    "Análisis por producto": {
       cargando: productos.cargando,
       value: productos.error ? sinDato : `${formatUnidades(productos.datos.ProductosPeriodoActual ?? 0)} SKU`,
       description: productos.error
@@ -158,7 +158,7 @@ function useResumenInicio() {
       value: vendedorTop ? formatVentas(vendedorTop.TotalVentas ?? 0) : sinDato,
       description: vendedorTop
         ? `Vendedor con más venta del mes: ${vendedorTop.Nombre}`
-        : "Analisis de ventas por vendedor",
+        : "Análisis de ventas por vendedor",
     },
   } as Record<string, { cargando: boolean; value: string; description: string }>;
 }
@@ -195,7 +195,7 @@ function LauncherCard({
         background:
           "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,251,255,0.92) 100%)",
         boxShadow: "0 18px 40px rgba(15, 23, 42, 0.08)",
-        minHeight: 210,
+        minHeight: { xs: 0, sm: 210 },
         cursor: "pointer",
         transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
         animation: `${floatIn} 500ms ease both`,
@@ -232,14 +232,16 @@ function LauncherCard({
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          p: 3,
+          // En celular la tarjeta es compacta: la tarjeta entera ya es el acceso.
+          p: { xs: 2, sm: 3 },
+          "&:last-child": { pb: { xs: 2, sm: 3 } },
         }}
       >
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
           <Box
             sx={{
-              width: 58,
-              height: 58,
+              width: { xs: 44, sm: 58 },
+              height: { xs: 44, sm: 58 },
               borderRadius: 3,
               display: "grid",
               placeItems: "center",
@@ -251,9 +253,10 @@ function LauncherCard({
             <Icon size={30} />
           </Box>
           <Chip
-            label="Abrir modulo"
+            label="Abrir módulo"
             size="small"
             sx={{
+              display: { xs: "none", sm: "inline-flex" },
               backgroundColor: alpha(accent, 0.08),
               color: accent,
               fontWeight: 700,
@@ -264,11 +267,11 @@ function LauncherCard({
           />
         </Stack>
 
-        <Box sx={{ mt: 2 }}>
+        <Box sx={{ mt: { xs: 1.25, sm: 2 } }}>
           <Typography variant="h6" fontWeight={800} color="#17315e" sx={{ lineHeight: 1.15 }}>
             {title}
           </Typography>
-          <Typography variant="h4" fontWeight={900} sx={{ mt: 1, color: accent }}>
+          <Typography variant="h4" fontWeight={900} sx={{ mt: { xs: 0.5, sm: 1 }, color: accent, fontSize: { xs: "1.6rem", sm: undefined } }}>
             {cargando ? <Skeleton width="60%" /> : value}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -279,14 +282,15 @@ function LauncherCard({
         <Box
           sx={{
             mt: 2.5,
-            display: "flex",
+            // En celular sobra: tocar la tarjeta ya entra al módulo.
+            display: { xs: "none", sm: "flex" },
             alignItems: "center",
             justifyContent: "space-between",
             gap: 2,
           }}
         >
           <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
-            Navegacion rapida
+            Navegación rápida
           </Typography>
           <Button
             size="small"
