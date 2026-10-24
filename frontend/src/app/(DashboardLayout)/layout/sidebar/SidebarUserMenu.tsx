@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import LogoutIcon from "@mui/icons-material/Logout";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import { useRouter } from "next/navigation";
 import { clearStoredToken } from "@/utils/apiClient";
 import { logoutIdService, obtenerImagenPerfil } from "@/modules/auth/services/idservice.client";
@@ -154,6 +155,21 @@ export default function SidebarUserMenu({ collapsed }: { collapsed: boolean }) {
             </Box>
           </Box>
 
+          {/* Mi Perfil salió de la lista del menú (en el rail el avatar es la cuenta). */}
+          <Button
+            variant="text"
+            color="inherit"
+            size="small"
+            fullWidth
+            startIcon={<PersonOutlineIcon fontSize="small" />}
+            onClick={() => {
+              handleClose();
+              router.push("/perfil");
+            }}
+            sx={{ justifyContent: "flex-start", mb: 1 }}
+          >
+            Mi perfil
+          </Button>
           <Button
             variant="outlined"
             color="error"

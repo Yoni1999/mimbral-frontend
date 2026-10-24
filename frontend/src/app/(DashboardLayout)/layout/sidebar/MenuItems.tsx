@@ -1,188 +1,152 @@
-// src/layout/Menuitems.ts
-import {IconLayoutDashboard, IconChartBar,IconChartDonut,IconChartPie,IconChartLine,
-  IconBoxSeam,IconHierarchy3,IconClipboardCheck,IconMessage2,
-  IconChartBarOff,
-  IconCashOff,IconUser,IconSettings,IconDatabase,IconTargetArrow,} from "@tabler/icons-react";
-
+// Menú de Análisis 360: la misma forma que el rail de FrontOms (módulo con
+// nombre corto de una palabra; el submenú se abre como panel al costado).
+// MODULOS es la única fuente: el rail de escritorio la usa tal cual y el
+// drawer móvil (Menuitems, abajo) se deriva de ella.
+import {
+  IconHome2,
+  IconTrendingUp,
+  IconChartLine,
+  IconChartDonut,
+  IconUsers,
+  IconCategory2,
+  IconPackage,
+  IconTarget,
+  IconCalendarStats,
+  IconListCheck,
+  IconReportAnalytics,
+  IconChartBar,
+  IconCoinOff,
+  IconPackageOff,
+  IconBulb,
+  IconSettings,
+  IconDatabase,
+  IconMessage2,
+} from "@tabler/icons-react";
 import { uniqueId } from "lodash";
-const Menuitems = [
-  {
-    navlabel: true,
-    subheader: "Inicio",
-    divider: true,
-  },
-  {
-    id: uniqueId(),
-    title: "Panel de Control",
-    icon: IconLayoutDashboard,
-    href: "/inicio",
-  },
 
-  {
-    navlabel: true,
-    subheader: "Analisa tus Ventas",
-    divider: true,
-  },
-  {
-    id: uniqueId(),
-    title: "Ventas",
-    icon: IconChartBar,
-    subMenu: [
-      {
-        id: uniqueId(),
-        title: "Resumen Ventas",
-        icon: IconChartLine,
-        href: "/utilities/ventas/resumen-ventas",
-      },
-      {
-        id: uniqueId(),
-        title: "Ventas por Canal",
-        icon: IconChartDonut,
-        href: "/utilities/ventas/ventas-por-canal",
-      },
-      {
-        id: uniqueId(),
-        title: "Ventas por Vendedor",
-        icon: IconChartPie,
-        href: "/utilities/ventas/ventas-por-vendedor",
-      },
-    ],
-  },
-  {
-    id: uniqueId(),
-    title: "Análisis por Categoría",
-    icon: IconHierarchy3,
-    href: "/utilities/analisis-categoria",
-  },
-  {
-    id: uniqueId(),
-    title: "Análisis por Producto",
-    icon: IconBoxSeam,
-    href: "/utilities/analisis-producto1.1",
-  },
-  {
-    id: uniqueId(),
-    title: "Administrador de Metas",
-    icon: IconTargetArrow,
-    // Antes vivía como "Administrar Metas" dentro de Configuraciones — se
-    // saca a menú principal propio, con sus 3 vistas como submenú (igual
-    // patrón que "Ventas" o "Análisis por Categoría" arriba).
-    subMenu: [
-      {
-        id: uniqueId(),
-        title: "Resumen",
-        icon: IconChartPie,
-        href: "/metas",
-      },
-      {
-        id: uniqueId(),
-        title: "Periodos",
-        icon: IconChartLine,
-        href: "/metas/periodos",
-      },
-      {
-        id: uniqueId(),
-        title: "Metas",
-        icon: IconClipboardCheck,
-        href: "/metas/listado",
-      },
-    ],
-  },
+export type Pagina = { titulo: string; href: string; icon: any };
+export type Grupo = { titulo: string; paginas: Pagina[] };
+export type Modulo = {
+  id: string;
+  /** Nombre corto: una palabra, entra en una línea bajo el ícono del rail. */
+  titulo: string;
+  /** Una línea bajo el nombre en el panel del módulo. */
+  descripcion?: string;
+  icon: any;
+  /** Módulo sin submenú: navega directo. */
+  href?: string;
+  /** Módulo con submenú: sus páginas, agrupadas (un grupo sin título = lista simple). */
+  grupos?: Grupo[];
+};
 
+export const MODULOS: Modulo[] = [
+  { id: "inicio", titulo: "Inicio", icon: IconHome2, href: "/inicio" },
   {
-    navlabel: true,
-    subheader: "Informes",
-    divider: true,
-  },
-  {
-    id: uniqueId(),
-    title: "Ventas",
-    icon: IconClipboardCheck,
-    subMenu: [
+    id: "ventas",
+    titulo: "Ventas",
+    descripcion: "Cómo vamos vendiendo, por canal y por vendedor",
+    icon: IconTrendingUp,
+    grupos: [
       {
-        id: uniqueId(),
-        title: "Ventas de Productos",
-        icon: IconChartBar,
-        href: "/informes/ventas-productos",
+        titulo: "",
+        paginas: [
+          { titulo: "Resumen de ventas", href: "/utilities/ventas/resumen-ventas", icon: IconChartLine },
+          { titulo: "Ventas por canal", href: "/utilities/ventas/ventas-por-canal", icon: IconChartDonut },
+          { titulo: "Ventas por vendedor", href: "/utilities/ventas/ventas-por-vendedor", icon: IconUsers },
+        ],
       },
+    ],
+  },
+  { id: "categorias", titulo: "Categorías", icon: IconCategory2, href: "/utilities/analisis-categoria" },
+  { id: "productos", titulo: "Productos", icon: IconPackage, href: "/utilities/analisis-producto1.1" },
+  {
+    id: "metas",
+    titulo: "Metas",
+    descripcion: "Períodos, metas y cómo vamos contra ellas",
+    icon: IconTarget,
+    grupos: [
       {
-        id: uniqueId(),
-        title: "Ventas de productos por canal",
-        icon: IconCashOff,
-        href: "/informes/ventas-productos-por-canal",
+        titulo: "",
+        paginas: [
+          { titulo: "Resumen", href: "/metas", icon: IconChartDonut },
+          { titulo: "Períodos", href: "/metas/periodos", icon: IconCalendarStats },
+          { titulo: "Metas", href: "/metas/listado", icon: IconListCheck },
+        ],
       },
     ],
   },
   {
-    id: uniqueId(),
-    title: "Inventario",
-    icon: IconClipboardCheck,
-    subMenu: [
+    id: "informes",
+    titulo: "Informes",
+    descripcion: "Listados para revisar y descargar",
+    icon: IconReportAnalytics,
+    grupos: [
       {
-        id: uniqueId(),
-        title: "Productos Detenidos",
-        icon: IconBoxSeam,
-        href: "/informes/productos-detenidos",
+        titulo: "Ventas",
+        paginas: [
+          { titulo: "Ventas de productos", href: "/informes/ventas-productos", icon: IconChartBar },
+          { titulo: "Ventas de productos por canal", href: "/informes/ventas-productos-por-canal", icon: IconChartDonut },
+        ],
       },
       {
-        id: uniqueId(),
-        title: "Productos menos rentables",
-        icon: IconChartBarOff,
-        href: "/informes/productos-menos-rentables",
-      },
-      {
-        id: uniqueId(),
-        title: "Productos sin ventas",
-        icon: IconCashOff,
-        href: "/informes/productos-sin-ventas",
+        titulo: "Inventario",
+        paginas: [
+          { titulo: "Productos detenidos", href: "/informes/productos-detenidos", icon: IconPackageOff },
+          { titulo: "Productos menos rentables", href: "/informes/productos-menos-rentables", icon: IconCoinOff },
+          { titulo: "Productos sin ventas", href: "/informes/productos-sin-ventas", icon: IconPackage },
+        ],
       },
     ],
   },
+  { id: "sugerencias", titulo: "Sugerencias", icon: IconBulb, href: "/sugerencias" },
   {
-    navlabel: true,
-    subheader: "Feedback",
-    divider: true,
-  },
-  {
-    id: uniqueId(),
-    title: "Sugerencias",
-    icon: IconMessage2,
-    href: "/sugerencias",
-  },
-  {
-    navlabel: true,
-    subheader: "Cuenta",
-    divider: true,
-  },
-  {
-    id: uniqueId(),
-    title: "Mi Perfil",
-    icon: IconUser,
-    href: "/perfil",
-  },
-  {
-    id: uniqueId(),
-    title: "Configuraciones",
+    id: "ajustes",
+    titulo: "Ajustes",
+    descripcion: "Base de datos y sugerencias recibidas",
     icon: IconSettings,
-    // Un item con subMenu no navega solo: al hacer click despliega estas
-    // opciones (igual que "Ventas"), y cada una va DIRECTO a su vista -ya no
-    // hay que pasar primero por una pantalla intermedia con 3 tarjetas.
-    subMenu: [
+    grupos: [
       {
-        id: uniqueId(),
-        title: "Actualizar Base de Datos",
-        icon: IconDatabase,
-        href: "/configuracion",
-      },
-      {
-        id: uniqueId(),
-        title: "Sugerencias",
-        icon: IconMessage2,
-        href: "/configuracion/sugerencias",
+        titulo: "",
+        paginas: [
+          { titulo: "Actualizar base de datos", href: "/configuracion", icon: IconDatabase },
+          { titulo: "Sugerencias recibidas", href: "/configuracion/sugerencias", icon: IconMessage2 },
+        ],
       },
     ],
   },
 ];
 
+/** Activo = ruta exacta, o la ruta actual vive dentro de esa página. */
+export function esRutaActiva(href: string | undefined, path: string): boolean {
+  if (!href) return false;
+  return path === href || path.startsWith(`${href}/`);
+}
+
+export function paginasDe(m: Modulo): Pagina[] {
+  return (m.grupos ?? []).flatMap((g) => g.paginas);
+}
+
+/** Módulo de la ruta actual: el de la página que calza más largo ("/metas/periodos" gana a "/metas"). */
+export function moduloActivo(path: string): Modulo | undefined {
+  let mejor: { m: Modulo; largo: number } | undefined;
+  for (const m of MODULOS) {
+    for (const href of [m.href, ...paginasDe(m).map((p) => p.href)]) {
+      if (href && esRutaActiva(href, path) && (!mejor || href.length > mejor.largo)) mejor = { m, largo: href.length };
+    }
+  }
+  return mejor?.m;
+}
+
+// Drawer móvil: la lista de siempre (ítem con submenú desplegable), armada desde MODULOS.
+const Menuitems = MODULOS.map((m) => ({
+  id: uniqueId(),
+  title: m.titulo,
+  icon: m.icon,
+  href: m.href,
+  subMenu: m.grupos
+    ? paginasDe(m).map((p) => ({ id: uniqueId(), title: p.titulo, icon: p.icon, href: p.href }))
+    : undefined,
+  subheader: undefined as string | undefined,
+}));
 
 export default Menuitems;
