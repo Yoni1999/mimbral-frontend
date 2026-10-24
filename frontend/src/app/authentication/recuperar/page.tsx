@@ -32,7 +32,7 @@ function RecuperarContrasenaForm() {
     try {
       setLoading(true);
       await recuperarPassword(email.trim());
-      setOkMsg("Te enviamos un codigo de 6 digitos a tu correo.");
+      setOkMsg("Te enviamos un código de 6 dígitos a tu correo.");
       setTimeout(
         () => router.push(`/authentication/recuperar/otp?email=${encodeURIComponent(email.trim())}`),
         1500
@@ -49,11 +49,11 @@ function RecuperarContrasenaForm() {
     <div className={styles.page}>
       <div className={styles.content}>
         <div className={styles.brand}>
-          <p className={styles.brandTitle}>Analisis 360</p>
+          <p className={styles.brandTitle}>Análisis 360</p>
         </div>
 
         <form className={styles.card} onSubmit={onSubmit}>
-          <h1 className={styles.heading}>Recuperar contrasena</h1>
+          <h1 className={styles.heading}>Recuperar contraseña</h1>
           <p className={styles.subheading}>
             Introduce tu correo y te enviaremos un codigo de 6 digitos.
           </p>

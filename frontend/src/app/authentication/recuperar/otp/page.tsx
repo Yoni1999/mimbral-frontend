@@ -6,7 +6,7 @@ import { verificarOtpPassword } from "@/modules/auth/services/idservice.client";
 import type { IdServiceApiError } from "@/modules/auth/types/auth.types";
 import styles from "../Recuperar.module.css";
 
-const FRIENDLY_OTP_ERROR = "El codigo es invalido o ha expirado. Intenta nuevamente.";
+const FRIENDLY_OTP_ERROR = "El código es inválido o ha expirado. Intenta nuevamente.";
 
 /** Quita tildes (rango Unicode de diacriticos combinados) para comparar texto. */
 function stripDiacritics(value: string): string {
@@ -50,7 +50,7 @@ function VerifyOtpForm() {
     setError(null);
 
     if (code.length !== 6) {
-      setError("Ingresa el codigo de 6 digitos.");
+      setError("Ingresa el código de 6 dígitos.");
       return;
     }
 
@@ -76,16 +76,16 @@ function VerifyOtpForm() {
     <div className={styles.page}>
       <div className={styles.content}>
         <div className={styles.brand}>
-          <p className={styles.brandTitle}>Analisis 360</p>
+          <p className={styles.brandTitle}>Análisis 360</p>
         </div>
 
         <form className={styles.card} onSubmit={onSubmit}>
-          <h1 className={styles.heading}>Introduce el codigo de seguridad</h1>
-          <p className={styles.subheading}>Codigo de 6 digitos enviado a {emailParam}</p>
+          <h1 className={styles.heading}>Introduce el código de seguridad</h1>
+          <p className={styles.subheading}>Código de 6 dígitos enviado a {emailParam}</p>
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="code">
-              Codigo (6 digitos)
+              Código (6 dígitos)
             </label>
             <input
               id="code"
