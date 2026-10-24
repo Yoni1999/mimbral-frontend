@@ -226,7 +226,7 @@ const AnalisisProductoPage: React.FC = () => {
         <>
           <Grid container spacing={2} sx={{ mb: 2 }}>
             {tarjetas.map((t) => (
-              <Grid item xs={12} sm={6} md={4} lg={2} key={t.title}>
+              <Grid item xs={6} sm={6} md={4} lg={2} key={t.title}>
                 <MetricCard {...t} onClick={detalleTarjetas.alPulsar(t.title)} />
               </Grid>
             ))}

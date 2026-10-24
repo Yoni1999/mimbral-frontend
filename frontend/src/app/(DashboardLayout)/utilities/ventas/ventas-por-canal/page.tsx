@@ -193,7 +193,7 @@ const VentasPorCanal = () => {
         ) : (
           <Grid container spacing={2}>
             {tarjetas.map((card) => (
-              <Grid item xs={12} sm={6} md={4} xl={2} key={card.title}>
+              <Grid item xs={6} sm={6} md={4} xl={2} key={card.title}>
                 <MetricCard {...card} onClick={detalleTarjetas.alPulsar(card.title)} />
               </Grid>
             ))}

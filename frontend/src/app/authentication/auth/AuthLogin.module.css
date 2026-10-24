@@ -316,3 +316,52 @@
   font-size: 0.875rem;
   color: #475569;
 }
+
+/* Celular: todo el login en una pantalla, sin scroll (también en un iPhone SE). */
+@media (max-width: 639px) {
+  .page {
+    min-height: 100dvh;
+    padding: 1rem;
+  }
+  .brand {
+    margin-bottom: 1rem;
+  }
+  .brandTitle {
+    font-size: 2rem;
+  }
+  .card {
+    border-radius: 24px;
+    padding: 1.25rem 1.25rem 1.5rem;
+  }
+  .cardHeading {
+    margin-bottom: 1.25rem;
+    font-size: 1.2rem;
+  }
+  .field {
+    margin-bottom: 1rem;
+  }
+  .label {
+    margin-bottom: 0.25rem;
+  }
+  .input {
+    height: 2.75rem;
+    font-size: 1rem;
+  }
+  .submitButton {
+    height: 2.75rem;
+  }
+  .divider {
+    margin: 1rem 0;
+  }
+  .secondaryRow {
+    grid-template-columns: 1fr 1fr;
+  }
+  .secondaryButton,
+  .recoverLink {
+    height: 2.75rem;
+    padding: 0 0.5rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    text-align: center;
+  }
+}

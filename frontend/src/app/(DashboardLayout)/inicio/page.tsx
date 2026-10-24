@@ -233,15 +233,16 @@ function LauncherCard({
           flexDirection: "column",
           justifyContent: "space-between",
           // En celular la tarjeta es compacta: la tarjeta entera ya es el acceso.
-          p: { xs: 2, sm: 3 },
-          "&:last-child": { pb: { xs: 2, sm: 3 } },
+          p: { xs: 1.5, sm: 3 },
+          "&:last-child": { pb: { xs: 1.5, sm: 3 } },
         }}
       >
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
           <Box
             sx={{
-              width: { xs: 44, sm: 58 },
-              height: { xs: 44, sm: 58 },
+              width: { xs: 36, sm: 58 },
+              height: { xs: 36, sm: 58 },
+              "& svg": { width: { xs: 20, sm: 30 }, height: { xs: 20, sm: 30 } },
               borderRadius: 3,
               display: "grid",
               placeItems: "center",
@@ -268,13 +269,13 @@ function LauncherCard({
         </Stack>
 
         <Box sx={{ mt: { xs: 1.25, sm: 2 } }}>
-          <Typography variant="h6" fontWeight={800} color="#17315e" sx={{ lineHeight: 1.15 }}>
+          <Typography variant="h6" fontWeight={800} color="#17315e" sx={{ lineHeight: 1.15, fontSize: { xs: 14, sm: undefined } }}>
             {title}
           </Typography>
-          <Typography variant="h4" fontWeight={900} sx={{ mt: { xs: 0.5, sm: 1 }, color: accent, fontSize: { xs: "1.6rem", sm: undefined } }}>
+          <Typography variant="h4" fontWeight={900} sx={{ mt: { xs: 0.5, sm: 1 }, color: accent, fontSize: { xs: "1.2rem", sm: undefined }, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {cargando ? <Skeleton width="60%" /> : value}
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: { xs: 0.5, sm: 1 }, fontSize: { xs: 12, sm: undefined }, display: "-webkit-box", WebkitLineClamp: { xs: 2, sm: "unset" }, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {cargando ? <Skeleton width="85%" /> : description}
           </Typography>
         </Box>
@@ -360,7 +361,7 @@ const Dashboard = () => {
         <Box sx={{ position: "relative", zIndex: 1 }}>
           <Grid container spacing={2.5}>
             {launcherItems.map((item) => (
-              <Grid item xs={12} sm={6} md={4} key={item.title}>
+              <Grid item xs={6} sm={6} md={4} key={item.title}>
                 <LauncherCard
                   {...item}
                   {...resumen[item.title]}
