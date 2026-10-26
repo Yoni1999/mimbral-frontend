@@ -13,7 +13,7 @@ import {
   IconTrendingUp,
 } from "@tabler/icons-react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
-import MetricCard from "@/app/(DashboardLayout)/utilities/ventas/components/MetricCard";
+import MetricCard, { notaSinNc } from "@/app/(DashboardLayout)/utilities/ventas/components/MetricCard";
 import ListaBarras from "@/app/(DashboardLayout)/utilities/ventas/components/ListaBarras";
 import RankingProductos from "@/app/(DashboardLayout)/utilities/ventas/components/RankingProductos";
 import TendenciaCanales, { Punto, puntosDeTendencia, totalesPorCanal } from "@/app/(DashboardLayout)/utilities/ventas/components/TendenciaCanales";
@@ -227,7 +227,7 @@ const AnalisisProductoPage: React.FC = () => {
           <Grid container spacing={2} sx={{ mb: 2 }}>
             {tarjetas.map((t) => (
               <Grid item xs={6} sm={6} md={4} lg={2} key={t.title}>
-                <MetricCard {...t} onClick={detalleTarjetas.alPulsar(t.title)} />
+                <MetricCard {...t} nota={notaSinNc(t.title, true)} onClick={detalleTarjetas.alPulsar(t.title)} />
               </Grid>
             ))}
           </Grid>

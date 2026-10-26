@@ -2,7 +2,7 @@
 import { useState, useEffect, type ElementType } from "react";
 import { useRouter } from "next/navigation";
 import { alpha, keyframes } from "@mui/material/styles";
-import { Box, Button, Card, CardContent, Chip, Grid, Skeleton, Stack, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Chip, Grid, Skeleton, Stack, Tooltip, Typography } from "@mui/material";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import {
   IconTrendingUp,
@@ -118,6 +118,7 @@ function useResumenInicio() {
     .sort((a, b) => (b.TotalVentas ?? 0) - (a.TotalVentas ?? 0))
     .find((v) => !CUENTAS_DE_CANAL.has(Number(v.SlpCode)));
   const sinDato = "—";
+  const notaSinNc = "Venta facturada: no descuenta las notas de crédito.";
 
   return {
     "Resumen Ventas": {
@@ -125,7 +126,8 @@ function useResumenInicio() {
       value: ventas.error ? sinDato : formatVentas(ventas.datos.TotalVentasPeriodo ?? 0),
       description: ventas.error
         ? "No se pudo cargar la venta del mes"
-        : `Venta neta del mes · ${variacion(ventas.datos.PorcentajeCambio)}`,
+        : `Venta del mes (sin IVA) · ${variacion(ventas.datos.PorcentajeCambio)}`,
+      nota: notaSinNc,
     },
     "Ventas por Canal": {
       cargando: canales.cargando,
@@ -133,6 +135,7 @@ function useResumenInicio() {
       description: canalTop
         ? `Canal con más venta del mes: ${formatVentas(ventaCanalTop ?? 0)}`
         : "Sin ventas por canal en el mes",
+      nota: notaSinNc,
     },
     "Análisis por categoría": {
       cargando: categorias.cargando,
@@ -159,8 +162,9 @@ function useResumenInicio() {
       description: vendedorTop
         ? `Vendedor con más venta del mes: ${vendedorTop.Nombre}`
         : "Análisis de ventas por vendedor",
+      nota: notaSinNc,
     },
-  } as Record<string, { cargando: boolean; value: string; description: string }>;
+  } as Record<string, { cargando: boolean; value: string; description: string; nota?: string }>;
 }
 
 function LauncherCard({
@@ -173,6 +177,7 @@ function LauncherCard({
   accent,
   softAccent,
   onClick,
+  nota,
 }: {
   title: string;
   value: string;
@@ -183,136 +188,140 @@ function LauncherCard({
   accent: string;
   softAccent: string;
   onClick: (route: string) => void;
+  /** Aclaración que aparece al pasar el cursor. */
+  nota?: string;
 }) {
   return (
-    <Card
-      onClick={() => onClick(route)}
-      sx={{
-        position: "relative",
-        overflow: "hidden",
-        borderRadius: 4,
-        border: "1px solid rgba(17, 38, 74, 0.08)",
-        background:
-          "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,251,255,0.92) 100%)",
-        boxShadow: "0 18px 40px rgba(15, 23, 42, 0.08)",
-        minHeight: { xs: 0, sm: 210 },
-        cursor: "pointer",
-        transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
-        animation: `${floatIn} 500ms ease both`,
-        "&:hover": {
-          transform: "translateY(-6px)",
-          boxShadow: "0 24px 50px rgba(15, 23, 42, 0.14)",
-          borderColor: alpha(accent, 0.22),
-        },
-      }}
-    >
-      <Box
-        sx={{
-          position: "absolute",
-          inset: 0,
-          background: `radial-gradient(circle at top right, ${softAccent}, transparent 40%)`,
-          pointerEvents: "none",
-        }}
-      />
-      <Box
-        sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 4,
-          background: `linear-gradient(90deg, ${accent}, ${alpha(accent, 0.45)})`,
-        }}
-      />
-      <CardContent
+    <Tooltip title={nota ?? ""} arrow placement="top">
+      <Card
+        onClick={() => onClick(route)}
         sx={{
           position: "relative",
-          zIndex: 1,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          // En celular la tarjeta es compacta: la tarjeta entera ya es el acceso.
-          p: { xs: 1.5, sm: 3 },
-          "&:last-child": { pb: { xs: 1.5, sm: 3 } },
+          overflow: "hidden",
+          borderRadius: 4,
+          border: "1px solid rgba(17, 38, 74, 0.08)",
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,251,255,0.92) 100%)",
+          boxShadow: "0 18px 40px rgba(15, 23, 42, 0.08)",
+          minHeight: { xs: 0, sm: 210 },
+          cursor: "pointer",
+          transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
+          animation: `${floatIn} 500ms ease both`,
+          "&:hover": {
+            transform: "translateY(-6px)",
+            boxShadow: "0 24px 50px rgba(15, 23, 42, 0.14)",
+            borderColor: alpha(accent, 0.22),
+          },
         }}
       >
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
-          <Box
-            sx={{
-              width: { xs: 36, sm: 58 },
-              height: { xs: 36, sm: 58 },
-              "& svg": { width: { xs: 20, sm: 30 }, height: { xs: 20, sm: 30 } },
-              borderRadius: 3,
-              display: "grid",
-              placeItems: "center",
-              background: `linear-gradient(135deg, ${alpha(accent, 0.18)}, ${alpha(accent, 0.08)})`,
-              color: accent,
-              boxShadow: `0 10px 24px ${alpha(accent, 0.18)}`,
-            }}
-          >
-            <Icon size={30} />
-          </Box>
-          <Chip
-            label="Abrir módulo"
-            size="small"
-            sx={{
-              display: { xs: "none", sm: "inline-flex" },
-              backgroundColor: alpha(accent, 0.08),
-              color: accent,
-              fontWeight: 700,
-              "& .MuiChip-icon": {
-                color: accent,
-              },
-            }}
-          />
-        </Stack>
-
-        <Box sx={{ mt: { xs: 1.25, sm: 2 } }}>
-          <Typography variant="h6" fontWeight={800} color="#17315e" sx={{ lineHeight: 1.15, fontSize: { xs: 14, sm: undefined } }}>
-            {title}
-          </Typography>
-          <Typography variant="h4" fontWeight={900} sx={{ mt: { xs: 0.5, sm: 1 }, color: accent, fontSize: { xs: "1.2rem", sm: undefined }, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {cargando ? <Skeleton width="60%" /> : value}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: { xs: 0.5, sm: 1 }, fontSize: { xs: 12, sm: undefined }, display: "-webkit-box", WebkitLineClamp: { xs: 2, sm: "unset" }, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-            {cargando ? <Skeleton width="85%" /> : description}
-          </Typography>
-        </Box>
-
         <Box
           sx={{
-            mt: 2.5,
-            // En celular sobra: tocar la tarjeta ya entra al módulo.
-            display: { xs: "none", sm: "flex" },
-            alignItems: "center",
+            position: "absolute",
+            inset: 0,
+            background: `radial-gradient(circle at top right, ${softAccent}, transparent 40%)`,
+            pointerEvents: "none",
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 4,
+            background: `linear-gradient(90deg, ${accent}, ${alpha(accent, 0.45)})`,
+          }}
+        />
+        <CardContent
+          sx={{
+            position: "relative",
+            zIndex: 1,
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
             justifyContent: "space-between",
-            gap: 2,
+            // En celular la tarjeta es compacta: la tarjeta entera ya es el acceso.
+            p: { xs: 1.5, sm: 3 },
+            "&:last-child": { pb: { xs: 1.5, sm: 3 } },
           }}
         >
-          <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
-            Navegación rápida
-          </Typography>
-          <Button
-            size="small"
-            endIcon={<IconArrowRight size={16} />}
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+            <Box
+              sx={{
+                width: { xs: 36, sm: 58 },
+                height: { xs: 36, sm: 58 },
+                "& svg": { width: { xs: 20, sm: 30 }, height: { xs: 20, sm: 30 } },
+                borderRadius: 3,
+                display: "grid",
+                placeItems: "center",
+                background: `linear-gradient(135deg, ${alpha(accent, 0.18)}, ${alpha(accent, 0.08)})`,
+                color: accent,
+                boxShadow: `0 10px 24px ${alpha(accent, 0.18)}`,
+              }}
+            >
+              <Icon size={30} />
+            </Box>
+            <Chip
+              label="Abrir módulo"
+              size="small"
+              sx={{
+                display: { xs: "none", sm: "inline-flex" },
+                backgroundColor: alpha(accent, 0.08),
+                color: accent,
+                fontWeight: 700,
+                "& .MuiChip-icon": {
+                  color: accent,
+                },
+              }}
+            />
+          </Stack>
+
+          <Box sx={{ mt: { xs: 1.25, sm: 2 } }}>
+            <Typography variant="h6" fontWeight={800} color="#17315e" sx={{ lineHeight: 1.15, fontSize: { xs: 14, sm: undefined } }}>
+              {title}
+            </Typography>
+            <Typography variant="h4" fontWeight={900} sx={{ mt: { xs: 0.5, sm: 1 }, color: accent, fontSize: { xs: "1.2rem", sm: undefined }, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {cargando ? <Skeleton width="60%" /> : value}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: { xs: 0.5, sm: 1 }, fontSize: { xs: 12, sm: undefined }, display: "-webkit-box", WebkitLineClamp: { xs: 2, sm: "unset" }, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+              {cargando ? <Skeleton width="85%" /> : description}
+            </Typography>
+          </Box>
+
+          <Box
             sx={{
-              textTransform: "none",
-              fontWeight: 800,
-              color: accent,
-              backgroundColor: alpha(accent, 0.06),
-              borderRadius: 999,
-              px: 1.5,
-              "&:hover": {
-                backgroundColor: alpha(accent, 0.12),
-              },
+              mt: 2.5,
+              // En celular sobra: tocar la tarjeta ya entra al módulo.
+              display: { xs: "none", sm: "flex" },
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 2,
             }}
           >
-            Entrar
-          </Button>
-        </Box>
-      </CardContent>
-    </Card>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+              Navegación rápida
+            </Typography>
+            <Button
+              size="small"
+              endIcon={<IconArrowRight size={16} />}
+              sx={{
+                textTransform: "none",
+                fontWeight: 800,
+                color: accent,
+                backgroundColor: alpha(accent, 0.06),
+                borderRadius: 999,
+                px: 1.5,
+                "&:hover": {
+                  backgroundColor: alpha(accent, 0.12),
+                },
+              }}
+            >
+              Entrar
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
+    </Tooltip>
   );
 }
 
