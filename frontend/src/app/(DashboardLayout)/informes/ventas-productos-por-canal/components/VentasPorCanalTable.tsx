@@ -228,13 +228,7 @@ const VentasPorCanalTable: React.FC<Props> = ({
               </StyledTableCell>
 
               <StyledTableCell>
-                {/* valor + % margen al lado, en pequeño */}
-                <Box display="flex" alignItems="baseline" gap={1}>
-                  <Typography fontWeight={600}>{formatNumber(row.cantidadVendida)}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {(row.margenPorcentaje ?? 0).toFixed(2)}%
-                  </Typography>
-                </Box>
+                <Typography fontWeight={600}>{formatNumber(row.cantidadVendida)}</Typography>
               </StyledTableCell>
 
               <StyledTableCell>
