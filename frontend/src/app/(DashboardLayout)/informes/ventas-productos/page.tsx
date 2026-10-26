@@ -81,7 +81,7 @@ const InformeVentaPage = () => {
   // período es relativo ("1D", "7D"…) o un rango a mano: va tal cual.
   const [vista, setVista] = useEstadoVista<{ filters: FiltrosVentas; page: number; orden: Order; ordenPor: OrderBy }>(
     "informe-ventas-productos",
-    () => ({ filters: { periodo: "1D", canal: "Vitex" }, page: 1, orden: "desc", ordenPor: "cantidadVendida" })
+    () => ({ filters: { periodo: "1D" }, page: 1, orden: "desc", ordenPor: "cantidadVendida" })
   );
   const { filters, page, orden, ordenPor } = vista;
   const setFilters = (f: FiltrosVentas) => setVista((v) => ({ ...v, filters: f }));
