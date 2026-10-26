@@ -49,6 +49,7 @@ import VentasPorCanalTable, {
   OrderBy,
   DetalleVenta,
   StockBodegaItem,
+  SEMAFORO,
 } from "./components/VentasPorCanalTable";
 
 const defaultPageSize = 60;
@@ -499,6 +500,25 @@ const InformeVentasPorCanalPage: React.FC = () => {
           </Menu>
         </Box>
       </Box>
+
+      {hasAppliedFilters && (
+        <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5, mb: 1 }}>
+          <Typography variant="caption" color="text.secondary">
+            Por producto:
+          </Typography>
+          {Object.values(SEMAFORO).map((s) => (
+            <Box key={s.etiqueta} sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+              <Box sx={{ width: 12, height: 12, borderRadius: 0.5, bgcolor: s.fondo, border: `1px solid ${s.texto}` }} />
+              <Typography variant="caption" sx={{ color: s.texto, fontWeight: 600 }}>
+                {s.etiqueta}
+              </Typography>
+            </Box>
+          ))}
+          <Typography variant="caption" color="text.secondary">
+            · los empates comparten color
+          </Typography>
+        </Box>
+      )}
 
       {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" height={200}>

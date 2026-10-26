@@ -62,7 +62,7 @@ const ProductosMenosRentablesPage: React.FC = () => {
     // volver; el período es relativo ("7D", "1M"…) o un rango a mano: va tal cual.
     const [vista, setVista] = useEstadoVista<{ filters: FiltroVentas; page: number; orden: Order; ordenPor: OrderBy }>(
         'informe-menos-rentables',
-        () => ({ filters: { periodo: '7D', canal: 'Vitex' }, page: 1, orden: 'asc', ordenPor: 'margenBruto' })
+        () => ({ filters: { periodo: '7D' }, page: 1, orden: 'asc', ordenPor: 'margenBruto' })
     );
     const { filters, page, orden, ordenPor } = vista;
     const setFilters = (f: FiltroVentas) => setVista((v) => ({ ...v, filters: f }));
@@ -94,6 +94,9 @@ const ProductosMenosRentablesPage: React.FC = () => {
         return { primerNivel: (nivel || "").trim(), categoria: (cat || "").trim() };
     };
 
+    // «Todos» (sin canal) se pide como los seis canales: la API exige canal.
+    const TODOS_LOS_CANALES = 'chorrillo,meli,vitex,empresas,balmaceda,falabella';
+
     // helper local para normalizar canal a CSV en minúsculas
     const toCsvLower = (v?: string | string[]) =>
         Array.isArray(v)
@@ -104,7 +107,7 @@ const ProductosMenosRentablesPage: React.FC = () => {
     // null = faltan los mínimos que exige la API (no se pide y la tabla queda vacía).
     const construirUrl = (): string | null => {
         // --- reglas mínimas exigidas por la API ---
-        const canalCsv = toCsvLower(filters.canal ?? "");
+        const canalCsv = toCsvLower(filters.canal ?? "") || TODOS_LOS_CANALES;
         const periodo = filters.periodo ?? null;
         const { fechaInicio, fechaFin } = filters;
 
@@ -272,7 +275,7 @@ const ProductosMenosRentablesPage: React.FC = () => {
             };
 
             // mismos checks que construirUrl
-            const canalCsv = toCsvLowerLocal(filters.canal);
+            const canalCsv = toCsvLowerLocal(filters.canal) || TODOS_LOS_CANALES;
             const { periodo, fechaInicio, fechaFin } = filters;
             const isYYYYMMDD = (d?: string) => !!d && /^\d{4}-\d{2}-\d{2}$/.test(d);
             const hasValidRange = (a?: string, b?: string) => isYYYYMMDD(a) && isYYYYMMDD(b);

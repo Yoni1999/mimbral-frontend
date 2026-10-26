@@ -87,14 +87,45 @@ const getStockTotalProducto = (stock?: StockBodegaItem[]) =>
 const formatChannelLabel = (channel: string) =>
   channel?.toLowerCase() === "vitex" ? "VTEX" : channel;
 
-const highlightCellSx = {
-  backgroundColor: "rgba(76, 110, 219, 0.10)",
-  borderRadius: 1,
-  px: 0.75,
-  py: 0.25,
-  display: "inline-flex",
-  alignItems: "center",
+/** Semáforo por producto: verde el canal que más vende, amarillo el segundo y
+ *  rojo el que menos vende entre los que vendieron. Los empates repiten color;
+ *  un canal sin venta del producto no se pinta. */
+export type ColorSemaforo = "verde" | "amarillo" | "rojo";
+
+export const SEMAFORO: Record<ColorSemaforo, { fondo: string; texto: string; etiqueta: string }> = {
+  verde: { fondo: "#dcfce7", texto: "#166534", etiqueta: "Canal que más vende" },
+  amarillo: { fondo: "#fef3c7", texto: "#92400e", etiqueta: "Segundo canal" },
+  rojo: { fondo: "#fee2e2", texto: "#991b1b", etiqueta: "Canal que menos vende" },
 };
+
+export const semaforoPorCanal = (porCanal: ResumenCanalItem[] = [], canales: string[]) => {
+  const cantidades = canales
+    .map((canal) => ({ canal, cantidad: Number(porCanal.find((c) => c.canal === canal)?.cantidadVendida) || 0 }))
+    .filter((c) => c.cantidad > 0);
+  // Valores distintos de mayor a menor: así un empate comparte el color.
+  const valores = Array.from(new Set(cantidades.map((c) => c.cantidad))).sort((a, b) => b - a);
+  const colores = new Map<string, ColorSemaforo>();
+  for (const { canal, cantidad } of cantidades) {
+    if (cantidad === valores[0]) colores.set(canal, "verde");
+    else if (cantidad === valores[valores.length - 1]) colores.set(canal, "rojo");
+    else if (cantidad === valores[1]) colores.set(canal, "amarillo");
+  }
+  return colores;
+};
+
+const semaforoSx = (color?: ColorSemaforo) =>
+  color
+    ? {
+        backgroundColor: SEMAFORO[color].fondo,
+        color: SEMAFORO[color].texto,
+        borderRadius: 1,
+        px: 0.75,
+        py: 0.25,
+        display: "inline-flex",
+        alignItems: "center",
+        fontWeight: 700,
+      }
+    : undefined;
 
 /* ===== Copiado robusto al portapapeles (mismo patrón del informe original) ===== */
 /* Basado en ProductosVendidos.tsx: usa Clipboard API y fallback con textarea:contentReference[oaicite:1]{index=1} */
@@ -133,18 +164,6 @@ const VentasPorCanalTable: React.FC<Props> = ({
   onOpenStock,
 }) => {
   const safe = Array.isArray(data) ? data : [];
-
-  const getTopChannels = (row: ProductoPorCanal) => {
-    return (row.porCanal || [])
-      .map((item) => ({
-        canal: item.canal,
-        cantidad: Number(item.cantidadVendida) || 0,
-      }))
-      .filter((item) => item.cantidad > 0)
-      .sort((a, b) => b.cantidad - a.cantidad)
-      .slice(0, 2)
-      .map((item) => item.canal);
-  };
 
   const handleCopySku = async (sku: string) => {
     const ok = await copyToClipboard(sku);
@@ -191,7 +210,7 @@ const VentasPorCanalTable: React.FC<Props> = ({
           {safe.map((row) => (
             <StyledTableRow key={row.sku}>
               {(() => {
-                const topChannels = getTopChannels(row);
+                const semaforo = semaforoPorCanal(row.porCanal, canales);
                 return (
                   <>
               <StyledTableCell>
@@ -251,7 +270,7 @@ const VentasPorCanalTable: React.FC<Props> = ({
                 const canal = row.porCanal?.find((c) => c.canal === canalNombre);
                 const cantidad = canal?.cantidadVendida || 0;
                 const tieneDetalle = (canal?.detalles || []).length > 0;
-                const isTopChannel = topChannels.includes(canalNombre);
+                const color = semaforo.get(canalNombre);
 
                 return (
                   <StyledTableCell key={`${row.sku}-${canalNombre}`}>
@@ -263,16 +282,17 @@ const VentasPorCanalTable: React.FC<Props> = ({
                           p: 0,
                           minWidth: 0,
                           textAlign: "left",
-                          ...(isTopChannel ? { borderRadius: 1, px: 0.75, py: 0.25, backgroundColor: "rgba(76, 110, 219, 0.10)" } : {}),
+                          ...semaforoSx(color),
                         }}
+                        title={color ? SEMAFORO[color].etiqueta : undefined}
                       >
                         <Box textAlign="left">
-                          <Typography sx={{ textDecoration: "underline" }}>{formatNumber(cantidad)}</Typography>
+                          <Typography sx={{ textDecoration: "underline", fontWeight: "inherit" }}>{formatNumber(cantidad)}</Typography>
                         </Box>
                       </Button>
                     ) : (
-                      <Box sx={isTopChannel ? highlightCellSx : undefined}>
-                        <Typography>{formatNumber(cantidad)}</Typography>
+                      <Box sx={semaforoSx(color)} title={color ? SEMAFORO[color].etiqueta : undefined}>
+                        <Typography sx={{ fontWeight: "inherit" }}>{formatNumber(cantidad)}</Typography>
                       </Box>
                     )}
                   </StyledTableCell>
