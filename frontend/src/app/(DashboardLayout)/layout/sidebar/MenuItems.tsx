@@ -84,7 +84,7 @@ export const MODULOS: Modulo[] = [
         titulo: "Ventas",
         paginas: [
           { titulo: "Ventas de productos", href: "/informes/ventas-productos", icon: IconChartBar },
-          { titulo: "Ventas de productos por canal", href: "/informes/ventas-productos-por-canal", icon: IconChartDonut },
+          { titulo: "Ventas de productos por canal y marca", href: "/informes/ventas-productos-por-canal", icon: IconChartDonut },
         ],
       },
       {
