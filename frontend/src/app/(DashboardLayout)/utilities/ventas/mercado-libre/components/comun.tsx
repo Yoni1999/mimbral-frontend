@@ -50,8 +50,23 @@ export interface PorTipo {
   unidades: number | null;
 }
 
+/** Una publicación de ML del SKU (ml_sku_items), con su enlace. */
+export interface PublicacionMl {
+  itemId: string;
+  estado: string | null;
+  catalogo: boolean;
+  catalogoId: string | null;
+  logistica: string | null;
+  tipo: string | null;
+  titulo: string | null;
+  principal: boolean;
+  url: string | null;
+}
+
 export interface ProductoMl {
   sku: string;
+  /** Activas primero; null si no se pudieron leer. */
+  publicaciones?: PublicacionMl[] | null;
   nombre: string | null;
   categoria: string | null;
   categoriaId: string | null;
