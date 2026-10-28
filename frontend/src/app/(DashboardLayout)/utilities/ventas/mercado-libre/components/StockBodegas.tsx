@@ -8,22 +8,53 @@ import { BACKEND_URL } from "@/config";
 import { BarraParticipacion, Columnas, cifraSx, estado, tablaSx, tinta } from "../../components/estilo";
 import { ProductoMl, TipoEnvio, fechaCorta, n, tipoEnvio, unidades } from "./comun";
 
+/** Stock Full consultado en vivo a ML (analysis-service → meli-catalog). */
+interface StockFullEnVivo {
+  sku: string;
+  enFull: boolean;
+  sinInventario: boolean;
+  disponible: number;
+  noDisponible: number;
+  total: number;
+  inventarios: { inventoryId: string; detalleNoDisponible: { motivo: string | null; unidades: number }[] }[];
+  consultadoEn: string;
+  desdeCache: boolean;
+}
+
+/** Motivos de ML por los que una unidad en Full no se puede vender. */
+const MOTIVOS: Record<string, string> = {
+  damaged: "dañadas",
+  lost: "perdidas",
+  withdrawal: "en retiro",
+  internal_process: "en proceso interno",
+  transfer: "en traspaso",
+  noFiscalCoverage: "sin cobertura fiscal",
+  not_supported: "no admitidas",
+};
+
+const hora = (iso: string) => new Date(iso).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+
 /**
  * Stock que importa según el tipo de envío: en Full, el de la bodega de ML
- * (con la fecha en que ML lo informó); en Colecta y Flex, el de la bodega 03.
- * Al pulsarlo abre el stock del producto en todas las bodegas de SAP.
+ * (el guardado, con la fecha en que ML lo informó); en Colecta y Flex, el de
+ * la bodega 03. Al pulsarlo abre el detalle, que consulta el Full en vivo a ML
+ * y muestra el stock en todas las bodegas de SAP. Sin dato guardado de Full,
+ * la celda invita a consultarlo (no es lo mismo que cero).
  */
 export function CeldaStock({ producto, tipo }: { producto: ProductoMl; tipo: TipoEnvio | "" }) {
   const [abierto, setAbierto] = React.useState(false);
   const verFull = tipo === "full" || tipo === "";
   const ver03 = tipo !== "full";
 
-  const cifra = (valor: number | null, etiqueta: string, ayuda: string) => (
+  const cifra = (valor: number | null, etiqueta: string, ayuda: string, sinDato = "—") => (
     <Tooltip title={ayuda} placement="top" arrow>
       <Box component="span" sx={{ display: "flex", justifyContent: "flex-end", alignItems: "baseline", gap: 0.5, whiteSpace: "nowrap" }}>
         <Box component="span" sx={{ fontSize: 10.5, color: tinta.tenue }}>{etiqueta}</Box>
-        <Box component="span" sx={{ fontWeight: 700, color: valor == null ? tinta.tenue : n(valor) <= 0 ? estado.mal.color : tinta.primaria }}>
-          {valor == null ? "—" : unidades(valor)}
+        <Box
+          component="span"
+          sx={{ fontWeight: 700, fontSize: valor == null && sinDato !== "—" ? 11 : undefined, color: valor == null ? (sinDato !== "—" ? tinta.acento : tinta.tenue) : n(valor) <= 0 ? estado.mal.color : tinta.primaria }}
+        >
+          {valor == null ? sinDato : unidades(valor)}
         </Box>
       </Box>
     </Tooltip>
@@ -58,7 +89,10 @@ export function CeldaStock({ producto, tipo }: { producto: ProductoMl; tipo: Tip
           cifra(
             producto.stockFull,
             "Full",
-            producto.stockFullAl ? `Stock en la bodega Full de ML, informado el ${fechaCorta(producto.stockFullAl)}` : "Sin stock Full informado por ML"
+            producto.stockFullAl
+              ? `Stock en la bodega Full de ML, informado el ${fechaCorta(producto.stockFullAl)}. Pulsa para verlo en vivo.`
+              : "Sin dato guardado de stock Full: pulsa para consultarlo a Mercado Libre.",
+            "Ver en ML"
           )}
         {ver03 && cifra(producto.stock03, "B03", "Stock en la bodega 03 (Colecta), según SAP")}
       </Box>
@@ -78,13 +112,35 @@ function DialogoStock({ producto, tipo, onCerrar }: { producto: ProductoMl; tipo
     .sort((a, b) => (a.codigo === "03" ? -1 : b.codigo === "03" ? 1 : b.stock - a.stock));
   const maximo = Math.max(0, ...filas.map((b) => b.stock));
 
-  const caja = (titulo: string, valor: number | null, pie: string, color: string) => (
+  // Stock Full en vivo desde ML; si falla se muestra el guardado y el motivo.
+  const enVivo = useApiDatos<StockFullEnVivo | null>(`${BACKEND_URL}/api/mercado-libre/stock-full/${encodeURIComponent(producto.sku)}`, null);
+  const vivo = enVivo.datos;
+  const noVendibles = (vivo?.inventarios ?? [])
+    .flatMap((i) => i.detalleNoDisponible)
+    .map((d) => `${unidades(d.unidades)} ${MOTIVOS[d.motivo ?? ""] ?? d.motivo ?? "no vendibles"}`)
+    .join(", ");
+  const guardado = producto.stockFullAl ? `Guardado: ${unidades(producto.stockFull)} al ${fechaCorta(producto.stockFullAl)}` : "Sin dato guardado";
+  const full = enVivo.cargando
+    ? { valor: null as number | null, pie: "Consultando a Mercado Libre…", cargando: true }
+    : vivo
+      ? vivo.enFull
+        ? {
+            valor: vivo.disponible,
+            pie: `Según ML a las ${hora(vivo.consultadoEn)}${vivo.noDisponible ? ` · ${unidades(vivo.noDisponible)} no vendibles${noVendibles ? ` (${noVendibles})` : ""}` : ""}`,
+            cargando: false,
+          }
+        : { valor: 0, pie: vivo.sinInventario ? "El producto no tiene inventario en ML" : `No está en Full según ML (${hora(vivo.consultadoEn)})`, cargando: false }
+      : { valor: producto.stockFull, pie: `No se pudo consultar a ML${enVivo.error instanceof Error ? `: ${enVivo.error.message}` : ""}. ${guardado}.`, cargando: false };
+
+  const caja = (titulo: string, valor: number | null, pie: string, color: string, cargando = false) => (
     <Box sx={{ flex: 1, minWidth: 150, border: `1px solid ${tinta.borde}`, borderRadius: "12px", p: 1.5 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: 12.5, fontWeight: 600, color: tinta.secundaria }}>
         <Box sx={{ width: 8, height: 8, borderRadius: "2px", bgcolor: color }} />
         {titulo}
       </Box>
-      <Typography sx={{ fontSize: 22, fontWeight: 750, color: tinta.primaria, ...cifraSx }}>{valor == null ? "—" : unidades(valor)}</Typography>
+      <Typography sx={{ fontSize: 22, fontWeight: 750, color: tinta.primaria, ...cifraSx }}>
+        {cargando ? <Skeleton width={60} /> : valor == null ? "—" : unidades(valor)}
+      </Typography>
       <Typography sx={{ fontSize: 11.5, color: tinta.tenue }}>{pie}</Typography>
     </Box>
   );
@@ -105,12 +161,7 @@ function DialogoStock({ producto, tipo, onCerrar }: { producto: ProductoMl; tipo
 
       <Box sx={{ px: 2.5, pb: 2.5 }}>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
-          {caja(
-            "Full (bodega de ML)",
-            producto.stockFull,
-            producto.stockFullAl ? `Según ML al ${fechaCorta(producto.stockFullAl)}` : "ML no informa stock Full",
-            tipoEnvio("full")!.color
-          )}
+          {caja("Full (bodega de ML)", full.valor, full.pie, tipoEnvio("full")!.color, full.cargando)}
           {caja("Colecta (bodega 03)", producto.stock03, "Según la copia de SAP", tipoEnvio("colecta")!.color)}
         </Box>
 
