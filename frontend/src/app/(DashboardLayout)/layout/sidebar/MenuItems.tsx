@@ -24,9 +24,21 @@ import {
   IconShoppingBag,
   IconTrophy,
   IconPackageImport,
+  IconCash,
+  IconClockDollar,
+  IconAlertCircle,
+  IconArrowsExchange,
+  IconTag,
+  IconArrowBackUp,
 } from "@tabler/icons-react";
 
-export type Pagina = { titulo: string; href: string; icon: any };
+export type Pagina = {
+  titulo: string;
+  href: string;
+  icon: any;
+  /** Páginas dentro de un desplegable (p. ej. Informes → Mercado Libre). El href del desplegable no se navega: identifica el grupo. */
+  hijos?: Pagina[];
+};
 export type Grupo = { titulo: string; paginas: Pagina[] };
 export type Modulo = {
   id: string;
@@ -92,8 +104,21 @@ export const MODULOS: Modulo[] = [
         paginas: [
           { titulo: "Ventas de productos", href: "/informes/ventas-productos", icon: IconChartBar },
           { titulo: "Ventas de productos por canal y marca", href: "/informes/ventas-productos-por-canal", icon: IconChartDonut },
-          { titulo: "Más vendidos Mercado Libre", href: "/informes/mas-vendidos-mercado-libre", icon: IconTrophy },
-          { titulo: "Reposición Mercado Libre", href: "/informes/reposicion-mercado-libre", icon: IconPackageImport },
+          {
+            titulo: "Mercado Libre",
+            href: "/informes/mercado-libre",
+            icon: IconShoppingBag,
+            hijos: [
+              { titulo: "Más vendidos", href: "/informes/mas-vendidos-mercado-libre", icon: IconTrophy },
+              { titulo: "Reposición", href: "/informes/reposicion-mercado-libre", icon: IconPackageImport },
+              { titulo: "Rentabilidad por producto", href: "/informes/mercado-libre/rentabilidad", icon: IconCash },
+              { titulo: "Stock Full que cuesta", href: "/informes/mercado-libre/stock-full", icon: IconClockDollar },
+              { titulo: "Publicaciones con problemas", href: "/informes/mercado-libre/publicaciones", icon: IconAlertCircle },
+              { titulo: "Full contra Colecta", href: "/informes/mercado-libre/full-vs-colecta", icon: IconArrowsExchange },
+              { titulo: "Precio y competencia", href: "/informes/mercado-libre/precios", icon: IconTag },
+              { titulo: "Devoluciones y cancelaciones", href: "/informes/mercado-libre/devoluciones", icon: IconArrowBackUp },
+            ],
+          },
         ],
       },
       {
@@ -130,9 +155,13 @@ export function esRutaActiva(href: string | undefined, path: string): boolean {
   return path === href || path.startsWith(`${href}/`);
 }
 
+/** Páginas navegables del módulo (los desplegables aportan sus hijos). */
 export function paginasDe(m: Modulo): Pagina[] {
-  return (m.grupos ?? []).flatMap((g) => g.paginas);
+  return (m.grupos ?? []).flatMap((g) => g.paginas.flatMap((p) => p.hijos ?? [p]));
 }
+
+/** Un desplegable está activo si la ruta actual es una de sus páginas. */
+export const desplegableActivo = (p: Pagina, path: string) => (p.hijos ?? []).some((h) => esRutaActiva(h.href, path));
 
 /** Módulo de la ruta actual: el de la página que calza más largo ("/metas/periodos" gana a "/metas"). */
 export function moduloActivo(path: string): Modulo | undefined {

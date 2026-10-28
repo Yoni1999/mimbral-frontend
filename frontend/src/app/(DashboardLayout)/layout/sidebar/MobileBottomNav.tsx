@@ -17,6 +17,7 @@ import { Box, Typography } from "@mui/material";
 import { IconHome2, IconLayoutGrid, IconSparkles, IconMenu2, IconChevronRight, IconChevronLeft, IconUserCircle } from "@tabler/icons-react";
 import SidebarUserMenu from "./SidebarUserMenu";
 import { MODULOS, Modulo, esRutaActiva, moduloActivo } from "./MenuItems";
+import Desplegable from "./Desplegable";
 
 const AZUL = "#1d4ed8";
 const AZUL_SUAVE = "#eff6ff";
@@ -170,6 +171,28 @@ export default function MobileBottomNav() {
                     {g.paginas.map((p) => {
                       const Icono = p.icon;
                       const pActiva = esRutaActiva(p.href, path);
+                      if (p.hijos)
+                        return (
+                          <Desplegable
+                            key={p.href}
+                            pagina={p}
+                            path={path}
+                            tamanoIcono={20}
+                            sxCabecera={(a) => filaSx(a)}
+                            renderHijo={(h) => {
+                              const IconoHijo = h.icon;
+                              const hActiva = esRutaActiva(h.href, path);
+                              return (
+                                <Box component={Link} href={h.href} aria-current={hActiva ? "page" : undefined} sx={{ ...filaSx(hActiva), my: 0.25 }}>
+                                  <Box sx={{ display: "flex", color: hActiva ? AZUL : "#9ca3af" }}>
+                                    <IconoHijo size={18} stroke={1.7} />
+                                  </Box>
+                                  {h.titulo}
+                                </Box>
+                              );
+                            }}
+                          />
+                        );
                       return (
                         <Box key={p.href} component={Link} href={p.href} aria-current={pActiva ? "page" : undefined} sx={filaSx(pActiva)}>
                           <Box sx={{ display: "flex", color: pActiva ? AZUL : "#9ca3af" }}>
