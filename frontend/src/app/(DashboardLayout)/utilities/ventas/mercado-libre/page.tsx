@@ -116,10 +116,12 @@ export default function VentasMercadoLibre() {
     },
     {
       title: "Margen después de todo",
-      value: formatoMonto(margen),
-      subtitle: `${formatoPorcentaje(margenPct)} de la venta · vs ${formatoMonto(margenAnterior)} (${formatoPorcentaje(margenPctAnterior)})`,
-      percentageChange: variacion(margen, margenAnterior) ?? undefined,
-      nota: "Venta − comisión − envío − costo de los productos (costo promedio de SAP), todo sin IVA.",
+      // El % es la cifra principal; la variación es la diferencia en puntos (pp), como en Resumen de ventas.
+      value: formatoPorcentaje(margenPct),
+      subtitle: `${formatoMonto(margen)} de margen · vs ${formatoPorcentaje(margenPctAnterior)} (${formatoMonto(margenAnterior)})`,
+      percentageChange: margenPct != null && margenPctAnterior != null ? margenPct - margenPctAnterior : undefined,
+      unidadVariacion: "pp" as const,
+      nota: "Margen sobre la venta: venta − comisión − envío − costo de los productos (costo promedio de SAP), todo sin IVA. La variación es en puntos porcentuales.",
       icon: <IconPigMoney />,
       onClick: () => setDesglose("dinero"),
     },
