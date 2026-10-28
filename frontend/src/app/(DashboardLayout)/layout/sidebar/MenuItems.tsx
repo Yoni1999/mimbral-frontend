@@ -21,6 +21,8 @@ import {
   IconSettings,
   IconDatabase,
   IconMessage2,
+  IconShoppingBag,
+  IconTrophy,
 } from "@tabler/icons-react";
 
 export type Pagina = { titulo: string; href: string; icon: any };
@@ -43,7 +45,7 @@ export const MODULOS: Modulo[] = [
   {
     id: "ventas",
     titulo: "Ventas",
-    descripcion: "Cómo vamos vendiendo, por canal y por vendedor",
+    descripcion: "Cómo vamos vendiendo, por canal, por vendedor y en Mercado Libre",
     icon: IconTrendingUp,
     grupos: [
       {
@@ -53,6 +55,10 @@ export const MODULOS: Modulo[] = [
           { titulo: "Ventas por canal", href: "/utilities/ventas/ventas-por-canal", icon: IconChartDonut },
           { titulo: "Ventas por vendedor", href: "/utilities/ventas/ventas-por-vendedor", icon: IconUsers },
         ],
+      },
+      {
+        titulo: "Mercado Libre",
+        paginas: [{ titulo: "Datos de ventas", href: "/utilities/ventas/mercado-libre", icon: IconShoppingBag }],
       },
     ],
   },
@@ -85,6 +91,7 @@ export const MODULOS: Modulo[] = [
         paginas: [
           { titulo: "Ventas de productos", href: "/informes/ventas-productos", icon: IconChartBar },
           { titulo: "Ventas de productos por canal y marca", href: "/informes/ventas-productos-por-canal", icon: IconChartDonut },
+          { titulo: "Más vendidos Mercado Libre", href: "/informes/mas-vendidos-mercado-libre", icon: IconTrophy },
         ],
       },
       {

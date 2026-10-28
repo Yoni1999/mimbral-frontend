@@ -26,6 +26,7 @@ import { useEstadoVista } from "@/utils/estadoVista";
 import { BACKEND_URL } from "@/config";
 import HeaderCategorias, { FiltrosCategorias, OpcionCategoria } from "./components/HeaderCategorias";
 import Desglose from "./components/Desglose";
+import CategoriasMercadoLibre from "./components/CategoriasMercadoLibre";
 import { CATALOGOS, CATALOGO_FAMILIAS, Paso, configDe } from "./niveles";
 
 const n = (v: unknown) => Number(v) || 0;
@@ -45,9 +46,10 @@ const pasoDesdeUrl = (sp: URLSearchParams | null): Paso | null => {
 };
 
 /** Análisis por categoría: una sola vista que recorre el árbol de artículos,
- *  por categorías (primer nivel → categoría → subcategoría) o por familias
- *  (familia → subfamilia). Reemplaza a las tres vistas por nivel; sus rutas
- *  redirigen acá. */
+ *  por categorías (primer nivel → categoría → subcategoría), por familias
+ *  (familia → subfamilia) o por el árbol de categorías de Mercado Libre (solo
+ *  la venta de ML, por tipo de envío). Reemplaza a las tres vistas por nivel;
+ *  sus rutas redirigen acá. */
 const AnalisisCategoriaPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -57,17 +59,21 @@ const AnalisisCategoriaPage: React.FC = () => {
     searchParams?.get("fechaInicio") && searchParams?.get("fechaFin")
       ? { fechaInicio: searchParams.get("fechaInicio")!, fechaFin: searchParams.get("fechaFin")! }
       : null;
+  // Enlaces desde Ventas → Mercado Libre: ?arbol=mercadolibre[&mlCategoria=MLC…&mlNombre=…].
+  const mlUrl = searchParams?.get("arbol") === "mercadolibre";
+  const mlCategoria = searchParams?.get("mlCategoria");
   const inicial = (): FiltrosCategorias => ({
-    arbol: "categorias",
+    arbol: mlUrl ? "mercadolibre" : "categorias",
     temporada: "",
     ruta: pasoUrl ? [pasoUrl] : [],
+    rutaMl: mlUrl && mlCategoria ? [{ id: mlCategoria, nombre: searchParams?.get("mlNombre") || mlCategoria }] : [],
     ...(fechasUrl ?? rangoInicial()),
   });
 
   const [filtros, setFiltros] = useEstadoVista<FiltrosCategorias>("analisis-categoria", inicial, {
     serializar: conPeriodoRapido,
     restaurar: (guardado) =>
-      pasoUrl || fechasUrl
+      pasoUrl || fechasUrl || mlUrl
         ? { ...resolverPeriodoRapido<FiltrosCategorias>(guardado), ...inicial() }
         : { ...inicial(), ...resolverPeriodoRapido<FiltrosCategorias>(guardado) },
   });
@@ -75,7 +81,7 @@ const AnalisisCategoriaPage: React.FC = () => {
   // Los parámetros de la URL ya quedaron en el estado: se quitan para que al
   // recargar mande lo que el usuario navegó y no el enlace de entrada.
   React.useEffect(() => {
-    if (pasoUrl || fechasUrl) router.replace("/utilities/analisis-categoria");
+    if (pasoUrl || fechasUrl || mlUrl) router.replace("/utilities/analisis-categoria");
     // Solo al entrar.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -125,11 +131,13 @@ const AnalisisCategoriaPage: React.FC = () => {
   const ruta = filtros.ruta.map((p) =>
     p.nombre ? p : { ...p, nombre: catalogoActual.find((o) => o.nivel === p.nivel && o.codigo === p.codigo)?.nombre ?? "" }
   );
-  const { config, filtro, esHoja } = configDe(filtros.arbol, ruta);
+  // Con el árbol de Mercado Libre las cifras de SAP no se piden (ver CategoriasMercadoLibre).
+  const enMl = filtros.arbol === "mercadolibre";
+  const { config, filtro, esHoja } = configDe(filtros.arbol === "familias" ? "familias" : "categorias", ruta);
 
   const periodo = new URLSearchParams({ fechaInicio: filtros.fechaInicio, fechaFin: filtros.fechaFin }).toString();
   const query = new URLSearchParams({ fechaInicio: filtros.fechaInicio, fechaFin: filtros.fechaFin, ...filtro }).toString();
-  const url = (endpoint: string) => `${BACKEND_URL}${endpoint}?${query}`;
+  const url = (endpoint: string) => (enMl ? null : `${BACKEND_URL}${endpoint}?${query}`);
 
   const ventas = useApiDatos<any>(url(config.tarjetas.ventas), {});
   const margen = useApiDatos<any>(url(config.tarjetas.margen), {});
@@ -139,7 +147,7 @@ const AnalisisCategoriaPage: React.FC = () => {
   const unidadesVendidas = useApiDatos<any>(url(config.tarjetas.unidades), {});
 
   const urlTendencia = url(config.tendencia);
-  const tendencia = useCargaDatos<Punto[]>(urlTendencia, async (signal) => puntosDeTendencia(await apiJson(urlTendencia, { signal })), []);
+  const tendencia = useCargaDatos<Punto[]>(urlTendencia, async (signal) => puntosDeTendencia(await apiJson(urlTendencia!, { signal })), []);
   const canales = totalesPorCanal(tendencia.datos).sort((a, b) => b.venta - a.venta);
   const totalCanales = canales.reduce((s, c) => s + c.venta, 0);
 
@@ -243,6 +251,15 @@ const AnalisisCategoriaPage: React.FC = () => {
           cargandoFamilias={cargandoFamilias}
         />
 
+        {enMl ? (
+          <CategoriasMercadoLibre
+            fechaInicio={filtros.fechaInicio}
+            fechaFin={filtros.fechaFin}
+            rutaMl={filtros.rutaMl}
+            onEntrar={(paso) => setFiltros((f) => ({ ...f, rutaMl: [...f.rutaMl, paso] }))}
+          />
+        ) : (
+        <>
         <Grid container spacing={2}>
           {tarjetas.map((t) => (
             <Grid item xs={6} sm={6} md={4} lg={2} key={t.title}>
@@ -259,7 +276,7 @@ const AnalisisCategoriaPage: React.FC = () => {
           {!esHoja && (
             <Grid item xs={12} lg={7}>
               <Desglose
-                arbol={filtros.arbol}
+                arbol={filtros.arbol === "familias" ? "familias" : "categorias"}
                 ruta={ruta}
                 periodo={periodo}
                 primerosNiveles={catalogo.filter((o) => o.nivel === 1)}
@@ -280,6 +297,8 @@ const AnalisisCategoriaPage: React.FC = () => {
           claveVista="analisis-categoria:productos"
           parametros={{ fechaInicio: filtros.fechaInicio, fechaFin: filtros.fechaFin, ...filtro }}
         />
+        </>
+        )}
       </Box>
       {detalleTarjetas.ventana}
     </PageContainer>

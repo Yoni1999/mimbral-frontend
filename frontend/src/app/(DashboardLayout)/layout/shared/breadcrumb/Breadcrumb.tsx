@@ -15,6 +15,8 @@ const customLabels: Record<string, string> = {
   utilities: "Analisa tus ventas",
   ventas: "Ventas",
   "ventas-por-canal": "Ventas por Canal",
+  "mercado-libre": "Mercado Libre",
+  "mas-vendidos-mercado-libre": "Más vendidos Mercado Libre",
   "resumen-categorias": "Primer Nivel",
   "resumen2nivel": "Categorías",
   "resumen3nivel": "Sub-Categorías",

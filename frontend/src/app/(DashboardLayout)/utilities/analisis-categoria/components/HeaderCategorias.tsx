@@ -18,13 +18,23 @@ import {
 import { Arbol, Paso } from "../niveles";
 import SelectorCategoria from "./SelectorCategoria";
 
+/** Árbol por el que se mira: los dos de SAP o el de Mercado Libre. */
+export type ArbolVista = Arbol | "mercadolibre";
+
+/** Un paso del árbol de Mercado Libre (id de categoría de ML). */
+export interface PasoMl {
+  id: string;
+  nombre: string;
+}
+
 export interface FiltrosCategorias {
-  /** Árbol por el que se mira: categorías o familias. */
-  arbol: Arbol;
+  arbol: ArbolVista;
   fechaInicio: string;
   fechaFin: string;
   temporada: string;
   ruta: Paso[];
+  /** Ruta dentro del árbol de Mercado Libre (cualquier profundidad). */
+  rutaMl: PasoMl[];
 }
 
 /** Una opción del buscador: cualquier nivel del árbol. */
@@ -50,12 +60,15 @@ interface Props {
  *  temporada. Cada cambio se aplica al instante. */
 const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, cargandoOpciones, familias, cargandoFamilias }) => {
   const [filtrosAnchor, setFiltrosAnchor] = React.useState<HTMLElement | null>(null);
-  const { ruta } = filtros;
+  const enMl = filtros.arbol === "mercadolibre";
+  // Las migas son de la ruta del árbol que se mira.
+  const ruta = enMl ? filtros.rutaMl.map((p) => ({ codigo: p.id, nombre: p.nombre })) : filtros.ruta;
   const actual = ruta[ruta.length - 1];
   const rango = filtros.temporada || etiquetaRango(filtros.fechaInicio, filtros.fechaFin);
 
   const cambiar = (cambios: Partial<FiltrosCategorias>) => setFiltros((prev) => ({ ...prev, ...cambios }));
-  const irA = (indice: number) => cambiar({ ruta: ruta.slice(0, indice) });
+  const irA = (indice: number) =>
+    enMl ? cambiar({ rutaMl: filtros.rutaMl.slice(0, indice) }) : cambiar({ ruta: filtros.ruta.slice(0, indice) });
 
   const handleDateChange = (range: DateRangeValue | null) =>
     cambiar({ temporada: "", ...(range ? { fechaInicio: range.start, fechaFin: range.end } : rangoInicial()) });
@@ -66,9 +79,9 @@ const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, carg
     setFiltrosAnchor(null);
   };
 
-  const limpiar = () => setFiltros({ arbol: "categorias", temporada: "", ruta: [], ...rangoInicial() });
+  const limpiar = () => setFiltros({ arbol: "categorias", temporada: "", ruta: [], rutaMl: [], ...rangoInicial() });
   const enEstadoInicial = filtros.arbol === "categorias" && ruta.length === 0 && !filtros.temporada && rango === "Ayer";
-  const raiz = filtros.arbol === "familias" ? "Todas las familias" : "Todas las categorías";
+  const raiz = enMl ? "Todo Mercado Libre" : filtros.arbol === "familias" ? "Todas las familias" : "Todas las categorías";
 
   const miga = (texto: string, indice: number, activa: boolean) => (
     <Box
@@ -104,7 +117,7 @@ const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, carg
           <Box component="nav" aria-label="Nivel" sx={{ display: "flex", alignItems: "center", gap: 0.25, flexWrap: "wrap", minWidth: 0 }}>
             {miga(raiz, 0, ruta.length === 0)}
             {ruta.map((p, i) => (
-              <React.Fragment key={`${p.nivel}-${p.codigo}`}>
+              <React.Fragment key={`${i}-${p.codigo}`}>
                 <IconChevronRight size={12} color={tinta.tenue} />
                 {miga(p.nombre || p.codigo, i + 1, i === ruta.length - 1)}
               </React.Fragment>
@@ -130,10 +143,11 @@ const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, carg
         <Stack direction="row" spacing={1} alignItems="center" useFlexGap sx={filaControlesSx}>
           <SelectorCategoria
             arbol={filtros.arbol}
-            ruta={ruta}
+            ruta={filtros.ruta}
+            textoMl={filtros.rutaMl.length ? `ML › ${filtros.rutaMl.map((p) => p.nombre).join(" › ")}` : "Categorías de Mercado Libre"}
             catalogos={{ categorias: opciones, familias }}
             cargando={{ categorias: cargandoOpciones, familias: cargandoFamilias }}
-            onElegir={(arbol, nueva) => cambiar({ arbol, ruta: nueva })}
+            onElegir={(arbol, nueva) => cambiar(arbol === "mercadolibre" ? { arbol, rutaMl: [] } : { arbol, ruta: nueva })}
           />
 
           <DateRangeFilter
