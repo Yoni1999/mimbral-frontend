@@ -13,7 +13,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Box, Typography, keyframes } from "@mui/material";
 import SidebarUserMenu from "./SidebarUserMenu";
-import { MODULOS, Modulo, esRutaActiva, moduloActivo } from "./MenuItems";
+import { MODULOS, Modulo, Pagina, esRutaActiva, moduloActivo } from "./MenuItems";
+import Desplegable from "./Desplegable";
 
 export const ANCHO_RAIL = 84;
 const ANCHO_PANEL = 248;
@@ -28,6 +29,39 @@ const entrarPanel = keyframes`
   from { opacity: 0; transform: translateX(-8px); }
   to { opacity: 1; transform: translateX(0); }
 `;
+
+/** Estilo de una fila del panel (página o cabecera de desplegable). */
+const filaRailSx = (activa: boolean, hijo: boolean) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: 1.25,
+  px: hijo ? 1.5 : 2,
+  py: hijo ? "7px" : "9px",
+  fontSize: hijo ? 13.5 : 14,
+  textDecoration: "none",
+  color: activa ? AZUL : "#1f2937",
+  fontWeight: activa ? 600 : 400,
+  bgcolor: activa ? "rgba(239, 246, 255, 0.7)" : "transparent",
+  borderLeft: `3px solid ${activa ? "#3b82f6" : "transparent"}`,
+  transition: "background-color 150ms",
+  "&:hover": { bgcolor: activa ? "rgba(239, 246, 255, 0.9)" : GRIS_SUAVE },
+  "&:hover .pagina-icono": { color: AZUL },
+  "&:focus-visible": { outline: `2px solid ${AZUL}`, outlineOffset: -2 },
+});
+
+/** Una página del panel como enlace. */
+function filaRail(p: Pagina, path: string, hijo: boolean) {
+  const Icono = p.icon;
+  const pActiva = esRutaActiva(p.href, path);
+  return (
+    <Box component={Link} href={p.href} aria-current={pActiva ? "page" : undefined} sx={filaRailSx(pActiva, hijo)}>
+      <Box component="span" className="pagina-icono" sx={{ display: "flex", color: pActiva ? AZUL : "#9ca3af", transition: "color 150ms" }}>
+        <Icono size={hijo ? 16 : 17} stroke={1.7} />
+      </Box>
+      {p.titulo}
+    </Box>
+  );
+}
 
 export default function RailSidebar() {
   const path = usePathname() ?? "";
@@ -248,40 +282,13 @@ export default function RailSidebar() {
                     {g.titulo}
                   </Typography>
                 )}
-                {g.paginas.map((p) => {
-                  const Icono = p.icon;
-                  const pActiva = esRutaActiva(p.href, path);
-                  return (
-                    <Box
-                      key={p.href}
-                      component={Link}
-                      href={p.href}
-                      aria-current={pActiva ? "page" : undefined}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1.25,
-                        px: 2,
-                        py: "9px",
-                        fontSize: 14,
-                        textDecoration: "none",
-                        color: pActiva ? AZUL : "#1f2937",
-                        fontWeight: pActiva ? 600 : 400,
-                        bgcolor: pActiva ? "rgba(239, 246, 255, 0.7)" : "transparent",
-                        borderLeft: `3px solid ${pActiva ? "#3b82f6" : "transparent"}`,
-                        transition: "background-color 150ms",
-                        "&:hover": { bgcolor: pActiva ? "rgba(239, 246, 255, 0.9)" : GRIS_SUAVE },
-                        "&:hover .pagina-icono": { color: AZUL },
-                        "&:focus-visible": { outline: `2px solid ${AZUL}`, outlineOffset: -2 },
-                      }}
-                    >
-                      <Box component="span" className="pagina-icono" sx={{ display: "flex", color: pActiva ? AZUL : "#9ca3af", transition: "color 150ms" }}>
-                        <Icono size={17} stroke={1.7} />
-                      </Box>
-                      {p.titulo}
-                    </Box>
-                  );
-                })}
+                {g.paginas.map((p) =>
+                  p.hijos ? (
+                    <Desplegable key={p.href} pagina={p} path={path} sxCabecera={(a) => filaRailSx(a, false)} renderHijo={(h) => filaRail(h, path, true)} />
+                  ) : (
+                    <React.Fragment key={p.href}>{filaRail(p, path, false)}</React.Fragment>
+                  )
+                )}
               </Box>
             ))}
           </Box>
