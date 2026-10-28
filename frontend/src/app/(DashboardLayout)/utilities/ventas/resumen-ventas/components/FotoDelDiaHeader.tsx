@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import DateRangeFilter, { DateRangeValue } from "./DateRangeFilter";
 import { BotonLimpiar, CANALES, ChipFiltro, controlSx, etiquetaControlSx as etiquetaSx, tarjetaSx, tinta } from "../../components/estilo";
-import RangosRapidos, { etiquetaRango, rangoInicial, TEMPORADAS } from "../../components/RangosRapidos";
+import RangosRapidos, { etiquetaRango, rangoInicial, TEMPORADAS, FechasDelRango } from "../../components/RangosRapidos";
 import FrescuraDatos from "../../components/FrescuraDatos";
 
 export interface Filters {
@@ -151,6 +151,7 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange, valorInicial }) => 
           </Typography>
           <Typography sx={{ fontSize: 11.5, color: tinta.secundaria }}>
             <strong style={{ color: tinta.primaria }}>{resumen}</strong>
+            <FechasDelRango inicio={filters.fechaInicio} fin={filters.fechaFin} />
           </Typography>
         </Box>
 

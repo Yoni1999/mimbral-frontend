@@ -64,6 +64,26 @@ export const etiquetaRango = (inicio?: string, fin?: string) => {
   return ini === f ? ini : `${ini} al ${f}`;
 };
 
+/** Fechas de un acceso rápido en corto: "27-10-26" o "01-10-26 al 27-10-26".
+ *  Vacío si el rango no es un acceso rápido (ahí la etiqueta ya trae las fechas). */
+export const fechasRango = (inicio?: string, fin?: string) => {
+  if (!inicio || !fin || !presetsDeHoy().some((p) => p.inicio === inicio && p.fin === fin)) return "";
+  const ini = dayjs(inicio).format("DD-MM-YY");
+  const f = dayjs(fin).format("DD-MM-YY");
+  return ini === f ? ini : `${ini} al ${f}`;
+};
+
+/** " · 27-10-26" junto a la etiqueta del rango; solo en escritorio. */
+export function FechasDelRango({ inicio, fin }: { inicio?: string; fin?: string }) {
+  const fechas = fechasRango(inicio, fin);
+  if (!fechas) return null;
+  return (
+    <Box component="span" sx={{ display: { xs: "none", md: "inline" } }}>
+      {" "}· {fechas}
+    </Box>
+  );
+}
+
 interface Props {
   fechaInicio?: string;
   fechaFin?: string;

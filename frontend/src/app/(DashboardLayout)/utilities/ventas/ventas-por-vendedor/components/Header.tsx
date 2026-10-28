@@ -6,7 +6,7 @@ import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
 import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import DateRangeFilter, { DateRangeValue } from "../../components/DateRangeFilter";
-import RangosRapidos, { etiquetaRango, rangoInicial } from "../../components/RangosRapidos";
+import RangosRapidos, { etiquetaRango, rangoInicial, FechasDelRango } from "../../components/RangosRapidos";
 import FrescuraDatos from "../../components/FrescuraDatos";
 import { BotonLimpiar, ChipFiltro, canalPorClave, controlSx, etiquetaControlSx, tarjetaSx, tinta } from "../../components/estilo";
 
@@ -112,6 +112,7 @@ const HeaderVendedor: React.FC<Props> = ({ filtros, setFiltros }) => {
                 {vendedor ? vendedor.cargo : filtros.canal ? nombreCanal(filtros.canal) : "Todos los vendedores"}
               </strong>{" "}
               · <strong style={{ color: tinta.primaria }}>{rango}</strong>
+              <FechasDelRango inicio={filtros.fechaInicio} fin={filtros.fechaFin} />
             </Typography>
           </Box>
         </Box>

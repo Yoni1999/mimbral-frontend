@@ -2,7 +2,7 @@
 
 import { Box, Button, FormControl, MenuItem, Select, Stack, Typography } from "@mui/material";
 import DateRangeFilter, { DateRangeValue } from "../../components/DateRangeFilter";
-import RangosRapidos, { etiquetaRango, rangoInicial } from "../../components/RangosRapidos";
+import RangosRapidos, { etiquetaRango, rangoInicial, FechasDelRango } from "../../components/RangosRapidos";
 import FrescuraDatos from "../../components/FrescuraDatos";
 import { BotonLimpiar, CANALES, ChipFiltro, controlSx, tarjetaSx, tinta } from "../../components/estilo";
 
@@ -44,6 +44,7 @@ const HeaderFilters = ({ filters, onFilterChange, vendedor, onQuitarVendedor }: 
           <Typography sx={{ fontSize: 11.5, color: tinta.secundaria }}>
             <strong style={{ color: tinta.primaria }}>{canal ? canal.nombre : "Todos los canales"}</strong> ·{" "}
             <strong style={{ color: tinta.primaria }}>{rango}</strong>
+            <FechasDelRango inicio={filters.fechaInicio} fin={filters.fechaFin} />
           </Typography>
         </Box>
 
