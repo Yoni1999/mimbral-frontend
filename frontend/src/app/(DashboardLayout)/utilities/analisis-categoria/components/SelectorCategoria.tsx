@@ -8,14 +8,16 @@ import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { controlSx, tinta } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
 import { ARBOLES, Arbol, CATALOGOS, Paso } from "../niveles";
-import type { OpcionCategoria } from "./HeaderCategorias";
+import type { ArbolVista, OpcionCategoria } from "./HeaderCategorias";
 
 interface Props {
-  arbol: Arbol;
+  arbol: ArbolVista;
   ruta: Paso[];
+  /** Texto del botón cuando se mira el árbol de Mercado Libre. */
+  textoMl?: string;
   catalogos: Record<Arbol, OpcionCategoria[]>;
   cargando: Record<Arbol, boolean>;
-  onElegir: (arbol: Arbol, ruta: Paso[]) => void;
+  onElegir: (arbol: ArbolVista, ruta: Paso[]) => void;
 }
 
 type Opcion = Paso & { imagen?: string; padre?: string };
@@ -157,14 +159,14 @@ function Resaltado({ texto, busqueda }: { texto: string; busqueda: string }) {
   );
 }
 
-/** Elegir qué mirar, de lo general a lo particular. Dos árboles en pestañas:
+/** Elegir qué mirar, de lo general a lo particular. Tres árboles en pestañas:
  *  Categorías (primer nivel → categoría → subcategoría) y Familias (familia →
  *  subfamilia), cada uno en columnas en cascada, y un buscador para saltar a
- *  cualquiera por nombre. Se elige con "Seleccionar", con Enter o con doble
- *  clic. */
-export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: cargandoArbol, onElegir }: Props) {
+ *  cualquiera por nombre; y Mercado Libre, que se recorre desde el desglose
+ *  de la vista. Se elige con "Seleccionar", con Enter o con doble clic. */
+export default function SelectorCategoria({ arbol, ruta, textoMl, catalogos, cargando: cargandoArbol, onElegir }: Props) {
   const [abierto, setAbierto] = React.useState(false);
-  const [pestana, setPestana] = React.useState<Arbol>(arbol);
+  const [pestana, setPestana] = React.useState<ArbolVista>(arbol);
   const [borrador, setBorrador] = React.useState<Paso[]>([]);
   const [busqueda, setBusqueda] = React.useState("");
 
@@ -174,7 +176,7 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
     setBusqueda("");
     setAbierto(true);
   };
-  const cambiarPestana = (nueva: Arbol) => {
+  const cambiarPestana = (nueva: ArbolVista) => {
     if (nueva === pestana) return;
     setPestana(nueva);
     // Al volver al árbol que se está mirando, aparece marcado lo elegido.
@@ -185,10 +187,14 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
     setAbierto(false);
   };
 
-  const enFamilias = pestana === "familias";
-  const catalogo = catalogos[pestana];
-  const cargando = cargandoArbol[pestana];
-  const niveles = ARBOLES[pestana].niveles;
+  const enMl = pestana === "mercadolibre";
+  // Mercado Libre no usa catálogo ni columnas: se toma el de categorías para
+  // que lo demás no cambie (no se muestra).
+  const arbolSap: Arbol = pestana === "mercadolibre" ? "categorias" : pestana;
+  const enFamilias = arbolSap === "familias";
+  const catalogo = catalogos[arbolSap];
+  const cargando = cargandoArbol[arbolSap];
+  const niveles = ARBOLES[arbolSap].niveles;
 
   const n1 = borrador.find((p) => p.nivel === 1);
   const n2 = borrador.find((p) => p.nivel === 2);
@@ -201,7 +207,7 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
     catalogo.filter((x) => x.nivel === 2 && (enFamilias ? x.padreCodigo === o.codigo : x.padre === o.nombre));
   const categorias = n1 ? segundosDe(n1) : [];
 
-  const urlSub = abierto && !enFamilias && n2 ? `${BACKEND_URL}${CATALOGOS[3]}?categoria=${encodeURIComponent(n2.codigo)}` : null;
+  const urlSub = abierto && !enMl && !enFamilias && n2 ? `${BACKEND_URL}${CATALOGOS[3]}?categoria=${encodeURIComponent(n2.codigo)}` : null;
   const { datos: subcategorias, cargando: cargandoSub } = useCargaDatos<Opcion[]>(
     urlSub,
     async (signal) => {
@@ -230,8 +236,9 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
     return [paso(o)];
   };
 
-  const todas = (a: Arbol) => (a === "familias" ? "Todas las familias" : "Todas las categorías");
-  const textoBoton = ruta.length ? ruta.map((p) => p.nombre || p.codigo).join(" › ") : todas(arbol);
+  const todas = (a: ArbolVista) => (a === "familias" ? "Todas las familias" : a === "mercadolibre" ? "Todo Mercado Libre" : "Todas las categorías");
+  const textoBoton =
+    arbol === "mercadolibre" ? textoMl || "Categorías de Mercado Libre" : ruta.length ? ruta.map((p) => p.nombre || p.codigo).join(" › ") : todas(arbol);
   const sinCambios =
     pestana === arbol &&
     borrador.length === ruta.length &&
@@ -276,6 +283,7 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
         // Enter elige lo marcado (o el primer resultado de la búsqueda).
         onKeyDown={(e) => {
           if (e.key !== "Enter" || (e.target as HTMLElement).tagName === "BUTTON") return;
+          if (enMl) return;
           e.preventDefault();
           if (q) {
             if (resultados[0]) elegir(rutaDe(resultados[0]));
@@ -297,7 +305,7 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
         <Box sx={{ px: 2.5, pb: 1.5, borderBottom: `1px solid ${tinta.borde}` }}>
           {/* Árbol: categorías o familias. */}
           <Box role="tablist" aria-label="Agrupar por" sx={{ display: "inline-flex", p: 0.5, mb: 1.5, borderRadius: "12px", bgcolor: "#f1f5f9", gap: 0.5 }}>
-            {(["categorias", "familias"] as const).map((a) => {
+            {(["categorias", "familias", "mercadolibre"] as const).map((a) => {
               const activa = pestana === a;
               return (
                 <Box
@@ -322,14 +330,15 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
                     transition: "all 120ms ease",
                   }}
                 >
-                  {ARBOLES[a].etiqueta}
-                  <Box component="span" sx={{ ml: 0.75, fontSize: 11.5, fontWeight: 500, color: tinta.tenue }}>
-                    {a === "familias" ? "Familia › Subfamilia" : "Primer nivel › Categoría › Subcategoría"}
+                  {a === "mercadolibre" ? "Mercado Libre" : ARBOLES[a].etiqueta}
+                  <Box component="span" sx={{ ml: 0.75, fontSize: 11.5, fontWeight: 500, color: tinta.tenue, display: { xs: "none", md: "inline" } }}>
+                    {a === "familias" ? "Familia › Subfamilia" : a === "mercadolibre" ? "Árbol de ML · Full, Colecta y Flex" : "Primer nivel › Categoría › Subcategoría"}
                   </Box>
                 </Box>
               );
             })}
           </Box>
+          {!enMl && (
           <TextField
             autoFocus
             fullWidth
@@ -351,9 +360,26 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
             }}
             sx={{ "& .MuiOutlinedInput-root": controlSx }}
           />
+          )}
         </Box>
 
-        {q ? (
+        {enMl ? (
+          <Box sx={{ p: 3, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 1.5 }}>
+            <Typography sx={{ fontSize: 14, fontWeight: 700, color: tinta.primaria }}>Categorías de Mercado Libre</Typography>
+            <Typography sx={{ fontSize: 13, color: tinta.secundaria, maxWidth: 640 }}>
+              La venta de Mercado Libre agrupada por el árbol de categorías de ML (el de cada publicación), separada en Full, Colecta y
+              Flex, con lo que cobra ML. Se entra a cada categoría pulsándola en el desglose de la vista.
+            </Typography>
+            <Button
+              variant="contained"
+              disableElevation
+              onClick={() => elegir([])}
+              sx={{ textTransform: "none", borderRadius: "10px", fontSize: 13, fontWeight: 600, px: 2.5 }}
+            >
+              Ver categorías de Mercado Libre
+            </Button>
+          </Box>
+        ) : q ? (
           <Box sx={{ height: { xs: 420, md: 520 }, overflowY: "auto", p: 1 }}>
             <Typography sx={{ fontSize: 11.5, color: tinta.tenue, px: 1.25, py: 0.5 }}>
               {resultados.length === 0
@@ -487,6 +513,7 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
           </Box>
         )}
 
+        {!enMl && (
         <Box
           sx={{
             display: "flex",
@@ -552,6 +579,7 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
             </Button>
           </Box>
         </Box>
+        )}
       </Dialog>
     </>
   );
