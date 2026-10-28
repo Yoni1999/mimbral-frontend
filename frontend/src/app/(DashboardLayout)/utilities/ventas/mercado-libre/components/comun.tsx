@@ -17,7 +17,7 @@ export const TIPOS_ENVIO: { clave: TipoEnvio; nombre: string; color: string; des
   { clave: "full", nombre: "Full", color: "#2a78d6", descripcion: "Despacha ML desde su bodega" },
   { clave: "colecta", nombre: "Colecta", color: "#eda100", descripcion: "ML retira en nuestra bodega 03" },
   { clave: "flex", nombre: "Flex", color: "#1baf7a", descripcion: "Despacho propio el mismo día" },
-  { clave: "otro", nombre: "Otros envíos", color: "#94a3b8", descripcion: "Retiro en tienda u otro envío" },
+  { clave: "otro", nombre: "Otros envíos", color: "#94a3b8", descripcion: "Tipo de envío 'default' de ML o sin tipo informado" },
 ];
 export const tipoEnvio = (clave: string) => TIPOS_ENVIO.find((t) => t.clave === clave);
 
