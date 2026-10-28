@@ -16,7 +16,7 @@ import FormasPago, { FormaPagoItem } from "./components/FormaPago";
 import CategoriasVendidas from "./components/SoldCategories";
 import { consultaVendedor, textoComparacion } from "./components/consulta";
 import RankingProductos from "../components/RankingProductos";
-import MetricCard from "../components/MetricCard";
+import MetricCard, { notaSinNc } from "../components/MetricCard";
 import SeccionTitulo from "../components/SeccionTitulo";
 import {
   canalPorClave,
@@ -233,9 +233,10 @@ const VentasVendedorPage: React.FC = () => {
           <>
             <Grid container spacing={2}>
               {tarjetas.map((t) => (
-                <Grid item xs={12} sm={6} md={4} lg={2} key={t.title}>
+                <Grid item xs={6} sm={6} md={4} lg={2} key={t.title}>
                   <MetricCard
                     {...t}
+                    nota={notaSinNc(t.title, true)}
                     onClick={detalleTarjetas.alPulsar(t.title)}
                   />
                 </Grid>

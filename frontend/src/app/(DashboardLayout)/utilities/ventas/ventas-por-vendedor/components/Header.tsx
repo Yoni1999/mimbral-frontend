@@ -2,13 +2,12 @@
 
 import React from "react";
 import { Autocomplete, Avatar, Box, Button, FormControl, MenuItem, Popover, Select, Stack, TextField, Typography } from "@mui/material";
-import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
 import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import DateRangeFilter, { DateRangeValue } from "../../components/DateRangeFilter";
 import RangosRapidos, { etiquetaRango, rangoInicial, FechasDelRango } from "../../components/RangosRapidos";
 import FrescuraDatos from "../../components/FrescuraDatos";
-import { BotonLimpiar, ChipFiltro, canalPorClave, controlSx, etiquetaControlSx, tarjetaSx, tinta } from "../../components/estilo";
+import { BotonLimpiar, ChipFiltro, canalPorClave, controlSx, etiquetaControlSx, tarjetaSx, tinta, filaControlesSx, IconoFiltros, SoloMovil } from "../../components/estilo";
 
 export interface Filters {
   vendedorEmpresa: string;
@@ -93,6 +92,66 @@ const HeaderVendedor: React.FC<Props> = ({ filtros, setFiltros }) => {
   const rango = etiquetaRango(filtros.fechaInicio, filtros.fechaFin);
   const enEstadoInicial = !filtros.canal && !filtros.vendedorEmpresa && !filtros.modoComparacion && rango === "Ayer";
 
+  // Selectores de la fila; en celular van dentro del panel de filtros (ver SoloMovil).
+  const selectores = (
+    <>
+      <FormControl size="small" sx={{ minWidth: 140 }}>
+        <Select
+          value={filtros.canal}
+          displayEmpty
+          inputProps={{ "aria-label": "Canal" }}
+          // Al cambiar de canal se suelta el vendedor si no es de ese canal.
+          onChange={(e) => {
+            const canal = e.target.value;
+            cambiar({ canal, vendedorEmpresa: !canal || vendedor?.canal === canal ? filtros.vendedorEmpresa : "" });
+          }}
+          sx={controlSx}
+        >
+          <MenuItem value="">Todos los canales</MenuItem>
+          {CANALES_VENDEDOR.map((c) => (
+            <MenuItem key={c.clave} value={c.clave}>
+              <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: canalPorClave(c.clave)?.color, mr: 1, display: "inline-block" }} />
+              {nombreCanal(c.clave)}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      <Autocomplete
+        size="small"
+        sx={{ minWidth: 230 }}
+        options={vendedores}
+        value={vendedor}
+        loading={cargandoVendedores}
+        groupBy={filtros.canal ? undefined : (v) => nombreCanal(v.canal)}
+        getOptionLabel={(v) => v.nombre}
+        isOptionEqualToValue={(a, b) => a.codigo === b.codigo}
+        onChange={(_, v) => cambiar({ vendedorEmpresa: v?.codigo ?? "" })}
+        noOptionsText="Sin vendedores"
+        loadingText="Cargando vendedores…"
+        renderOption={(props, v) => (
+          <Box component="li" {...props} key={v.codigo} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Avatar src={v.imagen} alt="" sx={{ width: 24, height: 24, fontSize: 11 }}>
+              {v.nombre.charAt(0)}
+            </Avatar>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography noWrap sx={{ fontSize: 13, fontWeight: 600 }}>{v.nombre}</Typography>
+              <Typography noWrap sx={{ fontSize: 11, color: tinta.tenue }}>{v.cargo}</Typography>
+            </Box>
+          </Box>
+        )}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            placeholder="Todos los vendedores"
+            inputProps={{ ...params.inputProps, "aria-label": "Vendedor" }}
+            sx={{ "& .MuiOutlinedInput-root": { ...controlSx, py: "0 !important" } }}
+          />
+        )}
+      />
+    </>
+  );
+
   return (
     <Box sx={{ ...tarjetaSx, position: "relative", mb: 2, px: { xs: 1.5, md: 2 }, py: 1.25 }}>
       <FrescuraDatos />
@@ -129,61 +188,8 @@ const HeaderVendedor: React.FC<Props> = ({ filtros, setFiltros }) => {
           </RangosRapidos>
         </Box>
 
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }} sx={{ flexShrink: 0 }}>
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <Select
-              value={filtros.canal}
-              displayEmpty
-              inputProps={{ "aria-label": "Canal" }}
-              // Al cambiar de canal se suelta el vendedor si no es de ese canal.
-              onChange={(e) => {
-                const canal = e.target.value;
-                cambiar({ canal, vendedorEmpresa: !canal || vendedor?.canal === canal ? filtros.vendedorEmpresa : "" });
-              }}
-              sx={controlSx}
-            >
-              <MenuItem value="">Todos los canales</MenuItem>
-              {CANALES_VENDEDOR.map((c) => (
-                <MenuItem key={c.clave} value={c.clave}>
-                  <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: canalPorClave(c.clave)?.color, mr: 1, display: "inline-block" }} />
-                  {nombreCanal(c.clave)}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <Autocomplete
-            size="small"
-            sx={{ minWidth: 230 }}
-            options={vendedores}
-            value={vendedor}
-            loading={cargandoVendedores}
-            groupBy={filtros.canal ? undefined : (v) => nombreCanal(v.canal)}
-            getOptionLabel={(v) => v.nombre}
-            isOptionEqualToValue={(a, b) => a.codigo === b.codigo}
-            onChange={(_, v) => cambiar({ vendedorEmpresa: v?.codigo ?? "" })}
-            noOptionsText="Sin vendedores"
-            loadingText="Cargando vendedores…"
-            renderOption={(props, v) => (
-              <Box component="li" {...props} key={v.codigo} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Avatar src={v.imagen} alt="" sx={{ width: 24, height: 24, fontSize: 11 }}>
-                  {v.nombre.charAt(0)}
-                </Avatar>
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography noWrap sx={{ fontSize: 13, fontWeight: 600 }}>{v.nombre}</Typography>
-                  <Typography noWrap sx={{ fontSize: 11, color: tinta.tenue }}>{v.cargo}</Typography>
-                </Box>
-              </Box>
-            )}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Todos los vendedores"
-                inputProps={{ ...params.inputProps, "aria-label": "Vendedor" }}
-                sx={{ "& .MuiOutlinedInput-root": { ...controlSx, py: "0 !important" } }}
-              />
-            )}
-          />
+        <Stack direction="row" spacing={1} alignItems="center" useFlexGap sx={filaControlesSx}>
+          {selectores}
 
           <DateRangeFilter
             value={filtros.fechaInicio && filtros.fechaFin ? { start: filtros.fechaInicio, end: filtros.fechaFin } : null}
@@ -194,7 +200,7 @@ const HeaderVendedor: React.FC<Props> = ({ filtros, setFiltros }) => {
 
           <Button
             variant="outlined"
-            startIcon={<IconAdjustmentsHorizontal size={16} />}
+            startIcon={<IconoFiltros activos={!!filtros.canal || !!filtros.vendedorEmpresa} />}
             onClick={(e) => setFiltrosAnchor(e.currentTarget)}
             sx={{
               textTransform: "none",
@@ -209,7 +215,7 @@ const HeaderVendedor: React.FC<Props> = ({ filtros, setFiltros }) => {
               "&:hover": { borderColor: "#cbd5e1", bgcolor: tinta.fondoSuave },
             }}
           >
-            Filtros
+            <span className="boton-texto">Filtros</span>
           </Button>
 
           <BotonLimpiar onClick={limpiar} disabled={enEstadoInicial} />
@@ -237,6 +243,9 @@ const HeaderVendedor: React.FC<Props> = ({ filtros, setFiltros }) => {
         <Typography sx={{ fontSize: 12.5, color: tinta.secundaria, mb: 2 }}>
           Contra qué período se calculan las variaciones.
         </Typography>
+        <Box sx={{ mb: 2 }}>
+          <SoloMovil>{selectores}</SoloMovil>
+        </Box>
         <Typography sx={etiquetaControlSx}>Comparar con</Typography>
         <FormControl fullWidth size="small">
           <Select

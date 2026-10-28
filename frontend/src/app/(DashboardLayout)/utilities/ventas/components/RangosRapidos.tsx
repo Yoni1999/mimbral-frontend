@@ -100,7 +100,22 @@ export default function RangosRapidos({ fechaInicio, fechaFin, inactivo = false,
   const activo = inactivo ? undefined : presets.find((p) => p.inicio === fechaInicio && p.fin === fechaFin)?.label;
 
   return (
-    <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap role="group" aria-label="Período">
+    <Stack
+      direction="row"
+      spacing={0.75}
+      alignItems="center"
+      useFlexGap
+      role="group"
+      aria-label="Período"
+      // En celular, una sola línea que se desliza de lado (no dos o tres líneas de botones).
+      sx={{
+        flexWrap: { xs: "nowrap", sm: "wrap" },
+        overflowX: { xs: "auto", sm: "visible" },
+        scrollbarWidth: "none",
+        "&::-webkit-scrollbar": { display: "none" },
+        "& > *": { flexShrink: 0 },
+      }}
+    >
       {RAPIDOS.map((label) => {
         const p = presets.find((x) => x.label === label);
         const marcado = activo === label;

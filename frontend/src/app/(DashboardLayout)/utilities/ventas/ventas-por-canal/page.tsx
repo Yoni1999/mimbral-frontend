@@ -9,7 +9,7 @@ import { formatUnidades } from "@/utils/format";
 import { useApiDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import SeccionTitulo from "../components/SeccionTitulo";
-import MetricCard from "../components/MetricCard";
+import MetricCard, { notaSinNc } from "../components/MetricCard";
 import { conPeriodoRapido, etiquetaRango, rangoInicial, resolverPeriodoRapido } from "../components/RangosRapidos";
 import { useEstadoVista } from "@/utils/estadoVista";
 import { canalPorClave, formatoMonto, formatoPorcentaje, pestanasSx } from "../components/estilo";
@@ -193,8 +193,8 @@ const VentasPorCanal = () => {
         ) : (
           <Grid container spacing={2}>
             {tarjetas.map((card) => (
-              <Grid item xs={12} sm={6} md={4} xl={2} key={card.title}>
-                <MetricCard {...card} onClick={detalleTarjetas.alPulsar(card.title)} />
+              <Grid item xs={6} sm={6} md={4} xl={2} key={card.title}>
+                <MetricCard {...card} nota={notaSinNc(card.title)} onClick={detalleTarjetas.alPulsar(card.title)} />
               </Grid>
             ))}
 

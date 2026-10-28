@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
 import {
   Box,
   Button,
@@ -15,8 +14,8 @@ import {
   Typography,
 } from "@mui/material";
 import DateRangeFilter, { DateRangeValue } from "./DateRangeFilter";
-import { BotonLimpiar, CANALES, ChipFiltro, controlSx, etiquetaControlSx as etiquetaSx, tarjetaSx, tinta } from "../../components/estilo";
 import RangosRapidos, { etiquetaRango, rangoInicial, TEMPORADAS, FechasDelRango } from "../../components/RangosRapidos";
+import { BotonLimpiar, CANALES, ChipFiltro, controlSx, etiquetaControlSx as etiquetaSx, tarjetaSx, tinta, filaControlesSx, IconoFiltros, SoloMovil } from "../../components/estilo";
 import FrescuraDatos from "../../components/FrescuraDatos";
 
 export interface Filters {
@@ -141,6 +140,46 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange, valorInicial }) => 
 
   const enEstadoInicial = activos.length === 0 && !filters.temporada && resumen === "Ayer";
 
+  // Selectores de la fila; en celular van dentro del panel de filtros (ver SoloMovil).
+  const selectores = (
+    <>
+      <FormControl size="small" sx={{ minWidth: 165 }}>
+        <Select
+          value={filters.canal}
+          onChange={(e) => handleChange("canal", e.target.value)}
+          displayEmpty
+          inputProps={{ "aria-label": "Canal" }}
+          sx={controlSx}
+        >
+          <MenuItem value="">Todos los canales</MenuItem>
+          {CANALES.map((c) => (
+            <MenuItem key={c.clave} value={c.clave}>
+              <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: c.color, mr: 1, display: "inline-block" }} />
+              {c.nombre}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      <FormControl size="small" sx={{ minWidth: 150 }}>
+        <Select
+          value={filters.temporada}
+          onChange={(e) => handleChange("temporada", e.target.value)}
+          displayEmpty
+          inputProps={{ "aria-label": "Temporada" }}
+          sx={controlSx}
+        >
+          <MenuItem value="">Sin temporada</MenuItem>
+          {Object.keys(TEMPORADAS).map((season) => (
+            <MenuItem key={season} value={season}>
+              {season}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </>
+  );
+
   return (
     <Box sx={{ ...tarjetaSx, position: "relative", mb: 2, px: { xs: 1.5, md: 2 }, py: 1.25 }}>
       <FrescuraDatos />
@@ -170,41 +209,8 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange, valorInicial }) => 
           </RangosRapidos>
         </Box>
 
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }} sx={{ flexShrink: 0 }}>
-          <FormControl size="small" sx={{ minWidth: 165 }}>
-            <Select
-              value={filters.canal}
-              onChange={(e) => handleChange("canal", e.target.value)}
-              displayEmpty
-              inputProps={{ "aria-label": "Canal" }}
-              sx={controlSx}
-            >
-              <MenuItem value="">Todos los canales</MenuItem>
-              {CANALES.map((c) => (
-                <MenuItem key={c.clave} value={c.clave}>
-                  <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: c.color, mr: 1, display: "inline-block" }} />
-                  {c.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <Select
-              value={filters.temporada}
-              onChange={(e) => handleChange("temporada", e.target.value)}
-              displayEmpty
-              inputProps={{ "aria-label": "Temporada" }}
-              sx={controlSx}
-            >
-              <MenuItem value="">Sin temporada</MenuItem>
-              {Object.keys(TEMPORADAS).map((season) => (
-                <MenuItem key={season} value={season}>
-                  {season}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+        <Stack direction="row" spacing={1} alignItems="center" useFlexGap sx={filaControlesSx}>
+          {selectores}
 
           <DateRangeFilter
             value={filters.fechaInicio && filters.fechaFin ? { start: filters.fechaInicio, end: filters.fechaFin } : null}
@@ -215,7 +221,7 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange, valorInicial }) => 
 
           <Button
             variant="outlined"
-            startIcon={<IconAdjustmentsHorizontal size={16} />}
+            startIcon={<IconoFiltros activos={!!filters.canal || !!filters.temporada} />}
             onClick={(e) => setFiltrosAnchorEl(e.currentTarget)}
             sx={{
               textTransform: "none",
@@ -230,7 +236,7 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange, valorInicial }) => 
               "&:hover": { borderColor: "#cbd5e1", bgcolor: tinta.fondoSuave },
             }}
           >
-            Más filtros
+            <span className="boton-texto">Más filtros</span>
           </Button>
           <BotonLimpiar onClick={handleClear} disabled={enEstadoInicial} />
         </Stack>
@@ -260,6 +266,8 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange, valorInicial }) => 
               Acotan todas las tarjetas, gráficos y tablas de la vista.
             </Typography>
           </Box>
+
+          <SoloMovil>{selectores}</SoloMovil>
 
           <Grid container spacing={1.5}>
             <Grid item xs={12} sm={6}>

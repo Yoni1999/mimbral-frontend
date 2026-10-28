@@ -462,10 +462,10 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
 
             <Grid item xs={12} md={6}>
               <Box sx={cardPanelSx}>
-                <Typography sx={sectionLabelSx}>Producto</Typography>
+                <Typography sx={sectionLabelSx}>Producto / Marca</Typography>
                 <TextField
                   fullWidth
-                  label="Buscar por SKU o nombre"
+                  label="Buscar por SKU, nombre o marca"
                   placeholder="Ej: 001001016 o Polpaico"
                   size="small"
                   value={filters.sku || ""}

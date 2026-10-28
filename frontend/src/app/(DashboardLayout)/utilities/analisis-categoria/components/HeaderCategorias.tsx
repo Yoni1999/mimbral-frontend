@@ -13,6 +13,7 @@ import {
   etiquetaControlSx,
   tarjetaSx,
   tinta,
+  filaControlesSx,
 } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
 import { Arbol, Paso } from "../niveles";
 import SelectorCategoria from "./SelectorCategoria";
@@ -126,7 +127,7 @@ const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, carg
           </RangosRapidos>
         </Box>
 
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }} sx={{ flexShrink: 0 }}>
+        <Stack direction="row" spacing={1} alignItems="center" useFlexGap sx={filaControlesSx}>
           <SelectorCategoria
             arbol={filtros.arbol}
             ruta={ruta}
@@ -159,7 +160,7 @@ const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, carg
               "&:hover": { borderColor: "#cbd5e1", bgcolor: tinta.fondoSuave },
             }}
           >
-            Filtros
+            <span className="boton-texto">Filtros</span>
           </Button>
 
           <BotonLimpiar onClick={limpiar} disabled={enEstadoInicial} />

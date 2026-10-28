@@ -4,7 +4,7 @@ import { Box, Button, FormControl, MenuItem, Select, Stack, Typography } from "@
 import DateRangeFilter, { DateRangeValue } from "../../components/DateRangeFilter";
 import RangosRapidos, { etiquetaRango, rangoInicial, FechasDelRango } from "../../components/RangosRapidos";
 import FrescuraDatos from "../../components/FrescuraDatos";
-import { BotonLimpiar, CANALES, ChipFiltro, controlSx, tarjetaSx, tinta } from "../../components/estilo";
+import { BotonLimpiar, CANALES, ChipFiltro, controlSx, tarjetaSx, tinta, filaControlesSx, FiltrosMovil } from "../../components/estilo";
 
 export interface Filters {
   canal: string;
@@ -33,6 +33,29 @@ const HeaderFilters = ({ filters, onFilterChange, vendedor, onQuitarVendedor }: 
   const rango = etiquetaRango(filters.fechaInicio, filters.fechaFin);
   const enEstadoInicial = !filters.canal && !vendedor && rango === "Ayer";
 
+  // Selectores de la fila; en celular van dentro del panel de filtros (ver SoloMovil).
+  const selectores = (
+    <>
+      <FormControl size="small" sx={{ minWidth: 175 }}>
+        <Select
+          value={filters.canal}
+          displayEmpty
+          inputProps={{ "aria-label": "Canal" }}
+          onChange={(e) => onFilterChange({ ...filters, canal: e.target.value })}
+          sx={controlSx}
+        >
+          <MenuItem value="">Todos los canales</MenuItem>
+          {CANALES.map((c) => (
+            <MenuItem key={c.clave} value={c.clave}>
+              <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: c.color, mr: 1, display: "inline-block" }} />
+              {c.nombre}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </>
+  );
+
   return (
     <Box sx={{ ...tarjetaSx, position: "relative", mb: 2, px: { xs: 1.5, md: 2 }, py: 1.25 }}>
       <FrescuraDatos />
@@ -58,24 +81,8 @@ const HeaderFilters = ({ filters, onFilterChange, vendedor, onQuitarVendedor }: 
           </RangosRapidos>
         </Box>
 
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }} sx={{ flexShrink: 0 }}>
-          <FormControl size="small" sx={{ minWidth: 175 }}>
-            <Select
-              value={filters.canal}
-              displayEmpty
-              inputProps={{ "aria-label": "Canal" }}
-              onChange={(e) => onFilterChange({ ...filters, canal: e.target.value })}
-              sx={controlSx}
-            >
-              <MenuItem value="">Todos los canales</MenuItem>
-              {CANALES.map((c) => (
-                <MenuItem key={c.clave} value={c.clave}>
-                  <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: c.color, mr: 1, display: "inline-block" }} />
-                  {c.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+        <Stack direction="row" spacing={1} alignItems="center" useFlexGap sx={filaControlesSx}>
+          {selectores}
 
           <DateRangeFilter
             value={filters.fechaInicio && filters.fechaFin ? { start: filters.fechaInicio, end: filters.fechaFin } : null}
@@ -83,6 +90,8 @@ const HeaderFilters = ({ filters, onFilterChange, vendedor, onQuitarVendedor }: 
             label="Rango de fecha"
             soloIcono
           />
+
+          <FiltrosMovil activos={!!filters.canal}>{selectores}</FiltrosMovil>
 
           <BotonLimpiar onClick={handleClearFilters} disabled={enEstadoInicial} />
         </Stack>
