@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Box, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
 import { Columnas, TextoCelda, cifraSx, formatoPorcentaje, formatoPesos, tablaSx, tinta } from "../../components/estilo";
 import { CeldaStock } from "./StockBodegas";
+import PublicacionesMl, { estadoPublicacion } from "./PublicacionesMl";
 import { BarraTipos, Monto, ProductoMl, TipoEnvio, cobros, n, unidades } from "./comun";
 
 interface Props {
@@ -29,12 +30,13 @@ export default function TablaProductosMl({ filas, cargando, tipo, desde = 0, fil
 
   return (
     <TableContainer sx={{ overflowX: { xs: "auto", lg: "hidden" } }}>
-      <Table size="small" sx={{ ...tablaSx, minWidth: { xs: 860, lg: 0 } }}>
-        <Columnas anchos={[4, 31, 8, 13, 11, 11, 11, 11]} />
+      <Table size="small" sx={{ ...tablaSx, minWidth: { xs: 980, lg: 0 } }}>
+        <Columnas anchos={[4, 26, 11, 7, 12, 10, 10, 10, 10]} />
         <TableHead>
           <TableRow>
             <TableCell>#</TableCell>
             <TableCell>Producto</TableCell>
+            <TableCell>Publicación</TableCell>
             <TableCell align="right">Unid.</TableCell>
             <TableCell align="right">Venta</TableCell>
             <TableCell>Envío</TableCell>
@@ -47,14 +49,14 @@ export default function TablaProductosMl({ filas, cargando, tipo, desde = 0, fil
           {cargando ? (
             Array.from({ length: filasCargando }).map((_, i) => (
               <TableRow key={i}>
-                <TableCell colSpan={8}>
+                <TableCell colSpan={9}>
                   <Skeleton height={30} />
                 </TableCell>
               </TableRow>
             ))
           ) : filas.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8}>
+              <TableCell colSpan={9}>
                 <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 4, textAlign: "center" }}>{vacio}</Typography>
               </TableCell>
             </TableRow>
@@ -78,6 +80,9 @@ export default function TablaProductosMl({ filas, cargando, tipo, desde = 0, fil
                         secundario={[p.sku, p.rutaCategoria.length ? p.rutaCategoria.map((c) => c.nombre).join(" › ") : "Sin categoría ML"].join(" · ")}
                       />
                     </Box>
+                  </TableCell>
+                  <TableCell>
+                    <PublicacionesMl publicaciones={p.publicaciones} />
                   </TableCell>
                   <TableCell align="right">{unidades(p.unidades)}</TableCell>
                   <TableCell align="right">
@@ -137,6 +142,11 @@ export const filasExcelProductos = (filas: ProductoMl[]) =>
     SKU: p.sku,
     Producto: p.nombre ?? "",
     "Categoría ML": p.rutaCategoria.map((c) => c.nombre).join(" > "),
+    Publicación: p.publicaciones?.[0]?.itemId ?? "",
+    "Estado publicación": p.publicaciones?.[0] ? estadoPublicacion(p.publicaciones[0].estado).texto : "",
+    "Catálogo": p.publicaciones?.[0] ? (p.publicaciones[0].catalogo ? "Sí" : "No") : "",
+    "Enlace": p.publicaciones?.[0]?.url ?? "",
+    "Otras publicaciones": (p.publicaciones ?? []).slice(1).map((x) => `${x.itemId} (${estadoPublicacion(x.estado).texto})`).join(", "),
     Unidades: n(p.unidades),
     "Venta sin IVA": Math.round(n(p.venta.neto)),
     "Venta con IVA": Math.round(n(p.venta.conIva)),

@@ -53,8 +53,21 @@ const rangoInforme = (): RangoMl => {
   return { fechaInicio: p.inicio, fechaFin: p.fin };
 };
 
-type Filtros = RangoMl & { tipo: FiltroTipo; medida: Medida; limite: string };
-const inicial = (): Filtros => ({ tipo: "", medida: "venta", limite: "100", ...rangoInforme() });
+type FiltroPublicacion = "" | "activa" | "pausada";
+const OPCIONES_PUBLICACION: { valor: FiltroPublicacion | "todas"; texto: string }[] = [
+  { valor: "todas", texto: "Todas" },
+  { valor: "activa", texto: "Con activa" },
+  { valor: "pausada", texto: "Solo pausadas" },
+];
+/** "Con activa": alguna publicación activa. "Solo pausadas": ninguna activa y alguna pausada. */
+const cumplePublicacion = (p: ProductoMl, f: FiltroPublicacion) => {
+  if (!f) return true;
+  const estados = (p.publicaciones ?? []).map((x) => x.estado);
+  return f === "activa" ? estados.includes("active") : !estados.includes("active") && estados.includes("paused");
+};
+
+type Filtros = RangoMl & { tipo: FiltroTipo; medida: Medida; limite: string; publicacion: FiltroPublicacion };
+const inicial = (): Filtros => ({ tipo: "", medida: "venta", limite: "100", publicacion: "", ...rangoInforme() });
 
 /** Stock que manda según el envío: Full en Full, bodega 03 en el resto. */
 const stockDe = (p: ProductoMl, tipo: FiltroTipo) =>
@@ -103,6 +116,7 @@ export default function InformeMasVendidosMercadoLibre() {
 
   const q = buscar.trim().toLowerCase();
   const filas = todas
+    .filter((p) => cumplePublicacion(p, filtros.publicacion))
     .filter((p) => !q || p.sku.toLowerCase().includes(q) || (p.nombre ?? "").toLowerCase().includes(q) || p.rutaCategoria.some((c) => c.nombre.toLowerCase().includes(q)))
     .sort((a, b) => valor(b, filtros.medida, filtros.tipo) - valor(a, filtros.medida, filtros.tipo));
   const paginas = Math.max(1, Math.ceil(filas.length / POR_PAGINA));
@@ -140,7 +154,7 @@ export default function InformeMasVendidosMercadoLibre() {
           rango={filtros}
           onRango={(r) => setFiltros((f) => ({ ...f, ...r }))}
           datosAl={datos.cargando ? undefined : datos.datos?.datosAl ?? null}
-          enEstadoInicial={!filtros.tipo && filtros.medida === "venta" && filtros.limite === "100" && etiquetaRango(filtros.fechaInicio, filtros.fechaFin) === "Últimos 30 días"}
+          enEstadoInicial={!filtros.tipo && !filtros.publicacion && filtros.medida === "venta" && filtros.limite === "100" && etiquetaRango(filtros.fechaInicio, filtros.fechaFin) === "Últimos 30 días"}
           onLimpiar={() => {
             setFiltros(inicial());
             setBuscar("");
@@ -197,6 +211,15 @@ export default function InformeMasVendidosMercadoLibre() {
             <Box>
               <Typography sx={etiquetaControlSx}>Ordenar por</Typography>
               <Pildoras etiqueta="Ordenar por" opciones={MEDIDAS} valor={filtros.medida} onCambiar={(m) => setFiltros((f) => ({ ...f, medida: m }))} />
+            </Box>
+            <Box>
+              <Typography sx={etiquetaControlSx}>Publicación</Typography>
+              <Pildoras
+                etiqueta="Estado de la publicación"
+                opciones={OPCIONES_PUBLICACION}
+                valor={filtros.publicacion || "todas"}
+                onCambiar={(v) => setFiltros((f) => ({ ...f, publicacion: v === "todas" ? "" : (v as FiltroPublicacion) }))}
+              />
             </Box>
             <Box>
               <Typography sx={etiquetaControlSx}>Cuántos</Typography>
