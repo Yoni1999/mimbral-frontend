@@ -28,7 +28,18 @@ interface Fila {
   unidades7d: number;
   logistica: string | null;
   url: string | null;
-  competencia: { tienda: string; precio: number; url: string | null; al: string | null; cantidad: number | null; diferenciaPct: number | null; margenAlIgualar: number | null } | null;
+  competencia: {
+    tienda: string;
+    vendedor: string | null;
+    precio: number;
+    /** La más barata de ML puede costar más que nosotros. */
+    masBarataQueNosotros: boolean;
+    url: string | null;
+    al: string | null;
+    cantidad: number | null;
+    diferenciaPct: number | null;
+    margenAlIgualar: number | null;
+  } | null;
 }
 
 type Ver = "todos" | "bajoObjetivo" | "masCaros" | "masBaratos" | "conCompetencia";
@@ -37,7 +48,7 @@ const VER: { valor: Ver; texto: string }[] = [
   { valor: "bajoObjetivo", texto: "Bajo el margen objetivo" },
   { valor: "masCaros", texto: "Más caros que la competencia (> 5 %)" },
   { valor: "masBaratos", texto: "Más baratos (> 5 %)" },
-  { valor: "conCompetencia", texto: "Con competencia" },
+  { valor: "conCompetencia", texto: "Con competencia en ML" },
 ];
 const cumple = (f: Fila, v: Ver) =>
   v === "todos"
@@ -69,7 +80,14 @@ export default function PrecioYCompetencia() {
   const elegir = (v: Ver) => () => setFiltros((x) => ({ ...x, ver: x.ver === v ? "todos" : v }));
   const con = todas.filter((f) => f.competencia);
   const tarjetas = [
-    { title: "Publicaciones activas", value: entero(todas.length), subtitle: `${entero(con.length)} con precio de la competencia (30 días)`, icon: <IconTag />, onClick: elegir("conCompetencia") },
+    {
+      title: "Publicaciones activas",
+      value: entero(todas.length),
+      subtitle: `${entero(con.length)} con competencia en ML (30 días)`,
+      icon: <IconTag />,
+      onClick: elegir("conCompetencia"),
+      nota: "Competencia: otros vendedores de Mercado Libre del monitor de precios, con precio visto en los últimos 30 días. Clic para ver solo esas.",
+    },
     {
       title: `Bajo ${filtros.objetivo} % de margen`,
       value: entero(todas.filter((f) => f.bajoObjetivo).length),
@@ -84,7 +102,7 @@ export default function PrecioYCompetencia() {
       subtitle: "Más de 5 % sobre el precio más bajo",
       icon: <IconScale />,
       onClick: elegir("masCaros"),
-      nota: "Comparado con el precio más bajo visto en los últimos 30 días entre las tiendas monitoreadas (incluye otros vendedores de ML). Clic para verlas.",
+      nota: "Hay otro vendedor de ML más de 5 % más barato que nosotros (precio visto en los últimos 30 días). Clic para verlas.",
     },
     {
       title: "Más baratos que la competencia",
@@ -92,7 +110,7 @@ export default function PrecioYCompetencia() {
       subtitle: "Más de 5 % bajo el precio más bajo",
       icon: <IconArrowDownRight />,
       onClick: elegir("masBaratos"),
-      nota: "Productos donde hay espacio para subir el precio. Clic para verlos.",
+      nota: "Somos más de 5 % más baratos que el vendedor de ML más barato: puede haber espacio para subir el precio. Clic para verlos.",
     },
   ];
 
@@ -136,19 +154,29 @@ export default function PrecioYCompetencia() {
     },
     {
       clave: "competencia",
-      titulo: "Competencia más barata",
+      titulo: "Competencia en ML",
       ancho: 18,
       valor: (f) => f.competencia?.precio,
-      excel: "Precio competencia",
+      excel: "Precio más bajo de otro vendedor en ML",
       celda: (f) =>
         f.competencia ? (
-          <Box>
-            <Enlace url={f.competencia.url}>{pesos(f.competencia.precio)}</Enlace>
-            <Box sx={{ fontSize: 10.5, color: tinta.tenue }}>
-              {f.competencia.tienda} · {fecha(f.competencia.al)}
-              {f.competencia.cantidad && f.competencia.cantidad > 1 ? ` · ${f.competencia.cantidad} tiendas` : ""}
+          f.competencia.masBarataQueNosotros ? (
+            <Box>
+              <Enlace url={f.competencia.url}>{pesos(f.competencia.precio)}</Enlace>
+              <Box sx={{ fontSize: 10.5, color: tinta.tenue }}>
+                {f.competencia.vendedor ?? "Otro vendedor"} · {fecha(f.competencia.al)}
+                {f.competencia.cantidad && f.competencia.cantidad > 1 ? ` · ${f.competencia.cantidad} vendedores` : ""}
+              </Box>
             </Box>
-          </Box>
+          ) : (
+            // Nadie en ML vende más barato: se dice, y el más cercano queda como referencia.
+            <Box>
+              <Box component="span" sx={{ fontWeight: 600, color: "#067647" }}>Somos los más baratos</Box>
+              <Box sx={{ fontSize: 10.5, color: tinta.tenue }}>
+                Siguiente: <Enlace url={f.competencia.url}>{pesos(f.competencia.precio)}</Enlace> · {f.competencia.vendedor ?? "otro vendedor"}
+              </Box>
+            </Box>
+          )
         ) : (
           <Box component="span" sx={{ color: tinta.tenue }}>Sin dato</Box>
         ),
@@ -183,7 +211,7 @@ export default function PrecioYCompetencia() {
       <Box sx={{ maxWidth: 1680, mx: "auto" }}>
         <EncabezadoInforme
           titulo="Precio y competencia"
-          descripcion="Publicaciones activas de ML (la más vendida de cada producto): margen al precio de hoy, precio mínimo para el margen objetivo y el precio más bajo de la competencia en los últimos 30 días. Fuente: cálculo de márgenes del PIM y monitor de competencia."
+          descripcion="Publicaciones activas de ML (la más vendida de cada producto): margen al precio de hoy, precio mínimo para el margen objetivo y el precio más bajo de otros vendedores de Mercado Libre en los últimos 30 días. Fuente: cálculo de márgenes del PIM y monitor de competencia (solo Mercado Libre)."
         >
           <Filtro etiqueta="Margen objetivo">
             <Pildoras
@@ -218,14 +246,15 @@ export default function PrecioYCompetencia() {
           textoBusqueda={(f) => `${f.sku} ${f.nombre ?? ""} ${f.itemId}`}
           ordenInicial={filtros.ver === "masCaros" || filtros.ver === "masBaratos" ? { clave: "diferencia", direccion: filtros.ver === "masCaros" ? "desc" : "asc" } : { clave: "unidades7d", direccion: "desc" }}
           nombreExcel={`precios_ml_objetivo_${filtros.objetivo}`}
-          nota="Precios con IVA. Margen sobre la venta neta: precio − comisión − envío − costo de SAP. La competencia sale de las asociaciones del monitor: revisa que sea el mismo producto."
+          nota="Precios con IVA. Margen sobre la venta neta: precio − comisión − envío − costo de SAP. Competencia: otros vendedores de ML del monitor (no páginas web); revisa que sea el mismo producto."
           extraExcel={[
             { titulo: "SKU", valor: (f) => f.sku },
             { titulo: "Publicación", valor: (f) => f.itemId },
             { titulo: "Comisión %", valor: (f) => f.comisionPct },
             { titulo: "Envío", valor: (f) => f.envio },
             { titulo: "Costo SAP", valor: (f) => redondo(f.costo) },
-            { titulo: "Tienda competencia", valor: (f) => f.competencia?.tienda },
+            { titulo: "Vendedor competencia (ML)", valor: (f) => f.competencia?.vendedor },
+            { titulo: "Competencia más barata que nosotros", valor: (f) => (f.competencia ? (f.competencia.masBarataQueNosotros ? "Sí" : "No") : "") },
             { titulo: "Competencia al", valor: (f) => (f.competencia?.al ? f.competencia.al.slice(0, 10) : "") },
             { titulo: "Margen al igualar %", valor: (f) => redondo(f.competencia?.margenAlIgualar, 1) },
           ]}
