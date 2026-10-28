@@ -8,6 +8,9 @@ import { BACKEND_URL } from "@/config";
 import { BarraParticipacion, Columnas, cifraSx, estado, tablaSx, tinta } from "../../components/estilo";
 import { ProductoMl, TipoEnvio, fechaCorta, n, tipoEnvio, unidades } from "./comun";
 
+/** Lo que necesitan la celda y el detalle de stock de un producto. */
+export type ProductoStock = Pick<ProductoMl, "sku" | "nombre" | "stockFull" | "stockFullAl" | "stock03">;
+
 /** Stock Full consultado en vivo a ML (analysis-service → meli-catalog). */
 interface StockFullEnVivo {
   sku: string;
@@ -41,7 +44,7 @@ const hora = (iso: string) => new Date(iso).toLocaleTimeString("es-CL", { hour: 
  * y muestra el stock en todas las bodegas de SAP. Sin dato guardado de Full,
  * la celda invita a consultarlo (no es lo mismo que cero).
  */
-export function CeldaStock({ producto, tipo }: { producto: ProductoMl; tipo: TipoEnvio | "" }) {
+export function CeldaStock({ producto, tipo }: { producto: ProductoStock; tipo: TipoEnvio | "" }) {
   const [abierto, setAbierto] = React.useState(false);
   const verFull = tipo === "full" || tipo === "";
   const ver03 = tipo !== "full";
@@ -101,7 +104,7 @@ export function CeldaStock({ producto, tipo }: { producto: ProductoMl; tipo: Tip
   );
 }
 
-function DialogoStock({ producto, tipo, onCerrar }: { producto: ProductoMl; tipo: TipoEnvio | ""; onCerrar: () => void }) {
+function DialogoStock({ producto, tipo, onCerrar }: { producto: ProductoStock; tipo: TipoEnvio | ""; onCerrar: () => void }) {
   const bodegas = useApiDatos<Record<string, { Stock?: number; NC?: number; OC?: number }> | null>(
     `${BACKEND_URL}/api/stock-por-almacen?itemCode=${encodeURIComponent(producto.sku)}`,
     null
