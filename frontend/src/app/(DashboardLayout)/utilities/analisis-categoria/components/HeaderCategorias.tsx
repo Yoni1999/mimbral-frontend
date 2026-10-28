@@ -4,7 +4,7 @@ import React from "react";
 import { Box, Button, FormControl, MenuItem, Popover, Select, Stack, Typography } from "@mui/material";
 import { IconAdjustmentsHorizontal, IconChevronRight } from "@tabler/icons-react";
 import DateRangeFilter, { DateRangeValue } from "@/app/(DashboardLayout)/utilities/ventas/components/DateRangeFilter";
-import RangosRapidos, { TEMPORADAS, etiquetaRango, rangoInicial } from "@/app/(DashboardLayout)/utilities/ventas/components/RangosRapidos";
+import RangosRapidos, { TEMPORADAS, etiquetaRango, rangoInicial, FechasDelRango } from "@/app/(DashboardLayout)/utilities/ventas/components/RangosRapidos";
 import FrescuraDatos from "@/app/(DashboardLayout)/utilities/ventas/components/FrescuraDatos";
 import {
   BotonLimpiar,
@@ -111,6 +111,7 @@ const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, carg
             ))}
             <Typography component="span" sx={{ fontSize: 11.5, color: tinta.secundaria, ml: 0.5 }}>
               · <strong style={{ color: tinta.primaria }}>{rango}</strong>
+              <FechasDelRango inicio={filtros.fechaInicio} fin={filtros.fechaFin} />
             </Typography>
           </Box>
         </Box>

@@ -3,7 +3,7 @@
 import React from "react";
 import { Box, Button, FormControl, MenuItem, Popover, Select, Stack, Typography } from "@mui/material";
 import DateRangeFilter, { DateRangeValue } from "@/app/(DashboardLayout)/utilities/ventas/components/DateRangeFilter";
-import RangosRapidos, { TEMPORADAS, etiquetaRango, rangoInicial } from "@/app/(DashboardLayout)/utilities/ventas/components/RangosRapidos";
+import RangosRapidos, { TEMPORADAS, etiquetaRango, rangoInicial, FechasDelRango } from "@/app/(DashboardLayout)/utilities/ventas/components/RangosRapidos";
 import FrescuraDatos from "@/app/(DashboardLayout)/utilities/ventas/components/FrescuraDatos";
 import {
   BotonLimpiar,
@@ -108,6 +108,7 @@ const HeaderProducto: React.FC<Props> = ({ filtros, setFiltros, selectorAbierto,
               )}
               <strong style={{ color: tinta.primaria }}>{canal ? canal.nombre : "Todos los canales"}</strong> ·{" "}
               <strong style={{ color: tinta.primaria }}>{rango}</strong>
+              <FechasDelRango inicio={filtros.fechaInicio} fin={filtros.fechaFin} />
             </Typography>
           </Box>
         </Box>
