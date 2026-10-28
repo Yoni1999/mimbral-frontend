@@ -25,6 +25,8 @@ interface FilaReposicion {
   lado: Lado;
   unidades: number;
   venta: Par;
+  /** Último día con venta por ese lado dentro del período (AAAA-MM-DD). */
+  ultimaVenta: string | null;
   ventaDiaria: number;
   stock: number | null;
   stockAl: string | null;
@@ -84,6 +86,13 @@ const rangoInforme = (): RangoMl => {
 
 type Filtros = RangoMl & { lado: Lado | ""; umbral: string; cubrir: string; minUnidades: string; estado: Estado | "" };
 const inicial = (): Filtros => ({ lado: "", umbral: "15", cubrir: "30", minUnidades: "3", estado: "", ...rangoInforme() });
+
+/** Días desde una fecha AAAA-MM-DD hasta hoy en Chile. */
+const diasDesde = (iso: string) => {
+  const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(new Date());
+  return Math.round((Date.parse(`${hoy}T00:00:00Z`) - Date.parse(`${iso}T00:00:00Z`)) / 86_400_000);
+};
+const hace = (dias: number) => (dias <= 0 ? "hoy" : dias === 1 ? "ayer" : `hace ${dias} días`);
 
 const dec = (v: number, d = 1) => v.toLocaleString("es-CL", { maximumFractionDigits: d, minimumFractionDigits: v < 10 && v % 1 ? d : 0 });
 
@@ -202,6 +211,7 @@ export default function InformeReposicionMercadoLibre() {
             Envío: tipoEnvio(f.lado)!.nombre,
             [`Unidades vendidas (${r?.dias ?? ""} días)`]: f.unidades,
             "Venta diaria": Math.round(f.ventaDiaria * 100) / 100,
+            "Última venta": f.ultimaVenta ?? "",
             Stock: f.stock ?? "",
             "Stock al": f.lado === "full" ? (f.stockAl ? f.stockAl.slice(0, 10) : "sin dato") : "SAP",
             "Días de stock": f.diasStock == null ? "" : Math.round(f.diasStock * 10) / 10,
@@ -291,14 +301,15 @@ export default function InformeReposicionMercadoLibre() {
           </Typography>
 
           <TableContainer sx={{ overflowX: { xs: "auto", lg: "hidden" } }}>
-            <Table size="small" sx={{ ...tablaSx, minWidth: { xs: 900, lg: 0 } }}>
-              <Columnas anchos={[4, 31, 8, 10, 12, 12, 10, 13]} />
+            <Table size="small" sx={{ ...tablaSx, minWidth: { xs: 980, lg: 0 } }}>
+              <Columnas anchos={[4, 27, 8, 9, 10, 10, 11, 9, 12]} />
               <TableHead>
                 <TableRow>
                   <TableCell>#</TableCell>
                   <TableCell>Producto</TableCell>
                   <TableCell>Envío</TableCell>
                   <TableCell align="right">Vende/día</TableCell>
+                  <TableCell align="right">Última venta</TableCell>
                   <TableCell align="right">Stock</TableCell>
                   <TableCell align="right">Alcanza</TableCell>
                   <TableCell align="right">Otras bod.</TableCell>
@@ -309,14 +320,14 @@ export default function InformeReposicionMercadoLibre() {
                 {datos.cargando ? (
                   Array.from({ length: 12 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell colSpan={8}>
+                      <TableCell colSpan={9}>
                         <Skeleton height={30} />
                       </TableCell>
                     </TableRow>
                   ))
                 ) : visibles.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8}>
+                    <TableCell colSpan={9}>
                       <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 4, textAlign: "center" }}>
                         {q || filtros.estado ? "Ningún producto coincide con el filtro." : "Ningún producto con venta está bajo el umbral de stock."}
                       </Typography>
@@ -352,6 +363,20 @@ export default function InformeReposicionMercadoLibre() {
                               <Box component="span" sx={{ fontSize: 10.5, color: tinta.tenue }}>{unidades(f.unidades)} u. en el período</Box>
                             </Box>
                           </Tooltip>
+                        </TableCell>
+                        <TableCell align="right">
+                          {f.ultimaVenta ? (
+                            <Tooltip title={`Último día con venta por ${lado.nombre} en el período`} placement="top" arrow>
+                              <Box component="span" sx={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end" }}>
+                                <Box component="span" sx={{ fontWeight: 600 }}>{fechaCorta(f.ultimaVenta).slice(0, 5)}</Box>
+                                <Box component="span" sx={{ fontSize: 10.5, color: diasDesde(f.ultimaVenta) > 7 ? "#b54708" : tinta.tenue }}>
+                                  {hace(diasDesde(f.ultimaVenta))}
+                                </Box>
+                              </Box>
+                            </Tooltip>
+                          ) : (
+                            <Box component="span" sx={{ color: tinta.tenue }}>—</Box>
+                          )}
                         </TableCell>
                         <TableCell align="right">
                           <CeldaStock producto={f} tipo={f.lado} />
