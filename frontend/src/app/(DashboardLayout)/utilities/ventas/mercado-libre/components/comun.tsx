@@ -103,7 +103,7 @@ export interface CategoriasMl {
 }
 
 /** URL de un endpoint de /api/mercado-libre con sus filtros (los vacíos no van). */
-export const urlMl = (endpoint: "resumen" | "productos" | "categorias", filtros: Record<string, string | number | null | undefined>) => {
+export const urlMl = (endpoint: "resumen" | "productos" | "categorias" | "reposicion", filtros: Record<string, string | number | null | undefined>) => {
   const q = new URLSearchParams(
     Object.entries(filtros)
       .filter(([, v]) => v !== undefined && v !== null && v !== "")

@@ -23,6 +23,7 @@ import {
   IconMessage2,
   IconShoppingBag,
   IconTrophy,
+  IconPackageImport,
 } from "@tabler/icons-react";
 
 export type Pagina = { titulo: string; href: string; icon: any };
@@ -92,6 +93,7 @@ export const MODULOS: Modulo[] = [
           { titulo: "Ventas de productos", href: "/informes/ventas-productos", icon: IconChartBar },
           { titulo: "Ventas de productos por canal y marca", href: "/informes/ventas-productos-por-canal", icon: IconChartDonut },
           { titulo: "Más vendidos Mercado Libre", href: "/informes/mas-vendidos-mercado-libre", icon: IconTrophy },
+          { titulo: "Reposición Mercado Libre", href: "/informes/reposicion-mercado-libre", icon: IconPackageImport },
         ],
       },
       {
