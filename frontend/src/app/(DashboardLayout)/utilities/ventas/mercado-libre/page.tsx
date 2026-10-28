@@ -99,7 +99,7 @@ export default function VentasMercadoLibre() {
     {
       title: "Venta Mercado Libre",
       value: formatoMonto(total.neto),
-      subtitle: `Cobra ML ${formatoMonto(cobra.neto)} · queda ${formatoMonto(queda)} · vs ${formatoMonto(totalAnterior.neto)}`,
+      subtitle: `vs ${formatoMonto(totalAnterior.neto)} · cobra ML ${formatoMonto(cobra.neto)} · queda ${formatoMonto(queda)}${n(a?.sin_dato.venta.neto) ? ` · incluye ${formatoMonto(a?.sin_dato.venta.neto)} sin detalle` : ""}`,
       percentageChange: variacion(n(total.neto), n(totalAnterior.neto)) ?? undefined,
       nota: `Sin IVA. Con IVA: ${formatoPesos(total.conIva)}. ML cobra ${formatoPesos(cobra.neto)} (${formatoPorcentaje(pct(n(cobra.neto), n(detalle?.venta.neto)))}) en comisión y envío.${n(a?.sin_dato.venta.neto) ? ` Incluye ${formatoMonto(a?.sin_dato.venta.neto)} que ML informa pero no están en mercadolibre-oms (sin tipo de envío ni producto).` : ""}`,
       icon: <IconCurrencyDollar />,
