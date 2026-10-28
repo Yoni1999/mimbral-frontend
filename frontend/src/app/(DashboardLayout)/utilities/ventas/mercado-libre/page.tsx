@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { Box, Button, Grid, Typography } from "@mui/material";
-import { IconArrowRight, IconBuildingWarehouse, IconCurrencyDollar, IconPigMoney, IconReceiptTax, IconTruck, IconTruckDelivery } from "@tabler/icons-react";
+import { IconArrowRight, IconCurrencyDollar, IconPackages, IconPigMoney } from "@tabler/icons-react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import { useApiDatos } from "@/utils/useCargaDatos";
 import { useEstadoVista } from "@/utils/estadoVista";
@@ -15,6 +15,7 @@ import { Panel, Pildoras, formatoMonto, formatoPesos, formatoPorcentaje, tinta }
 import HeaderMl, { RangoMl } from "./components/HeaderMl";
 import TendenciaTipos from "./components/TendenciaTipos";
 import TablaProductosMl from "./components/TablaProductosMl";
+import DesgloseMl, { VistaDesglose } from "./components/DesgloseMl";
 import {
   AvisoEstimaciones,
   BarraTipos,
@@ -48,10 +49,14 @@ const conDetalle = (t?: ResumenMl["actual"]): Totales | undefined =>
     ordenes: TIPOS_ENVIO.reduce((s, x) => s + n(t[x.clave]?.ordenes), 0),
     comision: sumaPar(...TIPOS_ENVIO.map((x) => t[x.clave]?.comision)),
     envio: sumaPar(...TIPOS_ENVIO.map((x) => t[x.clave]?.envio)),
+    costo: sumaPar(...TIPOS_ENVIO.map((x) => t[x.clave]?.costo)),
+    margen: sumaPar(...TIPOS_ENVIO.map((x) => t[x.clave]?.margen)),
+    ventaConCosto: sumaPar(...TIPOS_ENVIO.map((x) => t[x.clave]?.ventaConCosto)),
   };
 
-/** Ventas → Mercado Libre: cuánto se vende en ML, separado en Full, Colecta y
- *  Flex, cuánto cobra ML y cuánto queda; tendencia, categorías de ML y los
+/** Ventas → Mercado Libre: cuánto se vende en ML, cuánto cobra ML, cuánto
+ *  queda y el margen después de todo (tarjetas pulsables con su detalle);
+ *  reparto y tendencia por Full, Colecta y Flex, categorías de ML y los
  *  productos más vendidos. */
 export default function VentasMercadoLibre() {
   const router = useRouter();
@@ -74,53 +79,49 @@ export default function VentasMercadoLibre() {
   const totalAnterior = sumaPar(conDetalle(p)?.venta, p?.sin_dato.venta);
   const detalle = conDetalle(a);
   const detalleAnterior = conDetalle(p);
-  const cobra = cobros(detalle);
-  const cobraAnterior = cobros(detalleAnterior);
-  const queda = n(detalle?.venta.neto) - n(cobra.neto);
-  const quedaAnterior = n(detalleAnterior?.venta.neto) - n(cobraAnterior.neto);
   const pct = (parte: number, todo: number) => (todo ? (parte / todo) * 100 : null);
+  const [desglose, setDesglose] = React.useState<VistaDesglose | null>(null);
 
-  const tarjetaTipo = (tipo: TipoEnvio, icon: React.ReactNode) => {
-    const t = a?.[tipo];
-    const ant = p?.[tipo];
-    return {
-      title: `${TIPOS_ENVIO.find((x) => x.clave === tipo)!.nombre}`,
-      value: formatoMonto(t?.venta.neto),
-      subtitle: `${unidades(t?.unidades)} u. · ${formatoPorcentaje(pct(n(t?.venta.neto), n(total.neto)))} · vs ${formatoMonto(ant?.venta.neto)}`,
-      percentageChange: variacion(n(t?.venta.neto), n(ant?.venta.neto)) ?? undefined,
-      nota: `Sin IVA. Con IVA: ${formatoPesos(t?.venta.conIva)}. ${TIPOS_ENVIO.find((x) => x.clave === tipo)!.descripcion}.`,
-      icon,
-    };
-  };
+  const cobra = cobros(detalle);
+  const queda = n(detalle?.venta.neto) - n(cobra.neto);
+  const margen = n(detalle?.margen?.neto);
+  const margenAnterior = n(detalleAnterior?.margen?.neto);
+  // % de margen sobre la venta que tiene costo en SAP (la que entra en el margen).
+  const margenPct = pct(margen, n(detalle?.ventaConCosto?.neto));
+  const margenPctAnterior = pct(margenAnterior, n(detalleAnterior?.ventaConCosto?.neto));
+  const unidadesTotal = n(detalle?.unidades) + n(a?.sin_dato.unidades);
+  const unidadesAnterior = n(detalleAnterior?.unidades) + n(p?.sin_dato.unidades);
+  const items = resumen.datos?.items;
 
+  // Tres tarjetas; cada una abre su detalle. Full, Colecta y Flex están en
+  // "Reparto de la venta"; lo que cobra ML y lo que queda, en el detalle de la venta.
   const tarjetas = [
     {
       title: "Venta Mercado Libre",
       value: formatoMonto(total.neto),
-      subtitle: `${unidades(n(detalle?.unidades) + n(a?.sin_dato.unidades))} u. · vs ${formatoMonto(totalAnterior.neto)}`,
+      subtitle: `Cobra ML ${formatoMonto(cobra.neto)} · queda ${formatoMonto(queda)} · vs ${formatoMonto(totalAnterior.neto)}`,
       percentageChange: variacion(n(total.neto), n(totalAnterior.neto)) ?? undefined,
-      nota: `Sin IVA. Con IVA: ${formatoPesos(total.conIva)}.${n(a?.sin_dato.venta.neto) ? ` Incluye ${formatoMonto(a?.sin_dato.venta.neto)} que ML informa pero no están en mercadolibre-oms (sin tipo de envío ni producto).` : ""}`,
+      nota: `Sin IVA. Con IVA: ${formatoPesos(total.conIva)}. ML cobra ${formatoPesos(cobra.neto)} (${formatoPorcentaje(pct(n(cobra.neto), n(detalle?.venta.neto)))}) en comisión y envío.${n(a?.sin_dato.venta.neto) ? ` Incluye ${formatoMonto(a?.sin_dato.venta.neto)} que ML informa pero no están en mercadolibre-oms (sin tipo de envío ni producto).` : ""}`,
       icon: <IconCurrencyDollar />,
-    },
-    tarjetaTipo("full", <IconBuildingWarehouse />),
-    tarjetaTipo("colecta", <IconTruck />),
-    tarjetaTipo("flex", <IconTruckDelivery />),
-    {
-      title: "Cobra Mercado Libre",
-      value: formatoMonto(cobra.neto),
-      subtitle: `${formatoPorcentaje(pct(n(cobra.neto), n(detalle?.venta.neto)))} de la venta · vs ${formatoMonto(cobraAnterior.neto)}`,
-      percentageChange: variacion(n(cobra.neto), n(cobraAnterior.neto)) ?? undefined,
-      masEsMejor: false,
-      nota: `Comisión ${formatoPesos(detalle?.comision.neto)} + envío ${formatoPesos(detalle?.envio.neto)}, sin IVA. Colecta y Flex: comisión real de cada orden. Full: comisión estimada con la publicación. Envío estimado con la publicación (Full y Colecta).`,
-      icon: <IconReceiptTax />,
+      onClick: () => setDesglose("dinero"),
     },
     {
-      title: "Queda después de ML",
-      value: formatoMonto(queda),
-      subtitle: `${formatoPorcentaje(pct(queda, n(detalle?.venta.neto)))} de la venta · vs ${formatoMonto(quedaAnterior)}`,
-      percentageChange: variacion(queda, quedaAnterior) ?? undefined,
-      nota: "Venta sin IVA menos comisión y envío. No descuenta el costo del producto.",
+      title: "Unidades e ítems vendidos",
+      value: `${unidades(unidadesTotal)} u.`,
+      subtitle: `${unidades(items?.actual)} ítems · vs ${unidades(unidadesAnterior)} u. y ${unidades(items?.anterior)} ítems`,
+      percentageChange: variacion(unidadesTotal, unidadesAnterior) ?? undefined,
+      nota: "Unidades vendidas y productos distintos (un producto que vende por Full y Colecta cuenta una vez).",
+      icon: <IconPackages />,
+      onClick: () => setDesglose("unidades"),
+    },
+    {
+      title: "Margen después de todo",
+      value: formatoMonto(margen),
+      subtitle: `${formatoPorcentaje(margenPct)} de la venta · vs ${formatoMonto(margenAnterior)} (${formatoPorcentaje(margenPctAnterior)})`,
+      percentageChange: variacion(margen, margenAnterior) ?? undefined,
+      nota: "Venta − comisión − envío − costo de los productos (costo promedio de SAP), todo sin IVA.",
       icon: <IconPigMoney />,
+      onClick: () => setDesglose("dinero"),
     },
   ];
 
@@ -155,8 +156,8 @@ export default function VentasMercadoLibre() {
 
         <Grid container spacing={2}>
           {tarjetas.map((t) => (
-            <Grid item xs={6} sm={6} md={4} xl={2} key={t.title}>
-              <MetricCard {...t} cargando={resumen.cargando} />
+            <Grid item xs={12} sm={4} key={t.title}>
+              <MetricCard {...t} cargando={resumen.cargando} onClick={resumen.datos ? t.onClick : undefined} />
             </Grid>
           ))}
 
@@ -255,6 +256,17 @@ export default function VentasMercadoLibre() {
           </Grid>
         </Grid>
       </Box>
+      {desglose && resumen.datos && detalle ? (
+        <DesgloseMl
+          vista={desglose}
+          resumen={resumen.datos}
+          total={detalle}
+          etiquetaPeriodo={etiquetaRango(rango.fechaInicio, rango.fechaFin)}
+          onCerrar={() => setDesglose(null)}
+        />
+      ) : (
+        <></>
+      )}
     </PageContainer>
   );
 }

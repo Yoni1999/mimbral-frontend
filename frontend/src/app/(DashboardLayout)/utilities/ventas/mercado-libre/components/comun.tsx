@@ -33,6 +33,15 @@ export interface Totales {
   coberturaComision?: number | null;
   coberturaEnvio?: number | null;
   comisionEstimada?: boolean;
+  /** Productos distintos vendidos. */
+  items?: number;
+  /** Costo promedio de SAP × unidades (sin IVA; el par lleva el mismo número en los dos lados). */
+  costo?: Par;
+  /** Venta − comisión − envío − costo, sin IVA, de las filas con costo. */
+  margen?: Par;
+  /** Venta de las filas con costo (base del % de margen). */
+  ventaConCosto?: Par;
+  coberturaCosto?: number | null;
 }
 
 export interface ResumenMl {
@@ -42,6 +51,8 @@ export interface ResumenMl {
   estimaciones: boolean;
   actual: Record<TipoEnvio | "sin_dato", Totales>;
   anterior: Record<TipoEnvio | "sin_dato", Totales>;
+  /** Productos distintos del total (un SKU en Full y Colecta cuenta una vez). */
+  items?: { actual: number; anterior: number };
   tendencia: { fecha: string; tipo: TipoEnvio; venta: Par; unidades: number }[];
 }
 
