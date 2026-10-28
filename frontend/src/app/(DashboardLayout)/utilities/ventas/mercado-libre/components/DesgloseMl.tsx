@@ -53,7 +53,7 @@ export default function DesgloseMl({ vista, resumen, total, etiquetaPeriodo, onC
   );
 
   /** Una fila de la cascada: el monto y su % de la venta. */
-  const fila = (texto: string, valor: (t: Totales) => number | null, { signo = "", fuerte = false, ayuda = "" } = {}) => (
+  const fila = (texto: string, valor: (t: Totales) => number | null, { signo = "", fuerte = false, ayuda = "", sinPct = false } = {}) => (
     <TableRow sx={fuerte ? { "& .MuiTableCell-body": { bgcolor: tinta.fondoSuave, fontWeight: 750 } } : undefined}>
       <TableCell sx={{ fontWeight: fuerte ? 750 : 600 }} title={ayuda}>
         {signo && <Box component="span" sx={{ color: tinta.tenue, mr: 0.5 }}>{signo}</Box>}
@@ -69,7 +69,7 @@ export default function DesgloseMl({ vista, resumen, total, etiquetaPeriodo, onC
             ) : (
               <Box component="span" sx={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end" }}>
                 <span>{formatoPesos(v)}</span>
-                {texto !== "Venta" && venta > 0 && (
+                {!sinPct && venta > 0 && (
                   <Box component="span" sx={{ fontSize: 10.5, color: tinta.tenue, fontWeight: 500 }}>{formatoPorcentaje((v / venta) * 100)}</Box>
                 )}
               </Box>
@@ -108,7 +108,22 @@ export default function DesgloseMl({ vista, resumen, total, etiquetaPeriodo, onC
             <TableBody>
               {vista === "dinero" ? (
                 <>
-                  {fila("Venta", (t) => n(t?.venta.neto))}
+                  {/* Lo que ML informa sin producto: suma a la venta total pero no tiene comisión, envío ni costo. */}
+                  {n(sinDato?.venta.neto) !== 0 && (
+                    <>
+                      {fila("Venta total Mercado Libre", (t) => (t === total ? n(total.venta.neto) + n(sinDato.venta.neto) : n(t?.venta.neto)), {
+                        fuerte: true,
+                        sinPct: true,
+                        ayuda: "La cifra de la tarjeta: todo lo que informa ML.",
+                      })}
+                      {fila("Sin detalle de producto", (t) => (t === total ? n(sinDato.venta.neto) : null), {
+                        signo: "−",
+                        sinPct: true,
+                        ayuda: "Ventas que ML informa sin Full y que no están en mercadolibre-oms: sin producto ni tipo de envío, no se les puede calcular comisión, envío ni costo.",
+                      })}
+                    </>
+                  )}
+                  {fila(n(sinDato?.venta.neto) !== 0 ? "Venta con producto" : "Venta", (t) => n(t?.venta.neto), { signo: n(sinDato?.venta.neto) !== 0 ? "=" : "", sinPct: true })}
                   {fila("Comisión de ML", (t) => n(t?.comision.neto), { signo: "−", ayuda: "Colecta y Flex: comisión real de cada orden. Full: estimada con la publicación." })}
                   {fila("Envío", (t) => (t?.envio.neto == null ? null : n(t.envio.neto)), {
                     signo: "−",
@@ -124,7 +139,13 @@ export default function DesgloseMl({ vista, resumen, total, etiquetaPeriodo, onC
               ) : (
                 <>
                   {[
-                    { texto: "Unidades", v: (t: Totales) => t?.unidades },
+                    ...(n(sinDato?.unidades)
+                      ? [
+                          { texto: "Unidades totales Mercado Libre", v: (t: Totales) => (t === total ? n(total.unidades) + n(sinDato.unidades) : t?.unidades) },
+                          { texto: "Unidades sin detalle de producto", v: (t: Totales) => (t === total ? sinDato.unidades : null) },
+                        ]
+                      : []),
+                    { texto: n(sinDato?.unidades) ? "Unidades con producto" : "Unidades", v: (t: Totales) => t?.unidades },
                     { texto: "Productos distintos", v: (t: Totales, total?: boolean) => (total ? resumen.items?.actual ?? t?.items : t?.items) },
                     { texto: "Órdenes", v: (t: Totales) => t?.ordenes },
                   ].map((r) => (
@@ -148,12 +169,12 @@ export default function DesgloseMl({ vista, resumen, total, etiquetaPeriodo, onC
             <>
               Margen = venta − comisión − envío − costo, sin IVA.
               {cobertura < 0.995 ? ` Solo el ${formatoPorcentaje(cobertura * 100)} de la venta tiene costo en SAP; el resto no entra en el margen.` : ""}
-              {n(sinDato?.venta.neto) ? ` No incluye ${formatoPesos(sinDato.venta.neto)} que ML informa sin detalle de producto.` : ""}
+              {n(sinDato?.venta.neto) ? ` Comisión, envío, costo y margen son de la venta con producto: los ${formatoPesos(sinDato.venta.neto)} sin detalle no tienen producto ni tipo de envío.` : ""}
             </>
           ) : (
             <>
               Un producto que vende por Full y por Colecta cuenta una vez en el total. En Full, las órdenes son por producto y día.
-              {n(sinDato?.unidades) ? ` No incluye ${unidades(sinDato.unidades)} unidades que ML informa sin detalle de producto.` : ""}
+              {n(sinDato?.unidades) ? ` Las unidades sin detalle no tienen producto ni tipo de envío.` : ""}
             </>
           )}
         </Typography>
