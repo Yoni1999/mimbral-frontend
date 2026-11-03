@@ -6,6 +6,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 import { useAuthLogin } from "@/modules/auth/hooks/useAuthLogin";
 import styles from "./AuthLogin.module.css";
+import { MANTENCION_ACTIVA, MANTENCION_MENSAJE, MANTENCION_TITULO } from "./mantencion";
 
 const LOGOUT_REASON_KEY = "authLogoutReason";
 
@@ -56,7 +57,7 @@ const AuthLogin = () => {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || MANTENCION_ACTIVA) return;
     void handleLogin();
   };
 
@@ -71,7 +72,15 @@ const AuthLogin = () => {
           <p className={styles.brandTitle}>Análisis 360</p>
         </div>
 
-        <form className={styles.card} onSubmit={onSubmit}>
+        <div className={styles.cardWrap}>
+        {MANTENCION_ACTIVA && (
+          <div className={styles.maintenanceOverlay} role="alert">
+            <p className={styles.maintenanceTitle}>{MANTENCION_TITULO}</p>
+            <p className={styles.maintenanceText}>{MANTENCION_MENSAJE}</p>
+          </div>
+        )}
+        <form className={styles.card} onSubmit={onSubmit} aria-hidden={MANTENCION_ACTIVA || undefined}>
+          <fieldset disabled={MANTENCION_ACTIVA} className={styles.fieldsetReset}>
           <h2 className={styles.cardHeading}>Inicia sesión con tu cuenta</h2>
 
           {motivoLogout && (
@@ -170,7 +179,9 @@ const AuthLogin = () => {
               Olvidé mi contraseña
             </Link>
           </div>
+          </fieldset>
         </form>
+        </div>
       </div>
     </div>
   );

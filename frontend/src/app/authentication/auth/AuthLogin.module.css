@@ -365,3 +365,46 @@
     text-align: center;
   }
 }
+
+/* Aviso de mantención (ver mantencion.ts): tapa el cuadro de login. */
+.cardWrap {
+  position: relative;
+}
+
+.fieldsetReset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.maintenanceOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  text-align: center;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(4px);
+  border: 2px solid #f59e0b;
+}
+
+.maintenanceTitle {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #b45309;
+}
+
+.maintenanceText {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #334155;
+}
