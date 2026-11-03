@@ -7,6 +7,6 @@
  */
 export const MANTENCION_ACTIVA = true;
 
-export const MANTENCION_TITULO = "Plataforma en mantención";
+export const MANTENCION_TITULO = "Plataforma bloqueada";
 export const MANTENCION_MENSAJE =
-  "Estamos realizando trabajos de mantención. El ingreso está deshabilitado temporalmente; vuelve a intentarlo más tarde.";
+  "El ingreso a la plataforma está deshabilitado temporalmente.";
