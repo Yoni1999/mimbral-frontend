@@ -31,6 +31,7 @@ const customLabels: Record<string, string> = {
   sugerencias: "Sugerencias",
   inicio: "Dashboard",
   "analisis-producto1.1": "Análisis por Producto",
+  "grupo-skus": "Grupo de SKUs",
   metas: "Administrador de Metas",
   periodos: "Periodos",
   listado: "Metas",

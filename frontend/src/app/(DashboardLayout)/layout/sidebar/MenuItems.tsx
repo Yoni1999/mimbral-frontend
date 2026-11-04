@@ -30,6 +30,7 @@ import {
   IconArrowsExchange,
   IconTag,
   IconArrowBackUp,
+  IconStack2,
 } from "@tabler/icons-react";
 
 export type Pagina = {
@@ -76,7 +77,21 @@ export const MODULOS: Modulo[] = [
     ],
   },
   { id: "categorias", titulo: "Categorías", icon: IconCategory2, href: "/utilities/analisis-categoria" },
-  { id: "productos", titulo: "Productos", icon: IconPackage, href: "/utilities/analisis-producto1.1" },
+  {
+    id: "productos",
+    titulo: "Productos",
+    descripcion: "Un producto en detalle, o un grupo de hasta 100 SKUs comparados",
+    icon: IconPackage,
+    grupos: [
+      {
+        titulo: "",
+        paginas: [
+          { titulo: "Por SKU", href: "/utilities/analisis-producto1.1", icon: IconPackage },
+          { titulo: "Grupo de SKUs", href: "/utilities/grupo-skus", icon: IconStack2 },
+        ],
+      },
+    ],
+  },
   {
     id: "metas",
     titulo: "Metas",
