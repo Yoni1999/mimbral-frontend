@@ -5,7 +5,7 @@
  * tapado por el aviso y no se puede ingresar. Para quitarlo basta con
  * cambiarlo a `false` (o borrar este archivo y sus dos usos en AuthLogin.tsx).
  */
-export const MANTENCION_ACTIVA = true;
+export const MANTENCION_ACTIVA = false;
 
 export const MANTENCION_TITULO = "Plataforma bloqueada";
 export const MANTENCION_MENSAJE =
