@@ -128,6 +128,8 @@ export interface MesProducto {
 export interface RespuestaGrupo {
   periodo: { inicio: string; fin: string; anterior: { inicio: string; fin: string } | null; modoComparacion: string };
   skus: string[];
+  /** El flete (701001008) venía en la lista: no cuenta como venta, igual que en Ventas. */
+  fleteExcluido?: boolean;
   noEncontrados: string[];
   resumen: ResumenGrupo;
   canales: (CanalProducto & { margen?: number })[];

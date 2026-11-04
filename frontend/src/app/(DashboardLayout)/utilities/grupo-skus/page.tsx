@@ -15,7 +15,8 @@ import {
   IconStack2,
 } from "@tabler/icons-react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
-import MetricCard from "@/app/(DashboardLayout)/utilities/ventas/components/MetricCard";
+import MetricCard, { notaSinNc } from "@/app/(DashboardLayout)/utilities/ventas/components/MetricCard";
+import { useDetalleTarjetas } from "@/app/(DashboardLayout)/utilities/ventas/components/detalle/useDetalleTarjetas";
 import ListaBarras from "@/app/(DashboardLayout)/utilities/ventas/components/ListaBarras";
 import TendenciaCanales, { puntosDeTendencia } from "@/app/(DashboardLayout)/utilities/ventas/components/TendenciaCanales";
 import { conPeriodoRapido, etiquetaRango, presetsDeHoy, resolverPeriodoRapido } from "@/app/(DashboardLayout)/utilities/ventas/components/RangosRapidos";
@@ -152,6 +153,16 @@ const GrupoSkusPage: React.FC = () => {
     },
   ];
 
+  // Detalle de las tarjetas (documentos, NC, productos), acotado al grupo.
+  const detalleTarjetas = useDetalleTarjetas(
+    { fechaInicio: filtros.fechaInicio, fechaFin: filtros.fechaFin, canal: filtros.canal, skus: listaSkus },
+    [
+      filtros.temporada || etiquetaRango(filtros.fechaInicio, filtros.fechaFin),
+      `Grupo de ${skus.length} SKUs`,
+      filtros.canal ? `Canal: ${CANALES.find((c) => c.clave === filtros.canal)?.nombre ?? filtros.canal}` : "Todos los canales",
+    ]
+  );
+
   const canales = (datos?.canales ?? [])
     .filter((c) => c.venta !== 0)
     .map((c) => ({ ...c, ...(CANALES.find((x) => x.clave === c.canal) ?? { nombre: c.canal, color: tinta.acento }) }))
@@ -225,6 +236,11 @@ const GrupoSkusPage: React.FC = () => {
           No se pudo calcular el grupo: {(grupo.error as Error).message}
         </Alert>
       ) : null}
+      {datos?.fleteExcluido && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          El flete (701001008) está en la lista: no se cuenta como venta, igual que en el resto de los reportes de ventas.
+        </Alert>
+      )}
       {!!datos?.noEncontrados.length && (
         <Alert severity="warning" sx={{ mb: 2 }} action={<Button color="inherit" size="small" onClick={() => setEditor(true)}>Corregir</Button>}>
           {datos.noEncontrados.length === 1 ? "Este SKU no existe" : `Estos ${datos.noEncontrados.length} SKUs no existen`} en el catálogo de SAP:{" "}
@@ -244,7 +260,7 @@ const GrupoSkusPage: React.FC = () => {
           <Grid container spacing={2} sx={{ mb: 2 }}>
             {tarjetas.map((t) => (
               <Grid item xs={6} sm={6} md={3} key={t.title}>
-                <MetricCard {...t} cargando={cargando} />
+                <MetricCard {...t} cargando={cargando} nota={notaSinNc(t.title, true)} onClick={detalleTarjetas.alPulsar(t.title)} />
               </Grid>
             ))}
           </Grid>
@@ -309,6 +325,7 @@ const GrupoSkusPage: React.FC = () => {
         />
         {cuerpo}
       </Box>
+      {detalleTarjetas.ventana}
       <EditorSkus
         abierto={editor}
         skus={skus}

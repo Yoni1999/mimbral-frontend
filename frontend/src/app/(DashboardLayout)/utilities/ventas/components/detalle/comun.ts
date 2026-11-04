@@ -129,6 +129,7 @@ const DETALLE_DE_TARJETA: Record<string, TipoDetalle> = {
   "Notas de crédito": "notas",
   "Ítems vendidos": "productos",
   "Unidades vendidas": "productos",
+  "SKUs con venta": "productos",
   "Margen de ventas": "margen",
 };
 
