@@ -231,7 +231,7 @@ export function parametrosPeriodo(f: FiltrosPeriodo): Record<string, string> {
 }
 
 /** URL de un endpoint de /api/mercado-libre/categorias-analisis. */
-export const urlCat = (endpoint: "comparativo" | "evolucion" | "productos" | "mercado", filtros: Record<string, string | number | null | undefined>) => {
+export const urlCat = (endpoint: "comparativo" | "evolucion" | "productos" | "mercado" | "publicaciones", filtros: Record<string, string | number | null | undefined>) => {
   const q = new URLSearchParams(
     Object.entries(filtros)
       .filter(([, v]) => v !== undefined && v !== null && v !== "")
