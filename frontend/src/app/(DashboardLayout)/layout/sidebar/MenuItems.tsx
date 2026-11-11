@@ -19,6 +19,7 @@ import {
   IconPackageOff,
   IconBulb,
   IconSettings,
+  IconStar,
   IconDatabase,
   IconMessage2,
   IconShoppingBag,
@@ -192,7 +193,7 @@ export const MODULOS: Modulo[] = [
   {
     id: "ajustes",
     titulo: "Ajustes",
-    descripcion: "Base de datos y sugerencias recibidas",
+    descripcion: "Base de datos, sugerencias recibidas y nota de Falabella",
     icon: IconSettings,
     grupos: [
       {
@@ -200,6 +201,7 @@ export const MODULOS: Modulo[] = [
         paginas: [
           { titulo: "Actualizar base de datos", href: "/configuracion", icon: IconDatabase },
           { titulo: "Sugerencias recibidas", href: "/configuracion/sugerencias", icon: IconMessage2 },
+          { titulo: "Nota de Falabella", href: "/configuracion/falabella", icon: IconStar },
         ],
       },
     ],
