@@ -316,11 +316,9 @@ export function SelectorPeriodo({ filtros, setFiltros, contexto }: { filtros: Fi
             rangos={opciones.map((o) => ({ label: o.label, range: [aFecha(o.rango.desde), aFecha(o.rango.hasta)] as const }))}
           />
         </Box>
-        <Typography sx={{ fontSize: 12.5, color: tinta.secundaria, pb: 0.75, flex: 1, minWidth: 240 }}>
-          <b>{n} {n === 1 ? "día" : "días"}</b>: {etiquetaPeriodo(actual)} contra {etiquetaPeriodo(comparacion)}.
-          {" "}En «Comparar con», un clic en el calendario marca los {n} {n === 1 ? "día" : "días"} desde ese día.
-          {datosDesde ? ` Hay ventas guardadas desde el ${fecha(datosDesde)}` : ""}
-          {contexto?.datosAl ? ` hasta el ${fecha(contexto.datosAl)}.` : datosDesde ? "." : ""}
+        <Typography sx={{ fontSize: 12.5, color: tinta.secundaria, pb: 0.75, flex: 1, minWidth: 200 }}>
+          <b>{n} {n === 1 ? "día" : "días"}</b>
+          {datosDesde ? ` · datos desde el ${fecha(datosDesde)}` : ""}
         </Typography>
       </Box>
     </Box>
