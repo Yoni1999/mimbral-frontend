@@ -11,7 +11,7 @@ import MetricCard from "../../ventas/components/MetricCard";
 import SeccionTitulo from "../../ventas/components/SeccionTitulo";
 import { Panel, Pildoras, cifraSx, formatoMonto, formatoPorcentaje, tinta } from "../../ventas/components/estilo";
 import { SelectorPeriodo, mensajeError, n, nombreMes, parametrosPeriodo, pct, pp, unidades } from "../../categorias/mercado-libre/components/comun";
-import { AvisosFal, BarraTiposFal, BloqueFal, ComparativoFal, EvolucionFal, FiltroTipo, LeyendaTiposFal, OPCIONES_TIPO, TablaCategoriasFal, rutaProductos, urlFal, usePeriodoFal, useTipoFal } from "../components/comun";
+import { AvisosFal, BarraTiposFal, BloqueFal, ComparativoFal, EvolucionFal, FiltroTipo, LeyendaTiposFal, OPCIONES_TIPO, TablaCategoriasFal, pesos, rutaProductos, urlFal, usePeriodoFal, useTipoFal } from "../components/comun";
 
 type Paso = { id: string; nombre: string };
 
@@ -41,7 +41,7 @@ export default function InformeFalabella() {
     { title: "Venta neta", value: formatoMonto(a?.venta.neto), subtitle: `Comparación: ${formatoMonto(c?.venta.neto)}`, percentageChange: pct(t?.variacion.venta) ?? undefined, icon: <IconCash size={18} /> },
     { title: "Unidades", value: unidades(a?.unidades), subtitle: `${unidades(a?.ordenes)} órdenes · ${unidades(a?.canceladas)} canceladas · ${unidades(a?.devueltas)} devueltas`, percentageChange: pct(t?.variacion.unidades) ?? undefined, icon: <IconPackages size={18} /> },
     { title: "Comisión Falabella", value: formatoMonto(a?.comision.neto), subtitle: `${porcentaje(parte(a, "comision"))} de la venta`, icon: <IconShoppingCart size={18} /> },
-    { title: "Despacho", value: formatoMonto(a?.envio.neto), subtitle: `${porcentaje(parte(a, "envio"))} de la venta · ${a?.unidades ? formatoMonto(n(a.envio.neto) / a.unidades) : "—"} por unidad`, icon: <IconTruckDelivery size={18} /> },
+    { title: "Despacho", value: formatoMonto(a?.envio.neto), subtitle: `${porcentaje(parte(a, "envio"))} de la venta · ${a?.unidades ? pesos(n(a.envio.neto) / a.unidades) : "—"} por unidad`, icon: <IconTruckDelivery size={18} /> },
     { title: "Margen estimado", value: formatoMonto(a?.margen), subtitle: `Comparación: ${formatoMonto(c?.margen)}`, percentageChange: pct(t?.variacion.margen) ?? undefined, icon: <IconReceipt size={18} /> },
     { title: "Margen %", value: porcentaje(a?.margenPct), subtitle: `Comparación: ${porcentaje(c?.margenPct)}`, percentageChange: pp(t?.variacion.margenPuntos) ?? undefined, unidadVariacion: "pp" as const, icon: <IconPercentage size={18} /> },
   ];
@@ -56,7 +56,7 @@ export default function InformeFalabella() {
       <TableCell align="right" sx={{ ...celda, ...cifraSx, fontWeight: 700 }}>{formatoMonto(b?.venta.neto)}</TableCell>
       <TableCell align="right" sx={{ ...celda, ...cifraSx }}>{unidades(b?.unidades)}</TableCell>
       <TableCell align="right" sx={{ ...celda, ...cifraSx }}>{porcentaje(parte(b, "comision"))}</TableCell>
-      <TableCell align="right" sx={{ ...celda, ...cifraSx }}>{b?.unidades ? formatoMonto(n(b.envio.neto) / b.unidades) : "—"}</TableCell>
+      <TableCell align="right" sx={{ ...celda, ...cifraSx }}>{b?.unidades ? pesos(n(b.envio.neto) / b.unidades) : "—"}</TableCell>
       <TableCell align="right" sx={{ ...celda, ...cifraSx, fontWeight: 700 }}>
         {porcentaje(b?.margenPct)}
         <Box component="span" sx={{ display: "block", fontSize: 11.5, fontWeight: 500, color: tinta.secundaria }}>{formatoMonto(b?.margen)}</Box>

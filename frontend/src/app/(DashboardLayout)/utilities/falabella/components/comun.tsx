@@ -118,7 +118,7 @@ export const OPCIONES_TIPO: { valor: FiltroTipo; texto: string }[] = [
 ];
 
 /** URL de un endpoint de /api/falabella. */
-export const urlFal = (endpoint: "comparativo" | "productos" | "evolucion", filtros: Record<string, string | number | null | undefined>) => {
+export const urlFal = (endpoint: "comparativo" | "productos" | "evolucion" | "devoluciones" | "publicaciones" | "stock-full", filtros: Record<string, string | number | null | undefined>) => {
   const q = new URLSearchParams(
     Object.entries(filtros)
       .filter(([, v]) => v !== undefined && v !== null && v !== "" && v !== "todos")
@@ -126,6 +126,9 @@ export const urlFal = (endpoint: "comparativo" | "productos" | "evolucion", filt
   ).toString();
   return `${BACKEND_URL}/api/falabella/${endpoint}?${q}`;
 };
+
+/** Monto en pesos exactos (para valores por unidad, donde «$5 mil» esconde la diferencia). */
+export const pesos = (v: number | null | undefined) => (v == null ? "—" : `${v < 0 ? "−" : ""}$${Math.abs(Math.round(v)).toLocaleString("es-CL")}`);
 
 export const rutaProductos = (categoria?: string | null) =>
   `/utilities/falabella/productos${categoria ? `?${new URLSearchParams({ categoria }).toString()}` : ""}`;
@@ -301,7 +304,7 @@ export function TablaProductosFal({ filas, cargando, nombreExcel, orden = "venta
       celda: (f) =>
         f.actual.unidades ? (
           <Tooltip title={f.pesoFacturable == null ? "Falabella no tiene el peso del paquete: se usa el tramo más liviano" : `Se cobra por ${f.pesoFacturable.toLocaleString("es-CL", { maximumFractionDigits: 1 })} kg (el mayor entre peso y volumen)`} arrow placement="top">
-            <Box component="span" sx={cifraSx}>{formatoMonto(n(f.actual.envio.neto) / f.actual.unidades)}</Box>
+            <Box component="span" sx={cifraSx}>{pesos(n(f.actual.envio.neto) / f.actual.unidades)}</Box>
           </Tooltip>
         ) : (
           "—"

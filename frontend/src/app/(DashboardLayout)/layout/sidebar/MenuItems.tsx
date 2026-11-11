@@ -165,6 +165,17 @@ export const MODULOS: Modulo[] = [
               { titulo: "Devoluciones y cancelaciones", href: "/informes/mercado-libre/devoluciones", icon: IconArrowBackUp },
             ],
           },
+          {
+            titulo: "Falabella",
+            href: "/informes/falabella",
+            icon: IconShoppingBag,
+            hijos: [
+              { titulo: "Precio y margen de hoy", href: "/informes/falabella/publicaciones", icon: IconTag },
+              { titulo: "Publicaciones con problemas", href: "/informes/falabella/publicaciones?vista=problemas", icon: IconAlertCircle },
+              { titulo: "Stock Full y reposición", href: "/informes/falabella/stock-full", icon: IconPackageImport },
+              { titulo: "Devoluciones y cancelaciones", href: "/informes/falabella/devoluciones", icon: IconArrowBackUp },
+            ],
+          },
         ],
       },
       {
