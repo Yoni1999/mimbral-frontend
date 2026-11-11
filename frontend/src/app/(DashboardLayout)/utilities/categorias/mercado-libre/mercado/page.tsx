@@ -36,6 +36,8 @@ interface Publicacion {
   venta30: Par;
   publicadaEl: string | null;
   url: string | null;
+  /** Foto del producto (portada de su ficha). */
+  imagen?: string | null;
 }
 interface Publicaciones {
   cantidad: number;
@@ -63,6 +65,22 @@ function Chip({ texto, tono }: { texto: string; tono: { color: string; fondo: st
   );
 }
 
+/** Foto del producto en chico; al pasar el cursor se ve en grande. Sin foto, un recuadro vacío del mismo tamaño. */
+function Miniatura({ url, titulo }: { url?: string | null; titulo: string }) {
+  const [rota, setRota] = React.useState(false);
+  const caja = { width: 44, height: 44, flexShrink: 0, borderRadius: "8px", border: `1px solid ${tinta.borde}`, bgcolor: "#fff" } as const;
+  if (!url || rota) return <Box sx={{ ...caja, bgcolor: tinta.fondoSuave }} aria-hidden />;
+  return (
+    <Tooltip
+      arrow
+      placement="right"
+      title={<Box component="img" src={url} alt={titulo} sx={{ display: "block", width: 240, height: 240, objectFit: "contain", bgcolor: "#fff", borderRadius: "6px" }} />}
+    >
+      <Box component="img" src={url} alt={titulo} loading="lazy" onError={() => setRota(true)} sx={{ ...caja, objectFit: "contain" }} />
+    </Tooltip>
+  );
+}
+
 const COLUMNAS: ColumnaInforme<Publicacion>[] = [
   {
     clave: "titulo",
@@ -71,7 +89,9 @@ const COLUMNAS: ColumnaInforme<Publicacion>[] = [
     valor: (f) => f.titulo,
     excel: "Título",
     celda: (f) => (
-      <Box sx={{ minWidth: 0 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
+        <Miniatura url={f.imagen} titulo={f.titulo || f.nombre || f.itemId} />
+        <Box sx={{ minWidth: 0, flex: 1 }}>
         <TextoCelda texto={f.titulo || f.nombre || f.itemId} />
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: 11.5 }}>
           {f.url ? (
@@ -83,6 +103,7 @@ const COLUMNAS: ColumnaInforme<Publicacion>[] = [
           )}
           {f.catalogo && <Box component="span" sx={{ color: tinta.tenue }}>· catálogo</Box>}
           {f.variaciones > 1 && <Box component="span" sx={{ color: tinta.tenue }}>· {f.variaciones} variaciones</Box>}
+        </Box>
         </Box>
       </Box>
     ),
@@ -313,6 +334,7 @@ export default function MercadoMl() {
             { titulo: "Catálogo", valor: (f) => (f.catalogo ? "Sí" : "No") },
             { titulo: "Publicada el", valor: (f) => f.publicadaEl },
             { titulo: "Enlace", valor: (f) => f.url },
+            { titulo: "Imagen", valor: (f) => f.imagen },
           ]}
           nota={
             <Tooltip arrow title="La venta y las unidades de 30 días son del producto (SKU), sumando todas sus publicaciones. Precio y stock son de la última foto del catálogo.">
