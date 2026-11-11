@@ -39,6 +39,8 @@ export interface BloqueFal {
   canceladas: number;
   devueltas: number;
   devuelto: Par;
+  /** Lo que pagaron los clientes tras descuentos, por lo no cancelado: comparable con «Ventas brutas» de Seller Center. */
+  pagadoClientes?: Par;
   porTipo: Record<TipoFal, Par>;
 }
 
