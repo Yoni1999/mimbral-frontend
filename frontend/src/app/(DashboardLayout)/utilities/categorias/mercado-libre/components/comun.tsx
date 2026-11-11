@@ -57,7 +57,7 @@ export interface Contexto {
   datosDesde: string | null;
   datosAl: string | null;
   comparacionParcial: boolean;
-  estimaciones?: boolean;
+  estimaciones?: unknown;
 }
 
 export interface FilaCategoria {

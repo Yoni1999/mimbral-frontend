@@ -61,7 +61,7 @@ export const MODULOS: Modulo[] = [
   {
     id: "ventas",
     titulo: "Ventas",
-    descripcion: "Cómo vamos vendiendo, por canal, por vendedor y en Mercado Libre",
+    descripcion: "Cómo vamos vendiendo, por canal, por vendedor, en Mercado Libre y en Falabella",
     icon: IconTrendingUp,
     grupos: [
       {
@@ -76,12 +76,16 @@ export const MODULOS: Modulo[] = [
         titulo: "Mercado Libre",
         paginas: [{ titulo: "Datos de ventas", href: "/utilities/ventas/mercado-libre", icon: IconShoppingBag }],
       },
+      {
+        titulo: "Falabella",
+        paginas: [{ titulo: "Productos y rentabilidad", href: "/utilities/falabella/productos", icon: IconShoppingBag }],
+      },
     ],
   },
   {
     id: "categorias",
     titulo: "Categorías",
-    descripcion: "Venta, margen y crecimiento por categoría: las de Mimbral y las de Mercado Libre",
+    descripcion: "Venta, margen y crecimiento por categoría: las de Mimbral, Mercado Libre y Falabella",
     icon: IconCategory2,
     rutasExtra: ["/utilities/categorias/mercado-libre"],
     grupos: [
@@ -97,6 +101,10 @@ export const MODULOS: Modulo[] = [
           { titulo: "Mercado y tendencias", href: "/utilities/categorias/mercado-libre/mercado", icon: IconTrophy },
           // La ficha de una categoría no va en el menú: se llega desde el informe.
         ],
+      },
+      {
+        titulo: "Falabella",
+        paginas: [{ titulo: "Informe de categorías", href: "/utilities/falabella/informe", icon: IconChartBar }],
       },
     ],
   },
