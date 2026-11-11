@@ -366,14 +366,51 @@ export function MontoCorto({ par, fuerte = false, color }: { par: Par; fuerte?: 
   );
 }
 
-/** Margen % con la diferencia en puntos. */
-export function MargenCelda({ actual, puntos }: { actual: number | null; puntos: number | null }) {
-  if (actual == null) return <Box component="span" sx={{ color: tinta.tenue }}>—</Box>;
+/**
+ * Margen % del período y, al lado, cuánto cambió frente a la comparación (en
+ * puntos). Cada parte explica qué es al pasar el cursor.
+ */
+export function MargenCelda({ actual, puntos, anterior }: { actual: number | null; puntos: number | null; anterior?: number | null }) {
+  if (actual == null) {
+    return (
+      <Tooltip title="Sin margen: el producto no tiene costo en SAP." arrow placement="top">
+        <Box component="span" sx={{ color: tinta.tenue }}>—</Box>
+      </Tooltip>
+    );
+  }
   const tono = actual < 0 ? estado.mal.color : actual < 0.15 ? "#b54708" : estado.bien.color;
+  const cambio = pp(puntos);
+  // Un cambio que se redondea a 0,0 se muestra como "sin cambio", no como subida o baja.
+  const cambioVisible = cambio == null ? null : Math.abs(cambio) < 0.05 ? 0 : cambio;
   return (
     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.75 }}>
-      <Box component="span" sx={{ fontWeight: 700, color: tono, ...cifraSx }}>{formatoPorcentaje(actual * 100)}</Box>
-      <ChipVariacion valor={pp(puntos)} unidad="pp" />
+      <Tooltip
+        arrow
+        placement="top"
+        title={`Margen del período: ${formatoPorcentaje(actual * 100)} de la venta neta. Es estimado: venta − comisión − envío − costo promedio de SAP de hoy.`}
+      >
+        <Box component="span" sx={{ fontWeight: 700, color: tono, ...cifraSx }}>{formatoPorcentaje(actual * 100)}</Box>
+      </Tooltip>
+      {cambioVisible != null && (
+        <Tooltip
+          arrow
+          placement="top"
+          title={
+            <>
+              Esto no es el margen: es cuánto cambió el margen % frente al período de comparación
+              {anterior != null ? ` (antes ${formatoPorcentaje(anterior * 100)}, ahora ${formatoPorcentaje(actual * 100)})` : ""}, en puntos porcentuales.
+              {cambioVisible === 0 ? " Sin cambio." : ""}
+              <Box component="span" sx={{ display: "block", mt: 0.5, opacity: 0.85 }}>
+                Como el costo y la comisión son los de hoy para los dos períodos, en un producto solo cambia si se vendió a otro precio o por otro tipo de envío.
+              </Box>
+            </>
+          }
+        >
+          <Box component="span" sx={{ display: "inline-flex" }}>
+            <ChipVariacion valor={cambioVisible} unidad="pp" />
+          </Box>
+        </Tooltip>
+      )}
     </Box>
   );
 }

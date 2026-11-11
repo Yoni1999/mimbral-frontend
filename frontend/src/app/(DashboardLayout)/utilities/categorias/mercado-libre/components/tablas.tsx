@@ -71,7 +71,7 @@ export function TablaCategorias({
     { clave: "aporte", titulo: "Aporte", ancho: 6, alinear: "right", valor: (f) => (f.aporte == null ? null : f.aporte * 100), excel: "Aporte al crecimiento %", celda: (f) => (f.aporte == null ? "—" : formatoPorcentaje(f.aporte * 100)) },
     { clave: "unid", titulo: "Unidades", ancho: 7, alinear: "right", valor: (f) => f.actual.unidades, celda: (f) => <Box sx={cifraSx}>{unidades(f.actual.unidades)}</Box> },
     { clave: "margen", titulo: "Margen $", ancho: 8, alinear: "right", valor: (f) => f.actual.margen, excel: "Margen neto estimado", celda: (f) => (f.actual.margen == null ? "—" : <MontoCorto par={{ neto: f.actual.margen, conIva: f.actual.margen }} />) },
-    { clave: "margenPct", titulo: "Margen %", ancho: 10, alinear: "right", valor: (f) => (f.actual.margenPct == null ? null : f.actual.margenPct * 100), excel: "Margen %", celda: (f) => <MargenCelda actual={f.actual.margenPct} puntos={f.variacion.margenPuntos} /> },
+    { clave: "margenPct", titulo: "Margen %", ancho: 10, alinear: "right", valor: (f) => (f.actual.margenPct == null ? null : f.actual.margenPct * 100), excel: "Margen %", celda: (f) => <MargenCelda actual={f.actual.margenPct} puntos={f.variacion.margenPuntos} anterior={f.comparacion.margenPct} /> },
     { clave: "tipos", titulo: "Full · Colecta · Flex", ancho: 7, celda: (f) => <BarraTiposCat porTipo={f.actual.porTipo} /> },
   ];
   return (
@@ -157,7 +157,7 @@ export function TablaProductosCat({
     { clave: "crec", titulo: "Crecimiento", ancho: 9, alinear: "right", valor: (f) => (f.nuevo ? 9999 : f.sinVentas ? -100 : pct(f.variacion.venta)), excel: "Crecimiento %", celda: (f) => <Crecimiento valor={f.variacion.venta} nueva={f.nuevo} sinVentas={f.sinVentas} /> },
     { clave: "dif", titulo: "Diferencia", ancho: 9, alinear: "right", valor: (f) => n(f.diferencia.neto), excel: "Diferencia neta", celda: (f) => <MontoCorto par={f.diferencia} color={n(f.diferencia.neto) < 0 ? "#b42318" : "#067647"} /> },
     { clave: "unid", titulo: "Unidades", ancho: 7, alinear: "right", valor: (f) => f.actual.unidades, celda: (f) => <Box sx={cifraSx}>{unidades(f.actual.unidades)}</Box> },
-    { clave: "margenPct", titulo: "Margen %", ancho: 10, alinear: "right", valor: (f) => (f.actual.margenPct == null ? null : f.actual.margenPct * 100), excel: "Margen %", celda: (f) => <MargenCelda actual={f.actual.margenPct} puntos={f.variacion.margenPuntos} /> },
+    { clave: "margenPct", titulo: "Margen %", ancho: 10, alinear: "right", valor: (f) => (f.actual.margenPct == null ? null : f.actual.margenPct * 100), excel: "Margen %", celda: (f) => <MargenCelda actual={f.actual.margenPct} puntos={f.variacion.margenPuntos} anterior={f.comparacion.margenPct} /> },
     { clave: "tipos", titulo: "Envío", ancho: 7, celda: (f) => <BarraTiposCat porTipo={n(f.actual.venta.neto) > 0 ? f.actual.porTipo : f.comparacion.porTipo} /> },
   ];
   return (
