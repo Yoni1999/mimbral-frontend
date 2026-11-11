@@ -52,6 +52,8 @@ export type Modulo = {
   href?: string;
   /** Módulo con submenú: sus páginas, agrupadas (un grupo sin título = lista simple). */
   grupos?: Grupo[];
+  /** Rutas del módulo que no están en el menú (p. ej. una ficha): lo mantienen marcado. */
+  rutasExtra?: string[];
 };
 
 export const MODULOS: Modulo[] = [
@@ -76,7 +78,28 @@ export const MODULOS: Modulo[] = [
       },
     ],
   },
-  { id: "categorias", titulo: "Categorías", icon: IconCategory2, href: "/utilities/analisis-categoria" },
+  {
+    id: "categorias",
+    titulo: "Categorías",
+    descripcion: "Venta, margen y crecimiento por categoría: las de Mimbral y las de Mercado Libre",
+    icon: IconCategory2,
+    rutasExtra: ["/utilities/categorias/mercado-libre"],
+    grupos: [
+      {
+        titulo: "",
+        paginas: [{ titulo: "Categorías Mimbral", href: "/utilities/analisis-categoria", icon: IconCategory2 }],
+      },
+      {
+        titulo: "Mercado Libre",
+        paginas: [
+          { titulo: "Informe de categorías", href: "/utilities/categorias/mercado-libre/informe", icon: IconChartBar },
+          { titulo: "Ganadores y perdedores", href: "/utilities/categorias/mercado-libre/ganadores", icon: IconArrowsExchange },
+          { titulo: "Mercado y tendencias", href: "/utilities/categorias/mercado-libre/mercado", icon: IconTrophy },
+          // La ficha de una categoría no va en el menú: se llega desde el informe.
+        ],
+      },
+    ],
+  },
   {
     id: "productos",
     titulo: "Productos",
@@ -182,7 +205,7 @@ export const desplegableActivo = (p: Pagina, path: string) => (p.hijos ?? []).so
 export function moduloActivo(path: string): Modulo | undefined {
   let mejor: { m: Modulo; largo: number } | undefined;
   for (const m of MODULOS) {
-    for (const href of [m.href, ...paginasDe(m).map((p) => p.href)]) {
+    for (const href of [m.href, ...paginasDe(m).map((p) => p.href), ...(m.rutasExtra ?? [])]) {
       if (href && esRutaActiva(href, path) && (!mejor || href.length > mejor.largo)) mejor = { m, largo: href.length };
     }
   }

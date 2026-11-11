@@ -135,7 +135,7 @@ export default function VentasMercadoLibre() {
 
   const irACategoria = (id: string, nombre: string) =>
     router.push(
-      `/utilities/analisis-categoria?${new URLSearchParams({ arbol: "mercadolibre", mlCategoria: id, mlNombre: nombre, fechaInicio: rango.fechaInicio, fechaFin: rango.fechaFin })}`
+      `/utilities/categorias/mercado-libre/categoria?${new URLSearchParams({ id, nombre })}`
     );
   const irAlInforme = () =>
     router.push(`/informes/mas-vendidos-mercado-libre?${new URLSearchParams({ tipo: vista.tipo, fechaInicio: rango.fechaInicio, fechaFin: rango.fechaFin })}`);
@@ -210,8 +210,8 @@ export default function VentasMercadoLibre() {
               titulo="Categorías de Mercado Libre"
               descripcion="Primer nivel del árbol de ML · pulsa una para entrar"
               accion={
-                <Button size="small" endIcon={<IconArrowRight size={14} />} onClick={() => router.push("/utilities/analisis-categoria?arbol=mercadolibre")} sx={{ textTransform: "none", fontWeight: 600 }}>
-                  Ver árbol
+                <Button size="small" endIcon={<IconArrowRight size={14} />} onClick={() => router.push("/utilities/categorias/mercado-libre/informe")} sx={{ textTransform: "none", fontWeight: 600 }}>
+                  Ver informe
                 </Button>
               }
             >
