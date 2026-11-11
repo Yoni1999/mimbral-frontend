@@ -118,7 +118,7 @@ export const OPCIONES_TIPO: { valor: FiltroTipo; texto: string }[] = [
 ];
 
 /** URL de un endpoint de /api/falabella. */
-export const urlFal = (endpoint: "comparativo" | "productos" | "evolucion" | "devoluciones" | "publicaciones" | "stock-full", filtros: Record<string, string | number | null | undefined>) => {
+export const urlFal = (endpoint: "resumen" | "comparativo" | "productos" | "evolucion" | "devoluciones" | "publicaciones" | "stock-full", filtros: Record<string, string | number | null | undefined>) => {
   const q = new URLSearchParams(
     Object.entries(filtros)
       .filter(([, v]) => v !== undefined && v !== null && v !== "" && v !== "todos")
@@ -203,7 +203,6 @@ function Crecimiento({ valor, nueva, sinVentas }: { valor: number | null; nueva?
   return <ChipVariacion valor={pct(valor)} />;
 }
 
-const margenMonto = (v: number | null) => (v == null ? "—" : <MontoCorto par={{ neto: v, conIva: v }} color={v < 0 ? "#b42318" : undefined} />);
 
 /** Categorías de Falabella en un nivel: período actual contra comparación, con sus costos. */
 export function TablaCategoriasFal({ filas, cargando, onEntrar, nombreExcel }: { filas: FilaCategoriaFal[]; cargando: boolean; onEntrar?: (f: FilaCategoriaFal) => void; nombreExcel: string }) {
@@ -238,7 +237,6 @@ export function TablaCategoriasFal({ filas, cargando, onEntrar, nombreExcel }: {
     { clave: "unid", titulo: "Unidades", ancho: 6, alinear: "right", valor: (f) => f.actual.unidades, celda: (f) => <Box sx={cifraSx}>{unidades(f.actual.unidades)}</Box> },
     { clave: "com", titulo: "Comisión", ancho: 7, alinear: "right", valor: (f) => parte(f.actual.comision, f.actual.venta), excel: "Comisión % de la venta", celda: (f) => <CeldaParte costo={f.actual.comision} venta={f.actual.venta} /> },
     { clave: "desp", titulo: "Despacho", ancho: 7, alinear: "right", valor: (f) => parte(f.actual.envio, f.actual.venta), excel: "Despacho % de la venta", celda: (f) => <CeldaParte costo={f.actual.envio} venta={f.actual.venta} /> },
-    { clave: "margen", titulo: "Margen $", ancho: 8, alinear: "right", valor: (f) => f.actual.margen, excel: "Margen neto estimado", celda: (f) => margenMonto(f.actual.margen) },
     { clave: "margenPct", titulo: "Margen %", ancho: 10, alinear: "right", valor: (f) => (f.actual.margenPct == null ? null : f.actual.margenPct * 100), excel: "Margen %", celda: (f) => <MargenCelda actual={f.actual.margenPct} puntos={f.variacion.margenPuntos} anterior={f.comparacion.margenPct} /> },
     { clave: "tipos", titulo: "Full · Normal", ancho: 8, celda: (f) => <BarraTiposFal porTipo={f.actual.porTipo} /> },
   ];
@@ -264,13 +262,13 @@ export function TablaCategoriasFal({ filas, cargando, onEntrar, nombreExcel }: {
         { titulo: "Unidades canceladas", valor: (f) => f.actual.canceladas },
         { titulo: "Unidades devueltas", valor: (f) => f.actual.devueltas },
       ]}
-      nota="Venta sin IVA; margen estimado. Pulsa una categoría para bajar de nivel."
+      nota="Venta sin IVA; margen estimado, en % de la venta. Pulsa una categoría para bajar de nivel."
       anchoMinimo={1150}
     />
   );
 }
 
-export type OrdenProductos = "venta" | "margen" | "margenPct" | "dif" | "unid";
+export type OrdenProductos = "venta" | "margenPct" | "dif" | "unid";
 
 /** Productos de Falabella: venta, costos y margen del período contra la comparación. */
 export function TablaProductosFal({ filas, cargando, nombreExcel, orden = "venta", invertido = false }: { filas: FilaProductoFal[]; cargando: boolean; nombreExcel: string; orden?: OrdenProductos; invertido?: boolean }) {
@@ -310,7 +308,6 @@ export function TablaProductosFal({ filas, cargando, nombreExcel, orden = "venta
           "—"
         ),
     },
-    { clave: "margen", titulo: "Margen $", ancho: 8, alinear: "right", valor: (f) => f.actual.margen, excel: "Margen neto estimado", celda: (f) => margenMonto(f.actual.margen) },
     { clave: "margenPct", titulo: "Margen %", ancho: 10, alinear: "right", valor: (f) => (f.actual.margenPct == null ? null : f.actual.margenPct * 100), excel: "Margen %", celda: (f) => <MargenCelda actual={f.actual.margenPct} puntos={f.variacion.margenPuntos} anterior={f.comparacion.margenPct} /> },
     { clave: "tipos", titulo: "Full · Normal", ancho: 7, celda: (f) => <BarraTiposFal porTipo={n(f.actual.venta.neto) > 0 ? f.actual.porTipo : f.comparacion.porTipo} /> },
   ];

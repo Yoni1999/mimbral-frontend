@@ -17,7 +17,7 @@ import { AvisosFal, FiltroTipo, OPCIONES_TIPO, OrdenProductos, ProductosFal, Tab
 type Vista = "vendidos" | "margen" | "menorMargen" | "suben" | "bajan";
 const VISTAS: { valor: Vista; texto: string; orden: OrdenProductos; invertido?: boolean }[] = [
   { valor: "vendidos", texto: "Más vendidos", orden: "venta" },
-  { valor: "margen", texto: "Más margen en pesos", orden: "margen" },
+  { valor: "margen", texto: "Mayor margen %", orden: "margenPct" },
   { valor: "menorMargen", texto: "Menor margen %", orden: "margenPct", invertido: true },
   { valor: "suben", texto: "Los que más suben", orden: "dif" },
   { valor: "bajan", texto: "Los que más bajan", orden: "dif", invertido: true },
@@ -61,10 +61,10 @@ function Contenido() {
             <MetricCard title="Venta neta" value={formatoMonto(venta)} subtitle="Sin canceladas ni devueltas" cargando={cargando} icon={<IconCash size={18} />} />
           </Grid>
           <Grid item xs={6} md={3}>
-            <MetricCard title="Margen estimado" value={formatoMonto(margen)} subtitle={ventaConCosto ? `${formatoPorcentaje((margen / ventaConCosto) * 100)} de la venta` : "—"} cargando={cargando} icon={<IconReceipt size={18} />} />
+            <MetricCard title="Margen estimado" value={ventaConCosto ? formatoPorcentaje((margen / ventaConCosto) * 100) : "—"} subtitle="Sobre la venta con costo en SAP" cargando={cargando} icon={<IconReceipt size={18} />} />
           </Grid>
           <Grid item xs={6} md={3}>
-            <MetricCard title="Productos que pierden plata" value={unidades(bajoCero.length)} subtitle={`${formatoMonto(bajoCero.reduce((s, f) => s + n(f.actual.margen), 0))} de margen`} cargando={cargando} masEsMejor={false} icon={<IconPercentage size={18} />} />
+            <MetricCard title="Productos que pierden plata" value={unidades(bajoCero.length)} subtitle="Margen negativo en el período" cargando={cargando} masEsMejor={false} icon={<IconPercentage size={18} />} />
           </Grid>
         </Grid>
 

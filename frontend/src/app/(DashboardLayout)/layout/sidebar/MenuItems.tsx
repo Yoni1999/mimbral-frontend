@@ -79,7 +79,7 @@ export const MODULOS: Modulo[] = [
       },
       {
         titulo: "Falabella",
-        paginas: [{ titulo: "Productos y rentabilidad", href: "/utilities/falabella/productos", icon: IconShoppingBag }],
+        paginas: [{ titulo: "Datos de ventas", href: "/utilities/ventas/falabella", icon: IconShoppingBag }],
       },
     ],
   },
@@ -171,6 +171,7 @@ export const MODULOS: Modulo[] = [
             href: "/informes/falabella",
             icon: IconShoppingBag,
             hijos: [
+              { titulo: "Más vendidos y rentabilidad", href: "/utilities/falabella/productos", icon: IconTrophy },
               { titulo: "Precio y margen de hoy", href: "/informes/falabella/publicaciones", icon: IconTag },
               { titulo: "Publicaciones con problemas", href: "/informes/falabella/publicaciones?vista=problemas", icon: IconAlertCircle },
               { titulo: "Stock Full y reposición", href: "/informes/falabella/stock-full", icon: IconPackageImport },

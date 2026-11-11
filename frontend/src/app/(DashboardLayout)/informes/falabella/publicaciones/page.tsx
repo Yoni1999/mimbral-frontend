@@ -97,7 +97,6 @@ const COLUMNAS: ColumnaInforme<Fila>[] = [
       </Tooltip>
     ),
   },
-  { clave: "margen", titulo: "Margen $", ancho: 8, alinear: "right", valor: (f) => f.margen, excel: "Margen neto por unidad", celda: (f) => <Box component="span" sx={{ ...cifraSx, color: f.margen != null && f.margen < 0 ? "#b42318" : undefined }}>{pesos(f.margen)}</Box> },
   { clave: "margenPct", titulo: "Margen %", ancho: 7, alinear: "right", valor: (f) => (f.margenPct == null ? null : f.margenPct * 100), celda: (f) => <Box component="span" sx={{ ...cifraSx, fontWeight: 700, color: f.margenPct == null ? tinta.tenue : f.margenPct < 0 ? "#b42318" : f.margenPct < 0.1 ? "#b54708" : "#067647" }}>{porcentaje(f.margenPct)}</Box> },
   { clave: "stock", titulo: "Stock", ancho: 6, alinear: "right", valor: (f) => f.stock, celda: (f) => <Box sx={cifraSx}>{f.stock == null ? "—" : unidades(f.stock)}</Box> },
   { clave: "u30", titulo: "Unid. 30 días", ancho: 7, alinear: "right", valor: (f) => f.unidades30, celda: (f) => <Box sx={cifraSx}>{unidades(f.unidades30)}</Box> },
@@ -187,7 +186,7 @@ function Contenido() {
             { titulo: "Problemas", valor: (f) => f.problemas.map((p) => PROBLEMAS[p].texto).join(", ") },
             { titulo: "URL", valor: (f) => f.url },
           ]}
-          nota="Precio y despacho con IVA; costo y margen sin IVA."
+          nota="Precio y despacho con IVA; costo sin IVA; margen en % de la venta."
           anchoMinimo={1250}
         />
       </Box>
