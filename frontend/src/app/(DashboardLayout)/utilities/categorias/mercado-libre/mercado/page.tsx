@@ -12,11 +12,12 @@ import SeccionTitulo from "../../../ventas/components/SeccionTitulo";
 import MetricCard from "../../../ventas/components/MetricCard";
 import ListaBarras from "../../../ventas/components/ListaBarras";
 import TablaInforme, { ColumnaInforme } from "../../../ventas/mercado-libre/components/TablaInforme";
-import { Panel, TextoCelda, cifraSx, estado, formatoMonto, formatoPesos, formatoPorcentaje, tinta } from "../../../ventas/components/estilo";
+import { Panel, Pildoras, TextoCelda, cifraSx, estado, formatoMonto, formatoPesos, formatoPorcentaje, tinta } from "../../../ventas/components/estilo";
 import { Comparativo, Mercado, MontoCorto, Par, fecha, n, parametrosPeriodo, unidades, urlCat, usePeriodoMl } from "../components/comun";
 import { rutaFicha } from "../components/tablas";
 
 type Paso = { id: string; nombre: string };
+type Estado = "" | "active" | "paused";
 
 interface Publicacion {
   itemId: string;
@@ -111,7 +112,7 @@ const COLUMNAS: ColumnaInforme<Publicacion>[] = [
   {
     clave: "sku",
     titulo: "SKU",
-    ancho: 9,
+    ancho: 8,
     valor: (f) => f.sku,
     celda: (f) => (
       <Box component={Link} href={`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(f.sku)}`} sx={{ color: tinta.acento, textDecoration: "none", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}>
@@ -119,13 +120,13 @@ const COLUMNAS: ColumnaInforme<Publicacion>[] = [
       </Box>
     ),
   },
-  { clave: "categoria", titulo: "Categoría", ancho: 13, valor: (f) => f.categoria, celda: (f) => <TextoCelda texto={f.categoria || "—"} fuerte={false} /> },
-  { clave: "estado", titulo: "Estado", ancho: 8, valor: (f) => estadoDe(f.estado).texto, celda: (f) => <Chip {...estadoDe(f.estado)} /> },
+  { clave: "categoria", titulo: "Categoría", ancho: 12, valor: (f) => f.categoria, celda: (f) => <TextoCelda texto={f.categoria || "—"} fuerte={false} /> },
+  { clave: "estado", titulo: "Estado", ancho: 7, valor: (f) => estadoDe(f.estado).texto, celda: (f) => <Chip {...estadoDe(f.estado)} /> },
   { clave: "envio", titulo: "Envío", ancho: 6, valor: (f) => envio(f.logistica) },
   {
     clave: "precio",
     titulo: "Precio",
-    ancho: 9,
+    ancho: 8,
     alinear: "right",
     valor: (f) => f.precioOferta ?? f.precio,
     excel: "Precio vigente",
@@ -139,9 +140,17 @@ const COLUMNAS: ColumnaInforme<Publicacion>[] = [
         </Box>
       ),
   },
-  { clave: "stock", titulo: "Stock", ancho: 6, alinear: "right", valor: (f) => f.stock, celda: (f) => (f.stock == null ? "—" : <Box sx={{ ...cifraSx, color: f.stock <= 0 ? "#b42318" : tinta.primaria, fontWeight: f.stock <= 0 ? 700 : 500 }}>{unidades(f.stock)}</Box>) },
-  { clave: "un30", titulo: "Unid. 30 d", ancho: 8, alinear: "right", valor: (f) => f.unidades30, excel: "Unidades 30 días (producto)", celda: (f) => <Box sx={cifraSx}>{unidades(f.unidades30)}</Box> },
-  { clave: "venta30", titulo: "Venta 30 d", ancho: 11, alinear: "right", valor: (f) => n(f.venta30?.neto), excel: "Venta neta 30 días (producto)", celda: (f) => <MontoCorto par={f.venta30} fuerte /> },
+  {
+    clave: "stock",
+    titulo: "Stock",
+    ancho: 7,
+    alinear: "right",
+    valor: (f) => f.stock,
+    excel: "Stock publicado en ML",
+    celda: (f) => (f.stock == null ? "—" : <Box sx={{ ...cifraSx, color: f.stock <= 0 ? "#b42318" : tinta.primaria, fontWeight: f.stock <= 0 ? 700 : 500 }}>{unidades(f.stock)}</Box>),
+  },
+  { clave: "un30", titulo: "Unidades 30 días", ancho: 10, alinear: "right", valor: (f) => f.unidades30, excel: "Unidades vendidas en 30 días (producto)", celda: (f) => <Box sx={cifraSx}>{unidades(f.unidades30)}</Box> },
+  { clave: "venta30", titulo: "Venta 30 días", ancho: 10, alinear: "right", valor: (f) => n(f.venta30?.neto), excel: "Venta neta 30 días (producto)", celda: (f) => <MontoCorto par={f.venta30} fuerte /> },
 ];
 
 /**
@@ -156,12 +165,19 @@ export default function MercadoMl() {
     restaurar: (g) => (idUrl ? { ruta: [{ id: idUrl, nombre: sp?.get("nombre") || idUrl }] } : g),
   });
   const [todas, setTodas] = React.useState(false);
+  /** Qué publicaciones lista la tabla: todas, solo activas o solo pausadas. */
+  const [filtro, setFiltro] = React.useState<Estado>("");
+  const tablaRef = React.useRef<HTMLDivElement>(null);
+  const verLista = (estado: Estado) => {
+    setFiltro(estado);
+    tablaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const ruta = nav.ruta;
   const actual = ruta[ruta.length - 1];
 
   const mercado = useApiDatos<Mercado | null>(urlCat("mercado", { categoria: actual?.id }), null);
   const cat = mercado.datos?.categoria;
-  const pubs = useApiDatos<Publicaciones | null>(urlCat("publicaciones", { categoria: actual?.id, limite: 2000 }), null);
+  const pubs = useApiDatos<Publicaciones | null>(urlCat("publicaciones", { categoria: actual?.id, estado: filtro, limite: 2000 }), null);
   // Nuestra venta por categoría en el nivel que se mira (para elegir y para ver dónde no vendemos).
   const ventas = useApiDatos<Comparativo | null>(
     actual && !cat ? null : urlCat("comparativo", { ...parametrosPeriodo(periodo), nivel: cat ? cat.ruta.length : 0, padre: actual?.id }),
@@ -233,29 +249,35 @@ export default function MercadoMl() {
           <Grid item xs={6} md={3}>
             <MetricCard
               title="Nuestras publicaciones"
-              value={unidades(cat ? cat.nuestras.publicaciones : pubs.datos?.cantidad)}
-              subtitle={cat ? `${unidades(cat.nuestras.skus)} productos (SKU) · ${cat.publicacionesEnMl ? formatoPorcentaje((cat.nuestras.activas / cat.publicacionesEnMl) * 100, 2) : "—"} del total activas` : "En todo Mercado Libre"}
+              value={cat ? unidades(cat.nuestras.publicaciones) : "—"}
+              subtitle={cat ? `${unidades(cat.nuestras.skus)} productos (SKU) · ${ventas.cargando ? "…" : sinVenta} de ${sub.length} subcategorías sin venta` : "En todo Mercado Libre"}
               icon={<IconBuildingStore size={18} />}
-              cargando={cat ? mercado.cargando : pubs.cargando}
+              cargando={mercado.cargando}
+              onClick={() => verLista("")}
+              nota="Muestra abajo todas las publicaciones."
             />
           </Grid>
           <Grid item xs={6} md={3}>
             <MetricCard
               title="Activas"
               value={cat ? unidades(cat.nuestras.activas) : "—"}
-              subtitle={cat ? `${unidades(cat.nuestras.activasFull)} en Full` : "Elige una categoría"}
+              subtitle={cat ? `${unidades(cat.nuestras.activasFull)} en Full · ver la lista` : "Ver la lista"}
               icon={<IconPackages size={18} />}
               cargando={mercado.cargando}
+              onClick={() => verLista("active")}
+              nota="Muestra abajo solo las publicaciones activas."
             />
           </Grid>
           <Grid item xs={6} md={3}>
             <MetricCard
               title="Pausadas"
               value={cat ? unidades(cat.nuestras.pausadas) : "—"}
-              subtitle={cat ? `${ventas.cargando ? "…" : sinVenta} de ${sub.length} subcategorías sin venta nuestra` : "Elige una categoría"}
+              subtitle="Ver la lista"
               icon={<IconPlayerPause size={18} />}
               cargando={mercado.cargando}
               masEsMejor={false}
+              onClick={() => verLista("paused")}
+              nota="Muestra abajo solo las publicaciones pausadas."
             />
           </Grid>
         </Grid>
@@ -310,22 +332,37 @@ export default function MercadoMl() {
           </Grid>
         </Grid>
 
-        <SeccionTitulo
-          title={actual ? `Nuestras publicaciones en ${actual.nombre}` : "Nuestras publicaciones"}
-          infoRight={
-            pubs.datos && pubs.datos.cantidad > pubs.datos.filas.length
-              ? `Se muestran las ${unidades(pubs.datos.filas.length)} de mayor venta de ${unidades(pubs.datos.cantidad)}; entra a una categoría para ver las demás.`
-              : "De mayor a menor venta de los últimos 30 días."
-          }
-        />
+        <Box ref={tablaRef} sx={{ scrollMarginTop: 90 }}>
+          <SeccionTitulo
+            title={`${filtro === "active" ? "Publicaciones activas" : filtro === "paused" ? "Publicaciones pausadas" : "Nuestras publicaciones"}${actual ? ` en ${actual.nombre}` : ""}`}
+            infoRight={
+              pubs.datos && pubs.datos.cantidad > pubs.datos.filas.length
+                ? `Se muestran ${unidades(pubs.datos.filas.length)} de ${unidades(pubs.datos.cantidad)}; entra a una categoría para ver las demás.`
+                : "De mayor a menor venta de los últimos 30 días."
+            }
+          />
+          <Box sx={{ mb: 1.5 }}>
+            <Pildoras<Estado>
+              etiqueta="Estado"
+              valor={filtro}
+              onCambiar={setFiltro}
+              opciones={[
+                { valor: "", texto: "Todas" },
+                { valor: "active", texto: "Activas" },
+                { valor: "paused", texto: "Pausadas" },
+              ]}
+            />
+          </Box>
+        </Box>
         <TablaInforme<Publicacion>
+          key={filtro}
           filas={pubs.datos?.filas ?? []}
           cargando={pubs.cargando}
           columnas={COLUMNAS}
           clave={(f) => f.itemId}
           textoBusqueda={(f) => `${f.itemId} ${f.sku} ${f.titulo ?? ""} ${f.nombre ?? ""} ${f.categoria ?? ""}`}
           ordenInicial={{ clave: "venta30", direccion: "desc" }}
-          nombreExcel={`publicaciones-ml${actual ? `-${actual.nombre}` : ""}`}
+          nombreExcel={`publicaciones-ml${filtro === "paused" ? "-pausadas" : filtro === "active" ? "-activas" : ""}${actual ? `-${actual.nombre}` : ""}`}
           extraExcel={[
             { titulo: "Publicación", valor: (f) => f.itemId },
             { titulo: "Nombre SAP", valor: (f) => f.nombre },
@@ -337,11 +374,11 @@ export default function MercadoMl() {
             { titulo: "Imagen", valor: (f) => f.imagen },
           ]}
           nota={
-            <Tooltip arrow title="La venta y las unidades de 30 días son del producto (SKU), sumando todas sus publicaciones. Precio y stock son de la última foto del catálogo.">
+            <Tooltip arrow title="Unidades y venta de 30 días: lo vendido en Mercado Libre en los últimos 30 días por el producto (SKU), sumando todas sus publicaciones. Precio y stock son de la última foto del catálogo.">
               <span>Venta de 30 días por producto, sin IVA{pubs.datos?.datosAl ? ` · precios y stock al ${fecha(pubs.datos.datosAl)}` : ""}</span>
             </Tooltip>
           }
-          anchoMinimo={1100}
+          anchoMinimo={1200}
         />
         <Typography sx={{ fontSize: 12, color: tinta.tenue, mt: 1.5 }}>
           Las tendencias vienen de la API de Mercado Libre. Mercado Libre no entrega a nuestra aplicación los más vendidos del mercado ni las ventas de otros vendedores.
