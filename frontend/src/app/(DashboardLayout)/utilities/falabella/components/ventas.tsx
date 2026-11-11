@@ -207,6 +207,9 @@ export function DesgloseFal({ vista, resumen, etiquetaPeriodo, onCerrar }: { vis
           {vista === "dinero" ? (
             <>
               Margen = venta − comisión − despacho − costo, sin IVA, como porcentaje de la venta.
+              {total.pagadoClientes?.conIva != null
+                ? ` Los clientes pagaron ${formatoPesos(total.pagadoClientes.conIva)} con IVA por lo no cancelado (comparable con «Ventas brutas» de Seller Center); la venta es mayor porque Falabella financia los descuentos y paga el precio de lista.`
+                : ""}
               {cobertura < 0.995 ? ` Solo el ${formatoPorcentaje(cobertura * 100)} de la venta tiene costo en SAP; el resto no entra en el margen.` : ""}
               {resumen.estimaciones ? ` ${resumen.estimaciones.despacho} No incluye: ${resumen.estimaciones.noIncluye}` : ""}
             </>
