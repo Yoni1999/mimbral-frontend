@@ -31,6 +31,23 @@ interface DateRangeFilterProps {
   /** Solo el ícono del calendario (el rango elegido se lee en el título de la
    *  vista y en el tooltip); abre el mismo selector. */
   soloIcono?: boolean;
+  /** Largo fijo en días: un clic en el calendario marca el rango completo desde ese día. */
+  largoFijo?: number;
+  /** Primer y último día elegibles (YYYY-MM-DD); fuera de ellos los días no se pueden marcar. */
+  min?: string;
+  max?: string;
+  /** Opciones propias en vez de los rangos rápidos de siempre. */
+  rangos?: { label: string; range: readonly [Date, Date] }[];
+  /** Título de la columna de opciones (por defecto "RANGOS RÁPIDOS"). */
+  tituloRangos?: string;
+  /** Texto del botón cuando no hay rango elegido (por defecto "Hoy"). */
+  textoVacio?: string;
+}
+
+function addDays(date: Date, amount: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + amount);
+  return result;
 }
 
 const DAYS_ES = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"];
@@ -156,6 +173,10 @@ interface MonthGridProps {
   onDateClick: (date: Date) => void;
   onDateHover: (date: Date | null) => void;
   today: Date;
+  minDate?: Date | null;
+  maxDate?: Date | null;
+  /** Con largo fijo, al pasar el cursor se ve el rango que quedaría. */
+  largoFijo?: number;
 }
 
 function MonthGrid({
@@ -167,6 +188,9 @@ function MonthGrid({
   onDateClick,
   onDateHover,
   today,
+  minDate = null,
+  maxDate = null,
+  largoFijo,
 }: MonthGridProps) {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
@@ -182,6 +206,11 @@ function MonthGrid({
   const effectiveEnd = rangeStart && !rangeEnd && hoverDate ? hoverDate : rangeEnd;
   let visualStart = rangeStart;
   let visualEnd = effectiveEnd;
+  // Largo fijo: mientras se pasa el cursor se muestra el rango que se marcaría.
+  if (largoFijo && hoverDate) {
+    [visualStart, visualEnd] = rangoDeLargoFijo(hoverDate, largoFijo, minDate, maxDate);
+  }
+  const fuera = (d: Date) => (!!minDate && d.getTime() < minDate.getTime()) || (!!maxDate && d.getTime() > maxDate.getTime());
 
   if (visualStart && visualEnd && visualStart.getTime() > visualEnd.getTime()) {
     [visualStart, visualEnd] = [visualEnd, visualStart];
@@ -235,12 +264,14 @@ function MonthGrid({
           const isStart = !!visualStart && isSameDay(date, visualStart);
           const isEnd = !!visualEnd && isSameDay(date, visualEnd);
           const isToday = isSameDay(date, today);
+          const deshabilitado = fuera(date);
 
           return (
             <Box
               key={toDateStr(date)}
               component="button"
               type="button"
+              disabled={deshabilitado}
               onClick={() => onDateClick(date)}
               onMouseEnter={() => onDateHover(date)}
               onMouseLeave={() => onDateHover(null)}
@@ -254,6 +285,7 @@ function MonthGrid({
                 color: isSelected ? "#334155" : "#475569",
                 borderRadius: isStart || isEnd ? "999px" : 2,
                 cursor: "pointer",
+                "&:disabled": { color: "#cbd5e1", cursor: "not-allowed", background: "transparent" },
                 position: "relative",
                 fontSize: 11.5,
                 transition: "background-color 0.15s ease, color 0.15s ease",
@@ -301,15 +333,35 @@ function MonthGrid({
   );
 }
 
+/** Rango de `largo` días que parte en `inicio`, corrido lo necesario para caber entre min y max. */
+function rangoDeLargoFijo(inicio: Date, largo: number, minDate: Date | null, maxDate: Date | null): [Date, Date] {
+  let a = inicio;
+  let b = addDays(a, largo - 1);
+  if (maxDate && b.getTime() > maxDate.getTime()) {
+    b = maxDate;
+    a = addDays(b, -(largo - 1));
+  }
+  if (minDate && a.getTime() < minDate.getTime()) a = minDate;
+  return [a, b];
+}
+
 export default function DateRangeFilter({
   value,
   onChange,
   label = "Rango de Fecha",
   compacto = false,
   soloIcono = false,
+  largoFijo,
+  min,
+  max,
+  rangos,
+  tituloRangos = "RANGOS RÁPIDOS",
+  textoVacio = "Hoy",
 }: DateRangeFilterProps) {
   const today = useMemo(() => new Date(), []);
-  const presets = useMemo(() => buildPresets(today), [today]);
+  const presets = useMemo(() => rangos ?? buildPresets(today), [rangos, today]);
+  const minDate = useMemo(() => (min ? parseDate(min) : null), [min]);
+  const maxDate = useMemo(() => (max ? parseDate(max) : null), [max]);
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [draftStart, setDraftStart] = useState<Date | null>(null);
@@ -321,10 +373,14 @@ export default function DateRangeFilter({
     if (!anchorEl) return;
     const start = value?.start ? parseDate(value.start) : null;
     const end = value?.end ? parseDate(value.end) : null;
-    setDraftStart(start ?? today);
-    setDraftEnd(end ?? today);
+    // Sin valor se parte de hoy, o del último día elegible si hoy queda fuera.
+    const base = maxDate && today.getTime() > maxDate.getTime() ? maxDate : today;
+    setDraftStart(start ?? (largoFijo ? null : base));
+    setDraftEnd(end ?? (largoFijo ? null : base));
     setHoverDate(null);
-    setViewMonth(start ? startOfMonth(start) : startOfMonth(today));
+    setViewMonth(startOfMonth(start ?? base));
+    // Al abrir: los límites y el largo no cambian con el selector abierto.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anchorEl, today, value]);
 
   const open = Boolean(anchorEl);
@@ -346,6 +402,12 @@ export default function DateRangeFilter({
   };
 
   const handleDateClick = (date: Date) => {
+    if (largoFijo) {
+      const [a, b] = rangoDeLargoFijo(date, largoFijo, minDate, maxDate);
+      setDraftStart(a);
+      setDraftEnd(b);
+      return;
+    }
     if (!draftStart || draftEnd) {
       setDraftStart(date);
       setDraftEnd(null);
@@ -373,7 +435,10 @@ export default function DateRangeFilter({
     setAnchorEl(null);
   };
 
-  const triggerText = hasValue ? textoRango(value?.start ?? "", value?.end ?? "", compacto) : "Hoy";
+  const triggerText = hasValue ? textoRango(value?.start ?? "", value?.end ?? "", compacto) : textoVacio;
+  // No se navega a meses completos fuera de los días elegibles.
+  const puedeRetroceder = !minDate || viewMonth.getTime() > startOfMonth(minDate).getTime();
+  const puedeAvanzar = !maxDate || rightMonth.getTime() <= startOfMonth(maxDate).getTime();
 
   return (
     <>
@@ -496,7 +561,7 @@ export default function DateRangeFilter({
                 color: "#94a3b8",
               }}
             >
-              RANGOS RÁPIDOS
+              {tituloRangos}
             </Typography>
 
             {presets.map((preset) => {
@@ -547,6 +612,8 @@ export default function DateRangeFilter({
             >
               <IconButton
                 onClick={() => setViewMonth((current) => addMonths(current, -1))}
+                disabled={!puedeRetroceder}
+                aria-label="Mes anterior"
                 sx={{ color: "#64748b" }}
                 size="small"
               >
@@ -555,6 +622,8 @@ export default function DateRangeFilter({
               <Box sx={{ width: 16 }} />
               <IconButton
                 onClick={() => setViewMonth((current) => addMonths(current, 1))}
+                disabled={!puedeAvanzar}
+                aria-label="Mes siguiente"
                 sx={{ color: "#64748b" }}
                 size="small"
               >
@@ -582,6 +651,9 @@ export default function DateRangeFilter({
                 onDateClick={handleDateClick}
                 onDateHover={setHoverDate}
                 today={today}
+                minDate={minDate}
+                maxDate={maxDate}
+                largoFijo={largoFijo}
               />
               <MonthGrid
                 year={rightMonth.getFullYear()}
@@ -592,6 +664,9 @@ export default function DateRangeFilter({
                 onDateClick={handleDateClick}
                 onDateHover={setHoverDate}
                 today={today}
+                minDate={minDate}
+                maxDate={maxDate}
+                largoFijo={largoFijo}
               />
             </Box>
 
