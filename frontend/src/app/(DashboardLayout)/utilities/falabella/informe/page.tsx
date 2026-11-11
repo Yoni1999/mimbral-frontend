@@ -42,7 +42,7 @@ export default function InformeFalabella() {
     { title: "Unidades", value: unidades(a?.unidades), subtitle: `${unidades(a?.ordenes)} órdenes · ${unidades(a?.canceladas)} canceladas · ${unidades(a?.devueltas)} devueltas`, percentageChange: pct(t?.variacion.unidades) ?? undefined, icon: <IconPackages size={18} /> },
     { title: "Comisión Falabella", value: formatoMonto(a?.comision.neto), subtitle: `${porcentaje(parte(a, "comision"))} de la venta`, icon: <IconShoppingCart size={18} /> },
     { title: "Despacho", value: formatoMonto(a?.envio.neto), subtitle: `${porcentaje(parte(a, "envio"))} de la venta · ${a?.unidades ? pesos(n(a.envio.neto) / a.unidades) : "—"} por unidad`, icon: <IconTruckDelivery size={18} /> },
-    { title: "Margen estimado", value: formatoMonto(a?.margen), subtitle: `Comparación: ${formatoMonto(c?.margen)}`, percentageChange: pct(t?.variacion.margen) ?? undefined, icon: <IconReceipt size={18} /> },
+    { title: "Ticket promedio", value: formatoMonto(a?.ticket.neto), subtitle: `Comparación: ${formatoMonto(c?.ticket.neto)}`, icon: <IconReceipt size={18} /> },
     { title: "Margen %", value: porcentaje(a?.margenPct), subtitle: `Comparación: ${porcentaje(c?.margenPct)}`, percentageChange: pp(t?.variacion.margenPuntos) ?? undefined, unidadVariacion: "pp" as const, icon: <IconPercentage size={18} /> },
   ];
 
@@ -59,7 +59,6 @@ export default function InformeFalabella() {
       <TableCell align="right" sx={{ ...celda, ...cifraSx }}>{b?.unidades ? pesos(n(b.envio.neto) / b.unidades) : "—"}</TableCell>
       <TableCell align="right" sx={{ ...celda, ...cifraSx, fontWeight: 700 }}>
         {porcentaje(b?.margenPct)}
-        <Box component="span" sx={{ display: "block", fontSize: 11.5, fontWeight: 500, color: tinta.secundaria }}>{formatoMonto(b?.margen)}</Box>
       </TableCell>
     </TableRow>
   );
@@ -114,12 +113,12 @@ export default function InformeFalabella() {
             </Panel>
           </Grid>
           <Grid item xs={12} lg={7}>
-            <Panel titulo="Evolución mensual" descripcion="Venta sin IVA, costos y margen estimado de todo Falabella">
+            <Panel titulo="Evolución mensual" descripcion="Venta sin IVA, costos y margen estimado (% de la venta) de todo Falabella">
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    {["Mes", "Venta", "Unid.", "Comisión", "Despacho", "Margen $", "Margen %", "Full · Normal"].map((h, i) => (
-                      <TableCell key={h} align={i && i < 7 ? "right" : "left"} sx={cabecera}>{h}</TableCell>
+                    {["Mes", "Venta", "Unid.", "Comisión", "Despacho", "Margen %", "Full · Normal"].map((h, i) => (
+                      <TableCell key={h} align={i && i < 6 ? "right" : "left"} sx={cabecera}>{h}</TableCell>
                     ))}
                   </TableRow>
                 </TableHead>
@@ -131,7 +130,6 @@ export default function InformeFalabella() {
                       <TableCell align="right" sx={{ ...celda, ...cifraSx }}>{unidades(m.unidades)}</TableCell>
                       <TableCell align="right" sx={{ ...celda, ...cifraSx }}>{formatoMonto(m.comision.neto)}</TableCell>
                       <TableCell align="right" sx={{ ...celda, ...cifraSx }}>{formatoMonto(m.envio.neto)}</TableCell>
-                      <TableCell align="right" sx={{ ...celda, ...cifraSx }}>{formatoMonto(m.margen)}</TableCell>
                       <TableCell align="right" sx={{ ...celda, ...cifraSx, fontWeight: 700 }}>{porcentaje(m.margenPct)}</TableCell>
                       <TableCell sx={{ ...celda, minWidth: 90 }}><BarraTiposFal porTipo={m.porTipo} /></TableCell>
                     </TableRow>
