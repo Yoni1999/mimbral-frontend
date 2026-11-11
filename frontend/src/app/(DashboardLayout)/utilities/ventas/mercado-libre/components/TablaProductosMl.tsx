@@ -3,6 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { Box, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
+import { ConMiniatura } from "./TablaInforme";
 import { Columnas, TextoCelda, cifraSx, formatoPorcentaje, formatoPesos, tablaSx, tinta } from "../../components/estilo";
 import { CeldaStock } from "./StockBodegas";
 import PublicacionesMl, { estadoPublicacion } from "./PublicacionesMl";
@@ -68,6 +69,7 @@ export default function TablaProductosMl({ filas, cargando, tipo, desde = 0, fil
                 <TableRow key={p.sku}>
                   <TableCell sx={{ color: `${tinta.tenue} !important`, ...cifraSx }}>{desde + i + 1}</TableCell>
                   <TableCell>
+                    <ConMiniatura imagen={p.imagen} titulo={p.nombre ?? p.sku}>
                     <Box
                       role="link"
                       tabIndex={0}
@@ -80,6 +82,7 @@ export default function TablaProductosMl({ filas, cargando, tipo, desde = 0, fil
                         secundario={[p.sku, p.rutaCategoria.length ? p.rutaCategoria.map((c) => c.nombre).join(" › ") : "Sin categoría ML"].join(" · ")}
                       />
                     </Box>
+                    </ConMiniatura>
                   </TableCell>
                   <TableCell>
                     <PublicacionesMl publicaciones={p.publicaciones} />

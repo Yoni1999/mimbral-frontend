@@ -15,6 +15,8 @@ import { entero, fecha, pesos, redondo } from "../comun";
 type Problema = "pausada" | "en_revision" | "inactiva" | "error" | "stock_distinto";
 interface Fila {
   sku: string;
+  /** Foto del producto (portada de su ficha). */
+  imagen?: string | null;
   itemId: string;
   nombre: string | null;
   titulo: string | null;
@@ -84,7 +86,7 @@ export default function PublicacionesConProblemas() {
       titulo: "Producto",
       ancho: 28,
       valor: (f) => f.nombre ?? "",
-      celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} secundario={`${f.catalogo ? "Catálogo" : "Normal"} · ${LOGISTICA[f.logistica ?? ""] ?? f.logistica ?? "—"}`} />,
+      celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} secundario={`${f.catalogo ? "Catálogo" : "Normal"} · ${LOGISTICA[f.logistica ?? ""] ?? f.logistica ?? "—"}`} />,
     },
     {
       clave: "publicacion",

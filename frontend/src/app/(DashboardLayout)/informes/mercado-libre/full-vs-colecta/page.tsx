@@ -23,6 +23,8 @@ interface Lado {
 }
 interface Fila {
   sku: string;
+  /** Foto del producto (portada de su ficha). */
+  imagen?: string | null;
   nombre: string | null;
   full: Lado;
   colecta: Lado;
@@ -115,7 +117,7 @@ export default function FullContraColecta() {
   ];
 
   const columnas: ColumnaInforme<Fila>[] = [
-    { clave: "producto", titulo: "Producto", ancho: 26, valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} /> },
+    { clave: "producto", titulo: "Producto", ancho: 26, valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} /> },
     {
       clave: "sugerencia",
       titulo: "Sugerencia",

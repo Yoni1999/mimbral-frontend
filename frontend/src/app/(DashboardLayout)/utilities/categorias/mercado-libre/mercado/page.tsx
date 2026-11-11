@@ -11,7 +11,7 @@ import { useEstadoVista } from "@/utils/estadoVista";
 import SeccionTitulo from "../../../ventas/components/SeccionTitulo";
 import MetricCard from "../../../ventas/components/MetricCard";
 import ListaBarras from "../../../ventas/components/ListaBarras";
-import TablaInforme, { ColumnaInforme } from "../../../ventas/mercado-libre/components/TablaInforme";
+import TablaInforme, { ColumnaInforme, Miniatura } from "../../../ventas/mercado-libre/components/TablaInforme";
 import { Panel, Pildoras, TextoCelda, cifraSx, estado, formatoMonto, formatoPesos, formatoPorcentaje, tinta } from "../../../ventas/components/estilo";
 import { Comparativo, Mercado, MontoCorto, Par, fecha, n, parametrosPeriodo, unidades, urlCat, usePeriodoMl } from "../components/comun";
 import { rutaFicha } from "../components/tablas";
@@ -63,22 +63,6 @@ function Chip({ texto, tono }: { texto: string; tono: { color: string; fondo: st
     <Box component="span" sx={{ px: 0.9, py: 0.25, borderRadius: 999, bgcolor: tono.fondo, color: tono.color, fontSize: 11.5, fontWeight: 700, whiteSpace: "nowrap" }}>
       {texto}
     </Box>
-  );
-}
-
-/** Foto del producto en chico; al pasar el cursor se ve en grande. Sin foto, un recuadro vacío del mismo tamaño. */
-function Miniatura({ url, titulo }: { url?: string | null; titulo: string }) {
-  const [rota, setRota] = React.useState(false);
-  const caja = { width: 44, height: 44, flexShrink: 0, borderRadius: "8px", border: `1px solid ${tinta.borde}`, bgcolor: "#fff" } as const;
-  if (!url || rota) return <Box sx={{ ...caja, bgcolor: tinta.fondoSuave }} aria-hidden />;
-  return (
-    <Tooltip
-      arrow
-      placement="right"
-      title={<Box component="img" src={url} alt={titulo} sx={{ display: "block", width: 240, height: 240, objectFit: "contain", bgcolor: "#fff", borderRadius: "6px" }} />}
-    >
-      <Box component="img" src={url} alt={titulo} loading="lazy" onError={() => setRota(true)} sx={{ ...caja, objectFit: "contain" }} />
-    </Tooltip>
   );
 }
 

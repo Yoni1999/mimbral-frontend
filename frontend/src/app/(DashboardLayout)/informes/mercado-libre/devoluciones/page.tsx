@@ -15,6 +15,8 @@ import { entero, pesos, porcentaje, redondo, useFiltrosInforme } from "../comun"
 
 interface Fila {
   sku: string;
+  /** Foto del producto (portada de su ficha). */
+  imagen?: string | null;
   nombre: string | null;
   vendidas: number;
   canceladas: number;
@@ -93,7 +95,7 @@ export default function DevolucionesYCancelaciones() {
   ];
 
   const columnas: ColumnaInforme<Fila>[] = [
-    { clave: "producto", titulo: "Producto", ancho: 30, valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} /> },
+    { clave: "producto", titulo: "Producto", ancho: 30, valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} /> },
     { clave: "vendidas", titulo: "Vendidas", ancho: 9, alinear: "right", valor: (f) => f.vendidas, celda: (f) => entero(f.vendidas) },
     {
       clave: "devueltas",

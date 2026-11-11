@@ -5,7 +5,7 @@ import React from "react";
 import Link from "next/link";
 import { Box } from "@mui/material";
 import { IconChevronRight } from "@tabler/icons-react";
-import TablaInforme, { ColumnaInforme } from "../../../ventas/mercado-libre/components/TablaInforme";
+import TablaInforme, { ColumnaInforme, ConMiniatura } from "../../../ventas/mercado-libre/components/TablaInforme";
 import { ChipVariacion, TextoCelda, cifraSx, formatoPorcentaje, tinta } from "../../../ventas/components/estilo";
 import { BarraTiposCat, FilaCategoria, FilaProducto, MargenCelda, MontoCorto, n, pct, unidades } from "./comun";
 
@@ -126,12 +126,12 @@ export function TablaProductosCat({
       ancho: conCategoria ? 26 : 38,
       valor: (f) => f.sku,
       celda: (f) => (
-        <Box sx={{ minWidth: 0 }}>
+        <ConMiniatura imagen={f.imagen} titulo={f.nombre || f.sku}>
           <TextoCelda texto={f.nombre || f.sku} />
           <Box component={Link} href={`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(f.sku)}`} sx={{ ...enlaceSx, fontSize: 11.5 }}>
             {f.sku}
           </Box>
-        </Box>
+        </ConMiniatura>
       ),
     },
     ...(conCategoria

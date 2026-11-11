@@ -80,6 +80,8 @@ export interface Comparativo extends Contexto {
 
 export interface FilaProducto {
   sku: string;
+  /** Foto del producto (portada de su ficha). */
+  imagen?: string | null;
   nombre: string | null;
   categoriaId: string | null;
   categoria: string | null;

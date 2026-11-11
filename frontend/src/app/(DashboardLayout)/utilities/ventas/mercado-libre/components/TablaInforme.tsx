@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Box, Button, InputAdornment, Pagination, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, TextField, Typography } from "@mui/material";
+import { Box, Button, InputAdornment, Pagination, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, TextField, Tooltip, Typography } from "@mui/material";
 import { IconDownload, IconSearch } from "@tabler/icons-react";
 import { Columnas, TextoCelda, controlSx, tablaSx, tarjetaSx, tinta } from "../../components/estilo";
 import { descargarExcel } from "../../components/detalle/comun";
@@ -200,14 +200,45 @@ export default function TablaInforme<F>({
   );
 }
 
-/** Celda de producto: nombre y SKU; el nombre abre la ficha del producto. */
-export function CeldaProducto({ sku, nombre, secundario }: { sku: string; nombre: string | null; secundario?: string }) {
+/**
+ * Foto del producto en chico; al pasar el cursor se ve en grande. Sin foto (o
+ * si no carga), un recuadro vacío del mismo tamaño para que las filas no salten.
+ */
+export function Miniatura({ url, titulo }: { url?: string | null; titulo: string }) {
+  const [rota, setRota] = React.useState(false);
+  const caja = { width: 44, height: 44, flexShrink: 0, borderRadius: "8px", border: `1px solid ${tinta.borde}`, bgcolor: "#fff" } as const;
+  if (!url || rota) return <Box sx={{ ...caja, bgcolor: tinta.fondoSuave }} aria-hidden />;
+  return (
+    <Tooltip
+      arrow
+      placement="right"
+      title={<Box component="img" src={url} alt={titulo} sx={{ display: "block", width: 240, height: 240, objectFit: "contain", bgcolor: "#fff", borderRadius: "6px" }} />}
+    >
+      <Box component="img" src={url} alt={titulo} loading="lazy" onError={() => setRota(true)} sx={{ ...caja, objectFit: "contain" }} />
+    </Tooltip>
+  );
+}
+
+/** Contenido de una celda con la foto del producto a la izquierda. */
+export function ConMiniatura({ imagen, titulo, children }: { imagen?: string | null; titulo: string; children: React.ReactNode }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
+      <Miniatura url={imagen} titulo={titulo} />
+      <Box sx={{ minWidth: 0, flex: 1 }}>{children}</Box>
+    </Box>
+  );
+}
+
+/** Celda de producto: foto, nombre y SKU; el nombre abre la ficha del producto. */
+export function CeldaProducto({ sku, nombre, secundario, imagen }: { sku: string; nombre: string | null; secundario?: string; imagen?: string | null }) {
   const router = useRouter();
   const ir = () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(sku)}`);
   return (
-    <Box role="link" tabIndex={0} onClick={ir} onKeyDown={(e) => e.key === "Enter" && ir()} sx={{ cursor: "pointer", "&:hover p:first-of-type": { color: tinta.acento } }}>
-      <TextoCelda texto={nombre ?? "Sin nombre en SAP"} secundario={[sku, secundario].filter(Boolean).join(" · ")} />
-    </Box>
+    <ConMiniatura imagen={imagen} titulo={nombre ?? sku}>
+      <Box role="link" tabIndex={0} onClick={ir} onKeyDown={(e) => e.key === "Enter" && ir()} sx={{ cursor: "pointer", "&:hover p:first-of-type": { color: tinta.acento } }}>
+        <TextoCelda texto={nombre ?? "Sin nombre en SAP"} secundario={[sku, secundario].filter(Boolean).join(" · ")} />
+      </Box>
+    </ConMiniatura>
   );
 }
 

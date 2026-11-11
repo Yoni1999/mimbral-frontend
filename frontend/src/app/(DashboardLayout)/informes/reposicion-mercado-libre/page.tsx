@@ -1,5 +1,6 @@
 "use client";
 
+import { ConMiniatura } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/TablaInforme";
 import React from "react";
 import { useRouter } from "next/navigation";
 import { Box, Button, InputAdornment, Pagination, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Tooltip, Typography } from "@mui/material";
@@ -20,6 +21,8 @@ type Estado = "sin_stock" | "critico" | "bajo" | "sin_dato";
 
 interface FilaReposicion {
   sku: string;
+  /** Foto del producto (portada de su ficha). */
+  imagen?: string | null;
   nombre: string | null;
   categoria: string | null;
   lado: Lado;
@@ -340,6 +343,7 @@ export default function InformeReposicionMercadoLibre() {
                       <TableRow key={`${f.sku}-${f.lado}`}>
                         <TableCell sx={{ color: `${tinta.tenue} !important` }}>{(pagina - 1) * POR_PAGINA + i + 1}</TableCell>
                         <TableCell>
+                          <ConMiniatura imagen={f.imagen} titulo={f.nombre ?? f.sku}>
                           <Box
                             role="link"
                             tabIndex={0}
@@ -349,6 +353,7 @@ export default function InformeReposicionMercadoLibre() {
                           >
                             <TextoCelda texto={f.nombre ?? "Sin nombre en SAP"} secundario={[f.sku, f.categoria ?? "Sin categoría ML"].join(" · ")} />
                           </Box>
+                          </ConMiniatura>
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.6, fontSize: 12, fontWeight: 600 }}>

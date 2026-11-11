@@ -76,6 +76,8 @@ export interface PublicacionMl {
 
 export interface ProductoMl {
   sku: string;
+  /** Foto del producto (portada de su ficha). */
+  imagen?: string | null;
   /** Activas primero; null si no se pudieron leer. */
   publicaciones?: PublicacionMl[] | null;
   nombre: string | null;

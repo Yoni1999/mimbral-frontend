@@ -14,6 +14,8 @@ import { entero, fecha, pesos, redondo } from "../comun";
 
 interface Fila {
   sku: string;
+  /** Foto del producto (portada de su ficha). */
+  imagen?: string | null;
   nombre: string | null;
   unidades: number;
   noVendibles: number;
@@ -99,7 +101,7 @@ export default function StockFullQueCuesta() {
   ];
 
   const columnas: ColumnaInforme<Fila>[] = [
-    { clave: "producto", titulo: "Producto", ancho: 27, valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} secundario={f.tamano ?? undefined} /> },
+    { clave: "producto", titulo: "Producto", ancho: 27, valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} secundario={f.tamano ?? undefined} /> },
     {
       clave: "unidades",
       titulo: "Stock Full",

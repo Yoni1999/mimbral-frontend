@@ -14,6 +14,8 @@ import { entero, fecha, pesos, porcentaje, redondo } from "../comun";
 
 interface Fila {
   sku: string;
+  /** Foto del producto (portada de su ficha). */
+  imagen?: string | null;
   itemId: string;
   nombre: string | null;
   precio: number;
@@ -97,7 +99,7 @@ export default function PrecioYCompetencia() {
   ];
 
   const columnas: ColumnaInforme<Fila>[] = [
-    { clave: "producto", titulo: "Producto", ancho: 25, valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} secundario={`${entero(f.unidades7d)} u. en 7 días`} /> },
+    { clave: "producto", titulo: "Producto", ancho: 25, valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} secundario={`${entero(f.unidades7d)} u. en 7 días`} /> },
     {
       clave: "precio",
       titulo: "Precio ML",

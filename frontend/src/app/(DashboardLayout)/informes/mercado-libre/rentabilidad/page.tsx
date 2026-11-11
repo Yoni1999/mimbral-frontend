@@ -15,6 +15,8 @@ import { entero, pesos, porcentaje, redondo, useFiltrosInforme } from "../comun"
 
 interface Fila {
   sku: string;
+  /** Foto del producto (portada de su ficha). */
+  imagen?: string | null;
   nombre: string | null;
   unidades: number;
   unidadesFull: number;
@@ -101,7 +103,7 @@ export default function RentabilidadMercadoLibre() {
   ];
 
   const columnas: ColumnaInforme<Fila>[] = [
-    { clave: "producto", titulo: "Producto", ancho: 30, valor: (f) => f.nombre ?? "", excel: "Producto", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} /> },
+    { clave: "producto", titulo: "Producto", ancho: 30, valor: (f) => f.nombre ?? "", excel: "Producto", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} /> },
     {
       clave: "unidades",
       titulo: "Unid.",
