@@ -30,12 +30,15 @@ import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import DateRangeFilter, { DateRangeValue } from "../../../utilities/ventas/components/DateRangeFilter";
 import SubmitOnEnter from "../../../components/SubmitOnEnter";
+import { MAX_SKUS, ResultadoLista, descargarPlantillaSkus, skusDeExcel, skusDeTexto } from "./listaSkus";
 
 export interface FiltrosPorCanal {
   periodo?: "1d" | "7d" | "14d" | "1m" | "3m" | "6m" | "RANGO";
   fechaInicio?: string;
   fechaFin?: string;
   sku?: string;
+  /** Varios SKU exactos (pegados o desde la plantilla Excel), hasta 1.000. */
+  skus?: string[];
   familia?: string;
   subfamilia?: string;
   proveedor?: string;
@@ -148,6 +151,31 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
 
   const [proveedorSearchInput, setProveedorSearchInput] = useState("");
+  // Varios SKU: lo pegado en el cuadro o lo leído de la plantilla.
+  const [variosSkus, setVariosSkus] = useState(Boolean(currentFilters?.skus?.length));
+  const [textoSkus, setTextoSkus] = useState((currentFilters?.skus ?? []).join("\n"));
+  const [avisoSkus, setAvisoSkus] = useState<string | null>(null);
+  const [leyendoExcel, setLeyendoExcel] = useState(false);
+  const aplicarLista = (r: ResultadoLista, origen: string) => {
+    setFilters((prev) => ({ ...prev, skus: r.skus.length ? r.skus : undefined }));
+    const partes = [`${r.skus.length.toLocaleString("es-CL")} SKU ${origen}`];
+    if (r.excedidos) partes.push(`${r.excedidos.toLocaleString("es-CL")} quedaron fuera (máximo ${MAX_SKUS.toLocaleString("es-CL")})`);
+    if (r.invalidos.length) partes.push(`${r.invalidos.length} no válidos: ${r.invalidos.slice(0, 3).join(", ")}${r.invalidos.length > 3 ? "…" : ""}`);
+    setAvisoSkus(partes.join(" · "));
+  };
+  const cargarExcelSkus = async (archivo: File | undefined) => {
+    if (!archivo) return;
+    setLeyendoExcel(true);
+    try {
+      const r = await skusDeExcel(archivo);
+      setTextoSkus(r.skus.join("\n"));
+      aplicarLista(r, "cargados del Excel");
+    } catch {
+      setAvisoSkus("No se pudo leer el archivo. Usa la plantilla: una columna SKU, un código por fila.");
+    } finally {
+      setLeyendoExcel(false);
+    }
+  };
   const [loadingProveedores, setLoadingProveedores] = useState(false);
   const [showProveedorSuggestions, setShowProveedorSuggestions] =
     useState(false);
@@ -230,6 +258,10 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
       setFechaRange(null);
     } else if (key === "sku") {
       updated.sku = undefined;
+    } else if (key === "skus") {
+      updated.skus = undefined;
+      setTextoSkus("");
+      setAvisoSkus(null);
     } else if (key === "familia") {
       updated.familia = undefined;
     } else if (key === "subfamilia") {
@@ -319,6 +351,13 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
             <Chip
               label={`Producto: ${filters.sku}`}
               onDelete={() => handleChipDelete("sku")}
+              sx={chipPrimarySx}
+            />
+          )}
+          {filters.skus && filters.skus.length > 0 && (
+            <Chip
+              label={`Varios SKU: ${filters.skus.length.toLocaleString("es-CL")}`}
+              onDelete={() => handleChipDelete("skus")}
               sx={chipPrimarySx}
             />
           )}
@@ -482,6 +521,54 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
                     ),
                   }}
                 />
+                <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1, mt: 1 }}>
+                  <Button size="small" variant={variosSkus ? "contained" : "outlined"} disableElevation onClick={() => setVariosSkus((v) => !v)} sx={{ textTransform: "none", borderRadius: 2 }}>
+                    Varios SKU{filters.skus?.length ? ` (${filters.skus.length.toLocaleString("es-CL")})` : ""}
+                  </Button>
+                  {variosSkus && (
+                    <>
+                      <Button size="small" component="label" disabled={leyendoExcel} sx={{ textTransform: "none" }}>
+                        {leyendoExcel ? "Leyendo…" : "Cargar Excel"}
+                        <input
+                          hidden
+                          type="file"
+                          accept=".xlsx,.xls,.csv"
+                          onChange={(e) => {
+                            void cargarExcelSkus(e.target.files?.[0]);
+                            e.target.value = "";
+                          }}
+                        />
+                      </Button>
+                      <Button size="small" onClick={() => void descargarPlantillaSkus()} sx={{ textTransform: "none" }}>
+                        Descargar plantilla
+                      </Button>
+                    </>
+                  )}
+                </Box>
+                {variosSkus && (
+                  <>
+                    <TextField
+                      fullWidth
+                      multiline
+                      minRows={3}
+                      maxRows={8}
+                      size="small"
+                      label={`SKU, uno por línea (máximo ${MAX_SKUS.toLocaleString("es-CL")})`}
+                      placeholder={"001001016\n555225021"}
+                      value={textoSkus}
+                      onChange={(e) => {
+                        setTextoSkus(e.target.value);
+                        aplicarLista(skusDeTexto(e.target.value), "en la lista");
+                      }}
+                      // Enter es salto de línea aquí, no "Aplicar".
+                      onKeyDown={(e) => e.stopPropagation()}
+                      sx={{ ...textFieldSx, mt: 1 }}
+                    />
+                    <Typography sx={{ fontSize: 12, color: "#6a7c98", mt: 0.5 }}>
+                      {avisoSkus ?? "Pega los códigos o carga la plantilla Excel. Con lista se buscan esos SKU exactos."}
+                    </Typography>
+                  </>
+                )}
               </Box>
             </Grid>
 

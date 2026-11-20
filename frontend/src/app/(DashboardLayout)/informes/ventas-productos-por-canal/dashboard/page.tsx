@@ -45,6 +45,7 @@ import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
 import { useEstadoVista } from "@/utils/estadoVista";
+import { leerSkusDelTablero } from "../components/listaSkus";
 import { BACKEND_URL } from "@/config";
 
 type ChannelItem = {
@@ -291,10 +292,14 @@ const DashboardVentasPorCanalPage: React.FC = () => {
   params.set("pageSize", "10000");
   params.set("sinPaginacion", "true");
   const urlDashboard = `${BACKEND_URL}/api/informes/productos-por-canal-margen?${params.toString()}`;
+  // Varios SKU: la URL trae la huella ("lista") y la lista queda en la sesión del navegador.
+  const skusLista = leerSkusDelTablero(params.get("lista"));
   const { datos: data, cargando: loading } = useCargaDatos<ProductItem[]>(
     urlDashboard,
     async (signal) => {
-      const json = await apiJson(urlDashboard, { signal });
+      const json = skusLista?.length
+        ? await apiJson(urlDashboard, { signal, method: "POST", body: JSON.stringify({ skus: skusLista }) })
+        : await apiJson(urlDashboard, { signal });
       return Array.isArray(json?.data) ? json.data : [];
     },
     []

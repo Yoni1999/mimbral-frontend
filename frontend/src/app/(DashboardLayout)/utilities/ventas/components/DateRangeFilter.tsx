@@ -345,6 +345,64 @@ function rangoDeLargoFijo(inicio: Date, largo: number, minDate: Date | null, max
   return [a, b];
 }
 
+/**
+ * Fecha del pie del calendario, editable: se escribe (o se elige en el
+ * selector del navegador) en vez de recorrer mes a mes. Se aplica apenas es una
+ * fecha completa y válida; si se deja a medias, vuelve a la que había.
+ */
+function CampoFecha({
+  etiqueta,
+  valor,
+  min,
+  max,
+  disabled = false,
+  onCambiar,
+}: {
+  etiqueta: string;
+  valor: Date | null;
+  min: Date | null;
+  max: Date | null;
+  disabled?: boolean;
+  onCambiar: (date: Date | null) => void;
+}) {
+  const [texto, setTexto] = useState(valor ? toDateStr(valor) : "");
+  useEffect(() => setTexto(valor ? toDateStr(valor) : ""), [valor]);
+  // Fecha completa y con un año razonable: mientras se escribe el año, el
+  // campo nativo pasa por 0002, 0020, 0202… y esas no se aplican.
+  const valida = (t: string) => (/^(19|20)\d{2}-\d{2}-\d{2}$/.test(t) ? parseDate(t) : null);
+  const confirmar = () => {
+    const d = valida(texto);
+    if (d) onCambiar(d);
+    else setTexto(valor ? toDateStr(valor) : "");
+  };
+  return (
+    <TextField
+      type="date"
+      size="small"
+      value={texto}
+      disabled={disabled}
+      onChange={(e) => {
+        setTexto(e.target.value);
+        const d = valida(e.target.value);
+        if (d) onCambiar(d);
+      }}
+      onBlur={confirmar}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          confirmar();
+        }
+      }}
+      inputProps={{ "aria-label": etiqueta, min: min ? toDateStr(min) : undefined, max: max ? toDateStr(max) : undefined }}
+      sx={{
+        width: 150,
+        "& .MuiInputBase-root": { borderRadius: 1.5, bgcolor: "#f8fafc", fontSize: 12.5 },
+        "& .MuiInputBase-input": { py: 0.85, px: 1.2, color: "#334155" },
+      }}
+    />
+  );
+}
+
 export default function DateRangeFilter({
   value,
   onChange,
@@ -421,6 +479,29 @@ export default function DateRangeFilter({
     }
 
     setDraftEnd(date);
+  };
+
+  /** Fecha escrita en los campos de abajo: arma el rango sin recorrer el calendario. */
+  const handleTypedDate = (lado: "inicio" | "fin", date: Date | null) => {
+    if (!date) return;
+    const limitada = minDate && date < minDate ? minDate : maxDate && date > maxDate ? maxDate : date;
+    if (largoFijo) {
+      const [a, b] = rangoDeLargoFijo(limitada, largoFijo, minDate, maxDate);
+      setDraftStart(a);
+      setDraftEnd(b);
+      setViewMonth(startOfMonth(a));
+      return;
+    }
+    if (lado === "inicio") {
+      setDraftStart(limitada);
+      if (draftEnd && draftEnd.getTime() < limitada.getTime()) setDraftEnd(limitada);
+      setViewMonth(startOfMonth(limitada));
+    } else {
+      setDraftEnd(limitada);
+      if (!draftStart || draftStart.getTime() > limitada.getTime()) setDraftStart(limitada);
+      // Que el mes del fin quede a la vista (a la derecha).
+      setViewMonth(startOfMonth(addMonths(limitada, -1)));
+    }
   };
 
   const handleApply = () => {
@@ -680,39 +761,22 @@ export default function DateRangeFilter({
               sx={{ px: 3, py: 1.5 }}
             >
               <Stack direction="row" spacing={1} alignItems="center">
-                <Box
-                  sx={{
-                    minWidth: 100,
-                    px: 1.2,
-                    py: 0.85,
-                    borderRadius: 1.5,
-                    border: "1px solid #e2e8f0",
-                    backgroundColor: "#f8fafc",
-                    fontFamily: "monospace",
-                    fontSize: 12,
-                    color: "#334155",
-                    textAlign: "center",
-                  }}
-                >
-                  {draftStart ? toDateStr(draftStart) : "yyyy-mm-dd"}
-                </Box>
+                <CampoFecha
+                  etiqueta="Desde"
+                  valor={draftStart}
+                  min={minDate}
+                  max={maxDate}
+                  onCambiar={(d) => handleTypedDate("inicio", d)}
+                />
                 <Typography sx={{ color: "#94a3b8" }}>-</Typography>
-                <Box
-                  sx={{
-                    minWidth: 100,
-                    px: 1.2,
-                    py: 0.85,
-                    borderRadius: 1.5,
-                    border: "1px solid #e2e8f0",
-                    backgroundColor: "#f8fafc",
-                    fontFamily: "monospace",
-                    fontSize: 12,
-                    color: "#334155",
-                    textAlign: "center",
-                  }}
-                >
-                  {draftEnd ? toDateStr(draftEnd) : "yyyy-mm-dd"}
-                </Box>
+                <CampoFecha
+                  etiqueta="Hasta"
+                  valor={draftEnd}
+                  min={minDate}
+                  max={maxDate}
+                  disabled={!!largoFijo}
+                  onCambiar={(d) => handleTypedDate("fin", d)}
+                />
               </Stack>
 
               <Stack direction="row" spacing={1.25} justifyContent="flex-end">
