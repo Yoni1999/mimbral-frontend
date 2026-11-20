@@ -36,6 +36,7 @@ import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
 import { useEstadoVista } from "@/utils/estadoVista";
 import { conPeriodoRapido, resolverPeriodoRapido } from "../../utilities/ventas/components/RangosRapidos";
+import { guardarSkusParaTablero, huellaSkus } from "./components/listaSkus";
 import { BACKEND_URL } from "@/config";
 import { notifySuccess, notifyError } from "@/components/ui/toast/notify";
 import * as XLSX from "xlsx";
@@ -169,6 +170,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
       appliedFilters?.fechaInicio ||
       appliedFilters?.fechaFin ||
       appliedFilters?.sku ||
+      (appliedFilters?.skus?.length ?? 0) > 0 ||
       appliedFilters?.familia ||
       appliedFilters?.subfamilia ||
       appliedFilters?.proveedor ||
@@ -202,14 +204,19 @@ const InformeVentasPorCanalPage: React.FC = () => {
     params.append("pageSize", String(pageSize));
     params.append("orderBy", orderBy);
     params.append("order", order);
+    // La lista viaja en el cuerpo; la huella hace que cada lista sea otra consulta.
+    if (sourceFilters.skus?.length) params.append("lista", huellaSkus(sourceFilters.skus));
 
     return `${BACKEND_URL}/api/informes/productos-por-canal-margen?${params.toString()}`;
   };
   const urlTabla = hasAppliedFilters ? construirUrl() : null;
+  const skusAplicados = (appliedFilters || filters).skus;
   const { datos: resultado, cargando: loading } = useCargaDatos<{ rows: ProductoPorCanal[]; total: number }>(
     urlTabla,
     async (signal) => {
-      const data = await apiJson(urlTabla as string, { signal });
+      const data = skusAplicados?.length
+        ? await apiJson(urlTabla as string, { signal, method: "POST", body: JSON.stringify({ skus: skusAplicados }) })
+        : await apiJson(urlTabla as string, { signal });
       return {
         rows: Array.isArray(data?.data) ? data.data : [],
         total: Number(data?.meta?.total ?? data?.total ?? data?.count ?? 0),
@@ -233,6 +240,8 @@ const InformeVentasPorCanalPage: React.FC = () => {
     if (sourceFilters.fechaInicio) params.set("fechaInicio", sourceFilters.fechaInicio);
     if (sourceFilters.fechaFin) params.set("fechaFin", sourceFilters.fechaFin);
     if (sourceFilters.sku) params.set("sku", sourceFilters.sku);
+    // El tablero lee la lista de la sesión del navegador; la URL lleva su huella.
+    if (sourceFilters.skus?.length) params.set("lista", guardarSkusParaTablero(sourceFilters.skus));
     if (sourceFilters.familia) params.set("familia", sourceFilters.familia);
     if (sourceFilters.subfamilia) params.set("subfamilia", sourceFilters.subfamilia);
     if (sourceFilters.proveedor) params.set("proveedor", sourceFilters.proveedor);
