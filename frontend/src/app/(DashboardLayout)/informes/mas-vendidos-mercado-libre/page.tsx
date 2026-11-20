@@ -11,7 +11,8 @@ import { conPeriodoRapido, etiquetaRango, presetsDeHoy, resolverPeriodoRapido } 
 import { Pildoras, controlSx, etiquetaControlSx, formatoMonto, formatoPesos, tarjetaSx, tinta } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
 import { descargarExcel } from "@/app/(DashboardLayout)/utilities/ventas/components/detalle/comun";
 import HeaderMl, { RangoMl } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/HeaderMl";
-import TablaProductosMl, { filasExcelProductos } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/TablaProductosMl";
+import TablaProductosMl, { filasExcelProductos, valoresOrdenProductosMl } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/TablaProductosMl";
+import { useOrdenTabla } from "@/app/(DashboardLayout)/utilities/ventas/components/ordenTabla";
 import {
   AvisoEstimaciones,
   ProductoMl,
@@ -119,8 +120,11 @@ export default function InformeMasVendidosMercadoLibre() {
     .filter((p) => cumplePublicacion(p, filtros.publicacion))
     .filter((p) => !q || p.sku.toLowerCase().includes(q) || (p.nombre ?? "").toLowerCase().includes(q) || p.rutaCategoria.some((c) => c.nombre.toLowerCase().includes(q)))
     .sort((a, b) => valor(b, filtros.medida, filtros.tipo) - valor(a, filtros.medida, filtros.tipo));
+  // Pulsar un encabezado ordena por esa columna (por encima de "Ordenar por").
+  const columnas = useOrdenTabla(filas, valoresOrdenProductosMl(filtros.tipo));
+  React.useEffect(() => setPagina(1), [columnas.orden]);
   const paginas = Math.max(1, Math.ceil(filas.length / POR_PAGINA));
-  const visibles = filas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+  const visibles = columnas.ordenadas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
 
   const venta = sumaPar(...filas.map((p) => p.venta));
   const cobra = sumaPar(...filas.map((p) => cobros(p)));
@@ -210,7 +214,15 @@ export default function InformeMasVendidosMercadoLibre() {
             />
             <Box>
               <Typography sx={etiquetaControlSx}>Ordenar por</Typography>
-              <Pildoras etiqueta="Ordenar por" opciones={MEDIDAS} valor={filtros.medida} onCambiar={(m) => setFiltros((f) => ({ ...f, medida: m }))} />
+              <Pildoras
+                etiqueta="Ordenar por"
+                opciones={MEDIDAS}
+                valor={filtros.medida}
+                onCambiar={(m) => {
+                  columnas.setOrden(null);
+                  setFiltros((f) => ({ ...f, medida: m }));
+                }}
+              />
             </Box>
             <Box>
               <Typography sx={etiquetaControlSx}>Publicación</Typography>
@@ -234,6 +246,8 @@ export default function InformeMasVendidosMercadoLibre() {
             filas={visibles}
             cargando={datos.cargando}
             tipo={filtros.tipo}
+            orden={columnas.orden}
+            onOrdenar={columnas.ordenarPor}
             desde={(pagina - 1) * POR_PAGINA}
             filasCargando={12}
             vacio={q ? "Ningún producto coincide con la búsqueda." : "Sin ventas de Mercado Libre en el período."}

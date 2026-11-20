@@ -26,6 +26,9 @@ type ProductoEstancado = {
 };
 
 type SortKey =
+  | 'Producto'
+  | 'PrimerNivel'
+  | 'Categoria'
   | 'UltimaVenta'
   | 'UltimaFechaCompra'
   | 'DiasSinVenta'
@@ -77,6 +80,10 @@ const ProductosEstancadosTable = ({
       const valB = b[sortBy];
       if (valA === null || valA === undefined) return 1;
       if (valB === null || valB === undefined) return -1;
+      if (typeof valA === 'string' && typeof valB === 'string' && (sortBy === 'Producto' || sortBy === 'PrimerNivel' || sortBy === 'Categoria')) {
+        const r = valA.localeCompare(valB, 'es');
+        return sortDirection === 'asc' ? r : -r;
+      }
       if (sortDirection === 'asc') return valA > valB ? 1 : -1;
       else return valA < valB ? 1 : -1;
     });
@@ -145,9 +152,9 @@ const ProductosEstancadosTable = ({
           <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
             <TableRow>
               <TableCell>Imagen</TableCell>
-              <TableCell>Producto</TableCell>
-              <TableCell>Primer Nivel</TableCell>
-              <TableCell>Categoría</TableCell>
+              <TableCell>{renderSortLabel('Producto', 'Producto')}</TableCell>
+              <TableCell>{renderSortLabel('PrimerNivel', 'Primer Nivel')}</TableCell>
+              <TableCell>{renderSortLabel('Categoria', 'Categoría')}</TableCell>
               <TableCell>{renderSortLabel('UltimaVenta', 'Última venta')}</TableCell>
               <TableCell>{renderSortLabel('UltimaFechaCompra', 'Última compra')}</TableCell>
               <TableCell>{renderSortLabel('DiasSinVenta', 'Días sin venta')}</TableCell>

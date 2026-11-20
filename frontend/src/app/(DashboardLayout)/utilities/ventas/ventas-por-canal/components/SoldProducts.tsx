@@ -6,6 +6,7 @@ import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { BarraParticipacion, ChipMargen, Panel, formatoPesos, tablaSx, tinta, Columnas, TextoCelda } from "../../components/estilo";
+import { CeldaOrden, useOrdenTabla } from "../../components/ordenTabla";
 
 interface Filtros {
   canal: string;
@@ -85,6 +86,17 @@ const ProductosVendidos: React.FC<Props> = ({ filters }) => {
   );
 
   const maxVenta = Math.max(0, ...productos.map((p) => p.totalVentas || 0));
+  // Ordena la página que llegó del servidor (100 productos por página).
+  const orden = useOrdenTabla(productos, {
+    producto: (r) => r.nombre,
+    categoria: (r) => r.primerNivel,
+    cantidad: (r) => cifra(r.cantidadVendida),
+    venta: (r) => r.totalVentas,
+    precio: (r) => cifra(r.precioPromedio),
+    margen: (r) => cifra(r.margenBruto),
+    margenPct: (r) => r.margenPorcentaje,
+    stock: (r) => cifra(r.stockCanal),
+  });
   const paginas = Math.ceil(totalProductos / rowsPerPage);
 
   return (
@@ -107,18 +119,18 @@ const ProductosVendidos: React.FC<Props> = ({ filters }) => {
           <Columnas anchos={[26, 16, 9, 13, 10, 11, 8, 7]} />
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ pl: 2.5 }}>Producto</TableCell>
-                  <TableCell>Primer nivel / Categoría</TableCell>
-                  <TableCell align="right">Cantidad</TableCell>
-                  <TableCell align="right">Total ventas</TableCell>
-                  <TableCell align="right">Precio prom.</TableCell>
-                  <TableCell align="right">Margen bruto</TableCell>
-                  <TableCell align="right">% Margen</TableCell>
-                  <TableCell align="right" sx={{ pr: 2.5 }}>Stock</TableCell>
+                  <CeldaOrden clave="producto" orden={orden.orden} onOrdenar={orden.ordenarPor} sx={{ pl: 2.5 }}>Producto</CeldaOrden>
+                  <CeldaOrden clave="categoria" orden={orden.orden} onOrdenar={orden.ordenarPor}>Primer nivel / Categoría</CeldaOrden>
+                  <CeldaOrden clave="cantidad" orden={orden.orden} onOrdenar={orden.ordenarPor} align="right">Cantidad</CeldaOrden>
+                  <CeldaOrden clave="venta" orden={orden.orden} onOrdenar={orden.ordenarPor} align="right">Total ventas</CeldaOrden>
+                  <CeldaOrden clave="precio" orden={orden.orden} onOrdenar={orden.ordenarPor} align="right">Precio prom.</CeldaOrden>
+                  <CeldaOrden clave="margen" orden={orden.orden} onOrdenar={orden.ordenarPor} align="right">Margen bruto</CeldaOrden>
+                  <CeldaOrden clave="margenPct" orden={orden.orden} onOrdenar={orden.ordenarPor} align="right">% Margen</CeldaOrden>
+                  <CeldaOrden clave="stock" orden={orden.orden} onOrdenar={orden.ordenarPor} align="right" sx={{ pr: 2.5 }}>Stock</CeldaOrden>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {productos.map((row) => (
+                {orden.ordenadas.map((row) => (
                   <TableRow key={row.sku}>
                     <TableCell sx={{ pl: 2.5 }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>

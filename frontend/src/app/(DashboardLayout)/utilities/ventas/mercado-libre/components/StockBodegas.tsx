@@ -7,6 +7,7 @@ import { useApiDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { BarraParticipacion, Columnas, cifraSx, estado, tablaSx, tinta } from "../../components/estilo";
 import { ProductoMl, TipoEnvio, fechaCorta, n, tipoEnvio, unidades } from "./comun";
+import { CeldaOrden, useOrdenTabla } from "../../components/ordenTabla";
 
 /** Lo que necesitan la celda y el detalle de stock de un producto. */
 export type ProductoStock = Pick<ProductoMl, "sku" | "nombre" | "stockFull" | "stockFullAl" | "stock03">;
@@ -114,6 +115,13 @@ function DialogoStock({ producto, tipo, onCerrar }: { producto: ProductoStock; t
     .filter((b) => b.stock || b.comprometido || b.oc)
     .sort((a, b) => (a.codigo === "03" ? -1 : b.codigo === "03" ? 1 : b.stock - a.stock));
   const maximo = Math.max(0, ...filas.map((b) => b.stock));
+  const ordenBodegas = useOrdenTabla(filas, {
+    bodega: (b) => b.codigo,
+    stock: (b) => b.stock,
+    comprometido: (b) => b.comprometido,
+    oc: (b) => b.oc,
+    disponible: (b) => b.disponible,
+  });
 
   // Stock Full en vivo desde ML; si falla se muestra el guardado y el motivo.
   const enVivo = useApiDatos<StockFullEnVivo | null>(`${BACKEND_URL}/api/mercado-libre/stock-full/${encodeURIComponent(producto.sku)}`, null);
@@ -182,15 +190,15 @@ function DialogoStock({ producto, tipo, onCerrar }: { producto: ProductoStock; t
               <Columnas anchos={[22, 30, 16, 14, 18]} />
               <TableHead>
                 <TableRow>
-                  <TableCell>Bodega</TableCell>
-                  <TableCell align="right">Stock</TableCell>
-                  <TableCell align="right">Comprom.</TableCell>
-                  <TableCell align="right">En OC</TableCell>
-                  <TableCell align="right">Disponible</TableCell>
+                  <CeldaOrden clave="bodega" orden={ordenBodegas.orden} onOrdenar={ordenBodegas.ordenarPor}>Bodega</CeldaOrden>
+                  <CeldaOrden clave="stock" orden={ordenBodegas.orden} onOrdenar={ordenBodegas.ordenarPor} align="right">Stock</CeldaOrden>
+                  <CeldaOrden clave="comprometido" orden={ordenBodegas.orden} onOrdenar={ordenBodegas.ordenarPor} align="right">Comprom.</CeldaOrden>
+                  <CeldaOrden clave="oc" orden={ordenBodegas.orden} onOrdenar={ordenBodegas.ordenarPor} align="right">En OC</CeldaOrden>
+                  <CeldaOrden clave="disponible" orden={ordenBodegas.orden} onOrdenar={ordenBodegas.ordenarPor} align="right">Disponible</CeldaOrden>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filas.map((b) => (
+                {ordenBodegas.ordenadas.map((b) => (
                   <TableRow key={b.codigo} sx={b.codigo === "03" ? { "& .MuiTableCell-body": { bgcolor: "#fffaeb" } } : undefined}>
                     <TableCell sx={{ fontWeight: 600 }}>
                       Bodega {b.codigo}

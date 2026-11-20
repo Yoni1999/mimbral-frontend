@@ -1,6 +1,7 @@
 "use client";
 import { Avatar, Box, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { ChipMargen, formatoPesos, tablaSx, tinta, Panel, Columnas, TextoCelda } from "../../components/estilo";
+import { CeldaOrden, useOrdenTabla } from "../../components/ordenTabla";
 
 interface ProductoRentabilidad {
   Nombre_Producto: string;
@@ -16,23 +17,32 @@ interface Props {
   data: ProductoRentabilidad[];
 }
 
-const TopRentabilidadMinima = ({ data }: Props) => (
+const TopRentabilidadMinima = ({ data }: Props) => {
+  const orden = useOrdenTabla((data ?? []).slice(0, 10), {
+    producto: (i) => i.Nombre_Producto,
+    cantidad: (i) => i.Cantidad_Vendida,
+    venta: (i) => i.Precio_Venta_Promedio,
+    costo: (i) => i.Costo_Promedio,
+    rentabilidad: (i) => i.Rentabilidad_Total,
+    margen: (i) => i.Margen_Porcentaje,
+  });
+  return (
   <Panel titulo="Top 10 productos menos rentables" descripcion="Los que menos margen dejaron: revisar precio o costo">
     <Box sx={{ maxHeight: 400, overflowY: "auto", overflowX: "hidden", mx: -2.5 }}>
       <Table size="small" stickyHeader sx={tablaSx}>
           <Columnas anchos={[36, 10, 14, 14, 14, 12]} />
         <TableHead>
           <TableRow>
-            <TableCell sx={{ pl: 2.5 }}>Producto</TableCell>
-            <TableCell align="right">Cantidad</TableCell>
-            <TableCell align="right">Venta prom.</TableCell>
-            <TableCell align="right">Costo prom.</TableCell>
-            <TableCell align="right">Rentabilidad</TableCell>
-            <TableCell align="right" sx={{ pr: 2.5 }}>% Margen</TableCell>
+            <CeldaOrden clave="producto" orden={orden.orden} onOrdenar={orden.ordenarPor} sx={{ pl: 2.5 }}>Producto</CeldaOrden>
+            <CeldaOrden clave="cantidad" orden={orden.orden} onOrdenar={orden.ordenarPor} align="right">Cantidad</CeldaOrden>
+            <CeldaOrden clave="venta" orden={orden.orden} onOrdenar={orden.ordenarPor} align="right">Venta prom.</CeldaOrden>
+            <CeldaOrden clave="costo" orden={orden.orden} onOrdenar={orden.ordenarPor} align="right">Costo prom.</CeldaOrden>
+            <CeldaOrden clave="rentabilidad" orden={orden.orden} onOrdenar={orden.ordenarPor} align="right">Rentabilidad</CeldaOrden>
+            <CeldaOrden clave="margen" orden={orden.orden} onOrdenar={orden.ordenarPor} align="right" sx={{ pr: 2.5 }}>% Margen</CeldaOrden>
           </TableRow>
         </TableHead>
         <TableBody>
-          {(data ?? []).slice(0, 10).map((item) => (
+          {orden.ordenadas.map((item) => (
             <TableRow key={item.Codigo_Producto}>
               <TableCell sx={{ pl: 2.5 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
@@ -57,6 +67,7 @@ const TopRentabilidadMinima = ({ data }: Props) => (
       </Table>
     </Box>
   </Panel>
-);
+  );
+};
 
 export default TopRentabilidadMinima;

@@ -14,7 +14,8 @@ import { conPeriodoRapido, etiquetaRango, rangoInicial, resolverPeriodoRapido } 
 import { Panel, Pildoras, formatoMonto, formatoPesos, formatoPorcentaje, tinta } from "../components/estilo";
 import HeaderMl, { RangoMl } from "./components/HeaderMl";
 import TendenciaTipos from "./components/TendenciaTipos";
-import TablaProductosMl from "./components/TablaProductosMl";
+import TablaProductosMl, { valoresOrdenProductosMl } from "./components/TablaProductosMl";
+import { useOrdenTabla } from "../components/ordenTabla";
 import DesgloseMl, { VistaDesglose } from "./components/DesgloseMl";
 import {
   AvisoEstimaciones,
@@ -140,6 +141,7 @@ export default function VentasMercadoLibre() {
   const irAlInforme = () =>
     router.push(`/informes/mas-vendidos-mercado-libre?${new URLSearchParams({ tipo: vista.tipo, fechaInicio: rango.fechaInicio, fechaFin: rango.fechaFin })}`);
 
+  const productosOrden = useOrdenTabla(productos.datos?.filas ?? [], valoresOrdenProductosMl(vista.tipo));
   const filasCategorias = (categorias.datos?.filas ?? []).filter((c) => n(c.venta.neto) !== 0).slice(0, 10);
 
   return (
@@ -253,7 +255,7 @@ export default function VentasMercadoLibre() {
                   onCambiar={(t) => setVista((v) => ({ ...v, tipo: t === "todos" ? "" : (t as TipoEnvio) }))}
                 />
               </Box>
-              <TablaProductosMl filas={productos.datos?.filas ?? []} cargando={productos.cargando} tipo={vista.tipo} filasCargando={10} />
+              <TablaProductosMl filas={productosOrden.ordenadas} cargando={productos.cargando} tipo={vista.tipo} filasCargando={10} orden={productosOrden.orden} onOrdenar={productosOrden.ordenarPor} />
             </Panel>
           </Grid>
         </Grid>

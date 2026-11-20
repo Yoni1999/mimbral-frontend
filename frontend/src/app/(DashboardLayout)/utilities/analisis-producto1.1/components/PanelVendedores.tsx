@@ -29,7 +29,7 @@ interface Vendedor {
   participacion: number;
 }
 
-type Orden = "venta" | "unidades" | "margen" | "margenPorcentaje";
+type Orden = "nombre" | "venta" | "unidades" | "margen" | "margenPorcentaje";
 
 /** Quién vende el producto: venta, unidades y margen por vendedor en el
  *  período, con su participación. */
@@ -58,11 +58,15 @@ export default function PanelVendedores({ query }: { query: string }) {
     []
   );
 
-  const filas = [...datos].sort((a, b) => (vista.direccion === "asc" ? 1 : -1) * (a[vista.orden] - b[vista.orden]));
+  const filas = [...datos].sort(
+    (a, b) =>
+      (vista.direccion === "asc" ? 1 : -1) *
+      (vista.orden === "nombre" ? a.nombre.localeCompare(b.nombre, "es") : a[vista.orden] - b[vista.orden])
+  );
   const maximo = Math.max(0, ...datos.map((v) => v.venta));
 
-  const encabezado = (o: Orden, texto: string) => (
-    <TableCell align="right" sortDirection={vista.orden === o ? vista.direccion : false}>
+  const encabezado = (o: Orden, texto: string, align: "left" | "right" = "right") => (
+    <TableCell align={align} sortDirection={vista.orden === o ? vista.direccion : false}>
       <TableSortLabel
         active={vista.orden === o}
         direction={vista.orden === o ? vista.direccion : "desc"}
@@ -85,7 +89,7 @@ export default function PanelVendedores({ query }: { query: string }) {
             <Columnas anchos={[34, 24, 14, 14, 14]} />
             <TableHead>
               <TableRow>
-                <TableCell>Vendedor</TableCell>
+                {encabezado("nombre", "Vendedor", "left")}
                 {encabezado("venta", "Venta")}
                 {encabezado("unidades", "Unidades")}
                 {encabezado("margen", "Margen $")}

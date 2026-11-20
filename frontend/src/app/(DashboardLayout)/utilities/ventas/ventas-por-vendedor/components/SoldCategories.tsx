@@ -45,9 +45,9 @@ interface Categoria {
   cambioVentas: number | null;
 }
 
-type Orden = "unidades" | "ventas" | "margen";
+type Orden = "nombre" | "unidades" | "ventas" | "margen";
 
-const CAMPO: Record<Orden, keyof Categoria> = { unidades: "unidades", ventas: "ventas", margen: "margenPorcentaje" };
+const CAMPO: Record<Orden, keyof Categoria> = { nombre: "nombre", unidades: "unidades", ventas: "ventas", margen: "margenPorcentaje" };
 
 /** Categorías vendidas en el período, con búsqueda y orden por columna. */
 const CategoriasVendidas: React.FC<{ filtros: Filters }> = ({ filtros }) => {
@@ -87,13 +87,15 @@ const CategoriasVendidas: React.FC<{ filtros: Filters }> = ({ filtros }) => {
   const filas = datos
     .filter((c) => c.nombre.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => {
-      const dif = (a[CAMPO[sortBy]] as number) - (b[CAMPO[sortBy]] as number);
+      const va = a[CAMPO[sortBy]];
+      const vb = b[CAMPO[sortBy]];
+      const dif = typeof va === "number" && typeof vb === "number" ? va - vb : String(va ?? "").localeCompare(String(vb ?? ""), "es");
       return sortDirection === "asc" ? dif : -dif;
     });
   const maxVenta = Math.max(0, ...datos.map((c) => c.ventas));
 
-  const encabezado = (columna: Orden, texto: string) => (
-    <TableCell align="right" sortDirection={sortBy === columna ? sortDirection : false}>
+  const encabezado = (columna: Orden, texto: string, align: "left" | "right" = "right") => (
+    <TableCell align={align} sortDirection={sortBy === columna ? sortDirection : false}>
       <TableSortLabel active={sortBy === columna} direction={sortBy === columna ? sortDirection : "desc"} onClick={() => ordenar(columna)}>
         {texto}
       </TableSortLabel>
@@ -133,7 +135,7 @@ const CategoriasVendidas: React.FC<{ filtros: Filters }> = ({ filtros }) => {
             <Columnas anchos={[40, 20, 25, 15]} />
             <TableHead>
               <TableRow>
-                <TableCell>Categoría</TableCell>
+                {encabezado("nombre", "Categoría", "left")}
                 {encabezado("unidades", "Unidades")}
                 {encabezado("ventas", "Ventas")}
                 {encabezado("margen", "% Margen")}

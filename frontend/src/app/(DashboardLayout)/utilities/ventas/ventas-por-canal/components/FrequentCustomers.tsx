@@ -10,7 +10,7 @@ import { BACKEND_URL } from "@/config";
 import { BarraParticipacion, Panel, estado, formatoMonto, tablaSx, tinta, Columnas, TextoCelda } from "../../components/estilo";
 
 type Order = "asc" | "desc";
-type OrderBy = "cantidad_compras" | "total_comprado" | "ticket_promedio" | "ultima_compra";
+type OrderBy = "cardname" | "cantidad_compras" | "total_comprado" | "ticket_promedio" | "ultima_compra" | "linea_credito" | "balance";
 
 interface ClienteFrecuente {
   cardcode: string;
@@ -80,6 +80,10 @@ const ClientesFrecuentesTable: React.FC<ClientesFrecuentesTableProps> = ({ filte
 
   const sortedData = useMemo(() => {
     return [...clientes].sort((a, b) => {
+      if (orderBy === "cardname") {
+        const r = String(a.cardname ?? "").localeCompare(String(b.cardname ?? ""), "es");
+        return order === "asc" ? r : -r;
+      }
       if (orderBy === "ultima_compra") {
         const dateA = new Date(a.ultima_compra || 0).getTime();
         const dateB = new Date(b.ultima_compra || 0).getTime();
@@ -93,8 +97,8 @@ const ClientesFrecuentesTable: React.FC<ClientesFrecuentesTableProps> = ({ filte
 
   const maxTotal = Math.max(0, ...sortedData.map((c) => c.total_comprado || 0));
 
-  const columna = (key: OrderBy, label: string) => (
-    <TableCell align="right" sortDirection={orderBy === key ? order : false}>
+  const columna = (key: OrderBy, label: string, sx?: object, align: "left" | "right" = "right") => (
+    <TableCell align={align} sx={sx} sortDirection={orderBy === key ? order : false}>
       <TableSortLabel active={orderBy === key} direction={orderBy === key ? order : "desc"} onClick={() => handleSort(key)}>
         {label}
       </TableSortLabel>
@@ -115,13 +119,13 @@ const ClientesFrecuentesTable: React.FC<ClientesFrecuentesTableProps> = ({ filte
           <Columnas anchos={[28, 9, 15, 12, 12, 12, 12]} />
             <TableHead>
               <TableRow>
-                <TableCell sx={{ pl: 2.5 }}>Cliente</TableCell>
+                {columna("cardname", "Cliente", { pl: 2.5 }, "left")}
                 {columna("cantidad_compras", "Compras")}
                 {columna("total_comprado", "Total comprado")}
                 {columna("ticket_promedio", "Ticket promedio")}
                 {columna("ultima_compra", "Última compra")}
-                <TableCell align="right">Línea de crédito</TableCell>
-                <TableCell align="right" sx={{ pr: 2.5 }}>Pendiente de pago</TableCell>
+                {columna("linea_credito", "Línea de crédito")}
+                {columna("balance", "Pendiente de pago", { pr: 2.5 })}
               </TableRow>
             </TableHead>
             <TableBody>

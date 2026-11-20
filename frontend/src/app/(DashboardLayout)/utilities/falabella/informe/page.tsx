@@ -12,6 +12,7 @@ import SeccionTitulo from "../../ventas/components/SeccionTitulo";
 import { Panel, Pildoras, cifraSx, formatoMonto, formatoPorcentaje, tinta } from "../../ventas/components/estilo";
 import { SelectorPeriodo, mensajeError, n, nombreMes, parametrosPeriodo, pct, pp, unidades } from "../../categorias/mercado-libre/components/comun";
 import { AvisosFal, BarraTiposFal, BloqueFal, ComparativoFal, EvolucionFal, FiltroTipo, LeyendaTiposFal, OPCIONES_TIPO, TablaCategoriasFal, pesos, rutaProductos, urlFal, usePeriodoFal, useTipoFal } from "../components/comun";
+import { CeldaOrden, useOrdenTabla } from "@/app/(DashboardLayout)/utilities/ventas/components/ordenTabla";
 
 type Paso = { id: string; nombre: string };
 
@@ -33,6 +34,14 @@ export default function InformeFalabella() {
   const full = useApiDatos<ComparativoFal | null>(urlFal("comparativo", { ...parametrosPeriodo(periodo), tipo: "full" }), null);
   const normal = useApiDatos<ComparativoFal | null>(urlFal("comparativo", { ...parametrosPeriodo(periodo), tipo: "normal" }), null);
   const evolucion = useApiDatos<EvolucionFal | null>(urlFal("evolucion", {}), null);
+  const ordenMeses = useOrdenTabla(evolucion.datos?.meses ?? [], {
+    mes: (m) => m.mes,
+    venta: (m) => m.venta.neto,
+    unidades: (m) => m.unidades,
+    comision: (m) => m.comision.neto,
+    despacho: (m) => m.envio.neto,
+    margen: (m) => m.margenPct,
+  });
 
   const t = datos?.total;
   const a = t?.actual;
@@ -117,13 +126,29 @@ export default function InformeFalabella() {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    {["Mes", "Venta", "Unid.", "Comisión", "Despacho", "Margen %", "Full · Normal"].map((h, i) => (
-                      <TableCell key={h} align={i && i < 6 ? "right" : "left"} sx={cabecera}>{h}</TableCell>
-                    ))}
+                    {(
+                      [
+                        ["Mes", "mes"],
+                        ["Venta", "venta"],
+                        ["Unid.", "unidades"],
+                        ["Comisión", "comision"],
+                        ["Despacho", "despacho"],
+                        ["Margen %", "margen"],
+                        ["Full · Normal", ""],
+                      ] as const
+                    ).map(([h, clave], i) =>
+                      clave ? (
+                        <CeldaOrden key={h} clave={clave} orden={ordenMeses.orden} onOrdenar={ordenMeses.ordenarPor} align={i && i < 6 ? "right" : "left"} sx={cabecera}>
+                          {h}
+                        </CeldaOrden>
+                      ) : (
+                        <TableCell key={h} align="left" sx={cabecera}>{h}</TableCell>
+                      )
+                    )}
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {(evolucion.datos?.meses ?? []).map((m) => (
+                  {ordenMeses.ordenadas.map((m) => (
                     <TableRow key={m.mes}>
                       <TableCell sx={{ ...celda, fontWeight: 700, textTransform: "capitalize" }}>{nombreMes(m.mes)}</TableCell>
                       <TableCell align="right" sx={{ ...celda, ...cifraSx, fontWeight: 700 }}>{formatoMonto(m.venta.neto)}</TableCell>

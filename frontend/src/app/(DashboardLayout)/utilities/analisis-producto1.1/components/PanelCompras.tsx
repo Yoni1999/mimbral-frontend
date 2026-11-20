@@ -5,6 +5,7 @@ import { Box, Grid, Skeleton, Table, TableBody, TableCell, TableContainer, Table
 import { useApiDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { Columnas, Panel, TextoCelda, estado, formatoMonto, formatoPesos, tablaSx, tinta } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
+import { CeldaOrden, useOrdenTabla } from "../../ventas/components/ordenTabla";
 
 const fecha = (iso?: string | null) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "—");
 const unidades = (v: number) => v.toLocaleString("es-CL", { maximumFractionDigits: 2 });
@@ -31,6 +32,15 @@ export default function PanelCompras({ sku }: { sku: string }) {
   const promedioDias = provs.length ? provs.reduce((s, p) => s + p.dias, 0) / provs.length : 0;
 
   const ocs = (Array.isArray(ordenes.datos) ? ordenes.datos : []).sort((a, b) => String(b.FechaOrden).localeCompare(String(a.FechaOrden)));
+  const ordenProvs = useOrdenTabla(provs, { proveedor: (p) => p.nombre, ordenes: (p) => p.ordenes, dias: (p) => p.dias });
+  const ordenOcs = useOrdenTabla(ocs, {
+    fecha: (o) => String(o.FechaOrden ?? ""),
+    oc: (o) => Number(o.NumeroOrdenCompra) || o.NumeroOrdenCompra,
+    cantidad: (o) => Number(o.CantidadComprada) || 0,
+    precio: (o) => Number(o.PrecioUnitario),
+    total: (o) => Number(o.TotalLinea),
+    comprador: (o) => o.Vendedor,
+  });
   const comprado = ocs.filter((o) => o.EstaCancelado !== "Y").reduce((s, o) => s + (Number(o.CantidadComprada) || 0), 0);
 
   return (
@@ -50,13 +60,13 @@ export default function PanelCompras({ sku }: { sku: string }) {
                 <Columnas anchos={[56, 20, 24]} />
                 <TableHead>
                   <TableRow>
-                    <TableCell>Proveedor</TableCell>
-                    <TableCell align="right">OC</TableCell>
-                    <TableCell align="right">Días de entrega</TableCell>
+                    <CeldaOrden clave="proveedor" orden={ordenProvs.orden} onOrdenar={ordenProvs.ordenarPor}>Proveedor</CeldaOrden>
+                    <CeldaOrden clave="ordenes" orden={ordenProvs.orden} onOrdenar={ordenProvs.ordenarPor} align="right">OC</CeldaOrden>
+                    <CeldaOrden clave="dias" orden={ordenProvs.orden} onOrdenar={ordenProvs.ordenarPor} align="right">Días de entrega</CeldaOrden>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {provs.map((p) => (
+                  {ordenProvs.ordenadas.map((p) => (
                     <TableRow key={p.codigo}>
                       <TableCell>
                         <TextoCelda texto={p.nombre} secundario={p.codigo} />
@@ -88,16 +98,16 @@ export default function PanelCompras({ sku }: { sku: string }) {
                 <Columnas anchos={[15, 15, 15, 15, 16, 24]} />
                 <TableHead>
                   <TableRow>
-                    <TableCell>Fecha</TableCell>
-                    <TableCell>OC</TableCell>
-                    <TableCell align="right">Cantidad</TableCell>
-                    <TableCell align="right">Precio unit.</TableCell>
-                    <TableCell align="right">Total</TableCell>
-                    <TableCell>Comprador · estado</TableCell>
+                    <CeldaOrden clave="fecha" orden={ordenOcs.orden} onOrdenar={ordenOcs.ordenarPor}>Fecha</CeldaOrden>
+                    <CeldaOrden clave="oc" orden={ordenOcs.orden} onOrdenar={ordenOcs.ordenarPor}>OC</CeldaOrden>
+                    <CeldaOrden clave="cantidad" orden={ordenOcs.orden} onOrdenar={ordenOcs.ordenarPor} align="right">Cantidad</CeldaOrden>
+                    <CeldaOrden clave="precio" orden={ordenOcs.orden} onOrdenar={ordenOcs.ordenarPor} align="right">Precio unit.</CeldaOrden>
+                    <CeldaOrden clave="total" orden={ordenOcs.orden} onOrdenar={ordenOcs.ordenarPor} align="right">Total</CeldaOrden>
+                    <CeldaOrden clave="comprador" orden={ordenOcs.orden} onOrdenar={ordenOcs.ordenarPor}>Comprador · estado</CeldaOrden>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {ocs.map((o, i) => (
+                  {ordenOcs.ordenadas.map((o, i) => (
                     <TableRow key={`${o.NumeroOrdenCompra}-${i}`}>
                       <TableCell>{fecha(o.FechaOrden)}</TableCell>
                       <TableCell>{o.NumeroOrdenCompra}</TableCell>

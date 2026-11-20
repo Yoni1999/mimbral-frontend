@@ -31,6 +31,8 @@ type Props = {
 
 type Order = 'asc' | 'desc';
 type OrderBy =
+  | 'nombre'
+  | 'primerNivel'
   | 'cantidadVendida'
   | 'margenPorcentaje'
   | 'stock'
@@ -60,6 +62,10 @@ const ProductosVendidos = ({ data }: Props) => {
   const sortedData = [...filteredData].sort((a, b) => {
     const valA = a[orderBy];
     const valB = b[orderBy];
+    if (typeof valA === 'string' || typeof valB === 'string') {
+      const r = String(valA ?? '').localeCompare(String(valB ?? ''), 'es');
+      return order === 'asc' ? r : -r;
+    }
     if (valA < valB) return order === 'asc' ? -1 : 1;
     if (valA > valB) return order === 'asc' ? 1 : -1;
     return 0;
@@ -90,8 +96,8 @@ const ProductosVendidos = ({ data }: Props) => {
     saveAs(blob, 'productos_vendidos.xlsx');
   };
 
-  const columna = (campo: OrderBy, label: string) => (
-    <TableCell align="right" sortDirection={orderBy === campo ? order : false}>
+  const columna = (campo: OrderBy, label: string, sx?: object, align: 'left' | 'right' = 'right') => (
+    <TableCell align={align} sx={sx} sortDirection={orderBy === campo ? order : false}>
       <TableSortLabel active={orderBy === campo} direction={orderBy === campo ? order : 'desc'} onClick={() => handleSort(campo)}>
         {label}
       </TableSortLabel>
@@ -136,8 +142,8 @@ const ProductosVendidos = ({ data }: Props) => {
           <Columnas anchos={[26, 16, 9, 13, 9, 11, 9, 7]} />
           <TableHead>
             <TableRow>
-              <TableCell sx={{ pl: 2.5 }}>Producto</TableCell>
-              <TableCell>Primer nivel / Categoría</TableCell>
+              {columna('nombre', 'Producto', { pl: 2.5 }, 'left')}
+              {columna('primerNivel', 'Primer nivel / Categoría', undefined, 'left')}
               {columna('cantidadVendida', 'Cant. vendida')}
               {columna('totalVentas', 'Total ventas')}
               {columna('margenPorcentaje', '% Margen')}

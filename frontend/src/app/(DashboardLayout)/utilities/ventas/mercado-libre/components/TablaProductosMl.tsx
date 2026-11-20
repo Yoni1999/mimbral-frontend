@@ -8,6 +8,18 @@ import { Columnas, TextoCelda, cifraSx, formatoPorcentaje, formatoPesos, tablaSx
 import { CeldaStock } from "./StockBodegas";
 import PublicacionesMl, { estadoPublicacion } from "./PublicacionesMl";
 import { BarraTipos, Monto, ProductoMl, TipoEnvio, cobros, n, unidades } from "./comun";
+import { CeldaOrden, OrdenTabla, ValorOrden } from "../../components/ordenTabla";
+
+/** Valores por los que se ordenan las columnas de la tabla (con `useOrdenTabla`). */
+export const valoresOrdenProductosMl = (tipo: TipoEnvio | ""): Record<string, (p: ProductoMl) => ValorOrden> => ({
+  producto: (p) => p.nombre ?? p.sku,
+  publicacion: (p) => estadoPublicacion((p.publicaciones ?? [])[0]?.estado ?? null).texto,
+  unidades: (p) => n(p.unidades),
+  venta: (p) => n(p.venta.neto),
+  cobra: (p) => n(cobros(p).neto),
+  queda: (p) => n(p.queda.neto),
+  stock: (p) => (tipo === "full" ? p.stockFull : tipo === "" ? n(p.stockFull) + n(p.stock03) : p.stock03),
+});
 
 interface Props {
   filas: ProductoMl[];
@@ -18,6 +30,9 @@ interface Props {
   desde?: number;
   filasCargando?: number;
   vacio?: string;
+  /** Orden por columna: sin `onOrdenar` los encabezados no ordenan. Quien llama ordena las filas (antes de paginar). */
+  orden?: OrdenTabla | null;
+  onOrdenar?: (clave: string) => void;
 }
 
 /**
@@ -26,8 +41,16 @@ interface Props {
  * corresponde (Full o bodega 03), que al pulsarlo abre todas las bodegas.
  * El nombre lleva a la ficha del producto.
  */
-export default function TablaProductosMl({ filas, cargando, tipo, desde = 0, filasCargando = 8, vacio = "Sin ventas de Mercado Libre en el período." }: Props) {
+export default function TablaProductosMl({ filas, cargando, tipo, desde = 0, filasCargando = 8, vacio = "Sin ventas de Mercado Libre en el período.", orden = null, onOrdenar }: Props) {
   const router = useRouter();
+  const titulo = (clave: string, texto: string, align?: "left" | "right") =>
+    onOrdenar ? (
+      <CeldaOrden clave={clave} orden={orden} onOrdenar={onOrdenar} align={align}>
+        {texto}
+      </CeldaOrden>
+    ) : (
+      <TableCell align={align}>{texto}</TableCell>
+    );
 
   return (
     <TableContainer sx={{ overflowX: { xs: "auto", lg: "hidden" } }}>
@@ -36,14 +59,14 @@ export default function TablaProductosMl({ filas, cargando, tipo, desde = 0, fil
         <TableHead>
           <TableRow>
             <TableCell>#</TableCell>
-            <TableCell>Producto</TableCell>
-            <TableCell>Publicación</TableCell>
-            <TableCell align="right">Unid.</TableCell>
-            <TableCell align="right">Venta</TableCell>
+            {titulo("producto", "Producto")}
+            {titulo("publicacion", "Publicación")}
+            {titulo("unidades", "Unid.", "right")}
+            {titulo("venta", "Venta", "right")}
             <TableCell>Envío</TableCell>
-            <TableCell align="right">Cobra ML</TableCell>
-            <TableCell align="right">Queda</TableCell>
-            <TableCell align="right">Stock</TableCell>
+            {titulo("cobra", "Cobra ML", "right")}
+            {titulo("queda", "Queda", "right")}
+            {titulo("stock", "Stock", "right")}
           </TableRow>
         </TableHead>
         <TableBody>

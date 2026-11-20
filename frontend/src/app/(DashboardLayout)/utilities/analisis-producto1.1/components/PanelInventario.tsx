@@ -7,6 +7,7 @@ import { useApiDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import MetricCard from "@/app/(DashboardLayout)/utilities/ventas/components/MetricCard";
 import { BarraParticipacion, Columnas, Panel, estado, formatoPesos, tablaSx, tinta } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
+import { CeldaOrden, useOrdenTabla } from "../../ventas/components/ordenTabla";
 
 const n = (v: unknown) => Number(v) || 0;
 const unidades = (v: number, decimales = 0) => v.toLocaleString("es-CL", { maximumFractionDigits: decimales });
@@ -67,6 +68,13 @@ export default function PanelInventario({ sku }: { sku: string }) {
     .filter((b) => b.stock || b.comprometido || b.oc)
     .sort((a, b) => b.stock - a.stock);
   const maxStock = Math.max(0, ...filas.map((b) => b.stock));
+  const ordenBodegas = useOrdenTabla(filas, {
+    bodega: (b) => b.codigo,
+    stock: (b) => b.stock,
+    comprometido: (b) => b.comprometido,
+    oc: (b) => b.oc,
+    disponible: (b) => b.disponible,
+  });
   const total = filas.reduce(
     (t, b) => ({ stock: t.stock + b.stock, comprometido: t.comprometido + b.comprometido, oc: t.oc + b.oc, disponible: t.disponible + b.disponible }),
     { stock: 0, comprometido: 0, oc: 0, disponible: 0 }
@@ -102,15 +110,15 @@ export default function PanelInventario({ sku }: { sku: string }) {
               <Columnas anchos={[22, 26, 17, 17, 18]} />
               <TableHead>
                 <TableRow>
-                  <TableCell>Bodega</TableCell>
-                  <TableCell align="right">Stock</TableCell>
-                  <TableCell align="right">Comprometido</TableCell>
-                  <TableCell align="right">En OC</TableCell>
-                  <TableCell align="right">Disponible</TableCell>
+                  <CeldaOrden clave="bodega" orden={ordenBodegas.orden} onOrdenar={ordenBodegas.ordenarPor}>Bodega</CeldaOrden>
+                  <CeldaOrden clave="stock" orden={ordenBodegas.orden} onOrdenar={ordenBodegas.ordenarPor} align="right">Stock</CeldaOrden>
+                  <CeldaOrden clave="comprometido" orden={ordenBodegas.orden} onOrdenar={ordenBodegas.ordenarPor} align="right">Comprometido</CeldaOrden>
+                  <CeldaOrden clave="oc" orden={ordenBodegas.orden} onOrdenar={ordenBodegas.ordenarPor} align="right">En OC</CeldaOrden>
+                  <CeldaOrden clave="disponible" orden={ordenBodegas.orden} onOrdenar={ordenBodegas.ordenarPor} align="right">Disponible</CeldaOrden>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filas.map((b) => (
+                {ordenBodegas.ordenadas.map((b) => (
                   <TableRow key={b.codigo}>
                     <TableCell sx={{ fontWeight: 600 }}>Bodega {b.codigo}</TableCell>
                     <TableCell align="right">
