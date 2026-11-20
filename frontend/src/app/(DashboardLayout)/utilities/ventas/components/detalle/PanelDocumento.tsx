@@ -10,6 +10,7 @@ import { BACKEND_URL } from "@/config";
 import { ChipMargen, Columnas, TextoCelda, canalPorClave, cifraSx, formatoPesos, tablaSx, tinta } from "../estilo";
 import { FiltrosDetalle, consulta, fechaCorta, horaSap } from "./comun";
 import ChipMotivo from "./ChipMotivo";
+import { CeldaOrden, useOrdenTabla } from "../ordenTabla";
 
 interface Linea {
   linea: number;
@@ -74,6 +75,13 @@ export default function PanelDocumento({
   const { datos: d, cargando, error } = useCargaDatos<Documento | null>(url, (signal) => apiJson(url!, { signal }), null);
 
   const lineas = d?.lineas ?? [];
+  const ordenLineas = useOrdenTabla(lineas, {
+    producto: (l) => l.nombre,
+    cantidad: (l) => Number(l.cantidad),
+    precio: (l) => Number(l.precio),
+    total: (l) => Number(l.total),
+    margen: (l) => (l.total ? (Number(l.margen) || 0) / l.total : null),
+  });
   const neto = lineas.reduce((s, l) => s + (Number(l.total) || 0), 0);
   const margen = lineas.reduce((s, l) => s + (Number(l.margen) || 0), 0);
   const conMargen = lineas.some((l) => l.margen != null);
@@ -160,15 +168,15 @@ export default function PanelDocumento({
                 <Columnas anchos={conMargen ? [44, 12, 15, 17, 12] : [52, 14, 16, 18]} />
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ pl: "24px !important" }}>Producto</TableCell>
-                    <TableCell align="right">Cantidad</TableCell>
-                    <TableCell align="right">Precio neto</TableCell>
-                    <TableCell align="right">Total neto</TableCell>
-                    {conMargen && <TableCell align="right" sx={{ pr: "24px !important" }}>% Margen</TableCell>}
+                    <CeldaOrden clave="producto" orden={ordenLineas.orden} onOrdenar={ordenLineas.ordenarPor} sx={{ pl: "24px !important" }}>Producto</CeldaOrden>
+                    <CeldaOrden clave="cantidad" orden={ordenLineas.orden} onOrdenar={ordenLineas.ordenarPor} align="right">Cantidad</CeldaOrden>
+                    <CeldaOrden clave="precio" orden={ordenLineas.orden} onOrdenar={ordenLineas.ordenarPor} align="right">Precio neto</CeldaOrden>
+                    <CeldaOrden clave="total" orden={ordenLineas.orden} onOrdenar={ordenLineas.ordenarPor} align="right">Total neto</CeldaOrden>
+                    {conMargen && <CeldaOrden clave="margen" orden={ordenLineas.orden} onOrdenar={ordenLineas.ordenarPor} align="right" sx={{ pr: "24px !important" }}>% Margen</CeldaOrden>}
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {lineas.map((l) => {
+                  {ordenLineas.ordenadas.map((l) => {
                     const canal = l.canal ? canalPorClave(l.canal) : undefined;
                     return (
                       <TableRow

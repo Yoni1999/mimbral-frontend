@@ -16,7 +16,7 @@ interface Props {
   height?: number;
 }
 
-type OrderBy = "MargenAbsoluto" | "TotalVentas" | "MargenPorcentaje";
+type OrderBy = "Categoria" | "MargenAbsoluto" | "TotalVentas" | "MargenPorcentaje";
 type Order = "asc" | "desc";
 
 const CategoriasTableChart: React.FC<Props> = ({ data, height = 360 }) => {
@@ -42,6 +42,11 @@ const CategoriasTableChart: React.FC<Props> = ({ data, height = 360 }) => {
             item.MargenPorcentaje !== undefined
         )
       : [];
+    // Por nombre se ordenan las 10 de más margen (no las 10 primeras del abecedario).
+    if (orderBy === "Categoria") {
+      const top = [...cleaned].sort((a, b) => b.MargenAbsoluto - a.MargenAbsoluto).slice(0, 10);
+      return top.sort((a, b) => (order === "asc" ? 1 : -1) * String(a.Categoria).localeCompare(String(b.Categoria), "es"));
+    }
     const sorted = [...cleaned].sort((a, b) => {
       const valA = a[orderBy];
       const valB = b[orderBy];
@@ -52,8 +57,8 @@ const CategoriasTableChart: React.FC<Props> = ({ data, height = 360 }) => {
 
   const maxVenta = Math.max(0, ...sortedData.map((c) => c.TotalVentas));
 
-  const columna = (key: OrderBy, label: string) => (
-    <TableCell align="right" sortDirection={orderBy === key ? order : false}>
+  const columna = (key: OrderBy, label: string, sx?: object, align: "left" | "right" = "right") => (
+    <TableCell align={align} sx={sx} sortDirection={orderBy === key ? order : false}>
       <TableSortLabel active={orderBy === key} direction={orderBy === key ? order : "desc"} onClick={() => handleSort(key)}>
         {label}
       </TableSortLabel>
@@ -67,7 +72,7 @@ const CategoriasTableChart: React.FC<Props> = ({ data, height = 360 }) => {
           <Columnas anchos={[40, 22, 20, 18]} />
           <TableHead>
             <TableRow>
-              <TableCell sx={{ pl: 2.5 }}>Categoría</TableCell>
+              {columna("Categoria", "Categoría", { pl: 2.5 }, "left")}
               {columna("TotalVentas", "Ventas")}
               {columna("MargenAbsoluto", "Margen bruto")}
               <TableCell align="right" sx={{ pr: 2.5 }} sortDirection={orderBy === "MargenPorcentaje" ? order : false}>

@@ -14,7 +14,7 @@ interface Vendedor {
 }
 
 type Order = "asc" | "desc";
-type OrderBy = "UnidadesVendidas" | "Items" | "MargenBruto" | "MargenPorcentaje" | "TotalVentas";
+type OrderBy = "Nombre" | "UnidadesVendidas" | "Items" | "MargenBruto" | "MargenPorcentaje" | "TotalVentas";
 
 interface Props {
   data: Vendedor[];
@@ -44,6 +44,10 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
 
   const sortedData = useMemo(() => {
     return [...(Array.isArray(data) ? data : [])].sort((a, b) => {
+      if (orderBy === "Nombre") {
+        const r = String(a.Nombre ?? "").localeCompare(String(b.Nombre ?? ""), "es");
+        return order === "asc" ? r : -r;
+      }
       const valA = a[orderBy] ?? 0;
       const valB = b[orderBy] ?? 0;
       return order === "asc" ? valA - valB : valB - valA;
@@ -52,8 +56,8 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
 
   const maxVenta = Math.max(0, ...sortedData.map((v) => v.TotalVentas ?? 0));
 
-  const columna = (key: OrderBy, label: string, ultima = false) => (
-    <TableCell align="right" sx={ultima ? { pr: 2.5 } : undefined} sortDirection={orderBy === key ? order : false}>
+  const columna = (key: OrderBy, label: string, ultima = false, primera = false) => (
+    <TableCell align={primera ? "left" : "right"} sx={ultima ? { pr: 2.5 } : primera ? { pl: 2.5 } : undefined} sortDirection={orderBy === key ? order : false}>
       <TableSortLabel active={orderBy === key} direction={orderBy === key ? order : "desc"} onClick={() => handleSort(key)}>
         {label}
       </TableSortLabel>
@@ -67,7 +71,7 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
           <Columnas anchos={[30, 18, 13, 10, 15, 14]} />
           <TableHead>
             <TableRow>
-              <TableCell sx={{ pl: 2.5 }}>Vendedor</TableCell>
+              {columna("Nombre", "Vendedor", false, true)}
               {columna("TotalVentas", "Ventas")}
               {columna("UnidadesVendidas", "Unidades")}
               {columna("Items", "Ítems")}

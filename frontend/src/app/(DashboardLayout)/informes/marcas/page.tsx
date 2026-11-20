@@ -27,6 +27,7 @@ import {
 } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
 import { descargarExcel } from "@/app/(DashboardLayout)/utilities/ventas/components/detalle/comun";
 import HeaderMl, { RangoMl } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/HeaderMl";
+import { CeldaOrden, useOrdenTabla, OrdenTabla } from "@/app/(DashboardLayout)/utilities/ventas/components/ordenTabla";
 
 // ── Tipos de la respuesta (analysis-service /api/marcas) ─────────────────────
 
@@ -230,7 +231,24 @@ function FilasCargando({ columnas, filas = 10 }: { columnas: number; filas?: num
 
 // ── Tabla de marcas ──────────────────────────────────────────────────────────
 
-function TablaMarcas({ filas, desde, cargando, maximo, onElegir }: { filas: MarcaFila[]; desde: number; cargando: boolean; maximo: number; onElegir: (m: string) => void }) {
+function TablaMarcas({
+  filas,
+  desde,
+  cargando,
+  maximo,
+  onElegir,
+  orden,
+  onOrdenar,
+}: {
+  filas: MarcaFila[];
+  desde: number;
+  cargando: boolean;
+  maximo: number;
+  onElegir: (m: string) => void;
+  orden: OrdenTabla | null;
+  onOrdenar: (clave: string) => void;
+}) {
+  const o = { orden, ordenarPor: onOrdenar };
   return (
     <Box sx={{ overflowX: "auto" }}>
       <Table size="small" sx={{ ...tablaSx, minWidth: 900 }}>
@@ -238,14 +256,14 @@ function TablaMarcas({ filas, desde, cargando, maximo, onElegir }: { filas: Marc
         <TableHead>
           <TableRow>
             <TableCell>#</TableCell>
-            <TableCell>Marca</TableCell>
-            <TableCell align="right">Venta</TableCell>
-            <TableCell align="right">Comparación</TableCell>
-            <TableCell align="right">Variación</TableCell>
-            <TableCell align="right">Diferencia</TableCell>
-            <TableCell align="right">Unidades</TableCell>
-            <TableCell align="right">Productos ↑ / ↓</TableCell>
-            <TableCell>Participación</TableCell>
+            <CeldaOrden clave="marca" orden={o.orden} onOrdenar={o.ordenarPor}>Marca</CeldaOrden>
+            <CeldaOrden clave="venta" orden={o.orden} onOrdenar={o.ordenarPor} align="right">Venta</CeldaOrden>
+            <CeldaOrden clave="comparacion" orden={o.orden} onOrdenar={o.ordenarPor} align="right">Comparación</CeldaOrden>
+            <CeldaOrden clave="variacion" orden={o.orden} onOrdenar={o.ordenarPor} align="right">Variación</CeldaOrden>
+            <CeldaOrden clave="diferencia" orden={o.orden} onOrdenar={o.ordenarPor} align="right">Diferencia</CeldaOrden>
+            <CeldaOrden clave="unidades" orden={o.orden} onOrdenar={o.ordenarPor} align="right">Unidades</CeldaOrden>
+            <CeldaOrden clave="suben" orden={o.orden} onOrdenar={o.ordenarPor} align="right">Productos ↑ / ↓</CeldaOrden>
+            <CeldaOrden clave="participacion" orden={o.orden} onOrdenar={o.ordenarPor}>Participación</CeldaOrden>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -304,6 +322,14 @@ function TablaMarcas({ filas, desde, cargando, maximo, onElegir }: { filas: Marc
 // ── Tabla de productos de una marca ──────────────────────────────────────────
 
 function TablaProductos({ filas, cargando, vacio }: { filas: ProductoMarca[]; cargando: boolean; vacio: string }) {
+  const o = useOrdenTabla(filas, {
+    producto: (p) => p.nombre ?? p.sku,
+    venta: (p) => n(p.venta.neto),
+    comparacion: (p) => n(p.ventaAnterior.neto),
+    variacion: (p) => p.variacion,
+    diferencia: (p) => n(p.diferencia.neto),
+    unidades: (p) => p.unidades,
+  });
   return (
     <Box sx={{ overflowX: "auto" }}>
       <Table size="small" sx={{ ...tablaSx, minWidth: 860 }}>
@@ -311,12 +337,12 @@ function TablaProductos({ filas, cargando, vacio }: { filas: ProductoMarca[]; ca
         <TableHead>
           <TableRow>
             <TableCell>#</TableCell>
-            <TableCell>Producto</TableCell>
-            <TableCell align="right">Venta</TableCell>
-            <TableCell align="right">Comparación</TableCell>
-            <TableCell align="right">Variación</TableCell>
-            <TableCell align="right">Diferencia</TableCell>
-            <TableCell align="right">Unidades</TableCell>
+            <CeldaOrden clave="producto" orden={o.orden} onOrdenar={o.ordenarPor}>Producto</CeldaOrden>
+            <CeldaOrden clave="venta" orden={o.orden} onOrdenar={o.ordenarPor} align="right">Venta</CeldaOrden>
+            <CeldaOrden clave="comparacion" orden={o.orden} onOrdenar={o.ordenarPor} align="right">Comparación</CeldaOrden>
+            <CeldaOrden clave="variacion" orden={o.orden} onOrdenar={o.ordenarPor} align="right">Variación</CeldaOrden>
+            <CeldaOrden clave="diferencia" orden={o.orden} onOrdenar={o.ordenarPor} align="right">Diferencia</CeldaOrden>
+            <CeldaOrden clave="unidades" orden={o.orden} onOrdenar={o.ordenarPor} align="right">Unidades</CeldaOrden>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -329,7 +355,7 @@ function TablaProductos({ filas, cargando, vacio }: { filas: ProductoMarca[]; ca
               </TableCell>
             </TableRow>
           ) : (
-            filas.map((p, i) => (
+            o.ordenadas.map((p, i) => (
               <TableRow key={p.sku}>
                 <TableCell sx={{ color: tinta.tenue }}>{i + 1}</TableCell>
                 <TableCell>
@@ -421,8 +447,20 @@ export default function InformeMarcas() {
     .filter((m) => n(m.venta.neto) > 0 || n(m.ventaAnterior.neto) > 0)
     .filter((m) => !q || m.marca.toLowerCase().includes(q))
     .sort((a, b) => (filtros.orden === "variacion" ? valorOrden(b, "variacion") - valorOrden(a, "variacion") : valorOrden(b, filtros.orden) - valorOrden(a, filtros.orden)));
+  // Pulsar un encabezado ordena por esa columna (por encima de "Ordenar por").
+  const ordenMarcas = useOrdenTabla(filas, {
+    marca: (m) => m.marca,
+    venta: (m) => n(m.venta.neto),
+    comparacion: (m) => n(m.ventaAnterior.neto),
+    variacion: (m) => m.variacion,
+    diferencia: (m) => n(m.diferencia.neto),
+    unidades: (m) => m.unidades,
+    suben: (m) => m.suben - m.bajan,
+    participacion: (m) => m.participacion,
+  });
+  React.useEffect(() => setPagina(1), [ordenMarcas.orden]);
   const paginas = Math.max(1, Math.ceil(filas.length / POR_PAGINA));
-  const visibles = filas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+  const visibles = ordenMarcas.ordenadas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
   const maximo = Math.max(0, ...todas.map((m) => n(m.venta.neto)));
 
   const canalNombre = CANALES.find((c) => c.valor === filtros.canal)!.texto;
@@ -528,7 +566,15 @@ export default function InformeMarcas() {
                 />
                 <Box>
                   <Typography sx={etiquetaControlSx}>Ordenar por</Typography>
-                  <Pildoras etiqueta="Ordenar por" opciones={ORDENES} valor={filtros.orden} onCambiar={(o) => setFiltros((f) => ({ ...f, orden: o }))} />
+                  <Pildoras
+                    etiqueta="Ordenar por"
+                    opciones={ORDENES}
+                    valor={filtros.orden}
+                    onCambiar={(o) => {
+                      ordenMarcas.setOrden(null);
+                      setFiltros((f) => ({ ...f, orden: o }));
+                    }}
+                  />
                 </Box>
                 <Typography sx={{ fontSize: 12, color: tinta.tenue, ml: "auto" }}>Pulsa una marca para ver sus productos.</Typography>
               </Box>
@@ -538,6 +584,8 @@ export default function InformeMarcas() {
                 cargando={resumen.cargando}
                 maximo={maximo}
                 onElegir={(m) => setFiltros((f) => ({ ...f, marca: m, lista: "masVendidos" }))}
+                orden={ordenMarcas.orden}
+                onOrdenar={ordenMarcas.ordenarPor}
               />
               {paginas > 1 && (
                 <Box sx={{ display: "flex", justifyContent: "center", py: 1.5 }}>

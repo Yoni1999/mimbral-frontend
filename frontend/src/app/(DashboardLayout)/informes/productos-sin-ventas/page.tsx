@@ -22,6 +22,7 @@ import { BACKEND_URL } from '@/config';
 import { notifyInfo } from "@/components/ui/toast/notify";
 
 import HeaderSinVentasDrawer from './components/HeaderSinVentasDrawer';
+import { CeldaOrden, useOrdenTabla } from "@/app/(DashboardLayout)/utilities/ventas/components/ordenTabla";
 
 // ---- Tipos ----
 type Order = 'asc' | 'desc';
@@ -384,6 +385,17 @@ const ProductosSinVentasPage: React.FC = () => {
         return <>Mostrando del <strong>{(page - 1) * limit + 1}</strong> al <strong>{Math.min(page * limit, total)}</strong> de <strong>{total}</strong> productos</>;
     }, [page, total, skuSalesMode, skuSales.length, skuSalesItemCode]);
 
+    // Orden por columna de la tabla de ventas por SKU (vive aquí para no perderse al redibujar).
+    const ordenVentasSku = useOrdenTabla(skuSales, {
+        doc: (r) => Number(r.docNum) || r.docNum,
+        fecha: (r) => String(r.docDate || r.createDate || ''),
+        cliente: (r) => r.customer,
+        cantidad: (r) => r.quantity,
+        precio: (r) => r.price,
+        moneda: (r) => r.currency,
+        total: (r) => r.lineTotal,
+    });
+
     // tabla de ventas por SKU (inline, sin tocar componentes existentes) ----
     const SalesBySkuTable: React.FC<{
         rows: typeof skuSales;
@@ -398,17 +410,17 @@ const ProductosSinVentasPage: React.FC = () => {
                 <Table size="small">
                     <TableHead>
                         <TableRow>
-                            <TableCell><strong>Doc N°</strong></TableCell>
-                            <TableCell><strong>Fecha</strong></TableCell>
-                            <TableCell><strong>Cliente</strong></TableCell>
-                            <TableCell align="right"><strong>Cantidad</strong></TableCell>
-                            <TableCell align="right"><strong>Precio</strong></TableCell>
-                            <TableCell align="right"><strong>Moneda</strong></TableCell>
-                            <TableCell align="right"><strong>Total línea</strong></TableCell>
+                            <CeldaOrden clave="doc" orden={ordenVentasSku.orden} onOrdenar={ordenVentasSku.ordenarPor}><strong>Doc N°</strong></CeldaOrden>
+                            <CeldaOrden clave="fecha" orden={ordenVentasSku.orden} onOrdenar={ordenVentasSku.ordenarPor}><strong>Fecha</strong></CeldaOrden>
+                            <CeldaOrden clave="cliente" orden={ordenVentasSku.orden} onOrdenar={ordenVentasSku.ordenarPor}><strong>Cliente</strong></CeldaOrden>
+                            <CeldaOrden clave="cantidad" orden={ordenVentasSku.orden} onOrdenar={ordenVentasSku.ordenarPor} align="right"><strong>Cantidad</strong></CeldaOrden>
+                            <CeldaOrden clave="precio" orden={ordenVentasSku.orden} onOrdenar={ordenVentasSku.ordenarPor} align="right"><strong>Precio</strong></CeldaOrden>
+                            <CeldaOrden clave="moneda" orden={ordenVentasSku.orden} onOrdenar={ordenVentasSku.ordenarPor} align="right"><strong>Moneda</strong></CeldaOrden>
+                            <CeldaOrden clave="total" orden={ordenVentasSku.orden} onOrdenar={ordenVentasSku.ordenarPor} align="right"><strong>Total línea</strong></CeldaOrden>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {rows.map((r, idx) => (
+                        {(rows === skuSales ? ordenVentasSku.ordenadas : rows).map((r, idx) => (
                             <TableRow key={`${r.docNum}-${idx}`} hover>
                                 <TableCell>{r.docNum}</TableCell>
                                 <TableCell>{fmtDate(r.docDate || r.createDate)}</TableCell>

@@ -19,6 +19,7 @@ import { variacion } from "../mercado-libre/components/comun";
 import { Aviso, n, unidades } from "../../categorias/mercado-libre/components/comun";
 import { BarraTiposFal, ComparativoFal, FiltroTipo, OPCIONES_TIPO, ProductosFal, TIPOS_FAL, pesos, rutaProductos, urlFal } from "../../falabella/components/comun";
 import { DesgloseFal, ResumenFal, TendenciaFal, VistaDesgloseFal } from "../../falabella/components/ventas";
+import { CeldaOrden, useOrdenTabla } from "../components/ordenTabla";
 
 const DESCRIPCION_TIPO = { full: "Despacha Falabella desde su bodega", normal: "Despacho desde nuestra bodega" } as const;
 const porcentaje = (v: number | null | undefined) => (v == null ? "—" : formatoPorcentaje(v * 100));
@@ -86,6 +87,14 @@ export default function VentasFalabella() {
   const filasTipo = TIPOS_FAL.map((t) => ({ ...t, totales: resumen.datos?.cifras.actual[t.clave] })).filter((f) => n(f.totales?.venta.neto) !== 0);
   const filasCategorias = (categorias.datos?.categorias ?? []).filter((c) => n(c.actual.venta.neto) !== 0).slice(0, 10);
   const filasProductos = (productos.datos?.filas ?? []).filter((f) => f.actual.unidades > 0);
+  const ordenProductos = useOrdenTabla(filasProductos, {
+    producto: (f) => f.nombre ?? f.sku,
+    venta: (f) => n(f.actual.venta.neto),
+    unidades: (f) => n(f.actual.unidades),
+    comision: (f) => f.comisionPct,
+    despacho: (f) => (f.actual.unidades ? n(f.actual.envio.neto) / f.actual.unidades : null),
+    margen: (f) => f.actual.margenPct,
+  });
   const celda = { fontSize: 13, py: 0.9, px: 1, borderColor: tinta.borde } as const;
   const cabecera = { ...celda, fontSize: 11, fontWeight: 700, color: tinta.secundaria, textTransform: "uppercase", letterSpacing: 0.3, whiteSpace: "nowrap" } as const;
 
@@ -208,15 +217,32 @@ export default function VentasFalabella() {
                 <Table size="small" sx={{ minWidth: 620 }}>
                   <TableHead>
                     <TableRow>
-                      {["#", "Producto", "Venta", "Unid.", "Comisión", "Despacho/u", "Margen %", "Full · Normal"].map((h, i) => (
-                        <TableCell key={h} align={i >= 2 && i <= 6 ? "right" : "left"} sx={cabecera}>
-                          {h}
-                        </TableCell>
-                      ))}
+                      {(
+                        [
+                          ["#", ""],
+                          ["Producto", "producto"],
+                          ["Venta", "venta"],
+                          ["Unid.", "unidades"],
+                          ["Comisión", "comision"],
+                          ["Despacho/u", "despacho"],
+                          ["Margen %", "margen"],
+                          ["Full · Normal", ""],
+                        ] as const
+                      ).map(([h, clave], i) =>
+                        clave ? (
+                          <CeldaOrden key={h} clave={clave} orden={ordenProductos.orden} onOrdenar={ordenProductos.ordenarPor} align={i >= 2 && i <= 6 ? "right" : "left"} sx={cabecera}>
+                            {h}
+                          </CeldaOrden>
+                        ) : (
+                          <TableCell key={h} align={i >= 2 && i <= 6 ? "right" : "left"} sx={cabecera}>
+                            {h}
+                          </TableCell>
+                        )
+                      )}
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {filasProductos.map((f, i) => (
+                    {ordenProductos.ordenadas.map((f, i) => (
                       <TableRow key={f.sku}>
                         <TableCell sx={{ ...celda, color: tinta.tenue, width: 24 }}>{i + 1}</TableCell>
                         <TableCell sx={{ ...celda, maxWidth: 300 }}>

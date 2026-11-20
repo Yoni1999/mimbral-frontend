@@ -177,7 +177,7 @@ export default function PrecioYCompetencia() {
       },
     },
     { clave: "unidades7d", titulo: "Vende 7 d", ancho: 8, alinear: "right", valor: (f) => f.unidades7d, celda: (f) => entero(f.unidades7d) },
-    { clave: "logistica", titulo: "Envío", ancho: 6, valor: (f) => (f.logistica === "fulfillment" ? "Full" : f.logistica === "cross_docking" ? "Colecta" : f.logistica ?? ""), ordenable: false },
+    { clave: "logistica", titulo: "Envío", ancho: 6, valor: (f) => (f.logistica === "fulfillment" ? "Full" : f.logistica === "cross_docking" ? "Colecta" : f.logistica ?? "") },
   ];
 
   return (

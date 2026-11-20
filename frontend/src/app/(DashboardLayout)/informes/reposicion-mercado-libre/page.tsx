@@ -15,6 +15,7 @@ import { descargarExcel } from "@/app/(DashboardLayout)/utilities/ventas/compone
 import HeaderMl, { RangoMl } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/HeaderMl";
 import { CeldaStock } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/StockBodegas";
 import { Par, fechaCorta, tipoEnvio, unidades, urlMl } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/comun";
+import { CeldaOrden, useOrdenTabla } from "@/app/(DashboardLayout)/utilities/ventas/components/ordenTabla";
 
 type Lado = "full" | "colecta";
 type Estado = "sin_stock" | "critico" | "bajo" | "sin_dato";
@@ -151,8 +152,19 @@ export default function InformeReposicionMercadoLibre() {
   const filas = (r?.filas ?? [])
     .filter((f) => !filtros.estado || f.estado === filtros.estado)
     .filter((f) => !q || f.sku.toLowerCase().includes(q) || (f.nombre ?? "").toLowerCase().includes(q) || (f.categoria ?? "").toLowerCase().includes(q));
+  const ordenFilas = useOrdenTabla(filas, {
+    producto: (f) => f.nombre ?? f.sku,
+    envio: (f) => tipoEnvio(f.lado)?.nombre,
+    ventaDiaria: (f) => f.ventaDiaria,
+    ultimaVenta: (f) => f.ultimaVenta,
+    stock: (f) => f.stock,
+    alcanza: (f) => f.diasStock,
+    otras: (f) => f.stockOtras,
+    reponer: (f) => f.sugerido,
+  });
+  React.useEffect(() => setPagina(1), [ordenFilas.orden]);
   const paginas = Math.max(1, Math.ceil(filas.length / POR_PAGINA));
-  const visibles = filas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+  const visibles = ordenFilas.ordenadas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
   const nombreLado = filtros.lado ? tipoEnvio(filtros.lado)!.nombre : "Full y Colecta";
 
   const elegirEstado = (e: Estado) => cambiar({ estado: filtros.estado === e ? "" : e });
@@ -205,7 +217,7 @@ export default function InformeReposicionMercadoLibre() {
       await descargarExcel(`reposicion_ml_${filtros.lado || "full_y_colecta"}_${filtros.fechaInicio}_${filtros.fechaFin}`, [
         {
           nombre: "Reposición ML",
-          filas: filas.map((f, i) => ({
+          filas: ordenFilas.ordenadas.map((f, i) => ({
             "#": i + 1,
             Estado: ESTADOS[f.estado].texto,
             SKU: f.sku,
@@ -309,14 +321,14 @@ export default function InformeReposicionMercadoLibre() {
               <TableHead>
                 <TableRow>
                   <TableCell>#</TableCell>
-                  <TableCell>Producto</TableCell>
-                  <TableCell>Envío</TableCell>
-                  <TableCell align="right">Vende/día</TableCell>
-                  <TableCell align="right">Última venta</TableCell>
-                  <TableCell align="right">Stock</TableCell>
-                  <TableCell align="right">Alcanza</TableCell>
-                  <TableCell align="right">Otras bod.</TableCell>
-                  <TableCell align="right">Reponer</TableCell>
+                  <CeldaOrden clave="producto" orden={ordenFilas.orden} onOrdenar={ordenFilas.ordenarPor}>Producto</CeldaOrden>
+                  <CeldaOrden clave="envio" orden={ordenFilas.orden} onOrdenar={ordenFilas.ordenarPor}>Envío</CeldaOrden>
+                  <CeldaOrden clave="ventaDiaria" orden={ordenFilas.orden} onOrdenar={ordenFilas.ordenarPor} align="right">Vende/día</CeldaOrden>
+                  <CeldaOrden clave="ultimaVenta" orden={ordenFilas.orden} onOrdenar={ordenFilas.ordenarPor} align="right">Última venta</CeldaOrden>
+                  <CeldaOrden clave="stock" orden={ordenFilas.orden} onOrdenar={ordenFilas.ordenarPor} align="right">Stock</CeldaOrden>
+                  <CeldaOrden clave="alcanza" orden={ordenFilas.orden} onOrdenar={ordenFilas.ordenarPor} align="right">Alcanza</CeldaOrden>
+                  <CeldaOrden clave="otras" orden={ordenFilas.orden} onOrdenar={ordenFilas.ordenarPor} align="right">Otras bod.</CeldaOrden>
+                  <CeldaOrden clave="reponer" orden={ordenFilas.orden} onOrdenar={ordenFilas.ordenarPor} align="right">Reponer</CeldaOrden>
                 </TableRow>
               </TableHead>
               <TableBody>
