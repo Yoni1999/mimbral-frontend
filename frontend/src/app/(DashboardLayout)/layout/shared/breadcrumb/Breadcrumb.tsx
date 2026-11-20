@@ -17,6 +17,7 @@ const customLabels: Record<string, string> = {
   "ventas-por-canal": "Ventas por Canal",
   "mercado-libre": "Mercado Libre",
   "mas-vendidos-mercado-libre": "Más vendidos Mercado Libre",
+  marcas: "Marcas en marketplaces",
   "reposicion-mercado-libre": "Reposición Mercado Libre",
   rentabilidad: "Rentabilidad por producto",
   "stock-full": "Stock Full que cuesta",
