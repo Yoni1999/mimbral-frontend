@@ -6,6 +6,8 @@ import DateRangeFilter, { DateRangeValue } from "../../components/DateRangeFilte
 import RangosRapidos, { FechasDelRango, etiquetaRango, rangoInicial } from "../../components/RangosRapidos";
 import { BotonLimpiar, filaControlesSx, tarjetaSx, tinta } from "../../components/estilo";
 import { DatosMlAl } from "./comun";
+import { useEsCelular } from "../../components/movil";
+import { BotonFiltrosMovil, ChipsFiltrosActivos, FilaDeslizable, FiltroActivo } from "./PanelFiltrosMovil";
 
 export interface RangoMl {
   fechaInicio: string;
@@ -25,12 +27,81 @@ interface Props {
   acciones?: React.ReactNode;
   enEstadoInicial: boolean;
   onLimpiar: () => void;
+  /** Filtros propios que no están en su valor de siempre: en celular se ven
+   *  como chips bajo la barra y cuentan en el botón «Filtros». */
+  filtrosActivos?: FiltroActivo[];
 }
 
 /** Barra de filtros de las vistas de Mercado Libre, con la misma forma que la
  *  de Ventas por canal. Cada cambio se aplica al instante. */
-export default function HeaderMl({ titulo, contexto, rango, onRango, datosAl, children, acciones, enEstadoInicial, onLimpiar }: Props) {
+export default function HeaderMl({ titulo, contexto, rango, onRango, datosAl, children, acciones, enEstadoInicial, onLimpiar, filtrosActivos = [] }: Props) {
   const alElegirRango = (r: DateRangeValue | null) => onRango(r ? { fechaInicio: r.start, fechaFin: r.end } : rangoInicial());
+  const esCelular = useEsCelular();
+
+  const tituloVista = (
+    <Box sx={{ minWidth: 210, flexShrink: 0 }}>
+      <Typography sx={{ fontSize: 16, fontWeight: 800, color: tinta.primaria, letterSpacing: "-0.01em", lineHeight: 1.2 }}>{titulo}</Typography>
+      <Typography sx={{ fontSize: 11.5, color: tinta.secundaria }}>
+        {contexto && (
+          <>
+            <strong style={{ color: tinta.primaria }}>{contexto}</strong> ·{" "}
+          </>
+        )}
+        <strong style={{ color: tinta.primaria }}>{etiquetaRango(rango.fechaInicio, rango.fechaFin)}</strong>
+        <FechasDelRango inicio={rango.fechaInicio} fin={rango.fechaFin} />
+      </Typography>
+    </Box>
+  );
+  const calendario = (
+    <DateRangeFilter
+      value={rango.fechaInicio && rango.fechaFin ? { start: rango.fechaInicio, end: rango.fechaFin } : null}
+      onChange={alElegirRango}
+      label="Rango de fecha"
+      soloIcono
+    />
+  );
+  const rapidos = <RangosRapidos fechaInicio={rango.fechaInicio} fechaFin={rango.fechaFin} onElegir={(fechaInicio, fechaFin) => onRango({ fechaInicio, fechaFin })} />;
+
+  // Celular: título, una fila de períodos que se desliza (con degradado al
+  // borde) y una fila de botones: calendario, «Filtros» (las píldoras propias
+  // de la vista van en un panel desde abajo), acciones y limpiar.
+  if (esCelular && !children && !acciones) {
+    // Sin filtros propios ni acciones: calendario, períodos y limpiar en una sola fila.
+    return (
+      <Box sx={{ ...tarjetaSx, position: "relative", mb: 2, px: 1.5, py: 1.25, display: "flex", flexDirection: "column", gap: 1 }}>
+        <DatosMlAl datosAl={datosAl} />
+        {tituloVista}
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ "& .MuiIconButton-root": { height: 36, width: 36 } }}>
+          {calendario}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <FilaDeslizable>{rapidos}</FilaDeslizable>
+          </Box>
+          <BotonLimpiar onClick={onLimpiar} disabled={enEstadoInicial} />
+        </Stack>
+      </Box>
+    );
+  }
+  if (esCelular) {
+    return (
+      <Box sx={{ ...tarjetaSx, position: "relative", mb: 2, px: 1.5, py: 1.25, display: "flex", flexDirection: "column", gap: 1 }}>
+        <DatosMlAl datosAl={datosAl} />
+        {tituloVista}
+        <FilaDeslizable>{rapidos}</FilaDeslizable>
+        <Stack direction="row" spacing={1} alignItems="center" useFlexGap sx={{ ...filaControlesSx, flexWrap: "nowrap", "& .MuiIconButton-root, & .MuiButton-root": { height: 36, minWidth: 36 } }}>
+          {calendario}
+          {children && (
+            <BotonFiltrosMovil activos={filtrosActivos}>
+              {children}
+            </BotonFiltrosMovil>
+          )}
+          {acciones}
+          <Box sx={{ flex: 1 }} />
+          <BotonLimpiar onClick={onLimpiar} disabled={enEstadoInicial} />
+        </Stack>
+        <ChipsFiltrosActivos activos={filtrosActivos} />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ ...tarjetaSx, position: "relative", mb: 2, px: { xs: 1.5, md: 2 }, py: 1.25 }}>

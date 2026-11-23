@@ -17,6 +17,8 @@ import DateRangeFilter, { DateRangeValue } from "./DateRangeFilter";
 import RangosRapidos, { etiquetaRango, rangoInicial, TEMPORADAS, FechasDelRango } from "../../components/RangosRapidos";
 import { BotonLimpiar, CANALES, ChipFiltro, controlSx, etiquetaControlSx as etiquetaSx, tarjetaSx, tinta, filaControlesSx, IconoFiltros, SoloMovil } from "../../components/estilo";
 import FrescuraDatos from "../../components/FrescuraDatos";
+import { useEsCelular } from "../../components/movil";
+import { EtiquetaHoja, FiltrosActivosMovil, HojaFiltros, pildorasMovilSx } from "../../components/HojaFiltros";
 
 export interface Filters {
   canal: string;
@@ -60,6 +62,7 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange, valorInicial }) => 
   const [comparacionVisual, setComparacionVisual] = useState<string>(valorInicial?.comparacion ?? "");
 
   const filtrosAbiertos = Boolean(filtrosAnchorEl);
+  const esCelular = useEsCelular();
   const resumen = useMemo(
     () => (filters.temporada ? `Temporada ${filters.temporada}` : etiquetaRango(filters.fechaInicio, filters.fechaFin)),
     [filters.fechaInicio, filters.fechaFin, filters.temporada]
@@ -105,6 +108,13 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange, valorInicial }) => 
     setBusquedaSubfamilia("");
     setComparacionVisual("");
     emitir(filtrosIniciales());
+  };
+
+  const limpiarCampos = () => {
+    setBusquedaSku("");
+    setBusquedaFamilia("");
+    setBusquedaSubfamilia("");
+    setComparacionVisual("");
   };
 
   const aplicarFiltrosAdicionales = () => {
@@ -194,7 +204,7 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange, valorInicial }) => 
           </Typography>
         </Box>
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ flex: 1, minWidth: 0, ...pildorasMovilSx }}>
           <RangosRapidos
             fechaInicio={filters.fechaInicio}
             fechaFin={filters.fechaFin}
@@ -240,8 +250,61 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange, valorInicial }) => 
           </Button>
           <BotonLimpiar onClick={handleClear} disabled={enEstadoInicial} />
         </Stack>
+
+        {/* En celular canal y temporada quedan dentro de la hoja: aquí se ven como chips. */}
+        <FiltrosActivosMovil
+          activos={activos
+            .filter((a) => a.claves.includes("canal") || a.claves.includes("temporada"))
+            .map((a) => ({ etiqueta: a.etiqueta, onQuitar: () => quitar(a.claves) }))}
+        />
       </Stack>
 
+      {esCelular ? (
+        <HojaFiltros
+          abierta={filtrosAbiertos}
+          onCerrar={() => setFiltrosAnchorEl(null)}
+          titulo="Filtros"
+          descripcion="Acotan todas las tarjetas, gráficos y tablas de la vista."
+          onAplicar={aplicarFiltrosAdicionales}
+          onLimpiar={limpiarCampos}
+        >
+          <EtiquetaHoja>Canal y temporada</EtiquetaHoja>
+          {selectores}
+          <EtiquetaHoja>Comparando con</EtiquetaHoja>
+          <FormControl fullWidth size="small">
+            <Select
+              value={comparacionVisual}
+              onChange={(e) => setComparacionVisual(e.target.value)}
+              displayEmpty
+              inputProps={{ "aria-label": "Comparando con" }}
+              sx={controlSx}
+            >
+              <MenuItem value="">Período anterior (por defecto)</MenuItem>
+              <MenuItem value="Periodo anterior">Periodo anterior</MenuItem>
+              <MenuItem value="Mismo período año anterior">Mismo período año anterior</MenuItem>
+            </Select>
+          </FormControl>
+          {[
+            { label: "SKU", value: busquedaSku, set: setBusquedaSku },
+            { label: "Familia", value: busquedaFamilia, set: setBusquedaFamilia },
+            { label: "Subfamilia", value: busquedaSubfamilia, set: setBusquedaSubfamilia },
+          ].map((campo) => (
+            <React.Fragment key={campo.label}>
+              <EtiquetaHoja>{campo.label}</EtiquetaHoja>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder={campo.label}
+                value={campo.value}
+                onChange={(e) => campo.set(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && aplicarFiltrosAdicionales()}
+                inputProps={{ "aria-label": campo.label, enterKeyHint: "search" }}
+                sx={{ "& .MuiOutlinedInput-root": controlSx }}
+              />
+            </React.Fragment>
+          ))}
+        </HojaFiltros>
+      ) : (
       <Popover
         open={filtrosAbiertos}
         anchorEl={filtrosAnchorEl}
@@ -336,6 +399,7 @@ const FotoDelDiaHeader: React.FC<Props> = ({ onFilterChange, valorInicial }) => 
           </Stack>
         </Stack>
       </Popover>
+      )}
     </Box>
   );
 };

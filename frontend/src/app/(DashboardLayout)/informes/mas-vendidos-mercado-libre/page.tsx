@@ -13,6 +13,7 @@ import { descargarExcel } from "@/app/(DashboardLayout)/utilities/ventas/compone
 import HeaderMl, { RangoMl } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/HeaderMl";
 import TablaProductosMl, { filasExcelProductos, valoresOrdenProductosMl } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/TablaProductosMl";
 import { useOrdenTabla } from "@/app/(DashboardLayout)/utilities/ventas/components/ordenTabla";
+import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 import {
   AvisoEstimaciones,
   ProductoMl,
@@ -104,6 +105,7 @@ export default function InformeMasVendidosMercadoLibre() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const esCelular = useEsCelular();
   const [buscar, setBuscar] = React.useState("");
   const [pagina, setPagina] = React.useState(1);
   const [descargando, setDescargando] = React.useState(false);
@@ -149,6 +151,37 @@ export default function InformeMasVendidosMercadoLibre() {
     { titulo: "Queda", valor: formatoMonto(n(venta.neto) - n(cobra.neto)), pie: "Venta − comisión − envío" },
   ];
 
+  // Orden, publicación y cuántos: en escritorio sobre la tabla; en celular, en el panel de filtros.
+  const filtrosTabla = (
+    <>
+      <Box>
+        <Typography sx={etiquetaControlSx}>Ordenar por</Typography>
+        <Pildoras
+          etiqueta="Ordenar por"
+          opciones={MEDIDAS}
+          valor={filtros.medida}
+          onCambiar={(m) => {
+            columnas.setOrden(null);
+            setFiltros((f) => ({ ...f, medida: m }));
+          }}
+        />
+      </Box>
+      <Box>
+        <Typography sx={etiquetaControlSx}>Publicación</Typography>
+        <Pildoras
+          etiqueta="Estado de la publicación"
+          opciones={OPCIONES_PUBLICACION}
+          valor={filtros.publicacion || "todas"}
+          onCambiar={(v) => setFiltros((f) => ({ ...f, publicacion: v === "todas" ? "" : (v as FiltroPublicacion) }))}
+        />
+      </Box>
+      <Box>
+        <Typography sx={etiquetaControlSx}>Cuántos</Typography>
+        <Pildoras etiqueta="Cuántos" opciones={LIMITES} valor={filtros.limite} onCambiar={(l) => setFiltros((f) => ({ ...f, limite: l }))} />
+      </Box>
+    </>
+  );
+
   return (
     <PageContainer title="Más vendidos Mercado Libre" description="Productos más vendidos en Mercado Libre por tipo de envío">
       <Box sx={{ maxWidth: 1680, mx: "auto" }}>
@@ -163,6 +196,12 @@ export default function InformeMasVendidosMercadoLibre() {
             setFiltros(inicial());
             setBuscar("");
           }}
+          filtrosActivos={[
+            ...(filtros.tipo ? [{ etiqueta: tipoNombre, onQuitar: () => setFiltros((f) => ({ ...f, tipo: "" as FiltroTipo })) }] : []),
+            ...(filtros.medida !== "venta" ? [{ etiqueta: `Orden: ${MEDIDAS.find((m) => m.valor === filtros.medida)?.texto}`, onQuitar: () => setFiltros((f) => ({ ...f, medida: "venta" as Medida })) }] : []),
+            ...(filtros.publicacion ? [{ etiqueta: OPCIONES_PUBLICACION.find((o) => o.valor === filtros.publicacion)?.texto ?? "", onQuitar: () => setFiltros((f) => ({ ...f, publicacion: "" as FiltroPublicacion })) }] : []),
+            ...(filtros.limite !== "100" ? [{ etiqueta: LIMITES.find((l) => l.valor === filtros.limite)?.texto ?? "", onQuitar: () => setFiltros((f) => ({ ...f, limite: "100" })) }] : []),
+          ]}
           acciones={
             <Button
               variant="contained"
@@ -182,10 +221,11 @@ export default function InformeMasVendidosMercadoLibre() {
             valor={filtros.tipo || "todos"}
             onCambiar={(t) => setFiltros((f) => ({ ...f, tipo: t === "todos" ? "" : (t as TipoEnvio) }))}
           />
+          {esCelular && filtrosTabla}
         </HeaderMl>
         <AvisoEstimaciones estimaciones={datos.datos?.estimaciones} />
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(5, 1fr)" }, gap: 1.5, mb: 2 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "1fr 1fr", md: "repeat(5, 1fr)" }, gap: 1.5, mb: 2 }}>
           {resumen.map((r) => (
             <Box key={r.titulo} sx={{ ...tarjetaSx, px: 1.5, py: 1.25 }}>
               <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: tinta.secundaria }}>{r.titulo}</Typography>
@@ -212,31 +252,7 @@ export default function InformeMasVendidosMercadoLibre() {
               }}
               sx={{ width: { xs: "100%", sm: 300 } }}
             />
-            <Box>
-              <Typography sx={etiquetaControlSx}>Ordenar por</Typography>
-              <Pildoras
-                etiqueta="Ordenar por"
-                opciones={MEDIDAS}
-                valor={filtros.medida}
-                onCambiar={(m) => {
-                  columnas.setOrden(null);
-                  setFiltros((f) => ({ ...f, medida: m }));
-                }}
-              />
-            </Box>
-            <Box>
-              <Typography sx={etiquetaControlSx}>Publicación</Typography>
-              <Pildoras
-                etiqueta="Estado de la publicación"
-                opciones={OPCIONES_PUBLICACION}
-                valor={filtros.publicacion || "todas"}
-                onCambiar={(v) => setFiltros((f) => ({ ...f, publicacion: v === "todas" ? "" : (v as FiltroPublicacion) }))}
-              />
-            </Box>
-            <Box>
-              <Typography sx={etiquetaControlSx}>Cuántos</Typography>
-              <Pildoras etiqueta="Cuántos" opciones={LIMITES} valor={filtros.limite} onCambiar={(l) => setFiltros((f) => ({ ...f, limite: l }))} />
-            </Box>
+            {!esCelular && filtrosTabla}
             <Typography sx={{ fontSize: 12, color: tinta.tenue, ml: "auto" }}>
               Montos sin IVA (con IVA debajo). * Comisión del Full estimada con la publicación.
             </Typography>

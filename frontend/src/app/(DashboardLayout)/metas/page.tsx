@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Button,
@@ -20,6 +21,8 @@ import type { Goal, GoalPeriod, GoalsSummary } from "@/modules/metas/types";
 import { notifyError } from "@/components/ui/toast/notify";
 import { useEstadoVista } from "@/utils/estadoVista";
 import { campoDe } from "@/modules/metas/campoVista";
+import TarjetasPaginadas from "@/modules/metas/components/TarjetasPaginadas";
+import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 const TIPOS_RESPONSABLE = [
   { value: "", label: "Todos" },
@@ -37,6 +40,12 @@ const ESTADOS = [
   { value: "CANCELLED", label: "Cancelado" },
 ];
 
+/** Objetivo de la meta en texto (monto en su moneda; las de SKU no tienen monto). */
+const objetivo = (row: Goal) =>
+  row.goalType === "SALES_AMOUNT"
+    ? new Intl.NumberFormat("es-CL", { style: "currency", currency: row.currencyCode || "CLP", maximumFractionDigits: 0 }).format(row.targetAmount || 0)
+    : "—";
+
 export default function ResumenMetasPage() {
   const [periodos, setPeriodos] = useState<GoalPeriod[]>([]);
   const [resumen, setResumen] = useState<GoalsSummary | null>(null);
@@ -53,6 +62,8 @@ export default function ResumenMetasPage() {
   const setFiltros = campoDe(setVista, "filtros");
   const setPaginationModel = campoDe(setVista, "paginationModel");
   const setSortModel = campoDe(setVista, "sortModel");
+  const esCelular = useEsCelular();
+  const router = useRouter();
 
   useEffect(() => {
     listarPeriodos({ pageSize: 100 })
@@ -131,13 +142,13 @@ export default function ResumenMetasPage() {
         />
 
         <Grid container spacing={2} mb={3}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={6} md={3}>
             <MetaMetricCard title="Periodo activo" value={resumen?.activePeriod?.name || "—"} icon={<IconCalendarStats size={18} />} color="info" />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={6} md={3}>
             <MetaMetricCard title="Metas activas" value={resumen?.activeGoals ?? "—"} icon={<IconTargetArrow size={18} />} color="success" />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={6} md={3}>
             <MetaMetricCard
               title="Cumplimiento general"
               value={resumen?.overallCompliancePct != null ? `${resumen.overallCompliancePct}%` : "—"}
@@ -146,7 +157,7 @@ export default function ResumenMetasPage() {
               color="warning"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={6} md={3}>
             <MetaMetricCard title="Metas canceladas" value={resumen?.cancelledGoals ?? "—"} icon={<IconBan size={18} />} color="error" />
           </Grid>
         </Grid>
@@ -154,26 +165,26 @@ export default function ResumenMetasPage() {
         <BlankCard>
           <Box p={2}>
             <Grid container spacing={2} mb={2}>
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={6} sm={3}>
                 <TextField select fullWidth size="small" label="Periodo" value={filtros.periodId}
                   onChange={(e) => setFiltros((f) => ({ ...f, periodId: e.target.value }))}>
                   <MenuItem value="">Todos</MenuItem>
                   {periodos.map((p) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={6} sm={3}>
                 <TextField select fullWidth size="small" label="Tipo responsable" value={filtros.targetType}
                   onChange={(e) => setFiltros((f) => ({ ...f, targetType: e.target.value }))}>
                   {TIPOS_RESPONSABLE.map((t) => <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>)}
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={6} sm={3}>
                 <TextField select fullWidth size="small" label="Tipo de meta" value={filtros.goalType}
                   onChange={(e) => setFiltros((f) => ({ ...f, goalType: e.target.value }))}>
                   {TIPOS_META.map((t) => <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>)}
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={6} sm={3}>
                 <TextField select fullWidth size="small" label="Estado" value={filtros.status}
                   onChange={(e) => setFiltros((f) => ({ ...f, status: e.target.value }))}>
                   {ESTADOS.map((t) => <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>)}
@@ -181,6 +192,29 @@ export default function ResumenMetasPage() {
               </Grid>
             </Grid>
 
+            {esCelular ? (
+              <TarjetasPaginadas
+                cargando={loading}
+                total={total}
+                paginationModel={paginationModel}
+                onPaginationModelChange={setPaginationModel}
+                vacio="Sin metas para los filtros elegidos."
+                filas={metas.map((m) => ({
+                  clave: m.id,
+                  titulo: m.name,
+                  meta: `${m.periodName ?? "—"} · ${m.targetNames || "—"}`,
+                  onAbrir: () => router.push(`/metas/${m.id}`),
+                  principales: [
+                    { titulo: "Tipo", valor: m.goalType === "SALES_AMOUNT" ? "Monto" : "Cantidad SKU" },
+                    { titulo: "Objetivo", valor: objetivo(m) },
+                    { titulo: "Estado", valor: <EstadoChip estado={m.status} /> },
+                  ],
+                  detalle: [
+                    { titulo: "Responsable", valor: m.targetType === "SELLER" ? "Vendedor" : m.targetType === "SALES_CHANNEL" ? "Canal de venta" : "—" },
+                  ],
+                }))}
+              />
+            ) : (
             <Box sx={{ height: 520 }}>
               <DataGrid
                 rows={metas}
@@ -197,6 +231,7 @@ export default function ResumenMetasPage() {
                 density="comfortable"
               />
             </Box>
+            )}
           </Box>
         </BlankCard>
       </Box>

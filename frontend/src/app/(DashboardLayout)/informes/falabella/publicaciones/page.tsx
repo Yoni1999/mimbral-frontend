@@ -13,6 +13,7 @@ import TablaInforme, { CeldaProducto, ColumnaInforme, EncabezadoInforme, Etiquet
 import { Par } from "../../../utilities/ventas/mercado-libre/components/comun";
 import { mensajeError, n, unidades } from "../../../utilities/categorias/mercado-libre/components/comun";
 import { Estimaciones, pesos, urlFal } from "../../../utilities/falabella/components/comun";
+import { FiltrosAdaptables } from "../../../utilities/ventas/mercado-libre/components/PanelFiltrosMovil";
 
 type Problema = "inactiva" | "rechazada" | "en_revision" | "sin_stock" | "contenido_bajo" | "sin_peso" | "sin_comision" | "sin_costo" | "margen_negativo";
 interface Fila {
@@ -147,7 +148,11 @@ function Contenido() {
           titulo={titulo}
           descripcion={`Margen por unidad al precio vigente (oferta si la hay), con despacho normal. ${datos?.estimaciones.margen ?? ""}${datos?.sincronizado ? ` Catálogo de Falabella al ${datos.sincronizado.slice(0, 16).replace("T", " ")}.` : ""}`}
         >
-          <Pildoras<Filtro> etiqueta="Ver" valor={estado.filtro} onCambiar={(filtro) => setEstado({ filtro })} opciones={opciones} />
+          <FiltrosAdaptables
+            activos={estado.filtro !== "todos" ? [{ etiqueta: opciones.find((o) => o.valor === estado.filtro)?.texto ?? PROBLEMAS[estado.filtro as Problema]?.texto ?? "", onQuitar: () => setEstado({ filtro: "todos" }) }] : []}
+          >
+            <Pildoras<Filtro> etiqueta="Ver" valor={estado.filtro} onCambiar={(filtro) => setEstado({ filtro })} opciones={opciones} />
+          </FiltrosAdaptables>
         </EncabezadoInforme>
         {error ? <Typography sx={{ color: "#b42318", fontSize: 13, mb: 2 }}>No se pudo cargar: {mensajeError(error)}</Typography> : null}
         <Grid container spacing={2} sx={{ mb: 2 }}>

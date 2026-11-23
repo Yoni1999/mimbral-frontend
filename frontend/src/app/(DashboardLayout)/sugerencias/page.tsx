@@ -91,7 +91,7 @@ const Page = () => {
   };
 
   return (
-    <Box p={{ xs: 2, sm: 4 }}>
+    <Box px={{ xs: 0, sm: 4 }} py={{ xs: 2, sm: 4 }}>
       <Typography variant="h4" fontWeight="bold" gutterBottom>
         Sugerencias de Usuarios
       </Typography>

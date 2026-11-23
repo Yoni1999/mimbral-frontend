@@ -28,6 +28,8 @@ import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
+import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
+import { HojaFiltros } from "@/app/(DashboardLayout)/utilities/ventas/components/HojaFiltros";
 import DateRangeFilter, { DateRangeValue } from "../../../utilities/ventas/components/DateRangeFilter";
 import SubmitOnEnter from "../../../components/SubmitOnEnter";
 import { MAX_SKUS, ResultadoLista, descargarPlantillaSkus, skusDeExcel, skusDeTexto } from "./listaSkus";
@@ -138,6 +140,9 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
   currentFilters,
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  // En celular los filtros van en una hoja inferior con "Aplicar" fijo al pie
+  // (el Popover no cabía: el pie quedaba cortado y sin scroll).
+  const esCelular = useEsCelular();
   const [filters, setFilters] = useState<FiltrosPorCanal>(
     currentFilters || { periodo: "7d" }
   );
@@ -329,164 +334,8 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
     }
   };
 
-  return (
-    <Box mb={2}>
-      <Box
-        mt={1}
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        flexWrap="wrap"
-        gap={1.5}
-      >
-        <Box display="flex" gap={1} flexWrap="wrap">
-          {filters.fechaInicio && filters.fechaFin && (
-            <Chip
-              label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`}
-              onDelete={() => handleChipDelete("fechaInicio")}
-              sx={chipPrimarySx}
-            />
-          )}
-          {filters.sku && (
-            <Chip
-              label={`Producto: ${filters.sku}`}
-              onDelete={() => handleChipDelete("sku")}
-              sx={chipPrimarySx}
-            />
-          )}
-          {filters.skus && filters.skus.length > 0 && (
-            <Chip
-              label={`Varios SKU: ${filters.skus.length.toLocaleString("es-CL")}`}
-              onDelete={() => handleChipDelete("skus")}
-              sx={chipPrimarySx}
-            />
-          )}
-          {filters.familia && (
-            <Chip
-              label={`Familia: ${filters.familia}`}
-              onDelete={() => handleChipDelete("familia")}
-              sx={chipNeutralSx}
-            />
-          )}
-          {filters.subfamilia && (
-            <Chip
-              label={`Subfamilia: ${filters.subfamilia}`}
-              onDelete={() => handleChipDelete("subfamilia")}
-              sx={chipNeutralSx}
-            />
-          )}
-          {filters.proveedor && (
-            <Chip
-              label={`Proveedor: ${filters.proveedor}`}
-              onDelete={() => handleChipDelete("proveedor")}
-              sx={chipNeutralSx}
-            />
-          )}
-          {filters.primerNivel && (
-            <Chip
-              label={`Primer Nivel: ${filters.primerNivel}`}
-              onDelete={() => handleChipDelete("primerNivel")}
-              sx={chipNeutralSx}
-            />
-          )}
-          {filters.categoria && (
-            <Chip
-              label={`Categoría: ${filters.categoria}`}
-              onDelete={() => handleChipDelete("categoria")}
-              sx={chipNeutralSx}
-            />
-          )}
-          {filters.subcategoria && (
-            <Chip
-              label={`Subcategoría: ${filters.subcategoria}`}
-              onDelete={() => handleChipDelete("subcategoria")}
-              sx={chipNeutralSx}
-            />
-          )}
-        </Box>
-
-        <Button
-          variant="outlined"
-          startIcon={<TuneRoundedIcon />}
-          onClick={(e) => setAnchorEl(e.currentTarget)}
-          sx={{
-            borderRadius: 2.5,
-            px: 2.2,
-            py: 1.1,
-            textTransform: "none",
-            fontWeight: 700,
-            color: "#294273",
-            borderColor: "#b7c7e8",
-            background: "linear-gradient(180deg, #ffffff 0%, #f7faff 100%)",
-            "&:hover": {
-              borderColor: "#89a6df",
-              background: "#f5f8ff",
-            },
-          }}
-        >
-          Filtros
-        </Button>
-      </Box>
-
-      <Popover
-        open={Boolean(anchorEl)}
-        anchorEl={anchorEl}
-        onClose={() => setAnchorEl(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
-        PaperProps={{
-          sx: {
-            mt: 1,
-            p: 0,
-            width: { xs: "calc(100vw - 24px)", sm: 700 },
-            maxWidth: "100%",
-            borderRadius: 4,
-            overflow: "hidden",
-            border: "1px solid #dfe7f6",
-            boxShadow: "0 28px 70px rgba(25, 44, 86, 0.16)",
-          },
-        }}
-      >
-        <Box
-          sx={{
-            px: 3,
-            py: 2.2,
-            background: "linear-gradient(135deg, #f8fbff 0%, #eef3ff 100%)",
-            borderBottom: "1px solid #e1e8f6",
-          }}
-        >
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Box display="flex" alignItems="center" gap={1.25}>
-              <Box
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 2.5,
-                  display: "grid",
-                  placeItems: "center",
-                  backgroundColor: "#dfe9ff",
-                  color: "#294273",
-                }}
-              >
-                <FilterListIcon fontSize="small" />
-              </Box>
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: "#22324f" }}>
-                  Filtros
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#667792" }}>
-                  Refina productos, fechas y categorías del informe.
-                </Typography>
-              </Box>
-            </Box>
-            <IconButton size="small" onClick={() => setAnchorEl(null)} sx={{ color: "#50627f" }}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-        </Box>
-
-        <SubmitOnEnter onSubmit={handleApply}>
-          <Box sx={{ p: 3 }}>
+  // Campos del formulario; los botones van dentro solo en el Popover de escritorio.
+  const campos = (conBotones: boolean) => (
             <Grid container spacing={2.2}>
             <Grid item xs={12} md={6}>
               <Box sx={cardPanelSx}>
@@ -770,50 +619,226 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
               </Grid>
             )}
 
-            <Grid item xs={12}>
-              <Divider sx={{ my: 0.5 }} />
+            {conBotones && (
+              <Grid item xs={12}>
+                <Divider sx={{ my: 0.5 }} />
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  gap={2}
+                  flexWrap="wrap"
+                  pt={1}
+                >
+                  <Button
+                    fullWidth
+                    sx={{
+                      maxWidth: 150,
+                      borderRadius: 2.5,
+                      textTransform: "none",
+                      fontWeight: 700,
+                    }}
+                    variant="outlined"
+                    onClick={handleClear}
+                  >
+                    Limpiar
+                  </Button>
+                  <Button
+                    fullWidth
+                    sx={{
+                      maxWidth: 160,
+                      borderRadius: 2.5,
+                      textTransform: "none",
+                      fontWeight: 800,
+                      background:
+                        "linear-gradient(135deg, #3558c8 0%, #274690 100%)",
+                      boxShadow: "0 10px 24px rgba(39, 70, 144, 0.25)",
+                    }}
+                    variant="contained"
+                    onClick={handleApply}
+                  >
+                    Aplicar
+                  </Button>
+                </Box>
+              </Grid>
+            )}
+            </Grid>
+  );
+
+  return (
+    <Box mb={2}>
+      <Box
+        mt={1}
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        flexWrap="wrap"
+        gap={1.5}
+      >
+        <Box display="flex" gap={1} flexWrap="wrap" sx={{ maxWidth: "100%", "& .MuiChip-root": { maxWidth: "100%" } }}>
+          {filters.fechaInicio && filters.fechaFin && (
+            <Chip
+              label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`}
+              onDelete={() => handleChipDelete("fechaInicio")}
+              sx={chipPrimarySx}
+            />
+          )}
+          {filters.sku && (
+            <Chip
+              label={`Producto: ${filters.sku}`}
+              onDelete={() => handleChipDelete("sku")}
+              sx={chipPrimarySx}
+            />
+          )}
+          {filters.skus && filters.skus.length > 0 && (
+            <Chip
+              label={`Varios SKU: ${filters.skus.length.toLocaleString("es-CL")}`}
+              onDelete={() => handleChipDelete("skus")}
+              sx={chipPrimarySx}
+            />
+          )}
+          {filters.familia && (
+            <Chip
+              label={`Familia: ${filters.familia}`}
+              onDelete={() => handleChipDelete("familia")}
+              sx={chipNeutralSx}
+            />
+          )}
+          {filters.subfamilia && (
+            <Chip
+              label={`Subfamilia: ${filters.subfamilia}`}
+              onDelete={() => handleChipDelete("subfamilia")}
+              sx={chipNeutralSx}
+            />
+          )}
+          {filters.proveedor && (
+            <Chip
+              label={`Proveedor: ${proveedores.find((p) => p.CardCode === filters.proveedor)?.CardName || filters.proveedor}`}
+              onDelete={() => handleChipDelete("proveedor")}
+              sx={chipNeutralSx}
+            />
+          )}
+          {filters.primerNivel && (
+            <Chip
+              label={`Primer Nivel: ${primerNiveles.find((p) => p.codigo === filters.primerNivel)?.nombre || filters.primerNivel}`}
+              onDelete={() => handleChipDelete("primerNivel")}
+              sx={chipNeutralSx}
+            />
+          )}
+          {filters.categoria && (
+            <Chip
+              label={`Categoría: ${categorias.find((c) => c.codigo === filters.categoria)?.nombre || filters.categoria}`}
+              onDelete={() => handleChipDelete("categoria")}
+              sx={chipNeutralSx}
+            />
+          )}
+          {filters.subcategoria && (
+            <Chip
+              label={`Subcategoría: ${subcategorias.find((c) => c.codigo === filters.subcategoria)?.nombre || filters.subcategoria}`}
+              onDelete={() => handleChipDelete("subcategoria")}
+              sx={chipNeutralSx}
+            />
+          )}
+        </Box>
+
+        <Button
+          variant="outlined"
+          startIcon={<TuneRoundedIcon />}
+          onClick={(e) => setAnchorEl(e.currentTarget)}
+          sx={{
+            borderRadius: 2.5,
+            px: 2.2,
+            py: 1.1,
+            textTransform: "none",
+            fontWeight: 700,
+            color: "#294273",
+            borderColor: "#b7c7e8",
+            background: "linear-gradient(180deg, #ffffff 0%, #f7faff 100%)",
+            "&:hover": {
+              borderColor: "#89a6df",
+              background: "#f5f8ff",
+            },
+          }}
+        >
+          Filtros
+        </Button>
+      </Box>
+
+      {esCelular ? (
+        <HojaFiltros
+          abierta={Boolean(anchorEl)}
+          onCerrar={() => setAnchorEl(null)}
+          titulo="Filtros"
+          descripcion="Refina productos, fechas y categorías del informe."
+          onAplicar={handleApply}
+          onLimpiar={handleClear}
+        >
+          <SubmitOnEnter onSubmit={handleApply}>{campos(false)}</SubmitOnEnter>
+        </HojaFiltros>
+      ) : (
+      <Popover
+        open={Boolean(anchorEl)}
+        anchorEl={anchorEl}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            p: 0,
+            width: { xs: "calc(100vw - 24px)", sm: 700 },
+            maxWidth: "100%",
+            borderRadius: 4,
+            overflow: "hidden",
+            border: "1px solid #dfe7f6",
+            boxShadow: "0 28px 70px rgba(25, 44, 86, 0.16)",
+          },
+        }}
+      >
+        <Box
+          sx={{
+            px: 3,
+            py: 2.2,
+            background: "linear-gradient(135deg, #f8fbff 0%, #eef3ff 100%)",
+            borderBottom: "1px solid #e1e8f6",
+          }}
+        >
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Box display="flex" alignItems="center" gap={1.25}>
               <Box
-                display="flex"
-                justifyContent="space-between"
-                gap={2}
-                flexWrap="wrap"
-                pt={1}
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 2.5,
+                  display: "grid",
+                  placeItems: "center",
+                  backgroundColor: "#dfe9ff",
+                  color: "#294273",
+                }}
               >
-                <Button
-                  fullWidth
-                  sx={{
-                    maxWidth: 150,
-                    borderRadius: 2.5,
-                    textTransform: "none",
-                    fontWeight: 700,
-                  }}
-                  variant="outlined"
-                  onClick={handleClear}
-                >
-                  Limpiar
-                </Button>
-                <Button
-                  fullWidth
-                  sx={{
-                    maxWidth: 160,
-                    borderRadius: 2.5,
-                    textTransform: "none",
-                    fontWeight: 800,
-                    background:
-                      "linear-gradient(135deg, #3558c8 0%, #274690 100%)",
-                    boxShadow: "0 10px 24px rgba(39, 70, 144, 0.25)",
-                  }}
-                  variant="contained"
-                  onClick={handleApply}
-                >
-                  Aplicar
-                </Button>
+                <FilterListIcon fontSize="small" />
               </Box>
-            </Grid>
-            </Grid>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: "#22324f" }}>
+                  Filtros
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#667792" }}>
+                  Refina productos, fechas y categorías del informe.
+                </Typography>
+              </Box>
+            </Box>
+            <IconButton size="small" onClick={() => setAnchorEl(null)} sx={{ color: "#50627f" }}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </Box>
+
+        <SubmitOnEnter onSubmit={handleApply}>
+          <Box sx={{ p: 3 }}>
+            {campos(true)}
           </Box>
         </SubmitOnEnter>
       </Popover>
+      )}
     </Box>
   );
 };

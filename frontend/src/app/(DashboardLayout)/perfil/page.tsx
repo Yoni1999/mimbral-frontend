@@ -321,7 +321,8 @@ export default function PerfilPage() {
   const nombreCompleto = `${form.nombres || session.nombre || ""} ${form.apellidos || ""}`.trim() || session.correo;
 
   return (
-    <Box sx={{ p: { xs: 1.5, md: 2.5 } }}>
+    // En celular el layout ya deja 12 px por lado: sin margen lateral extra.
+    <Box sx={{ px: { xs: 0, sm: 1.5, md: 2.5 }, py: { xs: 1.5, md: 2.5 } }}>
       <Box display="flex" alignItems="center" gap={1} mb={1.5}>
         <Avatar sx={{ bgcolor: theme.palette.primary.main, width: 26, height: 26, fontSize: "0.9rem" }}>
           👤

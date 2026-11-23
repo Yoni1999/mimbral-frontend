@@ -262,8 +262,9 @@ export default function SharedVentasPorCanalPage() {
         loadingTable
       ) : (
         <>
-          <Grid container spacing={2} mb={2}>
-            <Grid item xs={12} sm={6} md={3}>
+          {/* En celular: dos cifras por fila y separación de 12 px (con 16 px la grilla se salía 4 px del borde). */}
+          <Grid container spacing={{ xs: 1.5, sm: 2 }} mb={2}>
+            <Grid item xs={6} md={3}>
               <Card sx={{ borderRadius: 3 }}>
                 <CardContent>
                   <Typography variant="body2" color="text.secondary">
@@ -278,7 +279,7 @@ export default function SharedVentasPorCanalPage() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={6} md={3}>
               <Card sx={{ borderRadius: 3 }}>
                 <CardContent>
                   <Typography variant="body2" color="text.secondary">
@@ -293,7 +294,7 @@ export default function SharedVentasPorCanalPage() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={6} md={3}>
               <Card sx={{ borderRadius: 3 }}>
                 <CardContent>
                   <Typography variant="body2" color="text.secondary">
@@ -308,7 +309,7 @@ export default function SharedVentasPorCanalPage() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={6} md={3}>
               <Card sx={{ borderRadius: 3 }}>
                 <CardContent>
                   <Typography variant="body2" color="text.secondary">
@@ -325,7 +326,7 @@ export default function SharedVentasPorCanalPage() {
             </Grid>
           </Grid>
 
-          <Grid container spacing={2} mb={2}>
+          <Grid container spacing={{ xs: 1.5, sm: 2 }} mb={2}>
             <Grid item xs={12} md={4}>
               <Card sx={{ borderRadius: 3, height: "100%", minHeight: 430 }}>
                 <CardContent>
@@ -388,7 +389,7 @@ export default function SharedVentasPorCanalPage() {
             </Grid>
           </Grid>
 
-          <Grid container spacing={2}>
+          <Grid container spacing={{ xs: 1.5, sm: 2 }}>
             <Grid item xs={12} md={7}>
               <Card sx={{ borderRadius: 3, height: "100%", minHeight: 520 }}>
                 <CardContent>

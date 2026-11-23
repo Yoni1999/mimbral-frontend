@@ -128,6 +128,21 @@ export default function DetalleTarjeta({
     }
   };
 
+  // `ancho`: versión de celular, a lo ancho bajo el título.
+  const botonExcel = (ancho: boolean) => (
+    <Button
+      variant="contained"
+      disableElevation
+      fullWidth={ancho}
+      onClick={descargar}
+      disabled={descargando}
+      startIcon={descargando ? <CircularProgress size={14} color="inherit" /> : <IconDownload size={17} />}
+      sx={{ textTransform: "none", borderRadius: "10px", fontWeight: 600, height: ancho ? 40 : undefined, bgcolor: "#067647", "&:hover": { bgcolor: "#05603a" } }}
+    >
+      {descargando ? "Preparando Excel…" : "Descargar Excel"}
+    </Button>
+  );
+
   return (
     <Dialog fullScreen open={!!abierto} onClose={onClose} PaperProps={{ sx: { bgcolor: "#f6f8fb" } }}>
       {abierto && (
@@ -138,8 +153,8 @@ export default function DetalleTarjeta({
               top: 0,
               zIndex: 2,
               display: "flex",
-              alignItems: "center",
-              gap: 2,
+              alignItems: { xs: "flex-start", sm: "center" },
+              gap: { xs: 1, sm: 2 },
               px: { xs: 2, md: 4 },
               py: 1.5,
               bgcolor: "#fff",
@@ -156,19 +171,15 @@ export default function DetalleTarjeta({
                   </Box>
                 ))}
               </Box>
+              {/* En celular el Excel va bajo el título y a lo ancho: al lado le quitaba casi todo el espacio al título. */}
+              <Box sx={{ display: { xs: "block", sm: "none" }, mt: 1.25 }}>
+                {botonExcel(true)}
+                {errorExcel && <Typography sx={{ fontSize: 12, color: "#b42318", mt: 0.5 }}>No se pudo descargar.</Typography>}
+              </Box>
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
-              {errorExcel && <Typography sx={{ fontSize: 12, color: "#b42318" }}>No se pudo descargar.</Typography>}
-              <Button
-                variant="contained"
-                disableElevation
-                onClick={descargar}
-                disabled={descargando}
-                startIcon={descargando ? <CircularProgress size={14} color="inherit" /> : <IconDownload size={17} />}
-                sx={{ textTransform: "none", borderRadius: "10px", fontWeight: 600, bgcolor: "#067647", "&:hover": { bgcolor: "#05603a" } }}
-              >
-                {descargando ? "Preparando Excel…" : "Descargar Excel"}
-              </Button>
+              {errorExcel && <Typography sx={{ fontSize: 12, color: "#b42318", display: { xs: "none", sm: "block" } }}>No se pudo descargar.</Typography>}
+              <Box sx={{ display: { xs: "none", sm: "block" } }}>{botonExcel(false)}</Box>
               <IconButton aria-label="Cerrar" onClick={onClose} sx={{ border: `1px solid ${tinta.borde}`, borderRadius: "10px" }}>
                 <IconX size={20} />
               </IconButton>

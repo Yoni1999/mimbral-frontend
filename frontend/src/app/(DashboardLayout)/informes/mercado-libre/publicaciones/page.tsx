@@ -11,6 +11,7 @@ import { Pildoras, formatoMonto, tinta } from "@/app/(DashboardLayout)/utilities
 import TablaInforme, { CeldaProducto, ColumnaInforme, EncabezadoInforme, Etiqueta, Filtro } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/TablaInforme";
 import { urlMl } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/comun";
 import { entero, fecha, pesos, redondo } from "../comun";
+import { FiltrosAdaptables } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/PanelFiltrosMovil";
 
 type Problema = "pausada" | "en_revision" | "inactiva" | "error" | "stock_distinto";
 interface Fila {
@@ -150,40 +151,48 @@ export default function PublicacionesConProblemas() {
           titulo="Publicaciones con problemas"
           descripcion="Publicaciones vigentes que hoy no se venden (pausadas, en revisión, inactivas), con error, o cuyo stock en ML no es el que calculamos. Ordenadas por lo que vendieron: lo que más se está dejando de vender, arriba."
         >
-          <Filtro etiqueta="Venta de los últimos">
-            <Pildoras
-              etiqueta="Días"
-              opciones={[
-                { valor: "30", texto: "30 días" },
-                { valor: "60", texto: "60 días" },
-                { valor: "90", texto: "90 días" },
-              ]}
-              valor={filtros.dias}
-              onCambiar={(v) => setFiltros((x) => ({ ...x, dias: v }))}
-            />
-          </Filtro>
-          <Filtro etiqueta="Problema">
-            <Pildoras
-              etiqueta="Problema"
-              opciones={[{ valor: "todos" as Ver, texto: "Todos" }, ...(Object.keys(PROBLEMAS) as Problema[]).map((p) => ({ valor: p as Ver, texto: PROBLEMAS[p].texto }))]}
-              valor={filtros.ver}
-              onCambiar={(v) => setFiltros((x) => ({ ...x, ver: v }))}
-            />
-          </Filtro>
-          <Filtro etiqueta="Publicaciones">
-            <Pildoras
-              etiqueta="Solo con venta"
-              opciones={[
-                { valor: "si", texto: "Solo las que vendían" },
-                { valor: "no", texto: "Todas" },
-              ]}
-              valor={filtros.soloConVenta}
-              onCambiar={(v) => setFiltros((x) => ({ ...x, soloConVenta: v }))}
-            />
-          </Filtro>
+          <FiltrosAdaptables
+            activos={[
+              ...(filtros.dias !== "60" ? [{ etiqueta: `Venta ${filtros.dias} días`, onQuitar: () => setFiltros((x) => ({ ...x, dias: "60" as Filtros["dias"] })) }] : []),
+              ...(filtros.ver !== "todos" ? [{ etiqueta: PROBLEMAS[filtros.ver as Problema].texto, onQuitar: () => setFiltros((x) => ({ ...x, ver: "todos" as Ver })) }] : []),
+              ...(filtros.soloConVenta !== "si" ? [{ etiqueta: "Todas las publicaciones", onQuitar: () => setFiltros((x) => ({ ...x, soloConVenta: "si" as Filtros["soloConVenta"] })) }] : []),
+            ]}
+          >
+            <Filtro etiqueta="Venta de los últimos">
+              <Pildoras
+                etiqueta="Días"
+                opciones={[
+                  { valor: "30", texto: "30 días" },
+                  { valor: "60", texto: "60 días" },
+                  { valor: "90", texto: "90 días" },
+                ]}
+                valor={filtros.dias}
+                onCambiar={(v) => setFiltros((x) => ({ ...x, dias: v }))}
+              />
+            </Filtro>
+            <Filtro etiqueta="Problema">
+              <Pildoras
+                etiqueta="Problema"
+                opciones={[{ valor: "todos" as Ver, texto: "Todos" }, ...(Object.keys(PROBLEMAS) as Problema[]).map((p) => ({ valor: p as Ver, texto: PROBLEMAS[p].texto }))]}
+                valor={filtros.ver}
+                onCambiar={(v) => setFiltros((x) => ({ ...x, ver: v }))}
+              />
+            </Filtro>
+            <Filtro etiqueta="Publicaciones">
+              <Pildoras
+                etiqueta="Solo con venta"
+                opciones={[
+                  { valor: "si", texto: "Solo las que vendían" },
+                  { valor: "no", texto: "Todas" },
+                ]}
+                valor={filtros.soloConVenta}
+                onCambiar={(v) => setFiltros((x) => ({ ...x, soloConVenta: v }))}
+              />
+            </Filtro>
+          </FiltrosAdaptables>
         </EncabezadoInforme>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
           {tarjetas.map((t) => (
             <MetricCard key={t.title} {...t} cargando={datos.cargando} />
           ))}

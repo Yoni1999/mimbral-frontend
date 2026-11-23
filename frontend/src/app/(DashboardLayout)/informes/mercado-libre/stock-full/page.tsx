@@ -11,6 +11,7 @@ import { Pildoras, formatoMonto, tinta } from "@/app/(DashboardLayout)/utilities
 import TablaInforme, { CeldaProducto, ColumnaInforme, EncabezadoInforme, Etiqueta, Filtro } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/TablaInforme";
 import { urlMl } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/comun";
 import { entero, fecha, pesos, redondo } from "../comun";
+import { FiltrosAdaptables } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/PanelFiltrosMovil";
 
 interface Fila {
   sku: string;
@@ -173,12 +174,14 @@ export default function StockFullQueCuesta() {
           titulo="Stock Full que cuesta"
           descripcion="Stock en la bodega Full de ML, cuánto paga hoy por antigüedad, cuándo salta al próximo tramo y cuánto dura al ritmo actual. Foto del último barrido de ML (cada producto trae su fecha)."
         >
-          <Filtro etiqueta="Mostrar">
-            <Pildoras etiqueta="Mostrar" opciones={VER} valor={ver} onCambiar={setVer} />
-          </Filtro>
+          <FiltrosAdaptables activos={ver !== "todos" ? [{ etiqueta: VER.find((v) => v.valor === ver)?.texto ?? "", onQuitar: () => setVer("todos") }] : []}>
+            <Filtro etiqueta="Mostrar">
+              <Pildoras etiqueta="Mostrar" opciones={VER} valor={ver} onCambiar={setVer} />
+            </Filtro>
+          </FiltrosAdaptables>
         </EncabezadoInforme>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
           {tarjetas.map((t) => (
             <MetricCard key={t.title} {...t} cargando={datos.cargando} />
           ))}

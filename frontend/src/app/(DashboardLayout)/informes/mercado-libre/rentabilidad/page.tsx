@@ -147,6 +147,10 @@ export default function RentabilidadMercadoLibre() {
           datosAl={datos.cargando ? undefined : datos.datos?.datosAl ?? null}
           enEstadoInicial={!filtros.lado && filtros.ver === "todos" && etiquetaRango(filtros.fechaInicio, filtros.fechaFin) === "Últimos 30 días"}
           onLimpiar={() => setFiltros(inicial())}
+          filtrosActivos={[
+            ...(filtros.lado ? [{ etiqueta: filtros.lado === "full" ? "Full" : "Colecta y otros", onQuitar: () => setFiltros((f) => ({ ...f, lado: "" as Lado })) }] : []),
+            ...(filtros.ver !== "todos" ? [{ etiqueta: VER.find((v) => v.valor === filtros.ver)?.texto ?? "", onQuitar: () => setFiltros((f) => ({ ...f, ver: "todos" as Ver })) }] : []),
+          ]}
         >
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
             <Pildoras
@@ -163,7 +167,7 @@ export default function RentabilidadMercadoLibre() {
           </Box>
         </HeaderMl>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
           {tarjetas.map((t) => (
             <MetricCard key={t.title} {...t} cargando={datos.cargando} />
           ))}

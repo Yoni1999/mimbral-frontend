@@ -25,12 +25,13 @@ export default function MetaMetricCard({ title, value, subtitle, icon, color = "
         "&:hover": { transform: "translateY(-2px)", boxShadow: "0px 8px 20px rgba(0,0,0,0.06)" },
       }}
     >
-      <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
+      {/* En celular van dos por fila: menos relleno y el título en dos líneas en vez de cortado. */}
+      <CardContent sx={{ p: { xs: 1.5, sm: 2.5 }, "&:last-child": { pb: { xs: 1.5, sm: 2.5 } } }}>
         <Box display="flex" alignItems="center" gap={1.25} mb={1.5}>
           <Box
             sx={{
-              width: 36,
-              height: 36,
+              width: { xs: 30, sm: 36 },
+              height: { xs: 30, sm: 36 },
               borderRadius: "50%",
               display: "flex",
               alignItems: "center",
@@ -42,12 +43,17 @@ export default function MetaMetricCard({ title, value, subtitle, icon, color = "
           >
             {icon}
           </Box>
-          <Typography variant="subtitle2" color="text.secondary" fontWeight={600} noWrap>
+          <Typography
+            variant="subtitle2"
+            color="text.secondary"
+            fontWeight={600}
+            sx={{ "@media (min-width: 600px)": { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, "@media (max-width: 599.95px)": { lineHeight: 1.25 } }}
+          >
             {title}
           </Typography>
         </Box>
 
-        <Typography variant="h4" fontWeight={700} lineHeight={1}>
+        <Typography variant="h4" fontWeight={700} lineHeight={1} sx={{ "@media (max-width: 599.95px)": { fontSize: 20 } }}>
           {value}
         </Typography>
 

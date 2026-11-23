@@ -177,6 +177,8 @@ interface MonthGridProps {
   maxDate?: Date | null;
   /** Con largo fijo, al pasar el cursor se ve el rango que quedaría. */
   largoFijo?: number;
+  /** Segundo mes: en celular no cabe y se oculta (se navega con las flechas). */
+  ocultarEnCelular?: boolean;
 }
 
 function MonthGrid({
@@ -191,6 +193,7 @@ function MonthGrid({
   minDate = null,
   maxDate = null,
   largoFijo,
+  ocultarEnCelular = false,
 }: MonthGridProps) {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
@@ -217,7 +220,8 @@ function MonthGrid({
   }
 
   return (
-    <Box sx={{ width: 250, flexShrink: 0 }}>
+    // En celular el mes ocupa el ancho de la pantalla (días más fáciles de tocar).
+    <Box sx={{ width: { xs: "100%", sm: 250 }, flexShrink: 0, display: ocultarEnCelular ? { xs: "none", sm: "block" } : undefined }}>
       <Typography
         sx={{
           mb: 1.5,
@@ -395,7 +399,8 @@ function CampoFecha({
       }}
       inputProps={{ "aria-label": etiqueta, min: min ? toDateStr(min) : undefined, max: max ? toDateStr(max) : undefined }}
       sx={{
-        width: 150,
+        width: { xs: "auto", sm: 150 },
+        minWidth: { xs: 0, sm: "auto" },
         "& .MuiInputBase-root": { borderRadius: 1.5, bgcolor: "#f8fafc", fontSize: 12.5 },
         "& .MuiInputBase-input": { py: 0.85, px: 1.2, color: "#334155" },
       }}
@@ -680,7 +685,9 @@ export default function DateRangeFilter({
             })}
           </Box>
 
-          <Box sx={{ display: "flex", flexDirection: "column" }}>
+          {/* En celular la columna toma el ancho del panel: así la flecha de
+              "mes siguiente" y los botones del pie no quedan cortados. */}
+          <Box sx={{ display: "flex", flexDirection: "column", flex: { xs: 1, sm: "initial" }, minWidth: { xs: 0, sm: "auto" } }}>
             <Box
               sx={{
                 display: "flex",
@@ -748,6 +755,7 @@ export default function DateRangeFilter({
                 minDate={minDate}
                 maxDate={maxDate}
                 largoFijo={largoFijo}
+                ocultarEnCelular
               />
             </Box>
 
@@ -757,10 +765,10 @@ export default function DateRangeFilter({
               direction={{ xs: "column", sm: "row" }}
               alignItems={{ xs: "stretch", sm: "center" }}
               justifyContent="space-between"
-              spacing={2}
-              sx={{ px: 3, py: 1.5 }}
+              spacing={{ xs: 1.5, sm: 2 }}
+              sx={{ px: { xs: 2, sm: 3 }, py: 1.5 }}
             >
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ "& > .MuiTextField-root": { flex: { xs: 1, sm: "initial" } } }}>
                 <CampoFecha
                   etiqueta="Desde"
                   valor={draftStart}
@@ -779,7 +787,8 @@ export default function DateRangeFilter({
                 />
               </Stack>
 
-              <Stack direction="row" spacing={1.25} justifyContent="flex-end">
+              {/* En celular los dos botones se reparten el ancho (y "Aplicar" queda a la vista). */}
+              <Stack direction="row" spacing={1.25} justifyContent="flex-end" sx={{ "& > .MuiButton-root": { flex: { xs: 1, sm: "initial" }, height: { xs: 44, sm: "auto" } } }}>
                 <Button
                   onClick={handleClose}
                   variant="outlined"

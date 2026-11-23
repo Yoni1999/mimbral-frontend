@@ -44,7 +44,9 @@ export default function PeriodoForm({ modo, valoresIniciales, onCancelar, onGuar
       <TextField label="Nombre" required fullWidth value={name} onChange={(e) => setName(e.target.value)} />
       <TextField label="Descripción" fullWidth multiline minRows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
 
-      <Grid container spacing={2}>
+      {/* El Stack le quita al Grid su margen negativo y la fila quedaba corrida
+          16 px a la derecha; en celular se le devuelve (se salía de la tarjeta). */}
+      <Grid container spacing={2} sx={{ "@media (max-width: 599.95px)": { marginLeft: "-16px !important" } }}>
         <Grid item xs={6}>
           <TextField label="Fecha inicio" type="date" required fullWidth InputLabelProps={{ shrink: true }} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         </Grid>

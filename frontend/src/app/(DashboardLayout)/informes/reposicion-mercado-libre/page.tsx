@@ -290,6 +290,24 @@ export default function InformeReposicionMercadoLibre() {
     }
   };
 
+  // Umbral, días a cubrir y mínimo vendido: en escritorio sobre la tabla; en celular, en el panel de filtros.
+  const filtrosTabla = (
+    <>
+      <Box>
+        <Typography sx={etiquetaControlSx}>Poco stock = menos de</Typography>
+        <Pildoras etiqueta="Umbral de días" opciones={UMBRALES} valor={filtros.umbral} onCambiar={(v) => cambiar({ umbral: v })} />
+      </Box>
+      <Box>
+        <Typography sx={etiquetaControlSx}>Reponer para cubrir</Typography>
+        <Pildoras etiqueta="Días a cubrir" opciones={CUBRIR} valor={filtros.cubrir} onCambiar={(v) => cambiar({ cubrir: v })} />
+      </Box>
+      <Box>
+        <Typography sx={etiquetaControlSx}>Vendió al menos (unidades)</Typography>
+        <Pildoras etiqueta="Mínimo vendido" opciones={MINIMOS} valor={filtros.minUnidades} onCambiar={(v) => cambiar({ minUnidades: v })} />
+      </Box>
+    </>
+  );
+
   return (
     <PageContainer title="Reposición Mercado Libre" description="Productos de Mercado Libre que se venden y les queda poco stock">
       <Box sx={{ maxWidth: 1680, mx: "auto" }}>
@@ -306,6 +324,13 @@ export default function InformeReposicionMercadoLibre() {
             setFiltros(inicial());
             setBuscar("");
           }}
+          filtrosActivos={[
+            ...(filtros.lado ? [{ etiqueta: nombreLado, onQuitar: () => cambiar({ lado: "" }) }] : []),
+            ...(filtros.estado ? [{ etiqueta: ESTADOS[filtros.estado].texto, onQuitar: () => cambiar({ estado: "" }) }] : []),
+            ...(filtros.umbral !== "15" ? [{ etiqueta: `Poco stock < ${filtros.umbral} días`, onQuitar: () => cambiar({ umbral: "15" }) }] : []),
+            ...(filtros.cubrir !== "30" ? [{ etiqueta: `Cubrir ${filtros.cubrir} días`, onQuitar: () => cambiar({ cubrir: "30" }) }] : []),
+            ...(filtros.minUnidades !== "3" ? [{ etiqueta: `Vendió ${filtros.minUnidades}+ u.`, onQuitar: () => cambiar({ minUnidades: "3" }) }] : []),
+          ]}
           acciones={
             <Button
               variant="contained"
@@ -320,9 +345,10 @@ export default function InformeReposicionMercadoLibre() {
           }
         >
           <Pildoras etiqueta="Envío" opciones={OPCIONES_LADO} valor={filtros.lado || "ambos"} onCambiar={(v) => cambiar({ lado: v === "ambos" ? "" : (v as Lado) })} />
+          {esCelular && filtrosTabla}
         </HeaderMl>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(3, 1fr)", xl: "repeat(6, 1fr)" }, gap: 2, mb: 2 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "1fr 1fr", md: "repeat(3, 1fr)", xl: "repeat(6, 1fr)" }, gap: 2, mb: 2 }}>
           {tarjetas.map((t) => (
             <MetricCard key={t.title} {...t} cargando={datos.cargando} />
           ))}
@@ -345,18 +371,7 @@ export default function InformeReposicionMercadoLibre() {
               }}
               sx={{ width: { xs: "100%", sm: 280 } }}
             />
-            <Box>
-              <Typography sx={etiquetaControlSx}>Poco stock = menos de</Typography>
-              <Pildoras etiqueta="Umbral de días" opciones={UMBRALES} valor={filtros.umbral} onCambiar={(v) => cambiar({ umbral: v })} />
-            </Box>
-            <Box>
-              <Typography sx={etiquetaControlSx}>Reponer para cubrir</Typography>
-              <Pildoras etiqueta="Días a cubrir" opciones={CUBRIR} valor={filtros.cubrir} onCambiar={(v) => cambiar({ cubrir: v })} />
-            </Box>
-            <Box>
-              <Typography sx={etiquetaControlSx}>Vendió al menos (unidades)</Typography>
-              <Pildoras etiqueta="Mínimo vendido" opciones={MINIMOS} valor={filtros.minUnidades} onCambiar={(v) => cambiar({ minUnidades: v })} />
-            </Box>
+            {!esCelular && filtrosTabla}
           </Box>
           <Typography sx={{ fontSize: 12, color: tinta.tenue, px: 2.5, mb: 1 }}>
             {datos.cargando

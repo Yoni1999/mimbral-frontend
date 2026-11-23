@@ -334,8 +334,10 @@ export function Pildoras<T extends string>({
               fontWeight: marcado ? 700 : 600,
               fontSize: 12,
               borderRadius: 999,
-              px: 1.25,
+              // En celular, altura táctil de 32 px (en escritorio quedan como antes).
+              px: { xs: 1.5, sm: 1.25 },
               py: 0.35,
+              minHeight: { xs: 32, sm: 0 },
               cursor: "pointer",
               fontFamily: "inherit",
               whiteSpace: "nowrap",

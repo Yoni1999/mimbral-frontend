@@ -12,9 +12,11 @@ const SeccionTitulo: React.FC<Props> = ({ title, icon, infoRight }) => (
   <Box
     sx={{
       display: "flex",
+      // En celular la descripción baja bajo el título: al lado lo apretaba a 2–3 líneas.
+      flexDirection: { xs: "column", sm: "row" },
       justifyContent: "space-between",
-      alignItems: "flex-end",
-      gap: 2,
+      alignItems: { xs: "flex-start", sm: "flex-end" },
+      gap: { xs: 0.25, sm: 2 },
       width: "100%",
       mt: 1.5,
       mb: 0.5,
@@ -27,7 +29,7 @@ const SeccionTitulo: React.FC<Props> = ({ title, icon, infoRight }) => (
       </Typography>
     </Box>
     {infoRight && (
-      <Typography sx={{ fontSize: 12.5, color: tinta.tenue, textAlign: "right" }}>{infoRight}</Typography>
+      <Typography sx={{ fontSize: 12.5, color: tinta.tenue, textAlign: { xs: "left", sm: "right" } }}>{infoRight}</Typography>
     )}
   </Box>
 );

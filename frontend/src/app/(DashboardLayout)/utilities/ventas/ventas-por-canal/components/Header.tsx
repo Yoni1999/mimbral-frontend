@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Box, Button, FormControl, MenuItem, Select, Stack, Typography } from "@mui/material";
 import DateRangeFilter, { DateRangeValue } from "../../components/DateRangeFilter";
 import RangosRapidos, { etiquetaRango, rangoInicial, FechasDelRango } from "../../components/RangosRapidos";
 import FrescuraDatos from "../../components/FrescuraDatos";
-import { BotonLimpiar, CANALES, ChipFiltro, controlSx, tarjetaSx, tinta, filaControlesSx, FiltrosMovil } from "../../components/estilo";
+import { BotonLimpiar, CANALES, ChipFiltro, controlSx, tarjetaSx, tinta, filaControlesSx, IconoFiltros } from "../../components/estilo";
+import { FiltrosActivosMovil, HojaFiltros, pildorasMovilSx } from "../../components/HojaFiltros";
 
 export interface Filters {
   canal: string;
@@ -24,6 +26,8 @@ interface HeaderFiltersProps {
  *  (antes había que pulsar "Aplicar"). */
 const HeaderFilters = ({ filters, onFilterChange, vendedor, onQuitarVendedor }: HeaderFiltersProps) => {
   const canal = CANALES.find((c) => c.clave === filters.canal);
+  // Hoja de filtros (solo celular: en escritorio el canal está en la fila).
+  const [hojaAbierta, setHojaAbierta] = useState(false);
 
   const handleDateChange = (range: DateRangeValue | null) =>
     onFilterChange({ ...filters, ...(range ? { fechaInicio: range.start, fechaFin: range.end } : rangoInicial()) });
@@ -71,7 +75,7 @@ const HeaderFilters = ({ filters, onFilterChange, vendedor, onQuitarVendedor }: 
           </Typography>
         </Box>
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ flex: 1, minWidth: 0, ...pildorasMovilSx }}>
           <RangosRapidos
             fechaInicio={filters.fechaInicio}
             fechaFin={filters.fechaFin}
@@ -91,11 +95,27 @@ const HeaderFilters = ({ filters, onFilterChange, vendedor, onQuitarVendedor }: 
             soloIcono
           />
 
-          <FiltrosMovil activos={!!filters.canal}>{selectores}</FiltrosMovil>
+          <Button
+            variant="outlined"
+            aria-label="Filtros"
+            onClick={() => setHojaAbierta(true)}
+            sx={{ display: { xs: "inline-flex", sm: "none" }, minWidth: 36, height: 34, px: 1, borderRadius: "10px", borderColor: tinta.borde, color: tinta.primaria }}
+          >
+            <IconoFiltros activos={!!filters.canal} />
+          </Button>
 
           <BotonLimpiar onClick={handleClearFilters} disabled={enEstadoInicial} />
         </Stack>
+
+        <FiltrosActivosMovil
+          activos={canal ? [{ etiqueta: `Canal: ${canal.nombre}`, onQuitar: () => onFilterChange({ ...filters, canal: "" }) }] : []}
+        />
       </Stack>
+
+      {/* El canal se aplica al elegirlo; "Listo" solo cierra. */}
+      <HojaFiltros abierta={hojaAbierta} onCerrar={() => setHojaAbierta(false)} descripcion="Acotan todas las tarjetas y tablas de la vista.">
+        {selectores}
+      </HojaFiltros>
     </Box>
   );
 };

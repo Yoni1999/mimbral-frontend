@@ -305,9 +305,37 @@ export function EncabezadoInforme({ titulo, descripcion, children }: { titulo: s
     <Box sx={{ ...tarjetaSx, mb: 2, px: { xs: 1.5, md: 2 }, py: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
       <Box>
         <Typography sx={{ fontSize: 16, fontWeight: 800, color: tinta.primaria, letterSpacing: "-0.01em", lineHeight: 1.2 }}>{titulo}</Typography>
-        <Typography sx={{ fontSize: 12, color: tinta.secundaria, mt: 0.25 }}>{descripcion}</Typography>
+        <DescripcionInforme texto={descripcion} />
       </Box>
       {children && <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "flex-end" }}>{children}</Box>}
+    </Box>
+  );
+}
+
+/** Descripción del informe: en celular, dos líneas y "Ver más" (ocupaba 4–5 líneas antes de los filtros). */
+function DescripcionInforme({ texto }: { texto: string }) {
+  const [abierta, setAbierta] = React.useState(false);
+  return (
+    <Box sx={{ mt: 0.25 }}>
+      <Typography
+        sx={{
+          fontSize: 12,
+          color: tinta.secundaria,
+          ...(abierta ? {} : { display: { xs: "-webkit-box", sm: "block" }, WebkitLineClamp: { xs: 2 }, WebkitBoxOrient: "vertical", overflow: { xs: "hidden", sm: "visible" } }),
+        }}
+      >
+        {texto}
+      </Typography>
+      {texto.length > 90 && (
+        <Box
+          component="button"
+          type="button"
+          onClick={() => setAbierta((v) => !v)}
+          sx={{ display: { xs: "inline", sm: "none" }, border: 0, bgcolor: "transparent", p: 0, mt: 0.25, color: tinta.acento, fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}
+        >
+          {abierta ? "Ver menos" : "Ver más"}
+        </Box>
+      )}
     </Box>
   );
 }
