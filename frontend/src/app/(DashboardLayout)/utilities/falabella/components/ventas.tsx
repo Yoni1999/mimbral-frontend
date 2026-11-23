@@ -196,11 +196,19 @@ export function DesgloseFal({ vista, resumen, etiquetaPeriodo, onCerrar }: { vis
     ),
     principales:
       vista === "dinero"
-        ? cascada.filter((r) => fijasDinero.includes(r.texto)).map((r) => ({ titulo: r.corto, valor: valorMovil(r, c.t) }))
+        ? // Montos cortos en la línea de la fila; el margen % como etiqueta de color.
+          cascada
+            .filter((r) => fijasDinero.includes(r.texto))
+            .map((r) => {
+              const v = r.valor(c.t);
+              if (r.op.soloPct) return { titulo: r.corto, valor: v == null ? "—" : formatoPorcentaje(v), chip: v ?? null };
+              return { titulo: r.corto, valor: v == null ? "—" : formatoMonto(v) };
+            })
         : filasUnidades.filter((r) => fijasUnidades.includes(r.texto)).map((r) => ({ titulo: cortoUnidades[r.texto] ?? r.texto, valor: r.v(c.t) == null ? "—" : unidades(r.v(c.t)) })),
     detalle:
       vista === "dinero"
-        ? cascada.filter((r) => !fijasDinero.includes(r.texto)).map((r) => ({ titulo: `${r.op.signo ? `${r.op.signo} ` : ""}${r.texto}`, valor: valorMovil(r, c.t) }))
+        ? // En la hoja, todos los pasos con su monto completo y su % de la venta.
+          cascada.filter((r) => !r.op.soloPct).map((r) => ({ titulo: `${r.op.signo ? `${r.op.signo} ` : ""}${r.texto}`, valor: valorMovil(r, c.t) }))
         : filasUnidades.filter((r) => !fijasUnidades.includes(r.texto)).map((r) => ({ titulo: r.texto, valor: r.v(c.t) == null ? "—" : unidades(r.v(c.t)) })),
   }));
 

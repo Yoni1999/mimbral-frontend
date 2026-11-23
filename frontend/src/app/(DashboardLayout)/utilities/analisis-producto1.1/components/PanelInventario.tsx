@@ -125,7 +125,7 @@ export default function PanelInventario({ sku }: { sku: string }) {
                 clave: b.codigo,
                 titulo: b.titulo,
                 principales: [
-                  { titulo: "Stock", valor: unidades(b.stock) },
+                  { titulo: "Stock", valor: unidades(b.stock), unidad: "un." },
                   {
                     titulo: "Disponible",
                     valor: <Box component="span" sx={{ color: b.disponible < 0 ? estado.mal.color : undefined }}>{unidades(b.disponible)}</Box>,

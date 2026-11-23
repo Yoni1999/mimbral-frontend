@@ -9,8 +9,8 @@ import { IconArrowRight, IconDownload, IconSearch } from '@tabler/icons-react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { useRouter } from 'next/navigation';
-import { BarraParticipacion, ChipMargen, EncabezadoPanel, formatoPesos, tablaSx, tarjetaSx, tinta, Columnas, TextoCelda } from '../../components/estilo';
-import { OrdenMovil, TarjetasMovil, useEsCelular } from '../../components/movil';
+import { BarraParticipacion, ChipMargen, EncabezadoPanel, formatoMonto, formatoPesos, tablaSx, tarjetaSx, tinta, Columnas, TextoCelda } from '../../components/estilo';
+import { BarraListaMovil, TarjetasMovil, useEsCelular } from '../../components/movil';
 
 type ProductoVendido = {
   imagen: string;
@@ -111,7 +111,8 @@ const ProductosVendidos = ({ data }: Props) => {
       <EncabezadoPanel
         titulo="Top 50 productos más vendidos"
         descripcion={`${filteredData.length} productos${busqueda ? ' con ese criterio' : ''}`}
-        accion={
+        // En celular el buscador y el Excel van en la barra de la lista (BarraListaMovil).
+        accion={esCelular ? undefined : (
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             <TextField
               size="small"
@@ -136,13 +137,16 @@ const ProductosVendidos = ({ data }: Props) => {
               Exportar a Excel
             </Button>
           </Box>
-        }
+        )}
       />
 
       {esCelular ? (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-          <OrdenMovil
-            opciones={[
+          <BarraListaMovil
+            buscar={{ valor: busqueda, onCambiar: setBusqueda, placeholder: 'Buscar por nombre o SKU' }}
+            onExportar={exportToExcel}
+            orden={{
+            opciones: [
               { clave: 'cantidadVendida', titulo: 'Cant. vendida' },
               { clave: 'totalVentas', titulo: 'Total ventas' },
               { clave: 'margenPorcentaje', titulo: '% Margen' },
@@ -150,28 +154,32 @@ const ProductosVendidos = ({ data }: Props) => {
               { clave: 'precioPromedio', titulo: 'Precio prom.' },
               { clave: 'stock', titulo: 'Stock' },
               { clave: 'nombre', titulo: 'Producto' },
-            ]}
-            clave={orderBy}
-            direccion={order}
-            onCambiar={(clave, direccion) => {
+            ],
+            clave: orderBy,
+            direccion: order,
+            onCambiar: (clave, direccion) => {
               setOrderBy(clave as OrderBy);
               setOrder(direccion);
+            },
             }}
           />
           <TarjetasMovil
             vacio="Ningún producto coincide con la búsqueda."
-            filas={sortedData.map((row) => ({
+            filas={sortedData.map((row, i) => ({
               clave: row.sku,
               titulo: row.nombre,
+              imagen: row.imagen || null,
+              // Posición en el ranking solo al ordenar de mayor a menor por una cifra y sin búsqueda.
+              rango: order === 'desc' && orderBy !== 'nombre' && orderBy !== 'primerNivel' && !busqueda ? i + 1 : undefined,
               meta: [row.sku, [row.primerNivel, row.categoria].filter(Boolean).join(' › ')].filter(Boolean).join(' · '),
               onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(row.sku)}`),
               principales: [
-                { titulo: 'Unid.', valor: (row.cantidadVendida ?? 0).toLocaleString('es-CL') },
-                { titulo: 'Ventas', valor: formatoPesos(row.totalVentas) },
-                { titulo: 'Margen', valor: <ChipMargen valor={row.margenPorcentaje} /> },
+                { titulo: 'Unidades', valor: (row.cantidadVendida ?? 0).toLocaleString('es-CL'), unidad: 'un.' },
+                { titulo: 'Venta', valor: formatoMonto(row.totalVentas) },
+                { titulo: 'Margen', valor: '', chip: row.margenPorcentaje ?? null },
               ],
               detalle: [
-                { titulo: 'Margen bruto', valor: formatoPesos(row.margenBruto) },
+                { titulo: 'Margen bruto', valor: formatoMonto(row.margenBruto) },
                 { titulo: 'Precio prom.', valor: formatoPesos(row.precioPromedio) },
                 { titulo: 'Stock', valor: (row.stock ?? 0).toLocaleString('es-CL') },
               ],

@@ -14,6 +14,8 @@ import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 import { HojaFiltros } from "@/app/(DashboardLayout)/utilities/ventas/components/HojaFiltros";
+import { useBarraMovil } from "@/app/(DashboardLayout)/layout/header/BarraMovil";
+import { etiquetaPeriodoCodigo } from "@/app/(DashboardLayout)/utilities/ventas/components/PeriodoMovil";
 
 // Interfaces moved out for clarity
 interface FiltroVentas {
@@ -83,6 +85,16 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
   const [open, setOpen] = useState(false);
   // En celular los filtros van en una hoja inferior con "Aplicar" fijo al pie.
   const esCelular = useEsCelular();
+  // Celular: período · canal del informe consultado en la barra de arriba.
+  const canalesSubtitulo = (Array.isArray(currentFilters?.canal) ? currentFilters!.canal : [currentFilters?.canal]).filter(Boolean) as string[];
+  useBarraMovil({
+    subtitulo: [
+      etiquetaPeriodoCodigo(currentFilters?.periodo ?? "7D", currentFilters?.fechaInicio, currentFilters?.fechaFin),
+      canalesSubtitulo.length ? canalesSubtitulo.map((c) => canales.find((x) => x.value === c)?.label ?? c).join(", ") : "Todos los canales",
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  });
   // Inicializa tipoEnvio a 'todas' por defecto cuando el canal es Meli o si no hay un filtro actual
   const [filters, setFilters] = useState<FiltroVentas>(() => {
     const initialFilters = currentFilters || { periodo: "7D" };

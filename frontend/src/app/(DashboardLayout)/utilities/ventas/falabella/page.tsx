@@ -216,7 +216,7 @@ export default function VentasFalabella() {
                 <Pildoras<FiltroTipo> etiqueta="Tipo de envío" opciones={OPCIONES_TIPO} valor={vista.tipo} onCambiar={(tipo) => setVista((v) => ({ ...v, tipo }))} />
               </Box>
               {esCelular ? (
-                // En celular, una tarjeta por producto: venta, unidades y margen; el resto en "Ver detalle".
+                // En celular, una fila por producto: unidades, venta y el margen en etiqueta; el resto en la hoja.
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
                   <OrdenMovil
                     opciones={[
@@ -236,20 +236,16 @@ export default function VentasFalabella() {
                     vacio="Sin ventas en el período."
                     filas={ordenProductos.ordenadas.map((f, i) => ({
                       clave: f.sku,
-                      titulo: `${i + 1}. ${f.nombre ?? f.sku}`,
+                      titulo: f.nombre ?? f.sku,
                       meta: f.sku,
+                      imagen: f.imagen ?? null,
+                      rango: i + 1,
                       onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(f.sku)}`),
                       principales: [
+                        { titulo: "Unidades", valor: unidades(f.actual.unidades), unidad: "un." },
                         { titulo: "Venta", valor: formatoMonto(f.actual.venta.neto) },
-                        { titulo: "Unid.", valor: unidades(f.actual.unidades) },
-                        {
-                          titulo: "Margen %",
-                          valor: (
-                            <Box component="span" sx={{ color: f.actual.margenPct == null ? tinta.tenue : f.actual.margenPct < 0 ? "#b42318" : f.actual.margenPct < 0.1 ? "#b54708" : "#067647" }}>
-                              {porcentaje(f.actual.margenPct)}
-                            </Box>
-                          ),
-                        },
+                        // El back entrega el margen como fracción (0,14): la etiqueta va en %.
+                        { titulo: "Margen %", valor: "—", chip: f.actual.margenPct == null ? null : f.actual.margenPct * 100 },
                       ],
                       detalle: [
                         { titulo: "Comisión", valor: porcentaje(f.comisionPct) },

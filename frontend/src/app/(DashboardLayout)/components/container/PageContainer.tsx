@@ -18,7 +18,11 @@ const PageContainer = ({ title, description, children }: Props) => (
         // En celular el layout ya deja 12 px por lado: sumar otros 20 dejaba
         // el contenido angosto y con gris a los costados (p. ej. Galaxy A55).
         px: { xs: 0, sm: "20px" },
-        overflowX: "hidden",
+        // En celular "visible": con "hidden" este Box pasa a ser un contenedor
+        // de scroll y la barra de período de las vistas (PeriodoMovil) dejaba
+        // de quedar pegada arriba al bajar; además la recortaba de lado a lado.
+        // Lo que se pase de ancho lo sigue recortando PageWrapper (layout.tsx).
+        overflowX: { xs: "visible", sm: "hidden" },
         boxSizing: "border-box",
         // Transparente: este wrapper lo comparten 5 pantallas (inicio,
         // metas-general, typography, resumen-ventas, ventas-por-canal) y

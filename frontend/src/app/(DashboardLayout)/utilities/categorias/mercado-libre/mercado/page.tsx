@@ -74,6 +74,14 @@ const COLUMNAS: ColumnaInforme<Publicacion>[] = [
     movil: "titulo",
     valor: (f) => f.titulo,
     excel: "Título",
+    // En celular: foto y título en texto; la publicación se abre desde la hoja.
+    movilFila: (f) => ({
+      titulo: f.titulo || f.nombre || f.itemId,
+      meta: [f.itemId, f.catalogo ? "catálogo" : null, f.variaciones > 1 ? `${f.variaciones} variaciones` : null].filter(Boolean).join(" · "),
+      imagen: f.imagen ?? null,
+      onAbrir: f.url ? () => window.open(f.url!, "_blank", "noopener") : undefined,
+      accionLabel: "Ver en Mercado Libre",
+    }),
     celda: (f) => (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
         <Miniatura url={f.imagen} titulo={f.titulo || f.nombre || f.itemId} />

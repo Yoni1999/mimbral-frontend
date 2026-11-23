@@ -45,6 +45,7 @@ import autoTable from "jspdf-autotable";
 import LaunchIcon from "@mui/icons-material/Launch";
 import HeaderVentasPorCanalDrawer, { FiltrosPorCanal } from "./components/HeaderVentasPorCanalDrawer";
 import { TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
+import { formatoMonto } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
 import VentasPorCanalTable, {
   ProductoPorCanal,
   Order,
@@ -428,12 +429,13 @@ const InformeVentasPorCanalPage: React.FC = () => {
 
   return (
     <Box p={1}>
-      <Typography variant="h4" fontWeight="bold" gutterBottom display="flex" alignItems="center">
+      {/* En celular el nombre del informe ya está en la barra de arriba. */}
+      <Typography variant="h4" fontWeight="bold" gutterBottom alignItems="center" sx={{ display: { xs: "none", sm: "flex" } }}>
         <TrendingUpIcon sx={{ mr: 1 }} />
         Informe ventas de Productos por Canal
       </Typography>
 
-      <Typography variant="body1" color="text.secondary" gutterBottom>
+      <Typography variant="body1" color="text.secondary" gutterBottom sx={{ fontSize: { xs: 13, sm: undefined } }}>
         Agrupa ventas por producto y canal. Haz clic en una cifra para ver el detalle (folio, fecha, vendedor, etc.).
       </Typography>
 
@@ -597,9 +599,10 @@ const InformeVentasPorCanalPage: React.FC = () => {
                   titulo: d.vendedor,
                   meta: `Folio ${d.folioNum} · ${new Date(d.fecha).toLocaleDateString("es-CL")}`,
                   principales: [
-                    { titulo: "Cantidad", valor: formatNumber(d.cantidad) },
-                    { titulo: "Venta", valor: money(d.venta) },
-                    { titulo: "Margen", valor: money(d.margenBrutoLinea) },
+                    { titulo: "Cantidad", valor: formatNumber(d.cantidad), unidad: "un." },
+                    { titulo: "Venta", valor: formatoMonto(d.venta) },
+                    { titulo: "Margen", valor: formatoMonto(d.margenBrutoLinea) },
+                    ...(d.venta ? [{ titulo: "% Margen", valor: "", chip: (d.margenBrutoLinea / d.venta) * 100 }] : []),
                   ],
                 }))}
               />

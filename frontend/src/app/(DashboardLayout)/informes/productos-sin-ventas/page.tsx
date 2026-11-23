@@ -5,9 +5,9 @@ import {
     Box, Typography, Divider,
     Pagination, CircularProgress, Button, Menu, MenuItem, Dialog,
     DialogTitle, DialogContent, DialogActions, TextField,
-    Table, TableHead, TableRow, TableCell, TableBody, Paper
-} from '@mui/material';
+    Table, TableHead, TableRow, TableCell, TableBody, Paper, IconButton } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import RemoveShoppingCartIcon from '@mui/icons-material/RemoveShoppingCart';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -433,13 +433,14 @@ const ProductosSinVentasPage: React.FC = () => {
                         filas={(rows === skuSales ? ordenVentasSku.ordenadas : rows).map((r, idx) => ({
                             clave: `${r.docNum}-${idx}`,
                             titulo: r.customer || '—',
-                            meta: `Doc N° ${r.docNum}`,
+                            // Fecha en formato chileno solo en celular (la tabla conserva el suyo).
+                            meta: [`Doc N° ${r.docNum}`, r.docDate || r.createDate ? new Date((r.docDate || r.createDate)!).toLocaleDateString('es-CL') : ''].filter(Boolean).join(' · '),
                             principales: [
-                                { titulo: 'Fecha', valor: fmtDate(r.docDate || r.createDate) },
-                                { titulo: 'Cantidad', valor: fmtNumber(r.quantity) },
+                                { titulo: 'Cantidad', valor: fmtNumber(r.quantity), unidad: 'un.' },
                                 { titulo: 'Total línea', valor: fmtMoney(r.lineTotal, r.currency) },
                             ],
                             detalle: [
+                                { titulo: 'Fecha', valor: r.docDate || r.createDate ? new Date((r.docDate || r.createDate)!).toLocaleDateString('es-CL') : '' },
                                 { titulo: 'Precio', valor: fmtMoney(r.price, r.currency) },
                                 { titulo: 'Moneda', valor: r.currency },
                             ],
@@ -488,13 +489,14 @@ const ProductosSinVentasPage: React.FC = () => {
 
     return (
         <Box p={0}>
-            <Box display="flex" alignItems="center" gap={1} mb={1}>
+            {/* En celular el nombre del informe ya está en la barra de arriba. */}
+            <Box alignItems="center" gap={1} mb={1} sx={{ display: { xs: "none", sm: "flex" } }}>
                 <RemoveShoppingCartIcon color="primary" fontSize="large" />
                 <Typography variant="h4" fontWeight="bold" gutterBottom>
                     Productos sin Ventas
                 </Typography>
             </Box>
-            <Typography variant="body1" color="text.secondary" gutterBottom>
+            <Typography variant="body1" color="text.secondary" gutterBottom sx={{ display: { xs: "none", sm: "block" } }}>
                 Revisa el detalle de productos sin ventas desde un mínimo de stock, fecha mínima de creación, categoría, subcategoría y más. (excluye almacén 04)
             </Typography>
 
@@ -504,7 +506,7 @@ const ProductosSinVentasPage: React.FC = () => {
                 onFilterChange={(nf) => { setFilters(nf); setPage(1); }}
             />
 
-            <Divider sx={{ my: 3 }} />
+            <Divider sx={{ my: 3, display: { xs: "none", sm: "block" } }} />
 
             {/* Barra con conteo + export */}
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1} mb={2}>
@@ -512,7 +514,8 @@ const ProductosSinVentasPage: React.FC = () => {
 
                 {!skuSalesMode && (
                     <Box>
-                        <Button variant="contained" onClick={handleOpenExportMenu} endIcon={<MoreVertIcon />}>
+                        <IconButton aria-label="Exportar" onClick={handleOpenExportMenu} sx={{ display: { xs: "inline-flex", sm: "none" }, width: 38, height: 38, borderRadius: "10px", border: "1px solid #e2e8f0", color: "#0f172a" }}><FileDownloadOutlinedIcon fontSize="small" /></IconButton>
+<Button sx={{ display: { xs: "none", sm: "inline-flex" } }} variant="contained" onClick={handleOpenExportMenu} endIcon={<MoreVertIcon />}>
                             Exportar
                         </Button>
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseExportMenu}>

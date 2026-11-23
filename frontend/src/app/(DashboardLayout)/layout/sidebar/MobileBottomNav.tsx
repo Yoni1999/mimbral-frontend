@@ -85,12 +85,36 @@ export default function MobileBottomNav() {
     border: 0,
     bgcolor: "transparent",
     font: "inherit",
-    fontSize: 11,
-    fontWeight: 600,
+    fontSize: 11.5,
+    fontWeight: activa ? 600 : 500,
     textDecoration: "none",
     cursor: "pointer",
     color: activa ? AZUL : "#6b7280",
+    WebkitTapHighlightColor: "transparent",
   });
+
+  // Ícono de cada pestaña sobre una píldora: azul suave en la activa (como Material 3).
+  const pildora = (activa: boolean, children: React.ReactNode) => (
+    <Box
+      component="span"
+      sx={{
+        width: 56,
+        height: 30,
+        borderRadius: 999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        bgcolor: activa ? "#dbeafe" : "transparent",
+        transition: "background-color 160ms ease",
+      }}
+    >
+      {children}
+    </Box>
+  );
+
+  // Inicio: la ruta /inicio. Módulos: su hoja abierta o, sin hoja, estar dentro de un módulo.
+  const enInicio = !hoja && path.startsWith("/inicio");
+  const enModulos = hoja === "modulos" || (!hoja && !!activo && activo.id !== "inicio");
 
   return (
     <Box sx={{ display: { xs: "block", sm: "none" } }}>
@@ -244,12 +268,12 @@ export default function MobileBottomNav() {
           display: "flex",
         }}
       >
-        <Box component={Link} href="/inicio" sx={tab(!hoja && path.startsWith("/inicio"))}>
-          <IconHome2 size={24} stroke={1.7} />
+        <Box component={Link} href="/inicio" aria-current={enInicio ? "page" : undefined} sx={tab(enInicio)}>
+          {pildora(enInicio, <IconHome2 size={22} stroke={1.7} />)}
           Inicio
         </Box>
-        <Box component="button" type="button" aria-expanded={hoja === "modulos"} onClick={() => abrir("modulos")} sx={tab(hoja === "modulos")}>
-          <IconLayoutGrid size={24} stroke={1.7} />
+        <Box component="button" type="button" aria-expanded={hoja === "modulos"} onClick={() => abrir("modulos")} sx={tab(enModulos)}>
+          {pildora(enModulos, <IconLayoutGrid size={22} stroke={1.7} />)}
           Módulos
         </Box>
         <Box
@@ -261,13 +285,16 @@ export default function MobileBottomNav() {
           }}
           sx={tab(false)}
         >
-          <Box sx={{ width: 24, height: 24, borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", background: "linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)" }}>
-            <IconSparkles size={16} />
-          </Box>
+          {pildora(
+            false,
+            <Box sx={{ width: 24, height: 24, borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", background: "linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)" }}>
+              <IconSparkles size={16} />
+            </Box>
+          )}
           Agente
         </Box>
         <Box component="button" type="button" aria-expanded={hoja === "mas"} onClick={() => abrir("mas")} sx={tab(hoja === "mas")}>
-          <IconMenu2 size={24} stroke={1.7} />
+          {pildora(hoja === "mas", <IconMenu2 size={22} stroke={1.7} />)}
           Más
         </Box>
       </Box>

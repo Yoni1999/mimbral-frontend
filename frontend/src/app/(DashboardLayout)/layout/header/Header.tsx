@@ -17,6 +17,12 @@ import Link from "next/link";
 import { IconRefresh, IconBellRinging } from "@tabler/icons-react";
 import { apiJson } from "@/utils/apiClient";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import { getIdServiceSession } from "@/modules/auth/utils/auth.storage";
+import { ALTO_BARRA_MOVIL, useValorBarraMovil } from "./BarraMovil";
+
+// Todo lo de celular va bajo esta consulta (la misma que theme.breakpoints.down("sm")):
+// desde 600 px la barra queda exactamente como estaba.
+const CELULAR = "@media (max-width: 599.95px)";
 
 const Header = () => {
   const [ultimaFecha, setUltimaFecha] = useState<string | null>(null);
@@ -26,6 +32,14 @@ const Header = () => {
   const [indicadoresData, setIndicadoresData] = useState<any>(null);
   const [anchorIndicador, setAnchorIndicador] = useState<null | HTMLElement>(null);
   const [indicadorSeleccionado, setIndicadorSeleccionado] = useState<any>(null);
+  const barraMovil = useValorBarraMovil();
+  // Inicial de la persona para el avatar de celular. Se lee al montar:
+  // localStorage no existe en el servidor (ver SidebarUserMenu).
+  const [inicial, setInicial] = useState("");
+  useEffect(() => {
+    const sesion = getIdServiceSession();
+    setInicial((sesion?.nombre || sesion?.correo || "").trim().charAt(0).toUpperCase());
+  }, []);
 
   const handleRefreshClick = async () => {
     try {
@@ -67,8 +81,39 @@ const Header = () => {
 
   return (
     <>
-      <AppBar position="sticky" color="default" elevation={1} sx={{ background: "linear-gradient(#ffffff)" }}>
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between", borderRadius: "18px", position: "relative", px: { xs: 1, sm: 2 }, minHeight: { xs: 56 } }}>
+      <AppBar
+        position="sticky"
+        color="default"
+        elevation={1}
+        sx={{
+          background: "linear-gradient(#ffffff)",
+          // Celular: blanca translúcida con desenfoque y una línea abajo, sin sombra.
+          [CELULAR]: {
+            background: "rgba(255, 255, 255, 0.96)",
+            backdropFilter: "saturate(180%) blur(12px)",
+            WebkitBackdropFilter: "saturate(180%) blur(12px)",
+            boxShadow: "none",
+            borderBottom: "1px solid #e5e7eb",
+          },
+        }}
+      >
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between", borderRadius: "18px", position: "relative", px: { xs: 1, sm: 2 }, minHeight: { xs: 56 }, [CELULAR]: { pl: 2, pr: 1.5, gap: 0.5, height: ALTO_BARRA_MOVIL } }}>
+          {/* Celular: nombre de la vista y, debajo, su contexto (período · canal…).
+              Lo fija cada vista con useBarraMovil; si no, sale del menú. */}
+          <Box sx={{ display: "none", [CELULAR]: { display: "block", flex: 1, minWidth: 0 } }}>
+            <Typography
+              component="h1"
+              noWrap
+              sx={{ fontSize: 16.5, fontWeight: 700, lineHeight: 1.25, color: "#0f172a", letterSpacing: "-0.01em" }}
+            >
+              {barraMovil.titulo}
+            </Typography>
+            {barraMovil.subtitulo && (
+              <Typography noWrap sx={{ fontSize: 12, lineHeight: 1.35, color: "#64748b" }}>
+                {barraMovil.subtitulo}
+              </Typography>
+            )}
+          </Box>
           {/* Centrado absoluto respecto a TODA la barra: con flex normal, el
               hamburger (oculto en escritorio) y el stack de indicadores/iconos
               a la derecha no pesan lo mismo, asi que un centrado por flexbox
@@ -140,13 +185,22 @@ const Header = () => {
             })}
           </Stack>
 
-          <Stack spacing={1.2} direction="row" alignItems="center" divider={<Divider orientation="vertical" flexItem />}>
+          <Stack
+            spacing={1.2}
+            direction="row"
+            alignItems="center"
+            divider={<Divider orientation="vertical" flexItem />}
+            // En celular la campana no está: tampoco su separador.
+            sx={{ [CELULAR]: { "& > .MuiDivider-root": { display: "none" } } }}
+          >
             <IconButton
               ref={refreshButtonRef}
               size="large"
               color="inherit"
               onClick={handleRefreshClick}
+              aria-label="Última actualización"
               sx={{
+                [CELULAR]: { width: 42, height: 42, color: "#334155" },
                 "&:active svg": {
                   transform: "rotate(180deg)",
                   transition: "transform 0.4s ease",
@@ -162,6 +216,34 @@ const Header = () => {
               </Badge>
             </IconButton>
           </Stack>
+
+          {/* Celular: la inicial de la persona; lleva a su perfil. Fuera del
+              Stack de arriba para no sumarle un separador en escritorio. */}
+          <Box
+            component={Link}
+            href="/perfil"
+            aria-label="Mi perfil"
+            sx={{
+              display: "none",
+              [CELULAR]: {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                width: 36,
+                height: 36,
+                ml: 0.5,
+                borderRadius: "50%",
+                color: "#fff",
+                fontSize: 15,
+                fontWeight: 700,
+                textDecoration: "none",
+                background: "linear-gradient(135deg, #2563eb 0%, #6d28d9 100%)",
+              },
+            }}
+          >
+            {inicial || "?"}
+          </Box>
         </Toolbar>
       </AppBar>
 

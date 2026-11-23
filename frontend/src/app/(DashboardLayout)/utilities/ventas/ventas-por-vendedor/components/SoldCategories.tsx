@@ -34,7 +34,7 @@ import {
 } from "../../components/estilo";
 import type { Filters } from "./Header";
 import { consultaVendedor } from "./consulta";
-import { OrdenMovil, TarjetasMovil, useEsCelular } from "../../components/movil";
+import { BarraListaMovil, TarjetasMovil, useEsCelular } from "../../components/movil";
 
 interface Categoria {
   codigo: string;
@@ -108,7 +108,8 @@ const CategoriasVendidas: React.FC<{ filtros: Filters }> = ({ filtros }) => {
     <Panel
       titulo="Categorías vendidas"
       descripcion={cargando ? "Cargando…" : `${datos.length.toLocaleString("es-CL")} categorías en el período`}
-      accion={
+      // En celular el buscador va en la barra de la lista.
+      accion={esCelular ? undefined : (
         <TextField
           size="small"
           placeholder="Buscar categoría"
@@ -123,9 +124,27 @@ const CategoriasVendidas: React.FC<{ filtros: Filters }> = ({ filtros }) => {
           }}
           sx={{ width: { xs: "100%", sm: 200 }, "& .MuiOutlinedInput-root": controlSx }}
         />
-      }
+      )}
       sx={{ p: { xs: 1.5, sm: 2.5 } }}
     >
+      {esCelular && !cargando && datos.length > 0 && (
+        <Box sx={{ mb: 1.25 }}>
+          <BarraListaMovil
+            buscar={{ valor: searchTerm, onCambiar: (t) => setVista((v) => ({ ...v, searchTerm: t })), placeholder: "Buscar categoría" }}
+            orden={{
+              opciones: [
+                { clave: "ventas", titulo: "Ventas" },
+                { clave: "unidades", titulo: "Unidades" },
+                { clave: "margen", titulo: "% Margen" },
+                { clave: "nombre", titulo: "Categoría" },
+              ],
+              clave: sortBy,
+              direccion: sortDirection,
+              onCambiar: (clave, direccion) => setVista((v) => ({ ...v, sortBy: clave as Orden, sortDirection: direccion })),
+            }}
+          />
+        </Box>
+      )}
       {cargando ? (
         Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} height={44} />)
       ) : filas.length === 0 ? (
@@ -134,41 +153,20 @@ const CategoriasVendidas: React.FC<{ filtros: Filters }> = ({ filtros }) => {
         </Typography>
       ) : esCelular ? (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
-          <OrdenMovil
-            opciones={[
-              { clave: "ventas", titulo: "Ventas" },
-              { clave: "unidades", titulo: "Unidades" },
-              { clave: "margen", titulo: "% Margen" },
-              { clave: "nombre", titulo: "Categoría" },
-            ]}
-            clave={sortBy}
-            direccion={sortDirection}
-            onCambiar={(clave, direccion) => setVista((v) => ({ ...v, sortBy: clave as Orden, sortDirection: direccion }))}
-          />
           <TarjetasMovil
-            filas={filas.map((c) => ({
+            filas={filas.map((c, i) => ({
               clave: c.codigo,
               titulo: c.nombre,
+              rango: sortDirection === "desc" && sortBy !== "nombre" && !searchTerm ? i + 1 : undefined,
               principales: [
-                {
-                  titulo: "Ventas",
-                  valor: (
-                    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
-                      {formatoMonto(c.ventas)}
-                      <ChipVariacion valor={c.cambioVentas} />
-                    </Box>
-                  ),
-                },
-                {
-                  titulo: "Unid.",
-                  valor: (
-                    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
-                      {c.unidades.toLocaleString("es-CL")}
-                      <ChipVariacion valor={c.cambioUnidades} />
-                    </Box>
-                  ),
-                },
-                { titulo: "Margen", valor: <ChipMargen valor={c.margenPorcentaje} /> },
+                { titulo: "Unidades", valor: c.unidades.toLocaleString("es-CL"), unidad: "un." },
+                { titulo: "Ventas", valor: formatoMonto(c.ventas) },
+                { titulo: "% Margen", valor: "", chip: c.margenPorcentaje },
+              ],
+              // Las variaciones contra el período anterior van en la hoja.
+              detalle: [
+                { titulo: "Variación ventas", valor: c.cambioVentas == null ? "—" : <ChipVariacion valor={c.cambioVentas} /> },
+                { titulo: "Variación unidades", valor: c.cambioUnidades == null ? "—" : <ChipVariacion valor={c.cambioUnidades} /> },
               ],
             }))}
           />

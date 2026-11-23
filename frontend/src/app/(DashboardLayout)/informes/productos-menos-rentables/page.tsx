@@ -5,9 +5,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
     Box, Typography, Divider,
     Pagination, CircularProgress, Button, Menu, MenuItem, Dialog,
-    DialogTitle, DialogContent, DialogActions, TextField,
-} from '@mui/material';
+    DialogTitle, DialogContent, DialogActions, TextField, IconButton } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import HeaderVentasProductosDrawer from '../ventas-productos/components/HeaderVentasProductosDrawer';
 import ProductosMenosRentablesTable from './components/ProductosMenosRentablesTable';
@@ -21,6 +21,8 @@ import { useCargaDatos } from "@/utils/useCargaDatos";
 import { useEstadoVista } from "@/utils/estadoVista";
 import { BACKEND_URL } from "@/config";
 import { notifyInfo } from "@/components/ui/toast/notify";
+import { useBarraMovil } from "@/app/(DashboardLayout)/layout/header/BarraMovil";
+import { etiquetaPeriodoCodigo } from "@/app/(DashboardLayout)/utilities/ventas/components/PeriodoMovil";
 
 // ---- Tipos (siguen el estilo de ventas-productos) ----
 type Order = 'asc' | 'desc';
@@ -65,6 +67,8 @@ const ProductosMenosRentablesPage: React.FC = () => {
         () => ({ filters: { periodo: '7D' }, page: 1, orden: 'asc', ordenPor: 'margenBruto' })
     );
     const { filters, page, orden, ordenPor } = vista;
+    // Celular: el período consultado en la barra de arriba.
+    useBarraMovil({ subtitulo: etiquetaPeriodoCodigo(filters.periodo, filters.fechaInicio, filters.fechaFin) || undefined });
     const setFilters = (f: FiltroVentas) => setVista((v) => ({ ...v, filters: f }));
     const setPage = (p: number) => setVista((v) => ({ ...v, page: p }));
     // La exportación también muestra el indicador de carga sobre la tabla.
@@ -556,13 +560,14 @@ const ProductosMenosRentablesPage: React.FC = () => {
 
     return (
         <Box p={0}>
-            <Box display="flex" alignItems="center" gap={1} mb={1}>
+            {/* En celular el nombre del informe ya está en la barra de arriba. */}
+            <Box alignItems="center" gap={1} mb={1} sx={{ display: { xs: "none", sm: "flex" } }}>
                 <TrendingDownIcon color="primary" fontSize="large" />
                 <Typography variant="h4" fontWeight="bold" gutterBottom>
                     Informe de Productos menos Rentables
                 </Typography>
             </Box>
-            <Typography variant="body1" color="text.secondary" gutterBottom>
+            <Typography variant="body1" color="text.secondary" gutterBottom sx={{ display: { xs: "none", sm: "block" } }}>
                 Revisa el detalle de productos menos rentables por período, canal, proveedor y más.
             </Typography>
 
@@ -572,14 +577,15 @@ const ProductosMenosRentablesPage: React.FC = () => {
                 currentFilters={filters}
                 multiCanal={true}   // <-- habilita selección múltiple de canal
             />
-            <Divider sx={{ my: 3 }} />
+            <Divider sx={{ my: 3, display: { xs: "none", sm: "block" } }} />
 
             {/* Barra con conteo + export */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="subtitle2">{productosCountText}</Typography>
 
                 <Box>
-                    <Button variant="contained" onClick={handleOpenExportMenu} endIcon={<MoreVertIcon />}>
+                    <IconButton aria-label="Exportar" onClick={handleOpenExportMenu} sx={{ display: { xs: "inline-flex", sm: "none" }, width: 38, height: 38, borderRadius: "10px", border: "1px solid #e2e8f0", color: "#0f172a" }}><FileDownloadOutlinedIcon fontSize="small" /></IconButton>
+<Button sx={{ display: { xs: "none", sm: "inline-flex" } }} variant="contained" onClick={handleOpenExportMenu} endIcon={<MoreVertIcon />}>
                         Exportar
                     </Button>
                     <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseExportMenu}>

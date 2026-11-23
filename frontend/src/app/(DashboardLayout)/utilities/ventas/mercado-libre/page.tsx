@@ -201,7 +201,7 @@ export default function VentasMercadoLibre() {
             </Panel>
           </Grid>
           <Grid item xs={12} lg={7}>
-            <TendenciaTipos tendencia={resumen.datos?.tendencia ?? []} cargando={resumen.cargando} />
+            <TendenciaTipos tendencia={resumen.datos?.tendencia ?? []} cargando={resumen.cargando} resumen={resumen.datos} />
           </Grid>
 
           <Grid item xs={12}>

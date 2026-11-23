@@ -16,6 +16,9 @@ import {
 import { BACKEND_URL } from "@/config";
 import { formatUnidades, formatVentas } from "@/utils/format";
 import { useApiDatos } from "@/utils/useCargaDatos";
+import { formatoMonto } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
+import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
+import InicioMovil, { type FilaModulo } from "./components/InicioMovil";
 
 const floatIn = keyframes`
   0% {
@@ -74,6 +77,14 @@ const launcherItems = [
 ];
 
 
+// Nombre del módulo en la lista del celular (en escritorio, el de la tarjeta).
+const TITULO_MOVIL: Record<string, string> = {
+  "Resumen Ventas": "Resumen de ventas",
+  "Ventas por Canal": "Ventas por canal",
+  "Administrador de Metas": "Metas",
+  "Ventas por Vendedor": "Ventas por vendedor",
+};
+
 const NOMBRE_CANAL: Record<string, string> = {
   Empresas: "Empresas",
   Chorrillo: "Chorrillos",
@@ -94,7 +105,7 @@ const variacion = (pct: number | null | undefined) =>
   typeof pct === "number" ? `${pct > 0 ? "+" : ""}${pct.toFixed(1)}% vs período anterior` : "";
 
 /** Datos reales del mes en curso para cada tarjeta del inicio. */
-function useResumenInicio() {
+function useResumenInicio(esCelular: boolean) {
   const hoy = new Date();
   const desde = aFecha(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
   const hasta = aFecha(hoy);
@@ -108,6 +119,9 @@ function useResumenInicio() {
   const productos = useApiDatos<any>(api(`productos-distintos-periodo?${mes}`), {});
   const metas = useApiDatos<any>(api("goals/summary"), {});
   const vendedores = useApiDatos<any[]>(api(`top-vendedores?${mes}`), []);
+  // Venta diaria del mes por canal: solo para la línea de la tarjeta grande
+  // del celular (en escritorio no se pide).
+  const diaria = useApiDatos<any[]>(esCelular ? api(`primer-nivel/ventas-fecha-primer-nivel?${mes}`) : null, []);
 
   const fila = Array.isArray(canales.datos) ? canales.datos[0] : null;
   const [canalTop, ventaCanalTop] = fila
@@ -123,7 +137,60 @@ function useResumenInicio() {
   const sinDato = "—";
   const notaSinNc = "Venta facturada: no descuenta las notas de crédito.";
 
-  return {
+  // Celular: la venta del mes va en la tarjeta grande y cada módulo en una
+  // fila (cifra clave a la derecha), con los mismos datos de las tarjetas.
+  const porDia = new Map<string, number>();
+  (Array.isArray(diaria.datos) ? diaria.datos : []).forEach((d: any) => {
+    const fecha = String(d?.Fecha ?? "").slice(0, 10);
+    if (!fecha) return;
+    const total = Object.entries(d).reduce((s, [k, v]) => (k === "Fecha" ? s : s + (Number(v) || 0)), 0);
+    porDia.set(fecha, (porDia.get(fecha) ?? 0) + total);
+  });
+  const pct = (v: number | null | undefined) =>
+    typeof v === "number" ? `${v > 0 ? "▲" : v < 0 ? "▼" : "="} ${Math.abs(v).toLocaleString("es-CL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% vs período anterior` : "";
+  const nombrePropio = (t: string) => String(t ?? "").toLowerCase().replace(/(^|\s)\S/g, (l) => l.toUpperCase());
+  const movil = {
+    ventaMes: {
+      cargando: ventas.cargando,
+      valor: ventas.error ? sinDato : formatoMonto(ventas.datos.TotalVentasPeriodo ?? 0),
+      variacion: ventas.error ? null : (ventas.datos.PorcentajeCambio as number | null | undefined) ?? null,
+      linea: [...porDia.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, v]) => v),
+    },
+    filas: {
+      "Resumen Ventas": {
+        cargando: ventas.cargando,
+        valor: ventas.error ? sinDato : formatoMonto(ventas.datos.TotalVentasPeriodo ?? 0),
+        detalle: ventas.error ? "No se pudo cargar" : pct(ventas.datos.PorcentajeCambio) || "Venta del mes",
+      },
+      "Ventas por Canal": {
+        cargando: canales.cargando,
+        valor: canalTop ? formatoMonto(ventaCanalTop ?? 0) : sinDato,
+        detalle: canalTop ? `Líder: ${NOMBRE_CANAL[canalTop] || canalTop}` : "Sin ventas en el mes",
+      },
+      "Análisis por categoría": {
+        cargando: categorias.cargando,
+        valor: categorias.error ? sinDato : `${formatUnidades(categorias.datos.length)} cat.`,
+        detalle: "Ventas por categoría",
+      },
+      "Análisis por producto": {
+        cargando: productos.cargando,
+        valor: productos.error ? sinDato : formatUnidades(productos.datos.ProductosPeriodoActual ?? 0),
+        detalle: "SKU vendidos en el mes",
+      },
+      "Administrador de Metas": {
+        cargando: metas.cargando,
+        valor: metas.error ? sinDato : `${formatUnidades(resumenMetas.activeGoals ?? 0)} activas`,
+        detalle: resumenMetas.activePeriod?.name ? `Período: ${resumenMetas.activePeriod.name}` : "Objetivos por vendedor y canal",
+      },
+      "Ventas por Vendedor": {
+        cargando: vendedores.cargando,
+        valor: vendedorTop ? formatoMonto(vendedorTop.TotalVentas ?? 0) : sinDato,
+        detalle: vendedorTop ? `Top: ${nombrePropio(vendedorTop.Nombre)}` : "Ventas por vendedor",
+      },
+    } as Record<string, Pick<FilaModulo, "cargando" | "valor" | "detalle">>,
+  };
+
+  const tarjetas = {
     "Resumen Ventas": {
       cargando: ventas.cargando,
       value: ventas.error ? sinDato : formatVentas(ventas.datos.TotalVentasPeriodo ?? 0),
@@ -168,6 +235,8 @@ function useResumenInicio() {
       nota: notaSinNc,
     },
   } as Record<string, { cargando: boolean; value: string; description: string; nota?: string }>;
+
+  return { tarjetas, movil };
 }
 
 function LauncherCard({
@@ -331,7 +400,8 @@ function LauncherCard({
 const Dashboard = () => {
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
-  const resumen = useResumenInicio();
+  const esCelular = useEsCelular();
+  const { tarjetas: resumen, movil } = useResumenInicio(esCelular);
 
   useEffect(() => {
     setIsClient(true);
@@ -343,6 +413,25 @@ const Dashboard = () => {
   }, [router]);
 
   if (!isClient) return null;
+
+  // Celular: saludo, la venta del mes en grande y los módulos en una lista.
+  if (esCelular) {
+    return (
+      <PageContainer title="Dashboard" description="this is Dashboard">
+        <InicioMovil
+          ventaMes={movil.ventaMes}
+          modulos={launcherItems.map((item) => ({
+            titulo: TITULO_MOVIL[item.title] ?? item.title,
+            ruta: item.route,
+            icono: item.icon,
+            color: item.accent,
+            ...movil.filas[item.title],
+          }))}
+          onAbrir={(ruta) => router.push(ruta)}
+        />
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer title="Dashboard" description="this is Dashboard">

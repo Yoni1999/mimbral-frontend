@@ -66,10 +66,12 @@ const MetricCard = ({
         width: "100%",
         height: "100%",
         px: 1.5,
-        py: 1.25,
+        // En celular la tarjeta va a la mitad de alto: etiqueta, cifra con su
+        // variación al lado y la comparación debajo.
+        py: { xs: 1, sm: 1.25 },
         display: "flex",
         flexDirection: "column",
-        gap: 0.5,
+        gap: { xs: 0.25, sm: 0.5 },
         textAlign: "left",
         fontFamily: "inherit",
         position: "relative",
@@ -106,14 +108,15 @@ const MetricCard = ({
           Ver detalle <IconArrowUpRight size={12} />
         </Box>
       )}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, minHeight: 20 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, minHeight: { xs: 0, sm: 20 } }}>
         {icon && (
           <Box
             sx={{
               width: 20,
               height: 20,
               borderRadius: "6px",
-              display: "grid",
+              // En celular la etiqueta va sola, sin ícono.
+              display: { xs: "none", sm: "grid" },
               placeItems: "center",
               bgcolor: "#eff4ff",
               color: tinta.acento,
@@ -126,8 +129,8 @@ const MetricCard = ({
         )}
         <Typography
           sx={{
-            fontSize: { xs: 12, sm: 12.5 },
-            fontWeight: 600,
+            fontSize: { xs: 11.5, sm: 12.5 },
+            fontWeight: { xs: 500, sm: 600 },
             color: tinta.secundaria,
             flex: 1,
             minWidth: 0,
@@ -145,16 +148,21 @@ const MetricCard = ({
         </Typography>
       </Box>
 
-      {/* En celular la tarjeta va de a dos por línea: la variación baja bajo la cifra. */}
-      <Box sx={{ display: "flex", alignItems: { xs: "flex-start", sm: "center" }, flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", gap: { xs: 0.5, sm: 1 } }}>
-        <Typography noWrap sx={{ fontSize: { xs: 18, sm: 20 }, fontWeight: 750, maxWidth: "100%", color: tinta.primaria, lineHeight: 1.15, minWidth: 0, ...cifraSx }}>
+      {/* En celular la variación va en la misma línea que la cifra, a la derecha;
+          si la cifra es larga y no caben las dos, la variación baja. */}
+      <Box sx={{ display: "flex", alignItems: "center", flexWrap: { xs: "wrap", sm: "nowrap" }, justifyContent: "space-between", columnGap: 1, rowGap: 0.25 }}>
+        <Typography noWrap sx={{ fontSize: 20, fontWeight: { xs: 700, sm: 750 }, maxWidth: "100%", color: tinta.primaria, lineHeight: 1.15, minWidth: 0, ...cifraSx }}>
           {cargando ? <Skeleton width={110} /> : value}
         </Typography>
-        {!cargando && <ChipVariacion valor={percentageChange} masEsMejor={masEsMejor} unidad={unidadVariacion} />}
+        {!cargando && (
+          <Box component="span" sx={{ display: "inline-flex", flexShrink: 0, "& > span": { fontSize: { xs: 11, sm: 12 }, px: { xs: 0.6, sm: 0.75 } }, "& svg": { width: { xs: 12, sm: 14 }, height: { xs: 12, sm: 14 } } }}>
+            <ChipVariacion valor={percentageChange} masEsMejor={masEsMejor} unidad={unidadVariacion} />
+          </Box>
+        )}
       </Box>
 
       {subtitle && (
-        <Typography noWrap sx={{ fontSize: 11.5, color: tinta.tenue, lineHeight: 1.2, ...cifraSx }}>
+        <Typography noWrap sx={{ fontSize: { xs: 11, sm: 11.5 }, color: tinta.tenue, lineHeight: 1.2, ...cifraSx }}>
           {cargando ? <Skeleton width="45%" /> : subtitle}
         </Typography>
       )}

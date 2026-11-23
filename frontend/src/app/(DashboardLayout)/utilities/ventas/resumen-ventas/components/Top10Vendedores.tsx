@@ -87,24 +87,16 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
             }}
           />
           <TarjetasMovil
-            filas={sortedData.map((vendedor) => ({
+            filas={sortedData.map((vendedor, i) => ({
               clave: vendedor.Nombre,
-              titulo: (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Avatar
-                    src={vendedor.Imagen || undefined}
-                    alt={vendedor.Nombre}
-                    sx={{ width: 26, height: 26, fontSize: 11, fontWeight: 700, bgcolor: "#eff4ff", color: tinta.acento, flexShrink: 0 }}
-                  >
-                    {iniciales(vendedor.Nombre || "")}
-                  </Avatar>
-                  {vendedor.Nombre}
-                </Box>
-              ),
+              titulo: vendedor.Nombre,
+              // Foto del vendedor (o recuadro gris) con su posición si se ordena de mayor a menor por una cifra.
+              imagen: vendedor.Imagen || null,
+              rango: order === "desc" && orderBy !== "Nombre" ? i + 1 : undefined,
               principales: [
+                { titulo: "Unidades", valor: (vendedor.UnidadesVendidas ?? 0).toLocaleString("es-CL"), unidad: "un." },
                 { titulo: "Ventas", valor: vendedor.TotalVentas ? formatoMonto(vendedor.TotalVentas) : "—" },
-                { titulo: "Unid.", valor: (vendedor.UnidadesVendidas ?? 0).toLocaleString("es-CL") },
-                { titulo: "Margen", valor: <ChipMargen valor={vendedor.MargenPorcentaje} /> },
+                { titulo: "Margen", valor: "", chip: vendedor.MargenPorcentaje ?? null },
               ],
               detalle: [
                 { titulo: "Margen bruto", valor: formatoMonto(vendedor.MargenBruto) },

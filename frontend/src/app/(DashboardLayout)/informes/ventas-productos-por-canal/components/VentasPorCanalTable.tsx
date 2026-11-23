@@ -1,4 +1,5 @@
 "use client";
+import { useRouter } from 'next/navigation';
 
 import React from "react";
 import {
@@ -7,7 +8,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { notifySuccess, notifyError } from "@/components/ui/toast/notify";
-import { OrdenMovil, TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
+import { BarraListaMovil, TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 export type Order = "asc" | "desc";
 export type OrderBy = "cantidadVendida" | "margenPorcentaje" | "nombre";
@@ -166,6 +167,7 @@ const VentasPorCanalTable: React.FC<Props> = ({
 }) => {
   const safe = Array.isArray(data) ? data : [];
   const esCelular = useEsCelular();
+  const router = useRouter();
 
   const handleCopySku = async (sku: string) => {
     const ok = await copyToClipboard(sku);
@@ -200,19 +202,24 @@ const VentasPorCanalTable: React.FC<Props> = ({
   };
 
   if (esCelular) {
-    // En celular: total, stock y el canal que más vende a la vista; cada canal en "Ver detalle".
+    // En celular: fila compacta con foto, total y stock; al tocarla, la hoja
+    // trae cada canal (con su detalle de ventas) y el stock por bodega.
     return (
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
-        <OrdenMovil
-          opciones={[{ clave: "cantidadVendida", titulo: "Cantidad total" }]}
-          clave={ordenPorActual}
-          direccion={ordenActual}
-          // Igual que el encabezado: la misma columna invierte el orden.
-          onCambiar={(clave) => onSortChange(clave as OrderBy)}
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <BarraListaMovil
+          orden={{
+            opciones: [{ clave: "cantidadVendida", titulo: "Cantidad total" }],
+            clave: ordenPorActual,
+            direccion: ordenActual,
+            // Igual que el encabezado: la misma columna invierte el orden.
+            onCambiar: (clave, direccion) => {
+              if (clave !== ordenPorActual || direccion !== ordenActual) onSortChange(clave as OrderBy);
+            },
+          }}
         />
         <TarjetasMovil
           vacio={emptyMessage}
-          filas={safe.map((row) => {
+          filas={safe.map((row, i) => {
             const semaforo = semaforoPorCanal(row.porCanal, canales);
             const lider = canales
               .map((c) => ({ canal: c, cantidad: Number(row.porCanal?.find((x) => x.canal === c)?.cantidadVendida) || 0 }))
@@ -222,41 +229,38 @@ const VentasPorCanalTable: React.FC<Props> = ({
             return {
               clave: row.sku,
               titulo: row.nombre,
-              // Tocar el título copia el SKU, igual que en la tabla.
-              meta: row.sku,
-              onAbrir: () => handleCopySku(row.sku),
+              meta: [row.sku, lider ? `más vende ${formatChannelLabel(lider.canal)}` : null].filter(Boolean).join(" · "),
+              imagen: row.imagen?.startsWith("http") ? row.imagen : null,
+              rango: ordenPorActual === "cantidadVendida" && ordenActual === "desc" ? i + 1 : undefined,
+              // La hoja abre la ficha del producto y, aparte, copia el SKU como al tocar el nombre en la tabla.
+              onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(row.sku)}`),
+              accionSecundaria: { label: 'Copiar SKU', onClick: () => handleCopySku(row.sku) },
               principales: [
-                { titulo: "Cant. total", valor: formatNumber(row.cantidadVendida) },
-                {
-                  titulo: "Stock",
-                  valor:
-                    (row.stock || []).length > 0 ? (
-                      <Button
-                        variant="text"
-                        onClick={() => onOpenStock(`${row.nombre} · Stock por bodega`, row.stock || [])}
-                        sx={{ p: 0, minWidth: 0, fontSize: "inherit", fontWeight: "inherit", textDecoration: "underline" }}
-                      >
-                        {stockTotal}
-                      </Button>
-                    ) : (
-                      stockTotal
-                    ),
-                },
-                {
-                  titulo: "Canal líder",
-                  valor: lider ? (
-                    <Box component="span" sx={{ display: "inline-flex", flexWrap: "wrap", alignItems: "center", gap: 0.5 }}>
-                      {formatChannelLabel(lider.canal)} {cifraCanal(row, lider.canal, semaforo.get(lider.canal))}
-                    </Box>
-                  ) : (
-                    "—"
-                  ),
-                },
+                { titulo: "Cant. total", valor: formatNumber(row.cantidadVendida), unidad: "un." },
+                { titulo: "Stock", valor: stockTotal, prefijo: "stock" },
               ],
-              detalle: canales.map((canalNombre) => ({
-                titulo: formatChannelLabel(canalNombre),
-                valor: cifraCanal(row, canalNombre, semaforo.get(canalNombre)),
-              })),
+              detalle: [
+                ...((row.stock || []).length > 0
+                  ? [
+                      {
+                        titulo: "Stock por bodega",
+                        valor: (
+                          <Button
+                            variant="text"
+                            onClick={() => onOpenStock(`${row.nombre} · Stock por bodega`, row.stock || [])}
+                            sx={{ p: 0, minWidth: 0, fontSize: "inherit", fontWeight: "inherit", textDecoration: "underline" }}
+                          >
+                            Ver bodegas
+                          </Button>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...canales.map((canalNombre) => ({
+                  titulo: formatChannelLabel(canalNombre),
+                  valor: cifraCanal(row, canalNombre, semaforo.get(canalNombre)),
+                })),
+              ],
             };
           })}
         />

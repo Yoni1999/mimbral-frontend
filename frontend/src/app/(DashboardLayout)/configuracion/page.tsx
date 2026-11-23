@@ -196,20 +196,18 @@ export default function ConfiguracionPage() {
             const p = porProcedimiento[proc.codigo.toLowerCase()];
             return {
               clave: proc.codigo,
-              // El estado va junto al nombre: en la tercera columna el chip quedaba cortado ("Sin regi…").
-              titulo: (
-                <Box component="span" sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
-                  <span>{proc.nombre}</span>
-                  <ChipEstado p={p} />
-                </Box>
-              ),
+              titulo: proc.nombre,
               meta: <span style={{ fontFamily: "monospace" }}>{proc.codigo}</span>,
+              // En la línea de la fila: el estado (chip) y la última ejecución; el origen y el error en la hoja.
               principales: [
-                { titulo: "Última ejecución", valor: p ? fechaHora(p.fin ?? p.inicio) : "—" },
-                { titulo: "Origen", valor: p ? ORIGEN[p.origen] ?? p.origen : "—" },
+                { titulo: "Estado", valor: <ChipEstado p={p} />, prefijo: false },
+                { titulo: "Última ejecución", valor: p ? fechaHora(p.fin ?? p.inicio) : "—", prefijo: false },
               ],
-              // El tooltip del error no se puede pasar el dedo: el detalle lo muestra.
-              detalle: p?.estado === "error" ? [{ titulo: "Error", valor: p.error || "Error sin detalle" }] : undefined,
+              // El tooltip del error no se puede pasar el dedo: la hoja lo muestra.
+              detalle: [
+                { titulo: "Origen", valor: p ? ORIGEN[p.origen] ?? p.origen : "—" },
+                ...(p?.estado === "error" ? [{ titulo: "Error", valor: p.error || "Error sin detalle" }] : []),
+              ],
             };
           })}
         />

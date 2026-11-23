@@ -21,6 +21,7 @@ import {
   etiquetaControlSx,
   formatoMonto,
   formatoPesos,
+  formatoPorcentaje,
   tablaSx,
   tarjetaSx,
   tinta,
@@ -28,7 +29,7 @@ import {
 import { descargarExcel } from "@/app/(DashboardLayout)/utilities/ventas/components/detalle/comun";
 import HeaderMl, { RangoMl } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/HeaderMl";
 import { CeldaOrden, useOrdenTabla, OrdenTabla } from "@/app/(DashboardLayout)/utilities/ventas/components/ordenTabla";
-import { OrdenMovil, TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
+import { BarraListaMovil, OrdenMovil, TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 // ── Tipos de la respuesta (analysis-service /api/marcas) ─────────────────────
 
@@ -254,19 +255,21 @@ function TablaMarcas({
   // En celular cada marca es una tarjeta; el orden lo dan las píldoras "Ordenar por".
   if (esCelular) {
     return (
-      <Box sx={{ px: 1.5, pb: 1 }}>
+      <Box sx={{ pb: 1 }}>
         <TarjetasMovil
           cargando={cargando}
           vacio="Sin ventas en el período."
           filas={filas.map((m, i) => ({
             clave: m.marca,
             titulo: m.marca,
-            meta: `#${desde + i + 1} · ${unidades(m.productos)} productos con venta`,
+            meta: `${unidades(m.productos)} productos con venta`,
+            rango: desde + i + 1,
             onAbrir: () => onElegir(m.marca),
+            accionLabel: "Ver productos de la marca",
             principales: [
               { titulo: "Venta", valor: formatoMonto(m.venta.neto) },
-              { titulo: "Variación", valor: <Variacion valor={m.variacion} actual={n(m.venta.neto)} /> },
-              { titulo: "Unidades", valor: unidades(m.unidades) },
+              { titulo: "Unidades", valor: unidades(m.unidades), unidad: "un." },
+              { titulo: "Variación", valor: <Variacion valor={m.variacion} actual={n(m.venta.neto)} />, prefijo: false },
             ],
             detalle: [
               { titulo: "Venta sin IVA", valor: formatoPesos(m.venta.neto) },
@@ -275,7 +278,7 @@ function TablaMarcas({
               { titulo: "Diferencia", valor: <Diferencia valor={m.diferencia.neto} /> },
               { titulo: "Unidades antes", valor: unidades(m.unidadesAnterior) },
               { titulo: "Productos ↑ / ↓", valor: `↑ ${m.suben} / ↓ ${m.bajan}` },
-              { titulo: "Participación", valor: `${(m.participacion * 100).toFixed(1).replace(".", ",")}%` },
+              { titulo: "Participación", valor: formatoPorcentaje(m.participacion * 100) },
             ],
           }))}
         />
@@ -366,7 +369,7 @@ function TablaProductos({ filas, cargando, vacio }: { filas: ProductoMarca[]; ca
   const esCelular = useEsCelular();
   if (esCelular) {
     return (
-      <Box sx={{ px: 1.5, pb: 1.5, display: "flex", flexDirection: "column", gap: 1.25 }}>
+      <Box sx={{ px: 1.5, pb: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
         <OrdenMovil
           opciones={[
             { clave: "venta", titulo: "Venta" },
@@ -386,11 +389,12 @@ function TablaProductos({ filas, cargando, vacio }: { filas: ProductoMarca[]; ca
           filas={o.ordenadas.map((p, i) => ({
             clave: p.sku,
             titulo: p.nombre || p.sku,
-            meta: [`#${i + 1}`, p.sku, ...Object.entries(p.tipos).map(([t, u]) => `${NOMBRE_TIPO[t] ?? t} ${unidades(u)}`)].join(" · "),
+            meta: [p.sku, ...Object.entries(p.tipos).map(([t, u]) => `${NOMBRE_TIPO[t] ?? t} ${unidades(u)}`)].join(" · "),
+            rango: i + 1,
             principales: [
               { titulo: "Venta", valor: formatoMonto(p.venta.neto) },
-              { titulo: "Variación", valor: <Variacion valor={p.variacion} actual={n(p.venta.neto)} /> },
-              { titulo: "Unidades", valor: unidades(p.unidades) },
+              { titulo: "Unidades", valor: unidades(p.unidades), unidad: "un." },
+              { titulo: "Variación", valor: <Variacion valor={p.variacion} actual={n(p.venta.neto)} />, prefijo: false },
             ],
             detalle: [
               { titulo: "Venta sin IVA", valor: formatoPesos(p.venta.neto) },
@@ -506,6 +510,7 @@ export default function InformeMarcas() {
     restaurar: (g) => ({ ...inicial(), ...resolverPeriodoRapido<Filtros>(g) }),
   });
   const [buscar, setBuscar] = React.useState("");
+  const esCelularPagina = useEsCelular();
   const [pagina, setPagina] = React.useState(1);
   const [descargando, setDescargando] = React.useState(false);
   React.useEffect(() => setPagina(1), [filtros.canal, filtros.fechaInicio, filtros.fechaFin, filtros.comparar, filtros.orden, buscar]);
@@ -621,7 +626,27 @@ export default function InformeMarcas() {
         {!filtros.marca ? (
           <>
             <Tarjetas items={tarjetasResumen} cargando={resumen.cargando} />
-            <Box sx={{ ...tarjetaSx, pt: 2, pb: 1 }}>
+            <Box sx={esCelularPagina ? { pb: 1 } : { ...tarjetaSx, pt: 2, pb: 1 }}>
+              {esCelularPagina ? (
+                // En celular: buscador y orden en una sola barra; las filas ya son tarjetas.
+                <Box sx={{ mb: 1 }}>
+                  <BarraListaMovil
+                    buscar={{ valor: buscar, onCambiar: setBuscar, placeholder: "Buscar marca" }}
+                    orden={{
+                      opciones: ORDENES.map((o) => ({ clave: o.valor, titulo: o.texto })),
+                      clave: filtros.orden,
+                      direccion: "desc",
+                      // Cada orden ya trae su sentido (más sube, más baja…): solo cambia el campo.
+                      onCambiar: (clave) => {
+                        if (clave === filtros.orden) return;
+                        ordenMarcas.setOrden(null);
+                        setFiltros((f) => ({ ...f, orden: clave as Orden }));
+                      },
+                    }}
+                    chips={<Typography component="span" sx={{ fontSize: 12, color: tinta.tenue }}>Toca una marca para ver sus productos.</Typography>}
+                  />
+                </Box>
+              ) : (
               <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 2, px: { xs: 1.5, sm: 2.5 }, mb: 1.5 }}>
                 <TextField
                   size="small"
@@ -652,6 +677,7 @@ export default function InformeMarcas() {
                 </Box>
                 <Typography sx={{ fontSize: 12, color: tinta.tenue, ml: "auto" }}>Pulsa una marca para ver sus productos.</Typography>
               </Box>
+              )}
               <TablaMarcas
                 filas={visibles}
                 desde={(pagina - 1) * POR_PAGINA}

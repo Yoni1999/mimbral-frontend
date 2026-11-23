@@ -99,7 +99,7 @@ const COLUMNAS: ColumnaInforme<Fila>[] = [
       </Tooltip>
     ),
   },
-  { clave: "margenPct", titulo: "Margen %", ancho: 7, movil: "principal", alinear: "right", valor: (f) => (f.margenPct == null ? null : f.margenPct * 100), celda: (f) => <Box component="span" sx={{ ...cifraSx, fontWeight: 700, color: f.margenPct == null ? tinta.tenue : f.margenPct < 0 ? "#b42318" : f.margenPct < 0.1 ? "#b54708" : "#067647" }}>{porcentaje(f.margenPct)}</Box> },
+  { clave: "margenPct", titulo: "Margen %", ancho: 7, movil: "chip", alinear: "right", valor: (f) => (f.margenPct == null ? null : f.margenPct * 100), celda: (f) => <Box component="span" sx={{ ...cifraSx, fontWeight: 700, color: f.margenPct == null ? tinta.tenue : f.margenPct < 0 ? "#b42318" : f.margenPct < 0.1 ? "#b54708" : "#067647" }}>{porcentaje(f.margenPct)}</Box> },
   { clave: "stock", titulo: "Stock", ancho: 6, alinear: "right", valor: (f) => f.stock, celda: (f) => <Box sx={cifraSx}>{f.stock == null ? "—" : unidades(f.stock)}</Box> },
   { clave: "u30", titulo: "Unid. 30 días", ancho: 7, alinear: "right", valor: (f) => f.unidades30, celda: (f) => <Box sx={cifraSx}>{unidades(f.unidades30)}</Box> },
   {
@@ -107,6 +107,7 @@ const COLUMNAS: ColumnaInforme<Fila>[] = [
     titulo: "Problemas",
     ancho: 14,
     movil: "principal",
+    prefijoMovil: false,
     valor: (f) => f.problemas.length,
     excel: "Cantidad de problemas",
     celda: (f) =>
@@ -170,6 +171,8 @@ function Contenido() {
           </Grid>
         </Grid>
         <TablaInforme<Fila>
+          // Mismos cortes que la columna de escritorio: ámbar bajo 10 %.
+          umbralesMovil={{ bueno: 10, regular: 0 }}
           key={`${vistaUrl}-${estado.filtro}`}
           filas={filas}
           cargando={cargando}

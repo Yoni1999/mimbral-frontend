@@ -8,6 +8,8 @@ import RangosRapidos, { TEMPORADAS, etiquetaRango, FechasDelRango } from "@/app/
 import FrescuraDatos from "@/app/(DashboardLayout)/utilities/ventas/components/FrescuraDatos";
 import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 import { EtiquetaHoja, FiltrosActivosMovil, HojaFiltros, pildorasMovilSx } from "@/app/(DashboardLayout)/utilities/ventas/components/HojaFiltros";
+import PeriodoMovil, { FiltrosPuestosMovil } from "@/app/(DashboardLayout)/utilities/ventas/components/PeriodoMovil";
+import { useBarraMovil } from "@/app/(DashboardLayout)/layout/header/BarraMovil";
 import {
   BotonLimpiar,
   CANALES,
@@ -75,6 +77,12 @@ const HeaderGrupo: React.FC<Props> = ({ filtros, setFiltros, rangoPorDefecto, on
     !filtros.canal && !filtros.temporada && !filtros.modoComparacion && filtros.fechaInicio === porDefecto.fechaInicio && filtros.fechaFin === porDefecto.fechaFin;
   const filtrosActivos = !!filtros.temporada || !!filtros.modoComparacion;
 
+  // Celular: el nombre de la vista y «SKUs · período · canal» van en la barra de arriba.
+  useBarraMovil({
+    titulo: "Grupo de SKUs",
+    subtitulo: `${filtros.skus.length} SKUs · ${rango} · ${canal ? canal.nombre : "Todos los canales"}`,
+  });
+
   const selectorCanal = (
     <FormControl size="small" sx={{ minWidth: 160 }}>
       <Select value={filtros.canal} displayEmpty inputProps={{ "aria-label": "Canal" }} onChange={(e) => cambiar({ canal: e.target.value })} sx={controlSx}>
@@ -103,6 +111,89 @@ const HeaderGrupo: React.FC<Props> = ({ filtros, setFiltros, rangoPorDefecto, on
       {selectorCanal}
     </>
   );
+
+  // Hoja de filtros de celular (la abre el botón de la barra de período).
+  const hojaMovil = (
+    // Cada cambio se aplica al instante; "Listo" cierra.
+    <HojaFiltros abierta={!!filtrosAnchor} onCerrar={() => setFiltrosAnchor(null)} descripcion="Acotan todas las pestañas de la vista.">
+      <EtiquetaHoja>Canal</EtiquetaHoja>
+      {selectorCanal}
+      <EtiquetaHoja>Temporada</EtiquetaHoja>
+      <FormControl fullWidth size="small">
+        <Select value={filtros.temporada} displayEmpty inputProps={{ "aria-label": "Temporada" }} onChange={(e) => elegirTemporada(e.target.value)} sx={controlSx}>
+          <MenuItem value="">Sin temporada</MenuItem>
+          {Object.keys(TEMPORADAS).map((t) => (
+            <MenuItem key={t} value={t}>
+              {t}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      <EtiquetaHoja>Comparar con</EtiquetaHoja>
+      <FormControl fullWidth size="small">
+        <Select
+          value={filtros.modoComparacion}
+          displayEmpty
+          inputProps={{ "aria-label": "Comparar con" }}
+          onChange={(e) => cambiar({ modoComparacion: e.target.value as FiltrosGrupo["modoComparacion"] })}
+          sx={controlSx}
+        >
+          <MenuItem value="">Período anterior</MenuItem>
+          <MenuItem value="MismoPeriodoAnoAnterior">Mismo período año anterior</MenuItem>
+        </Select>
+      </FormControl>
+    </HojaFiltros>
+  );
+
+  // Celular: sin tarjeta de título. Barra de período pegada arriba (canal,
+  // temporada y comparación en la hoja de filtros), los filtros puestos como
+  // chips y una fila con la lista de SKUs y la descarga.
+  if (esCelular) {
+    return (
+      <>
+        <PeriodoMovil
+          fechaInicio={filtros.fechaInicio}
+          fechaFin={filtros.fechaFin}
+          inactivo={!!filtros.temporada}
+          onElegir={(fechaInicio, fechaFin) => cambiar({ temporada: "", fechaInicio, fechaFin })}
+          calendario={
+            <DateRangeFilter
+              value={filtros.fechaInicio && filtros.fechaFin ? { start: filtros.fechaInicio, end: filtros.fechaFin } : null}
+              onChange={handleDateChange}
+              label="Rango de fecha"
+              soloIcono
+            />
+          }
+          onFiltros={(e) => setFiltrosAnchor(e.currentTarget)}
+          filtrosActivos={!!filtros.canal || filtrosActivos}
+        />
+        <FiltrosPuestosMovil
+          activos={[
+            ...(canal ? [{ etiqueta: `Canal: ${canal.nombre}`, onQuitar: () => cambiar({ canal: "" }) }] : []),
+            ...(filtros.temporada ? [{ etiqueta: `Temporada: ${filtros.temporada}`, onQuitar: () => elegirTemporada("") }] : []),
+            ...(filtros.modoComparacion ? [{ etiqueta: "vs año anterior", onQuitar: () => cambiar({ modoComparacion: "" }) }] : []),
+          ]}
+          onLimpiar={limpiar}
+        />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, "& .MuiButton-root": { height: 38 } }}>
+          <Button
+            variant="outlined"
+            startIcon={<IconListDetails size={16} />}
+            onClick={onEditarSkus}
+            sx={{ ...botonSx, flex: 1, bgcolor: "#fff", borderColor: tinta.borde, color: tinta.primaria, "&:hover": { borderColor: "#cbd5e1", bgcolor: tinta.fondoSuave } }}
+          >
+            {filtros.skus.length ? `${filtros.skus.length} SKUs` : "Elegir SKUs"}
+          </Button>
+          {onDescargar && (
+            <Button variant="contained" disableElevation startIcon={<IconDownload size={16} />} onClick={onDescargar} disabled={descargando} sx={botonSx}>
+              {descargando ? "Preparando…" : "Excel"}
+            </Button>
+          )}
+        </Box>
+        {hojaMovil}
+      </>
+    );
+  }
 
   return (
     <Box sx={{ ...tarjetaSx, position: "relative", mb: 2, px: { xs: 1.5, md: 2 }, py: 1.25 }}>
@@ -178,37 +269,6 @@ const HeaderGrupo: React.FC<Props> = ({ filtros, setFiltros, rangoPorDefecto, on
         />
       </Stack>
 
-      {esCelular ? (
-        // Cada cambio se aplica al instante; "Listo" cierra.
-        <HojaFiltros abierta={!!filtrosAnchor} onCerrar={() => setFiltrosAnchor(null)} descripcion="Acotan todas las pestañas de la vista.">
-          <EtiquetaHoja>Canal</EtiquetaHoja>
-          {selectorCanal}
-          <EtiquetaHoja>Temporada</EtiquetaHoja>
-          <FormControl fullWidth size="small">
-            <Select value={filtros.temporada} displayEmpty inputProps={{ "aria-label": "Temporada" }} onChange={(e) => elegirTemporada(e.target.value)} sx={controlSx}>
-              <MenuItem value="">Sin temporada</MenuItem>
-              {Object.keys(TEMPORADAS).map((t) => (
-                <MenuItem key={t} value={t}>
-                  {t}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <EtiquetaHoja>Comparar con</EtiquetaHoja>
-          <FormControl fullWidth size="small">
-            <Select
-              value={filtros.modoComparacion}
-              displayEmpty
-              inputProps={{ "aria-label": "Comparar con" }}
-              onChange={(e) => cambiar({ modoComparacion: e.target.value as FiltrosGrupo["modoComparacion"] })}
-              sx={controlSx}
-            >
-              <MenuItem value="">Período anterior</MenuItem>
-              <MenuItem value="MismoPeriodoAnoAnterior">Mismo período año anterior</MenuItem>
-            </Select>
-          </FormControl>
-        </HojaFiltros>
-      ) : (
       <Popover
         open={!!filtrosAnchor}
         anchorEl={filtrosAnchor}
@@ -254,7 +314,6 @@ const HeaderGrupo: React.FC<Props> = ({ filtros, setFiltros, rangoPorDefecto, on
           </Box>
         </Stack>
       </Popover>
-      )}
     </Box>
   );
 };

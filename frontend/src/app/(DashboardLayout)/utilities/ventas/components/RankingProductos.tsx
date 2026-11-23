@@ -179,44 +179,25 @@ const RankingProductos: React.FC<Props> = ({ parametros, claveVista, comparacion
           vacio="Sin ventas en el período."
           filas={productos.map((p, i) => {
             const comp = comparacion[p.sku];
-            // La tercera cifra fija es el margen que se está midiendo ($ o %).
-            const margenPesos = { titulo: "Margen $", valor: formatoMonto(p.margen) };
-            const margenPct = { titulo: "% Margen", valor: <ChipMargen valor={p.margenPorcentaje} /> };
+            const margenPesos = { titulo: "Margen $", valor: formatoMonto(p.margen), prefijo: "margen" };
             return {
               clave: p.sku,
-              titulo: (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Box
-                    component="img"
-                    src={p.imagen || SIN_IMAGEN}
-                    onError={(e) => {
-                      const img = e.target as HTMLImageElement;
-                      img.onerror = null;
-                      img.src = SIN_IMAGEN;
-                    }}
-                    alt=""
-                    sx={{ width: 34, height: 34, objectFit: "contain", borderRadius: "8px", border: `1px solid ${tinta.borde}`, bgcolor: "#fff", flexShrink: 0 }}
-                  />
-                  <Box sx={{ minWidth: 0 }}>{p.nombre}</Box>
-                </Box>
-              ),
-              meta: `#${i + 1} · SKU ${p.sku}`,
+              titulo: p.nombre,
+              meta: p.sku,
+              imagen: p.imagen ?? null,
+              // El servidor ya entrega el ranking en el orden elegido con las píldoras.
+              rango: i + 1,
               onAbrir: () => elegir(p),
               principales: [
-                {
-                  titulo: "Venta",
-                  valor: (
-                    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
-                      {formatoMonto(p.venta)}
-                      {comp && <ChipVariacion valor={comp.cambio} />}
-                    </Box>
-                  ),
-                },
-                { titulo: "Unid.", valor: p.unidades.toLocaleString("es-CL", { maximumFractionDigits: 2 }) },
-                medida === "margenBruto" ? margenPesos : margenPct,
+                { titulo: "Unidades", valor: p.unidades.toLocaleString("es-CL", { maximumFractionDigits: 2 }), unidad: "un." },
+                { titulo: "Venta", valor: formatoMonto(p.venta) },
+                // Si se mide por margen $, también va en la línea; el % siempre es la etiqueta de color.
+                ...(medida === "margenBruto" ? [margenPesos] : []),
+                { titulo: "% Margen", valor: "", chip: p.margenPorcentaje },
               ],
               detalle: [
-                medida === "margenBruto" ? margenPct : margenPesos,
+                ...(medida === "margenBruto" ? [] : [margenPesos]),
+                ...(comp ? [{ titulo: "Variación de la venta", valor: comp.cambio == null ? "—" : <ChipVariacion valor={comp.cambio} /> }] : []),
                 ...(comp ? [{ titulo: "Venta anterior", valor: formatoMonto(comp.anterior) }] : []),
               ],
             };

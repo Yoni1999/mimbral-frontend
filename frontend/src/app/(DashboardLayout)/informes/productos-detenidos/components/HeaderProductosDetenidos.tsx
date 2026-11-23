@@ -15,6 +15,8 @@ import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 import { HojaFiltros } from "@/app/(DashboardLayout)/utilities/ventas/components/HojaFiltros";
+import { useBarraMovil } from "@/app/(DashboardLayout)/layout/header/BarraMovil";
+import { etiquetaPeriodoCodigo } from "@/app/(DashboardLayout)/utilities/ventas/components/PeriodoMovil";
 
 // --- INTERFACES (Moved out from within the component for clarity) ---
 interface FiltroProductos {
@@ -53,6 +55,9 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
   const [openDrawer, setOpenDrawer] = useState(false);
   // En celular los filtros van en una hoja inferior con "Aplicar" fijo al pie.
   const esCelular = useEsCelular();
+  // Celular: el período sin movimiento consultado en la barra de arriba.
+  const periodoSubtitulo = etiquetaPeriodoCodigo(currentFilters?.periodo ?? "1M", currentFilters?.fechaInicio, currentFilters?.fechaFin);
+  useBarraMovil({ subtitulo: periodoSubtitulo ? `Sin ventas: ${periodoSubtitulo.charAt(0).toLowerCase()}${periodoSubtitulo.slice(1)}` : undefined });
   // Parte de los filtros vigentes (al volver a la vista muestra lo consultado);
   // sin ellos, "1M" y sin almacenes como siempre.
   const [filters, setFilters] = useState<FiltroProductos>(() => ({ periodo: "1M", almacenes: [], ...currentFilters }));

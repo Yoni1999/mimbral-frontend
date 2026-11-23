@@ -115,7 +115,7 @@ export default function PanelCompras({ sku }: { sku: string }) {
                   titulo: `OC ${o.NumeroOrdenCompra}`,
                   meta: `${fecha(o.FechaOrden)} · ${o.Vendedor || "—"}`,
                   principales: [
-                    { titulo: "Cantidad", valor: unidades(Number(o.CantidadComprada) || 0) },
+                    { titulo: "Cantidad", valor: unidades(Number(o.CantidadComprada) || 0), unidad: "un." },
                     { titulo: "Total", valor: formatoMonto(o.TotalLinea) },
                     { titulo: "Estado", valor: <Estado abierta={o.EstadoDocumento === "O"} cancelada={o.EstaCancelado === "Y"} /> },
                   ],

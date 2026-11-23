@@ -8,6 +8,7 @@
 // Fulfillment by Falabella; «Normal», despacho desde nuestra bodega.
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Box, Tooltip } from "@mui/material";
 import { IconAlertTriangle, IconChevronRight, IconInfoCircle } from "@tabler/icons-react";
 import { BACKEND_URL } from "@/config";
@@ -240,7 +241,7 @@ export function TablaCategoriasFal({ filas, cargando, onEntrar, nombreExcel }: {
     { clave: "unid", titulo: "Unidades", ancho: 6, alinear: "right", valor: (f) => f.actual.unidades, celda: (f) => <Box sx={cifraSx}>{unidades(f.actual.unidades)}</Box> },
     { clave: "com", titulo: "Comisión", ancho: 7, alinear: "right", valor: (f) => parte(f.actual.comision, f.actual.venta), excel: "Comisión % de la venta", celda: (f) => <CeldaParte costo={f.actual.comision} venta={f.actual.venta} /> },
     { clave: "desp", titulo: "Despacho", ancho: 7, alinear: "right", valor: (f) => parte(f.actual.envio, f.actual.venta), excel: "Despacho % de la venta", celda: (f) => <CeldaParte costo={f.actual.envio} venta={f.actual.venta} /> },
-    { clave: "margenPct", titulo: "Margen %", ancho: 10, movil: "principal", alinear: "right", valor: (f) => (f.actual.margenPct == null ? null : f.actual.margenPct * 100), excel: "Margen %", celda: (f) => <MargenCelda actual={f.actual.margenPct} puntos={f.variacion.margenPuntos} anterior={f.comparacion.margenPct} /> },
+    { clave: "margenPct", titulo: "Margen %", ancho: 10, movil: "chip", alinear: "right", valor: (f) => (f.actual.margenPct == null ? null : f.actual.margenPct * 100), excel: "Margen %", celda: (f) => <MargenCelda actual={f.actual.margenPct} puntos={f.variacion.margenPuntos} anterior={f.comparacion.margenPct} /> },
     { clave: "tipos", titulo: "Full · Normal", ancho: 8, celda: (f) => <BarraTiposFal porTipo={f.actual.porTipo} /> },
   ];
   return (
@@ -275,6 +276,7 @@ export type OrdenProductos = "venta" | "margenPct" | "dif" | "unid";
 
 /** Productos de Falabella: venta, costos y margen del período contra la comparación. */
 export function TablaProductosFal({ filas, cargando, nombreExcel, orden = "venta", invertido = false }: { filas: FilaProductoFal[]; cargando: boolean; nombreExcel: string; orden?: OrdenProductos; invertido?: boolean }) {
+  const router = useRouter();
   const columnas: ColumnaInforme<FilaProductoFal>[] = [
     {
       clave: "sku",
@@ -282,6 +284,13 @@ export function TablaProductosFal({ filas, cargando, nombreExcel, orden = "venta
       ancho: 26,
       movil: "titulo",
       valor: (f) => f.sku,
+      // En celular: foto, nombre y SKU en texto; la ficha se abre desde la hoja.
+      movilFila: (f) => ({
+        titulo: f.nombre || f.sku,
+        meta: [f.sku, f.categoria ?? "Sin categoría"].join(" · "),
+        imagen: f.imagen ?? null,
+        onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(f.sku)}`),
+      }),
       celda: (f) => (
         <ConMiniatura imagen={f.imagen} titulo={f.nombre || f.sku}>
           <TextoCelda texto={f.nombre || f.sku} secundario={f.categoria ?? "Sin categoría"} />
@@ -312,7 +321,7 @@ export function TablaProductosFal({ filas, cargando, nombreExcel, orden = "venta
           "—"
         ),
     },
-    { clave: "margenPct", titulo: "Margen %", ancho: 10, movil: "principal", alinear: "right", valor: (f) => (f.actual.margenPct == null ? null : f.actual.margenPct * 100), excel: "Margen %", celda: (f) => <MargenCelda actual={f.actual.margenPct} puntos={f.variacion.margenPuntos} anterior={f.comparacion.margenPct} /> },
+    { clave: "margenPct", titulo: "Margen %", ancho: 10, movil: "chip", alinear: "right", valor: (f) => (f.actual.margenPct == null ? null : f.actual.margenPct * 100), excel: "Margen %", celda: (f) => <MargenCelda actual={f.actual.margenPct} puntos={f.variacion.margenPuntos} anterior={f.comparacion.margenPct} /> },
     { clave: "tipos", titulo: "Full · Normal", ancho: 7, celda: (f) => <BarraTiposFal porTipo={n(f.actual.venta.neto) > 0 ? f.actual.porTipo : f.comparacion.porTipo} /> },
   ];
   return (

@@ -16,7 +16,7 @@ import HeaderMl, { RangoMl } from "@/app/(DashboardLayout)/utilities/ventas/merc
 import { CeldaStock } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/StockBodegas";
 import { Par, fechaCorta, tipoEnvio, unidades, urlMl } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/comun";
 import { CeldaOrden, useOrdenTabla } from "@/app/(DashboardLayout)/utilities/ventas/components/ordenTabla";
-import { OrdenMovil, TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
+import { BarraListaMovil, TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 type Lado = "full" | "colecta";
 type Estado = "sin_stock" | "critico" | "bajo" | "sin_dato";
@@ -354,7 +354,9 @@ export default function InformeReposicionMercadoLibre() {
           ))}
         </Box>
 
-        <Box sx={{ ...tarjetaSx, pt: 2, pb: 1 }}>
+        {/* En celular las filas ya son tarjetas: la lista va sin marco y el buscador pasa a la barra de la lista. */}
+        <Box sx={esCelular ? { pb: 1 } : { ...tarjetaSx, pt: 2, pb: 1 }}>
+          {!esCelular && (
           <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 2, px: 2.5, mb: 1.5 }}>
             <TextField
               size="small"
@@ -373,7 +375,8 @@ export default function InformeReposicionMercadoLibre() {
             />
             {!esCelular && filtrosTabla}
           </Box>
-          <Typography sx={{ fontSize: 12, color: tinta.tenue, px: 2.5, mb: 1 }}>
+          )}
+          <Typography sx={{ fontSize: 12, color: tinta.tenue, px: esCelular ? 0.5 : 2.5, mb: 1 }}>
             {datos.cargando
               ? "Cargando…"
               : `${unidades(filas.length)} de ${unidades(r?.resumen.analizados)} productos con venta están bajo ${filtros.umbral} días de stock${filtros.estado ? ` · solo «${ESTADOS[filtros.estado].texto}»` : ""}. Días de stock = stock ÷ venta diaria de los últimos ${r?.dias ?? ""} días. Full: stock guardado de ML (pulsa para verlo en vivo); Colecta: bodega 03.`}
@@ -381,9 +384,11 @@ export default function InformeReposicionMercadoLibre() {
 
           {esCelular ? (
             // En celular, una tarjeta por producto: stock, cuánto alcanza y cuánto reponer; el resto en "Ver detalle".
-            <Box sx={{ px: 1.5, pb: 1, display: "flex", flexDirection: "column", gap: 1.25 }}>
-              <OrdenMovil
-                opciones={[
+            <Box sx={{ pb: 1, display: "flex", flexDirection: "column", gap: 1 }}>
+              <BarraListaMovil
+                buscar={{ valor: buscar, onCambiar: setBuscar, placeholder: "Buscar SKU, producto o categoría" }}
+                orden={{
+                opciones: [
                   { clave: "alcanza", titulo: "Alcanza" },
                   { clave: "reponer", titulo: "Reponer" },
                   { clave: "stock", titulo: "Stock" },
@@ -392,10 +397,11 @@ export default function InformeReposicionMercadoLibre() {
                   { clave: "otras", titulo: "Otras bod." },
                   { clave: "envio", titulo: "Envío" },
                   { clave: "producto", titulo: "Producto" },
-                ]}
-                clave={ordenFilas.orden?.clave ?? ""}
-                direccion={ordenFilas.orden?.direccion ?? "desc"}
-                onCambiar={(clave, direccion) => clave && ordenFilas.setOrden({ clave, direccion })}
+                ],
+                clave: ordenFilas.orden?.clave ?? "",
+                direccion: ordenFilas.orden?.direccion ?? "desc",
+                onCambiar: (clave, direccion) => clave && ordenFilas.setOrden({ clave, direccion }),
+                }}
               />
               <TarjetasMovil
                 cargando={datos.cargando}
@@ -404,8 +410,10 @@ export default function InformeReposicionMercadoLibre() {
                   const lado = tipoEnvio(f.lado)!;
                   return {
                     clave: `${f.sku}-${f.lado}`,
-                    titulo: `${(pagina - 1) * POR_PAGINA + i + 1}. ${f.nombre ?? "Sin nombre en SAP"}`,
+                    titulo: f.nombre ?? "Sin nombre en SAP",
                     meta: [f.sku, f.categoria ?? "Sin categoría ML"].join(" · "),
+                    imagen: f.imagen ?? null,
+                    rango: (pagina - 1) * POR_PAGINA + i + 1,
                     onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(f.sku)}`),
                     principales: [
                       { titulo: "Stock", valor: celdaStock(f) },

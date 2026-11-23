@@ -13,6 +13,8 @@ import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 import { HojaFiltros } from "@/app/(DashboardLayout)/utilities/ventas/components/HojaFiltros";
+import { useBarraMovil } from "@/app/(DashboardLayout)/layout/header/BarraMovil";
+import { etiquetaPeriodoCodigo } from "@/app/(DashboardLayout)/utilities/ventas/components/PeriodoMovil";
 
 export interface FiltroSinVentas {
     sku?: string;           // filtro exclusivo por SKU
@@ -42,6 +44,8 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     const [open, setOpen] = useState(false);
     // En celular los filtros van en una hoja inferior con "Aplicar" fijo al pie.
     const esCelular = useEsCelular();
+    // Celular: desde cuándo no se vende, en la barra de arriba.
+    useBarraMovil({ subtitulo: currentFilters?.fechaInicio ? `Sin ventas desde ${etiquetaPeriodoCodigo("RANGO", currentFilters.fechaInicio, currentFilters.fechaInicio)}` : undefined });
     const [filters, setFilters] = useState<FiltroSinVentas>(() => currentFilters || { minStock: 0 });
 
     const [primerNiveles, setPrimerNiveles] = useState<Categoria[]>([]);

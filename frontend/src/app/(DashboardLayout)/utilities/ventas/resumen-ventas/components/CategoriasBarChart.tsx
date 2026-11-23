@@ -86,18 +86,15 @@ const CategoriasTableChart: React.FC<Props> = ({ data, height = 360 }) => {
             }}
           />
           <TarjetasMovil
-            filas={sortedData.map((item) => ({
+            filas={sortedData.map((item, i) => ({
               clave: item.Categoria,
-              titulo: (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Avatar src={item.U_Imagen} alt={item.Categoria} variant="rounded" sx={{ width: 26, height: 26, bgcolor: "#f1f5f9", flexShrink: 0 }} />
-                  {item.Categoria}
-                </Box>
-              ),
+              titulo: item.Categoria,
+              imagen: item.U_Imagen || null,
+              rango: order === "desc" && orderBy !== "Categoria" ? i + 1 : undefined,
               principales: [
-                { titulo: "Margen $", valor: formatoMonto(item.MargenAbsoluto) },
                 { titulo: "Ventas", valor: formatoMonto(item.TotalVentas) },
-                { titulo: "Margen", valor: <ChipMargen valor={item.MargenPorcentaje} /> },
+                { titulo: "Margen $", valor: formatoMonto(item.MargenAbsoluto), prefijo: "margen" },
+                { titulo: "% Margen", valor: "", chip: item.MargenPorcentaje ?? null },
               ],
             }))}
           />

@@ -107,6 +107,8 @@ export default function RentabilidadMercadoLibre() {
     {
       clave: "unidades",
       movil: "principal",
+      formatoMovil: "numero",
+      unidadMovil: "un.",
       titulo: "Unid.",
       ancho: 8,
       alinear: "right",
@@ -115,7 +117,7 @@ export default function RentabilidadMercadoLibre() {
         <Box title={`Full ${entero(f.unidadesFull)} · Colecta y otros ${entero(f.unidadesColecta)}`}>{entero(f.unidades)}</Box>
       ),
     },
-    { clave: "venta", titulo: "Venta", ancho: 11, movil: "principal", alinear: "right", valor: (f) => redondo(f.venta), excel: "Venta sin IVA", celda: (f) => pesos(f.venta) },
+    { clave: "venta", titulo: "Venta", ancho: 11, movil: "principal", formatoMovil: "monto", alinear: "right", valor: (f) => redondo(f.venta), excel: "Venta sin IVA", celda: (f) => pesos(f.venta) },
     {
       clave: "cobra",
       titulo: "Cobra ML",
@@ -131,8 +133,8 @@ export default function RentabilidadMercadoLibre() {
       ),
     },
     { clave: "costo", titulo: "Costo", ancho: 11, alinear: "right", valor: (f) => redondo(f.costo), excel: "Costo SAP", celda: (f) => pesos(f.costo) },
-    { clave: "margen", titulo: "Margen", ancho: 11, movil: "principal", alinear: "right", valor: (f) => redondo(f.margen), excel: "Margen sin IVA", celda: (f) => <Margen v={f.margen} pct={f.margenPct} /> },
-    { clave: "margenPct", titulo: "Margen %", ancho: 9, movil: "oculto", alinear: "right", valor: (f) => redondo(f.margenPct, 1), celda: (f) => porcentaje(f.margenPct) },
+    { clave: "margen", titulo: "Margen", ancho: 11, movil: "principal", formatoMovil: "monto", alinear: "right", valor: (f) => redondo(f.margen), excel: "Margen sin IVA", celda: (f) => <Margen v={f.margen} pct={f.margenPct} /> },
+    { clave: "margenPct", titulo: "Margen %", ancho: 9, movil: "chip", alinear: "right", valor: (f) => redondo(f.margenPct, 1), celda: (f) => porcentaje(f.margenPct) },
     { clave: "margenUnitario", titulo: "Por unidad", ancho: 9, alinear: "right", valor: (f) => redondo(f.margenUnitario), excel: "Margen por unidad", celda: (f) => pesos(f.margenUnitario) },
   ];
 

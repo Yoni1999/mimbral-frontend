@@ -32,6 +32,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, B
 import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import { TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
+import { formatoMonto } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
 
 type ShareFilters = Record<string, string | null>;
 
@@ -405,18 +406,22 @@ export default function SharedVentasPorCanalPage() {
                   {esCelular ? (
                     <TarjetasMovil
                       vacio="Sin datos disponibles"
-                      filas={topProducts.map((product) => ({
+                      filas={topProducts.map((product, i) => ({
                         clave: product.sku,
                         titulo: product.nombre,
                         meta: product.sku,
+                        imagen: product.imagen?.startsWith("http") ? product.imagen : null,
+                        // Top 8 ordenado por ventas.
+                        rango: i + 1,
+                        // El stock por bodega se abre desde la hoja (botón propio).
+                        onAbrir: () => setStockDetailProduct(product),
+                        accionLabel: "Ver stock por bodega",
                         principales: [
-                          { titulo: selectedChannel ? "Ventas canal" : "Ventas", valor: formatUnits(product.displaySales) },
-                          { titulo: "Margen", valor: formatMoney(product.margenBruto) },
-                          {
-                            titulo: "Stock 01+03",
-                            valor: <Chip label={formatUnits(product.stock0103)} size="small" clickable onClick={() => setStockDetailProduct(product)} />,
-                          },
+                          { titulo: selectedChannel ? "Ventas canal" : "Ventas", valor: formatUnits(product.displaySales), unidad: "un." },
+                          { titulo: "Margen", valor: formatoMonto(product.margenBruto) },
+                          { titulo: "% Margen", valor: `${product.margenPorcentaje}`, chip: typeof product.margenPorcentaje === "number" ? product.margenPorcentaje : null },
                         ],
+                        detalle: [{ titulo: "Stock 01+03", valor: formatUnits(product.stock0103) }],
                       }))}
                     />
                   ) : (

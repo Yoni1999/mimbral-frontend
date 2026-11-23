@@ -1,6 +1,6 @@
 "use client";
 import { Avatar, Box, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
-import { ChipMargen, formatoPesos, tablaSx, tinta, Panel, Columnas, TextoCelda } from "../../components/estilo";
+import { ChipMargen, formatoMonto, formatoPesos, tablaSx, tinta, Panel, Columnas, TextoCelda } from "../../components/estilo";
 import { CeldaOrden, useOrdenTabla } from "../../components/ordenTabla";
 import { OrdenMovil, TarjetasMovil, useEsCelular } from "../../components/movil";
 
@@ -51,16 +51,16 @@ const TopRentabilidadMinima = ({ data }: Props) => {
             titulo: item.Nombre_Producto,
             meta: item.Codigo_Producto,
             principales: [
+              { titulo: "Cantidad", valor: (item.Cantidad_Vendida ?? 0).toLocaleString("es-CL"), unidad: "un." },
               {
-                titulo: "Rentab.",
+                titulo: "Rentabilidad",
                 valor: (
                   <Box component="span" sx={{ color: item.Rentabilidad_Total < 0 ? "#b42318" : undefined }}>
-                    {formatoPesos(item.Rentabilidad_Total)}
+                    {formatoMonto(item.Rentabilidad_Total)}
                   </Box>
                 ),
               },
-              { titulo: "Margen", valor: <ChipMargen valor={item.Margen_Porcentaje} /> },
-              { titulo: "Cant.", valor: (item.Cantidad_Vendida ?? 0).toLocaleString("es-CL") },
+              { titulo: "Margen", valor: "", chip: item.Margen_Porcentaje ?? null },
             ],
             detalle: [
               { titulo: "Venta prom.", valor: formatoPesos(item.Precio_Venta_Promedio) },

@@ -7,6 +7,8 @@ import { apiJson } from '@/utils/apiClient';
 import { useCargaDatos } from '@/utils/useCargaDatos';
 import { BACKEND_URL } from '@/config';
 import { CANALES, Panel, cifraSx, formatoMonto, formatoPesos, tarjetaSx, tinta } from '../../components/estilo';
+import { useEsCelular } from '../../components/movil';
+import TendenciaMovil from '../../components/TendenciaMovil';
 
 interface Filters {
   canal: string;
@@ -87,11 +89,31 @@ const ProductoAnalisisChart: React.FC<Props> = ({ filters }) => {
   );
 
   const canal = CANALES.find((c) => c.clave === filters.canal);
+  const esCelular = useEsCelular();
+
+  // En celular: un año destacado a la vez (chips); la variación compara con
+  // el año anterior en los mismos meses que tiene el año elegido.
+  const series = anios.map((a, i) => ({ clave: a, nombre: a, color: COLOR_POR_ANTIGUEDAD[i] ?? '#94a3b8' }));
+  const variaciones = Object.fromEntries(
+    anios.map((a) => {
+      const previo = String(Number(a) - 1);
+      if (!anios.includes(previo)) return [a, null];
+      let actual = 0;
+      let anterior = 0;
+      dataset.forEach((m) => {
+        if (m[a] == null || m[previo] == null) return;
+        actual += Number(m[a]) || 0;
+        anterior += Number(m[previo]) || 0;
+      });
+      return [a, anterior ? ((actual - anterior) / anterior) * 100 : null];
+    })
+  );
 
   return (
     <Panel
       titulo="Ventas mensuales por año"
       descripcion={`${canal ? canal.nombre : 'Todos los canales'} · no depende del rango de fechas · el mes en curso llega hasta ayer`}
+      sx={{ p: { xs: 2, sm: 2.5 } }}
     >
       {cargando ? (
         <Skeleton variant="rounded" height={320} />
@@ -99,6 +121,19 @@ const ProductoAnalisisChart: React.FC<Props> = ({ filters }) => {
         <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 8, textAlign: 'center' }}>
           No hay ventas mensuales para el canal.
         </Typography>
+      ) : esCelular ? (
+        <TendenciaMovil
+          series={series}
+          puntos={dataset}
+          claveX="month"
+          etiquetaEje={(m) => m}
+          etiquetaMejor={(m) => m}
+          textoMejor="mejor mes"
+          inicial={anios[0]}
+          variaciones={variaciones}
+          notaVariacion={(a) => `vs mismos meses de ${Number(a) - 1}`}
+          ordenarPorVenta={false}
+        />
       ) : (
         <>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 1 }}>

@@ -185,19 +185,16 @@ export default function PanelDocumento({
                     const canal = l.canal ? canalPorClave(l.canal) : undefined;
                     return {
                       clave: String(l.linea),
-                      titulo: (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          {l.esFlete && <IconTruck size={16} color={tinta.tenue} style={{ flexShrink: 0 }} />}
-                          {l.nombre}
-                        </Box>
-                      ),
-                      meta: `SKU ${l.sku}`,
+                      titulo: l.nombre,
+                      meta: l.esFlete ? `Flete · ${l.sku}` : l.sku,
                       onAbrir: l.esFlete ? undefined : () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(l.sku)}`),
+                      accionLabel: "Ver ficha del producto",
                       principales: [
-                        { titulo: "Cant.", valor: Number(l.cantidad).toLocaleString("es-CL", { maximumFractionDigits: 2 }) },
+                        { titulo: "Cantidad", valor: Number(l.cantidad).toLocaleString("es-CL", { maximumFractionDigits: 2 }), unidad: "un." },
+                        // En un documento se lee el monto exacto, no el abreviado.
                         { titulo: "Total neto", valor: formatoPesos(l.total) },
                         conMargen
-                          ? { titulo: "Margen", valor: l.total ? <ChipMargen valor={((Number(l.margen) || 0) / l.total) * 100} /> : "—" }
+                          ? { titulo: "% Margen", valor: "—", chip: l.total ? ((Number(l.margen) || 0) / l.total) * 100 : null }
                           : { titulo: "Precio neto", valor: formatoPesos(l.precio) },
                       ],
                       detalle: [
