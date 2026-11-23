@@ -8,6 +8,7 @@ import { ENDPOINT, FiltrosDetalle, fechaCorta, horaSap, useListaDetalle } from "
 import { Buscador, Encabezado, FilasCargando, Paginador, SinResultados } from "./piezas";
 import ChipMotivo, { MOTIVOS_NC, motivoNc } from "./ChipMotivo";
 import { Canal } from "./ListaVentas";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "../movil";
 
 export interface FilaNota {
   docEntry: number;
@@ -53,6 +54,7 @@ export default function ListaNotas({ filtros, onAbrir }: { filtros: FiltrosDetal
   // El back usa "sin" para las notas sin código de motivo.
   const l = useListaDetalle<FilaNota, ResumenNotas>(ENDPOINT.notas, filtros, { orden: "fecha", direccion: "desc" }, 50, motivo === null ? {} : { motivo: motivo || "sin" });
   const r = l.resumen;
+  const esCelular = useEsCelular();
   const filas = l.datos?.filas ?? [];
   const setMotivo = (m: string | null) => {
     l.setPagina(1);
@@ -73,7 +75,7 @@ export default function ListaNotas({ filtros, onAbrir }: { filtros: FiltrosDetal
   return (
     <Grid container spacing={2}>
       <Grid item xs={12} lg={4}>
-        <Panel titulo="Notas de crédito del período" descripcion="Monto neto devuelto o rebajado, por motivo.">
+        <Panel titulo="Notas de crédito del período" descripcion="Monto neto devuelto o rebajado, por motivo." sx={{ p: { xs: 1.5, sm: 2.5 } }}>
           {!r ? (
             <>
               <Skeleton width={140} height={40} />
@@ -111,11 +113,62 @@ export default function ListaNotas({ filtros, onAbrir }: { filtros: FiltrosDetal
           titulo={motivo === null ? "Notas de crédito" : `Notas de crédito · ${motivoNc(motivo).texto}`}
           descripcion={motivo === null ? "Pulsa una nota para ver los ítems devueltos. Pulsa un motivo para filtrar." : "Pulsa el motivo de nuevo para ver todas."}
           accion={<Buscador valor={l.buscar} onCambiar={l.setBuscar} placeholder="Buscar folio, cliente, vendedor o folio corregido" />}
+          sx={{ p: { xs: 1.5, sm: 2.5 } }}
         >
+          {esCelular && (
+            <Box sx={{ mb: 1.25 }}>
+              <OrdenMovil
+                opciones={[
+                { clave: "fecha", titulo: "Fecha" },
+                { clave: "monto", titulo: "Monto" },
+                { clave: "folio", titulo: "Folio" },
+                { clave: "cliente", titulo: "Cliente" },
+                { clave: "vendedor", titulo: "Vendedor" },
+                { clave: "motivo", titulo: "Motivo" },
+                ]}
+                clave={l.orden.orden}
+                direccion={l.orden.direccion}
+                onCambiar={(orden, direccion) => {
+                  l.setPagina(1);
+                  l.setOrden({ orden, direccion });
+                }}
+              />
+            </Box>
+          )}
           {l.cargando ? (
             <FilasCargando />
           ) : filas.length === 0 ? (
             <SinResultados buscando={!!l.buscarDemorado || motivo !== null} />
+          ) : esCelular ? (
+            <TarjetasMovil
+              filas={filas.map((f) => ({
+                clave: String(f.docEntry),
+                titulo: f.cliente,
+                // En escritorio el comentario sale al pasar el mouse; aquí va bajo el folio.
+                meta: (
+                  <>
+                    Folio {f.folio ?? "—"} · N° {f.docNum} · {f.clienteCodigo}
+                    {f.comentario && <Box sx={{ mt: 0.25, fontStyle: "italic" }}>{f.comentario}</Box>}
+                  </>
+                ),
+                onAbrir: () => onAbrir(f.docEntry),
+                principales: [
+                  { titulo: "Monto", valor: formatoMonto(f.monto) },
+                  { titulo: "Fecha", valor: fechaCorta(f.fecha) },
+                  { titulo: "Motivo", valor: <ChipMotivo codigo={f.motivoCodigo} /> },
+                ],
+                detalle: [
+                  { titulo: "Hora", valor: horaSap(f.hora) },
+                  { titulo: "Vendedor", valor: f.vendedor },
+                  { titulo: "Canal", valor: <Canal clave={f.canal} /> },
+                  {
+                    titulo: "Corrige a",
+                    valor: f.folioReferencia ? [f.tipoDocumentoReferencia, f.folioReferencia].filter(Boolean).join(" ") : "—",
+                  },
+                  { titulo: "Monto exacto", valor: formatoPesos(f.monto) },
+                ],
+              }))}
+            />
           ) : (
             <TableContainer sx={{ mx: -2.5, width: "auto", overflowX: "hidden" }}>
               <Table size="small" sx={tablaSx}>

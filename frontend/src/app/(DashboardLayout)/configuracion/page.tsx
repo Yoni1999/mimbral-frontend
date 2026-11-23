@@ -23,6 +23,7 @@ import Tooltip from "@mui/material/Tooltip";
 import { apiJson } from "@/utils/apiClient";
 import { notifyError, notifySuccess } from "@/components/ui/toast/notify";
 import { olvidarDatosCargados } from "@/utils/memoriaDatos";
+import { TarjetasMovil, useEsCelular } from "../utilities/ventas/components/movil";
 
 /**
  * Lo que corre cada carga (analysis-service/src/services/actualizar.service.js,
@@ -98,6 +99,7 @@ export default function ConfiguracionPage() {
   const [porProcedimiento, setPorProcedimiento] = useState<Record<string, EstadoProcedimiento>>({});
   const [cargando, setCargando] = useState(true);
   const [actualizando, setActualizando] = useState(false);
+  const esCelular = useEsCelular();
 
   const fetchUltimaActualizacion = async () => {
     try {
@@ -187,6 +189,26 @@ export default function ConfiguracionPage() {
         minutos) y cuando se presiona &quot;Actualizar Ahora&quot;. Cada fila muestra su última ejecución real.
       </Typography>
 
+      {esCelular ? (
+        // En celular cada proceso es una tarjeta: nombre, código y sus tres datos.
+        <TarjetasMovil
+          filas={PROCEDIMIENTOS.map((proc) => {
+            const p = porProcedimiento[proc.codigo.toLowerCase()];
+            return {
+              clave: proc.codigo,
+              titulo: proc.nombre,
+              meta: <span style={{ fontFamily: "monospace" }}>{proc.codigo}</span>,
+              principales: [
+                { titulo: "Última ejecución", valor: p ? fechaHora(p.fin ?? p.inicio) : "—" },
+                { titulo: "Origen", valor: p ? ORIGEN[p.origen] ?? p.origen : "—" },
+                { titulo: "Estado", valor: <ChipEstado p={p} /> },
+              ],
+              // El tooltip del error no se puede pasar el dedo: el detalle lo muestra.
+              detalle: p?.estado === "error" ? [{ titulo: "Error", valor: p.error || "Error sin detalle" }] : undefined,
+            };
+          })}
+        />
+      ) : (
       <Paper variant="outlined" sx={{ borderRadius: 3, overflow: "hidden" }}>
         <Table>
           <TableHead>
@@ -220,6 +242,7 @@ export default function ConfiguracionPage() {
           </TableBody>
         </Table>
       </Paper>
+      )}
     </Box>
   );
 }

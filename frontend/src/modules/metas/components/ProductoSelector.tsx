@@ -118,6 +118,7 @@ export default function ProductoSelector({ value, onChange, disabled, targets, a
       </Stack>
 
       {value.length > 0 ? (
+        <Box sx={{ overflowX: "auto" }}>
         <Table size="small" sx={{ mt: 2 }}>
           <TableHead>
             <TableRow>
@@ -152,6 +153,7 @@ export default function ProductoSelector({ value, onChange, disabled, targets, a
             ))}
           </TableBody>
         </Table>
+        </Box>
       ) : (
         <Stack alignItems="center" spacing={1} sx={{ mt: 2, py: 3, borderRadius: 2, border: "1px dashed", borderColor: "divider", color: "text.secondary" }}>
           <IconPackageOff size={28} strokeWidth={1.5} />

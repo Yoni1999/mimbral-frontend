@@ -99,11 +99,12 @@ export default function PrecioYCompetencia() {
   ];
 
   const columnas: ColumnaInforme<Fila>[] = [
-    { clave: "producto", titulo: "Producto", ancho: 25, valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} secundario={`${entero(f.unidades7d)} u. en 7 días`} /> },
+    { clave: "producto", titulo: "Producto", ancho: 25, movil: "titulo", valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} secundario={`${entero(f.unidades7d)} u. en 7 días`} /> },
     {
       clave: "precio",
       titulo: "Precio ML",
       ancho: 10,
+      movil: "principal",
       alinear: "right",
       valor: (f) => f.precio,
       excel: "Precio ML (con IVA)",
@@ -140,6 +141,7 @@ export default function PrecioYCompetencia() {
       clave: "competencia",
       titulo: "Competencia más barata",
       ancho: 18,
+      movil: "principal",
       valor: (f) => f.competencia?.precio,
       excel: "Precio competencia",
       celda: (f) =>
@@ -159,6 +161,7 @@ export default function PrecioYCompetencia() {
       clave: "diferencia",
       titulo: "Diferencia",
       ancho: 13,
+      movil: "principal",
       alinear: "right",
       valor: (f) => redondo(f.competencia?.diferenciaPct, 1),
       excel: "Diferencia vs competencia %",

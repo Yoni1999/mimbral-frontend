@@ -8,6 +8,7 @@ import { BACKEND_URL } from "@/config";
 import { BarraParticipacion, Columnas, cifraSx, estado, tablaSx, tinta } from "../../components/estilo";
 import { ProductoMl, TipoEnvio, fechaCorta, n, tipoEnvio, unidades } from "./comun";
 import { CeldaOrden, useOrdenTabla } from "../../components/ordenTabla";
+import { TarjetasMovil, useEsCelular } from "../../components/movil";
 
 /** Lo que necesitan la celda y el detalle de stock de un producto. */
 export type ProductoStock = Pick<ProductoMl, "sku" | "nombre" | "stockFull" | "stockFullAl" | "stock03">;
@@ -115,6 +116,7 @@ function DialogoStock({ producto, tipo, onCerrar }: { producto: ProductoStock; t
     .filter((b) => b.stock || b.comprometido || b.oc)
     .sort((a, b) => (a.codigo === "03" ? -1 : b.codigo === "03" ? 1 : b.stock - a.stock));
   const maximo = Math.max(0, ...filas.map((b) => b.stock));
+  const esCelular = useEsCelular();
   const ordenBodegas = useOrdenTabla(filas, {
     bodega: (b) => b.codigo,
     stock: (b) => b.stock,
@@ -184,6 +186,21 @@ function DialogoStock({ producto, tipo, onCerrar }: { producto: ProductoStock; t
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} height={40} />)
         ) : filas.length === 0 ? (
           <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 3, textAlign: "center" }}>Sin stock en ninguna bodega de SAP.</Typography>
+        ) : esCelular ? (
+          // En celular cada bodega es una tarjeta; la 03 (Colecta) va primero.
+          <TarjetasMovil
+            filas={filas.map((b) => ({
+              clave: b.codigo,
+              titulo: `Bodega ${b.codigo}`,
+              meta: b.codigo === "03" ? <Box component="span" sx={{ color: "#b54708" }}>Colecta</Box> : undefined,
+              principales: [
+                { titulo: "Stock", valor: unidades(b.stock) },
+                { titulo: "Comprom.", valor: unidades(b.comprometido) },
+                { titulo: "Disponible", valor: <Box component="span" sx={{ color: b.disponible < 0 ? estado.mal.color : undefined }}>{unidades(b.disponible)}</Box> },
+              ],
+              detalle: [{ titulo: "En OC", valor: unidades(b.oc) }],
+            }))}
+          />
         ) : (
           <TableContainer sx={{ border: `1px solid ${tinta.borde}`, borderRadius: "12px", overflowX: "hidden" }}>
             <Table size="small" sx={tablaSx}>

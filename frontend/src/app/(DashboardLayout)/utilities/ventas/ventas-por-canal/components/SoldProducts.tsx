@@ -7,6 +7,7 @@ import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { BarraParticipacion, ChipMargen, Panel, formatoPesos, tablaSx, tinta, Columnas, TextoCelda } from "../../components/estilo";
 import { CeldaOrden, useOrdenTabla } from "../../components/ordenTabla";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "../../components/movil";
 
 interface Filtros {
   canal: string;
@@ -45,6 +46,7 @@ const SIN_IMAGEN = "https://res.cloudinary.com/dhzahos7u/image/upload/v174896038
 const ProductosVendidos: React.FC<Props> = ({ filters }) => {
   const [page, setPage] = useState(1);
   const rowsPerPage = 100;
+  const esCelular = useEsCelular();
 
   // Filtros sin paginación: si cambian se vuelve a la página 1 en el mismo
   // render (antes un efecto pedía primero con la página vieja y luego con la 1).
@@ -107,6 +109,7 @@ const ProductosVendidos: React.FC<Props> = ({ filters }) => {
           ? "Cargando…"
           : `${totalProductos.toLocaleString("es-CL")} productos · mostrando ${(offset + 1).toLocaleString("es-CL")}–${(offset + productos.length).toLocaleString("es-CL")}`
       }
+      sx={{ p: { xs: 1.5, sm: 2.5 } }}
     >
       {cargando ? (
         Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} height={52} />)
@@ -114,6 +117,42 @@ const ProductosVendidos: React.FC<Props> = ({ filters }) => {
         <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 6, textAlign: "center" }}>No se encontraron productos.</Typography>
       ) : (
         <>
+          {esCelular ? (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+              <OrdenMovil
+                opciones={[
+                  { clave: "cantidad", titulo: "Cantidad" },
+                  { clave: "venta", titulo: "Total ventas" },
+                  { clave: "margenPct", titulo: "% Margen" },
+                  { clave: "margen", titulo: "Margen bruto" },
+                  { clave: "precio", titulo: "Precio prom." },
+                  { clave: "stock", titulo: "Stock" },
+                  { clave: "categoria", titulo: "Primer nivel" },
+                  { clave: "producto", titulo: "Producto" },
+                ]}
+                clave={orden.orden?.clave ?? ""}
+                direccion={orden.orden?.direccion ?? "desc"}
+                onCambiar={(clave, direccion) => orden.setOrden({ clave, direccion })}
+              />
+              <TarjetasMovil
+                filas={orden.ordenadas.map((row) => ({
+                  clave: row.sku,
+                  titulo: row.nombre,
+                  meta: [row.sku, [row.primerNivel, row.categoria].filter(Boolean).join(" › ")].filter(Boolean).join(" · "),
+                  principales: [
+                    { titulo: "Unid.", valor: (cifra(row.cantidadVendida) ?? 0).toLocaleString("es-CL") },
+                    { titulo: "Ventas", valor: formatoPesos(row.totalVentas) },
+                    { titulo: "Margen", valor: <ChipMargen valor={row.margenPorcentaje} /> },
+                  ],
+                  detalle: [
+                    { titulo: "Margen bruto", valor: formatoPesos(cifra(row.margenBruto) ?? 0) },
+                    { titulo: "Precio prom.", valor: formatoPesos(cifra(row.precioPromedio) ?? 0) },
+                    { titulo: "Stock", valor: cifra(row.stockCanal) != null ? cifra(row.stockCanal)!.toLocaleString("es-CL") : "—" },
+                  ],
+                }))}
+              />
+            </Box>
+          ) : (
           <TableContainer sx={{ maxHeight: 640, mx: -2.5, width: "auto", overflowX: "hidden" }}>
             <Table size="small" stickyHeader sx={tablaSx}>
           <Columnas anchos={[26, 16, 9, 13, 10, 11, 8, 7]} />
@@ -171,6 +210,7 @@ const ProductosVendidos: React.FC<Props> = ({ filters }) => {
               </TableBody>
             </Table>
           </TableContainer>
+          )}
           {paginas > 1 && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
               <Pagination count={paginas} page={paginaActual} onChange={(_, p) => setPage(p)} color="primary" shape="rounded" />

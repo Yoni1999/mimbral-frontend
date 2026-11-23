@@ -6,6 +6,7 @@ import { useApiDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
 import { Columnas, Panel, TextoCelda, estado, formatoMonto, formatoPesos, tablaSx, tinta } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
 import { CeldaOrden, useOrdenTabla } from "../../ventas/components/ordenTabla";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 const fecha = (iso?: string | null) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "—");
 const unidades = (v: number) => v.toLocaleString("es-CL", { maximumFractionDigits: 2 });
@@ -41,6 +42,7 @@ export default function PanelCompras({ sku }: { sku: string }) {
     total: (o) => Number(o.TotalLinea),
     comprador: (o) => o.Vendedor,
   });
+  const esCelular = useEsCelular();
   const comprado = ocs.filter((o) => o.EstaCancelado !== "Y").reduce((s, o) => s + (Number(o.CantidadComprada) || 0), 0);
 
   return (
@@ -55,7 +57,7 @@ export default function PanelCompras({ sku }: { sku: string }) {
           ) : provs.length === 0 ? (
             <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 4, textAlign: "center" }}>Sin órdenes de compra con entrega registrada.</Typography>
           ) : (
-            <TableContainer sx={{ mx: -2.5, width: "auto", overflowX: "hidden" }}>
+            <TableContainer sx={{ mx: -2.5, width: "auto", overflowX: { xs: "auto", sm: "hidden" } }}>
               <Table size="small" sx={tablaSx}>
                 <Columnas anchos={[56, 20, 24]} />
                 <TableHead>
@@ -92,6 +94,38 @@ export default function PanelCompras({ sku }: { sku: string }) {
             Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} height={44} />)
           ) : ocs.length === 0 ? (
             <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 4, textAlign: "center" }}>Sin órdenes de compra en los últimos 12 meses.</Typography>
+          ) : esCelular ? (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+              <OrdenMovil
+                opciones={[
+                  { clave: "fecha", titulo: "Fecha" },
+                  { clave: "total", titulo: "Total" },
+                  { clave: "cantidad", titulo: "Cantidad" },
+                  { clave: "precio", titulo: "Precio unit." },
+                  { clave: "oc", titulo: "OC" },
+                  { clave: "comprador", titulo: "Comprador" },
+                ]}
+                clave={ordenOcs.orden?.clave ?? ""}
+                direccion={ordenOcs.orden?.direccion ?? "desc"}
+                onCambiar={(clave, direccion) => ordenOcs.setOrden({ clave, direccion })}
+              />
+              <TarjetasMovil
+                filas={ordenOcs.ordenadas.map((o, i) => ({
+                  clave: `${o.NumeroOrdenCompra}-${i}`,
+                  titulo: `OC ${o.NumeroOrdenCompra}`,
+                  meta: `${fecha(o.FechaOrden)} · ${o.Vendedor || "—"}`,
+                  principales: [
+                    { titulo: "Cantidad", valor: unidades(Number(o.CantidadComprada) || 0) },
+                    { titulo: "Total", valor: formatoMonto(o.TotalLinea) },
+                    { titulo: "Estado", valor: <Estado abierta={o.EstadoDocumento === "O"} cancelada={o.EstaCancelado === "Y"} /> },
+                  ],
+                  detalle: [
+                    { titulo: "Precio unit.", valor: formatoPesos(o.PrecioUnitario) },
+                    { titulo: "Comprador", valor: o.Vendedor || "—" },
+                  ],
+                }))}
+              />
+            </Box>
           ) : (
             <TableContainer sx={{ maxHeight: 520, mx: -2.5, width: "auto", overflowX: "hidden" }}>
               <Table size="small" stickyHeader sx={tablaSx}>

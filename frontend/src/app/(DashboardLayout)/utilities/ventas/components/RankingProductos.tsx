@@ -20,6 +20,7 @@ import {
   tablaSx,
   tinta,
 } from "./estilo";
+import { TarjetasMovil, useEsCelular } from "./movil";
 
 type Medida = "totalVentas" | "cantidadVendida" | "margenBruto" | "margenPorcentaje";
 type Orden = "desc" | "asc";
@@ -78,6 +79,7 @@ interface Props {
  *  `comparacion` y el producto aparece en ella. */
 const RankingProductos: React.FC<Props> = ({ parametros, claveVista, comparacion: fuenteComparacion, onElegir }) => {
   const router = useRouter();
+  const esCelular = useEsCelular();
   const elegir =
     onElegir ?? ((p: { sku: string }) => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(p.sku)}`));
   const [vista, setVista] = useEstadoVista<{ medida: Medida; orden: Orden; cantidad: string }>(claveVista, () => ({
@@ -159,8 +161,59 @@ const RankingProductos: React.FC<Props> = ({ parametros, claveVista, comparacion
           <Pildoras etiqueta="Cantidad" opciones={CANTIDADES} valor={cantidad} onCambiar={(c) => setVista((v) => ({ ...v, cantidad: c }))} />
         </Stack>
       }
+      sx={{ p: { xs: 1.5, sm: 2.5 } }}
     >
-      {cargando ? (
+      {esCelular ? (
+        // En celular el orden ya se elige con las píldoras de arriba (lo ordena el servidor).
+        <TarjetasMovil
+          cargando={cargando}
+          vacio="Sin ventas en el período."
+          filas={productos.map((p, i) => {
+            const comp = comparacion[p.sku];
+            // La tercera cifra fija es el margen que se está midiendo ($ o %).
+            const margenPesos = { titulo: "Margen $", valor: formatoMonto(p.margen) };
+            const margenPct = { titulo: "% Margen", valor: <ChipMargen valor={p.margenPorcentaje} /> };
+            return {
+              clave: p.sku,
+              titulo: (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box
+                    component="img"
+                    src={p.imagen || SIN_IMAGEN}
+                    onError={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      img.onerror = null;
+                      img.src = SIN_IMAGEN;
+                    }}
+                    alt=""
+                    sx={{ width: 34, height: 34, objectFit: "contain", borderRadius: "8px", border: `1px solid ${tinta.borde}`, bgcolor: "#fff", flexShrink: 0 }}
+                  />
+                  <Box sx={{ minWidth: 0 }}>{p.nombre}</Box>
+                </Box>
+              ),
+              meta: `#${i + 1} · SKU ${p.sku}`,
+              onAbrir: () => elegir(p),
+              principales: [
+                {
+                  titulo: "Venta",
+                  valor: (
+                    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                      {formatoMonto(p.venta)}
+                      {comp && <ChipVariacion valor={comp.cambio} />}
+                    </Box>
+                  ),
+                },
+                { titulo: "Unid.", valor: p.unidades.toLocaleString("es-CL", { maximumFractionDigits: 2 }) },
+                medida === "margenBruto" ? margenPesos : margenPct,
+              ],
+              detalle: [
+                medida === "margenBruto" ? margenPct : margenPesos,
+                ...(comp ? [{ titulo: "Venta anterior", valor: formatoMonto(comp.anterior) }] : []),
+              ],
+            };
+          })}
+        />
+      ) : cargando ? (
         Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} height={48} />)
       ) : productos.length === 0 ? (
         <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 6, textAlign: "center" }}>Sin ventas en el período.</Typography>

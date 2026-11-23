@@ -17,6 +17,7 @@ import {
   tablaSx,
   tinta,
 } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 interface Vendedor {
   codigo: number;
@@ -64,6 +65,7 @@ export default function PanelVendedores({ query }: { query: string }) {
       (vista.orden === "nombre" ? a.nombre.localeCompare(b.nombre, "es") : a[vista.orden] - b[vista.orden])
   );
   const maximo = Math.max(0, ...datos.map((v) => v.venta));
+  const esCelular = useEsCelular();
 
   const encabezado = (o: Orden, texto: string, align: "left" | "right" = "right") => (
     <TableCell align={align} sortDirection={vista.orden === o ? vista.direccion : false}>
@@ -83,6 +85,37 @@ export default function PanelVendedores({ query }: { query: string }) {
         Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} height={48} />)
       ) : filas.length === 0 ? (
         <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 6, textAlign: "center" }}>Sin ventas en el período.</Typography>
+      ) : esCelular ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+          <OrdenMovil
+            opciones={[
+              { clave: "venta", titulo: "Venta" },
+              { clave: "unidades", titulo: "Unidades" },
+              { clave: "margen", titulo: "Margen $" },
+              { clave: "margenPorcentaje", titulo: "% Margen" },
+              { clave: "nombre", titulo: "Vendedor" },
+            ]}
+            clave={vista.orden}
+            direccion={vista.direccion}
+            onCambiar={(clave, direccion) => setVista({ orden: clave as Orden, direccion })}
+          />
+          <TarjetasMovil
+            filas={filas.map((v) => ({
+              clave: String(v.codigo),
+              titulo: v.nombre,
+              meta: `Código ${v.codigo}`,
+              principales: [
+                { titulo: "Venta", valor: formatoMonto(v.venta) },
+                { titulo: "Unidades", valor: v.unidades.toLocaleString("es-CL", { maximumFractionDigits: 2 }) },
+                { titulo: "% Margen", valor: <ChipMargen valor={v.margenPorcentaje} /> },
+              ],
+              detalle: [
+                { titulo: "Margen $", valor: formatoMonto(v.margen) },
+                { titulo: "Participación", valor: formatoPorcentaje(v.participacion) },
+              ],
+            }))}
+          />
+        </Box>
       ) : (
         <TableContainer sx={{ maxHeight: 560, mx: -2.5, width: "auto", overflowX: "hidden" }}>
           <Table size="small" stickyHeader sx={tablaSx}>

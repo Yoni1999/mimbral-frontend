@@ -85,6 +85,7 @@ export default function PublicacionesConProblemas() {
       clave: "producto",
       titulo: "Producto",
       ancho: 28,
+      movil: "titulo",
       valor: (f) => f.nombre ?? "",
       celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} secundario={`${f.catalogo ? "Catálogo" : "Normal"} · ${LOGISTICA[f.logistica ?? ""] ?? f.logistica ?? "—"}`} />,
     },
@@ -106,6 +107,7 @@ export default function PublicacionesConProblemas() {
       clave: "problemas",
       titulo: "Problema",
       ancho: 14,
+      movil: "principal",
       valor: (f) => f.problemas.map((p) => PROBLEMAS[p].texto).join(", "),
       celda: (f) => (
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
@@ -119,12 +121,13 @@ export default function PublicacionesConProblemas() {
         </Box>
       ),
     },
-    { clave: "venta", titulo: `Vendió ${filtros.dias} d`, ancho: 11, alinear: "right", valor: (f) => redondo(f.venta), excel: "Venta sin IVA", celda: (f) => <Box>{pesos(f.venta)}<Box sx={{ fontSize: 10.5, color: tinta.tenue }}>{entero(f.unidades)} u.</Box></Box> },
+    { clave: "venta", titulo: `Vendió ${filtros.dias} d`, ancho: 11, movil: "principal", alinear: "right", valor: (f) => redondo(f.venta), excel: "Venta sin IVA", celda: (f) => <Box>{pesos(f.venta)}<Box sx={{ fontSize: 10.5, color: tinta.tenue }}>{entero(f.unidades)} u.</Box></Box> },
     { clave: "ultima", titulo: "Última venta", ancho: 9, alinear: "right", valor: (f) => f.ultimaVenta ?? "", celda: (f) => fecha(f.ultimaVenta) },
     {
       clave: "stock",
       titulo: "Stock ML / nuestro",
       ancho: 13,
+      movil: "principal",
       alinear: "right",
       valor: (f) => f.stockPublicado,
       excel: "Stock que muestra ML",

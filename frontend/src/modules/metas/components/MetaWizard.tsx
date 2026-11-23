@@ -141,7 +141,11 @@ export default function MetaWizard({ onCrear, onCancelar, creando }: Props) {
 
   return (
     <Box>
-      <Stepper activeStep={paso} sx={{ mb: 4 }}>
+      {/* En celular los cuatro nombres no caben: solo se ve el del paso actual. */}
+      <Stepper
+        activeStep={paso}
+        sx={{ mb: 4, "& .MuiStepLabel-labelContainer:not(:has(.Mui-active))": { display: { xs: "none", sm: "block" } } }}
+      >
         {PASOS.map((p, idx) => (
           <Step key={p.label}>
             <StepLabel

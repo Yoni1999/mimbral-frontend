@@ -9,6 +9,7 @@ import { CeldaStock } from "./StockBodegas";
 import PublicacionesMl, { estadoPublicacion } from "./PublicacionesMl";
 import { BarraTipos, Monto, ProductoMl, TipoEnvio, cobros, n, unidades } from "./comun";
 import { CeldaOrden, OrdenTabla, ValorOrden } from "../../components/ordenTabla";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "../../components/movil";
 
 /** Valores por los que se ordenan las columnas de la tabla (con `useOrdenTabla`). */
 export const valoresOrdenProductosMl = (tipo: TipoEnvio | ""): Record<string, (p: ProductoMl) => ValorOrden> => ({
@@ -43,6 +44,7 @@ interface Props {
  */
 export default function TablaProductosMl({ filas, cargando, tipo, desde = 0, filasCargando = 8, vacio = "Sin ventas de Mercado Libre en el período.", orden = null, onOrdenar }: Props) {
   const router = useRouter();
+  const esCelular = useEsCelular();
   const titulo = (clave: string, texto: string, align?: "left" | "right") =>
     onOrdenar ? (
       <CeldaOrden clave={clave} orden={orden} onOrdenar={onOrdenar} align={align}>
@@ -51,6 +53,63 @@ export default function TablaProductosMl({ filas, cargando, tipo, desde = 0, fil
     ) : (
       <TableCell align={align}>{texto}</TableCell>
     );
+
+  if (esCelular) {
+    // En celular: una tarjeta por producto con unidades, venta y lo que queda;
+    // publicación, envío, cobro de ML y stock en "Ver detalle".
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, px: 1.5, pb: 1 }}>
+        {onOrdenar && (
+          <OrdenMovil
+            opciones={[
+              { clave: "venta", titulo: "Venta" },
+              { clave: "unidades", titulo: "Unid." },
+              { clave: "queda", titulo: "Queda" },
+              { clave: "cobra", titulo: "Cobra ML" },
+              { clave: "stock", titulo: "Stock" },
+              { clave: "publicacion", titulo: "Publicación" },
+              { clave: "producto", titulo: "Producto" },
+            ]}
+            clave={orden?.clave ?? ""}
+            direccion={orden?.direccion ?? "desc"}
+            onCambiar={(clave, direccion) => {
+              // onOrdenar alterna la dirección al repetir la columna y parte de mayor a menor al cambiarla.
+              if (clave && (clave !== orden?.clave || direccion !== orden?.direccion)) onOrdenar(clave);
+            }}
+          />
+        )}
+        <TarjetasMovil
+          cargando={cargando}
+          vacio={vacio}
+          filas={filas.map((p, i) => {
+            const cobra = cobros(p);
+            const pctCobra = n(p.venta.neto) ? (n(cobra.neto) / n(p.venta.neto)) * 100 : null;
+            return {
+              clave: p.sku,
+              titulo: `${desde + i + 1}. ${p.nombre ?? "Sin nombre en SAP"}`,
+              meta: [p.sku, p.rutaCategoria.length ? p.rutaCategoria.map((c) => c.nombre).join(" › ") : "Sin categoría ML"].join(" · "),
+              onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(p.sku)}`),
+              principales: [
+                { titulo: "Unid.", valor: unidades(p.unidades) },
+                { titulo: "Venta", valor: <Monto par={p.venta} /> },
+                { titulo: "Queda", valor: <Monto par={p.queda} /> },
+              ],
+              detalle: [
+                { titulo: "Publicación", valor: <PublicacionesMl publicaciones={p.publicaciones} /> },
+                ...(p.participacion != null ? [{ titulo: "Del total", valor: formatoPorcentaje(p.participacion * 100) }] : []),
+                { titulo: "Envío", valor: <Box sx={{ minWidth: 120 }}><BarraTipos porTipo={p.porTipo} /></Box> },
+                {
+                  titulo: "Cobra ML",
+                  valor: cobra.neto ? `${formatoPesos(cobra.neto)}${p.comisionEstimada ? "*" : ""}${pctCobra != null ? ` (${formatoPorcentaje(pctCobra)})` : ""}` : "—",
+                },
+                { titulo: "Stock", valor: <CeldaStock producto={p} tipo={tipo} /> },
+              ],
+            };
+          })}
+        />
+      </Box>
+    );
+  }
 
   return (
     <TableContainer sx={{ overflowX: { xs: "auto", lg: "hidden" } }}>

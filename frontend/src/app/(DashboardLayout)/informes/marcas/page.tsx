@@ -28,6 +28,7 @@ import {
 import { descargarExcel } from "@/app/(DashboardLayout)/utilities/ventas/components/detalle/comun";
 import HeaderMl, { RangoMl } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/HeaderMl";
 import { CeldaOrden, useOrdenTabla, OrdenTabla } from "@/app/(DashboardLayout)/utilities/ventas/components/ordenTabla";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 // ── Tipos de la respuesta (analysis-service /api/marcas) ─────────────────────
 
@@ -249,6 +250,38 @@ function TablaMarcas({
   onOrdenar: (clave: string) => void;
 }) {
   const o = { orden, ordenarPor: onOrdenar };
+  const esCelular = useEsCelular();
+  // En celular cada marca es una tarjeta; el orden lo dan las píldoras "Ordenar por".
+  if (esCelular) {
+    return (
+      <Box sx={{ px: 1.5, pb: 1 }}>
+        <TarjetasMovil
+          cargando={cargando}
+          vacio="Sin ventas en el período."
+          filas={filas.map((m, i) => ({
+            clave: m.marca,
+            titulo: m.marca,
+            meta: `#${desde + i + 1} · ${unidades(m.productos)} productos con venta`,
+            onAbrir: () => onElegir(m.marca),
+            principales: [
+              { titulo: "Venta", valor: formatoMonto(m.venta.neto) },
+              { titulo: "Variación", valor: <Variacion valor={m.variacion} actual={n(m.venta.neto)} /> },
+              { titulo: "Unidades", valor: unidades(m.unidades) },
+            ],
+            detalle: [
+              { titulo: "Venta sin IVA", valor: formatoPesos(m.venta.neto) },
+              { titulo: "Venta con IVA", valor: formatoPesos(m.venta.conIva) },
+              { titulo: "Comparación", valor: formatoPesos(m.ventaAnterior.neto) },
+              { titulo: "Diferencia", valor: <Diferencia valor={m.diferencia.neto} /> },
+              { titulo: "Unidades antes", valor: unidades(m.unidadesAnterior) },
+              { titulo: "Productos ↑ / ↓", valor: `↑ ${m.suben} / ↓ ${m.bajan}` },
+              { titulo: "Participación", valor: `${(m.participacion * 100).toFixed(1).replace(".", ",")}%` },
+            ],
+          }))}
+        />
+      </Box>
+    );
+  }
   return (
     <Box sx={{ overflowX: "auto" }}>
       <Table size="small" sx={{ ...tablaSx, minWidth: 900 }}>
@@ -330,6 +363,47 @@ function TablaProductos({ filas, cargando, vacio }: { filas: ProductoMarca[]; ca
     diferencia: (p) => n(p.diferencia.neto),
     unidades: (p) => p.unidades,
   });
+  const esCelular = useEsCelular();
+  if (esCelular) {
+    return (
+      <Box sx={{ px: 1.5, pb: 1.5, display: "flex", flexDirection: "column", gap: 1.25 }}>
+        <OrdenMovil
+          opciones={[
+            { clave: "venta", titulo: "Venta" },
+            { clave: "comparacion", titulo: "Comparación" },
+            { clave: "variacion", titulo: "Variación" },
+            { clave: "diferencia", titulo: "Diferencia" },
+            { clave: "unidades", titulo: "Unidades" },
+            { clave: "producto", titulo: "Producto" },
+          ]}
+          clave={o.orden?.clave ?? ""}
+          direccion={o.orden?.direccion ?? "desc"}
+          onCambiar={(clave, direccion) => o.setOrden({ clave, direccion })}
+        />
+        <TarjetasMovil
+          cargando={cargando}
+          vacio={vacio}
+          filas={o.ordenadas.map((p, i) => ({
+            clave: p.sku,
+            titulo: p.nombre || p.sku,
+            meta: [`#${i + 1}`, p.sku, ...Object.entries(p.tipos).map(([t, u]) => `${NOMBRE_TIPO[t] ?? t} ${unidades(u)}`)].join(" · "),
+            principales: [
+              { titulo: "Venta", valor: formatoMonto(p.venta.neto) },
+              { titulo: "Variación", valor: <Variacion valor={p.variacion} actual={n(p.venta.neto)} /> },
+              { titulo: "Unidades", valor: unidades(p.unidades) },
+            ],
+            detalle: [
+              { titulo: "Venta sin IVA", valor: formatoPesos(p.venta.neto) },
+              { titulo: "Venta con IVA", valor: formatoPesos(p.venta.conIva) },
+              { titulo: "Comparación", valor: formatoPesos(p.ventaAnterior.neto) },
+              { titulo: "Diferencia", valor: <Diferencia valor={p.diferencia.neto} /> },
+              { titulo: "Unidades antes", valor: unidades(p.unidadesAnterior) },
+            ],
+          }))}
+        />
+      </Box>
+    );
+  }
   return (
     <Box sx={{ overflowX: "auto" }}>
       <Table size="small" sx={{ ...tablaSx, minWidth: 860 }}>
@@ -534,7 +608,7 @@ export default function InformeMarcas() {
           <Pildoras etiqueta="Canal" opciones={CANALES} valor={filtros.canal} onCambiar={(c) => setFiltros((f) => ({ ...f, canal: c }))} />
         </HeaderMl>
 
-        <Box sx={{ ...tarjetaSx, px: 2.5, py: 1.5, mb: 2, display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 2 }}>
+        <Box sx={{ ...tarjetaSx, px: { xs: 1.5, sm: 2.5 }, py: 1.5, mb: 2, display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 2 }}>
           <Box>
             <Typography sx={etiquetaControlSx}>Comparar contra</Typography>
             <Pildoras etiqueta="Comparar contra" opciones={COMPARAR} valor={filtros.comparar} onCambiar={(c) => setFiltros((f) => ({ ...f, comparar: c }))} />
@@ -548,7 +622,7 @@ export default function InformeMarcas() {
           <>
             <Tarjetas items={tarjetasResumen} cargando={resumen.cargando} />
             <Box sx={{ ...tarjetaSx, pt: 2, pb: 1 }}>
-              <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 2, px: 2.5, mb: 1.5 }}>
+              <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 2, px: { xs: 1.5, sm: 2.5 }, mb: 1.5 }}>
                 <TextField
                   size="small"
                   placeholder="Buscar marca"
@@ -596,7 +670,7 @@ export default function InformeMarcas() {
           </>
         ) : (
           <>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5, mb: 1.5 }}>
               <Button
                 size="small"
                 startIcon={<IconArrowLeft size={16} />}
@@ -641,7 +715,7 @@ export default function InformeMarcas() {
             <Panel
               titulo={listaActual.texto}
               descripcion={listaActual.descripcion}
-              sx={{ p: 0, pt: 2.5, "& > div:first-of-type": { px: 2.5 } }}
+              sx={{ p: 0, pt: 2.5, "& > div:first-of-type": { px: { xs: 1.5, sm: 2.5 } } }}
               accion={<Pildoras etiqueta="Lista de productos" opciones={LISTAS} valor={filtros.lista} onCambiar={(l) => setFiltros((f) => ({ ...f, lista: l }))} />}
             >
               <TablaProductos filas={d ? d[filtros.lista] : []} cargando={detalle.cargando} vacio="No hay productos en esta lista para el período." />

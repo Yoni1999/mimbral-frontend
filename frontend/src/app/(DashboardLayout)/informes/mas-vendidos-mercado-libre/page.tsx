@@ -196,7 +196,7 @@ export default function InformeMasVendidosMercadoLibre() {
         </Box>
 
         <Box sx={{ ...tarjetaSx, pt: 2, pb: 1 }}>
-          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 2, px: 2.5, mb: 1.5 }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 2, px: { xs: 1.5, sm: 2.5 }, mb: 1.5 }}>
             <TextField
               size="small"
               placeholder="Buscar SKU, producto o categoría"

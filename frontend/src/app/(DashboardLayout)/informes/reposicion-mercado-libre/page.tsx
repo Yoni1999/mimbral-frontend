@@ -16,6 +16,7 @@ import HeaderMl, { RangoMl } from "@/app/(DashboardLayout)/utilities/ventas/merc
 import { CeldaStock } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/StockBodegas";
 import { Par, fechaCorta, tipoEnvio, unidades, urlMl } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/comun";
 import { CeldaOrden, useOrdenTabla } from "@/app/(DashboardLayout)/utilities/ventas/components/ordenTabla";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 type Lado = "full" | "colecta";
 type Estado = "sin_stock" | "critico" | "bajo" | "sin_dato";
@@ -124,6 +125,7 @@ function ChipEstado({ estado, dias }: { estado: Estado; dias: number | null }) {
  */
 export default function InformeReposicionMercadoLibre() {
   const router = useRouter();
+  const esCelular = useEsCelular();
   const [filtros, setFiltros] = useEstadoVista<Filtros>("informe-reposicion-ml", inicial, {
     serializar: conPeriodoRapido,
     restaurar: (g) => ({ ...inicial(), ...resolverPeriodoRapido<Filtros>(g) }),
@@ -210,6 +212,53 @@ export default function InformeReposicionMercadoLibre() {
       nota: `Lo que vendieron en el período los productos de esta lista. Con IVA: ${formatoPesos(r?.resumen.ventaEnRiesgo.conIva)}.`,
     },
   ];
+
+  // Celdas que comparten la tabla y las tarjetas de celular.
+  const celdaVende = (f: FilaReposicion) => (
+    <Tooltip title={`${unidades(f.unidades)} unidades en ${r?.dias ?? ""} días · ${formatoPesos(f.venta.neto)} sin IVA`} placement="top" arrow>
+      <Box component="span" sx={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end" }}>
+        <Box component="span" sx={{ fontWeight: 700 }}>{dec(f.ventaDiaria, 2)}</Box>
+        <Box component="span" sx={{ fontSize: 10.5, color: tinta.tenue }}>{unidades(f.unidades)} u. en el período</Box>
+      </Box>
+    </Tooltip>
+  );
+  const celdaUltima = (f: FilaReposicion) =>
+    f.ultimaVenta ? (
+      <Tooltip title={`Último día con venta por ${tipoEnvio(f.lado)!.nombre} en el período`} placement="top" arrow>
+        <Box component="span" sx={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end" }}>
+          <Box component="span" sx={{ fontWeight: 600 }}>{fechaCorta(f.ultimaVenta).slice(0, 5)}</Box>
+          <Box component="span" sx={{ fontSize: 10.5, color: diasDesde(f.ultimaVenta) > 7 ? "#b54708" : tinta.tenue }}>
+            {hace(diasDesde(f.ultimaVenta))}
+          </Box>
+        </Box>
+      </Tooltip>
+    ) : (
+      <Box component="span" sx={{ color: tinta.tenue }}>—</Box>
+    );
+  const celdaStock = (f: FilaReposicion) => (
+    <>
+      <CeldaStock producto={f} tipo={f.lado} />
+      {f.lado === "full" && f.stockAl && <Box sx={{ fontSize: 10, color: tinta.tenue }}>al {fechaCorta(f.stockAl)}</Box>}
+    </>
+  );
+  const celdaOtras = (f: FilaReposicion) => (
+    <Tooltip title="Stock en las bodegas de venta 01, 07, 08 y 13 de SAP: de donde se puede reponer." placement="top" arrow>
+      <Box component="span" sx={{ fontWeight: 600, color: f.stockOtras > 0 ? tinta.primaria : tinta.tenue }}>{unidades(f.stockOtras)}</Box>
+    </Tooltip>
+  );
+  const celdaReponer = (f: FilaReposicion) =>
+    f.sugerido == null ? (
+      <Box component="span" sx={{ fontSize: 11.5, color: tinta.tenue }}>ver stock en ML</Box>
+    ) : (
+      <Box component="span" sx={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end" }}>
+        <Box component="span" sx={{ fontWeight: 750, color: tinta.acento }}>{unidades(f.sugerido)} u.</Box>
+        {f.sugerido > f.stockOtras && (
+          <Box component="span" sx={{ fontSize: 10.5, color: "#b54708" }}>
+            {f.stockOtras > 0 ? `solo hay ${unidades(f.stockOtras)} en bodegas` : "sin stock en bodegas"}
+          </Box>
+        )}
+      </Box>
+    );
 
   const exportar = async () => {
     setDescargando(true);
@@ -315,6 +364,58 @@ export default function InformeReposicionMercadoLibre() {
               : `${unidades(filas.length)} de ${unidades(r?.resumen.analizados)} productos con venta están bajo ${filtros.umbral} días de stock${filtros.estado ? ` · solo «${ESTADOS[filtros.estado].texto}»` : ""}. Días de stock = stock ÷ venta diaria de los últimos ${r?.dias ?? ""} días. Full: stock guardado de ML (pulsa para verlo en vivo); Colecta: bodega 03.`}
           </Typography>
 
+          {esCelular ? (
+            // En celular, una tarjeta por producto: stock, cuánto alcanza y cuánto reponer; el resto en "Ver detalle".
+            <Box sx={{ px: 1.5, pb: 1, display: "flex", flexDirection: "column", gap: 1.25 }}>
+              <OrdenMovil
+                opciones={[
+                  { clave: "alcanza", titulo: "Alcanza" },
+                  { clave: "reponer", titulo: "Reponer" },
+                  { clave: "stock", titulo: "Stock" },
+                  { clave: "ventaDiaria", titulo: "Vende/día" },
+                  { clave: "ultimaVenta", titulo: "Última venta" },
+                  { clave: "otras", titulo: "Otras bod." },
+                  { clave: "envio", titulo: "Envío" },
+                  { clave: "producto", titulo: "Producto" },
+                ]}
+                clave={ordenFilas.orden?.clave ?? ""}
+                direccion={ordenFilas.orden?.direccion ?? "desc"}
+                onCambiar={(clave, direccion) => clave && ordenFilas.setOrden({ clave, direccion })}
+              />
+              <TarjetasMovil
+                cargando={datos.cargando}
+                vacio={q || filtros.estado ? "Ningún producto coincide con el filtro." : "Ningún producto con venta está bajo el umbral de stock."}
+                filas={visibles.map((f, i) => {
+                  const lado = tipoEnvio(f.lado)!;
+                  return {
+                    clave: `${f.sku}-${f.lado}`,
+                    titulo: `${(pagina - 1) * POR_PAGINA + i + 1}. ${f.nombre ?? "Sin nombre en SAP"}`,
+                    meta: [f.sku, f.categoria ?? "Sin categoría ML"].join(" · "),
+                    onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(f.sku)}`),
+                    principales: [
+                      { titulo: "Stock", valor: celdaStock(f) },
+                      { titulo: "Alcanza", valor: <ChipEstado estado={f.estado} dias={f.diasStock} /> },
+                      { titulo: "Reponer", valor: celdaReponer(f) },
+                    ],
+                    detalle: [
+                      {
+                        titulo: "Envío",
+                        valor: (
+                          <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.6 }}>
+                            <Box component="span" sx={{ width: 8, height: 8, borderRadius: "2px", bgcolor: lado.color }} />
+                            {lado.nombre}
+                          </Box>
+                        ),
+                      },
+                      { titulo: "Vende/día", valor: celdaVende(f) },
+                      { titulo: "Última venta", valor: celdaUltima(f) },
+                      { titulo: "Otras bod.", valor: celdaOtras(f) },
+                    ],
+                  };
+                })}
+              />
+            </Box>
+          ) : (
           <TableContainer sx={{ overflowX: { xs: "auto", lg: "hidden" } }}>
             <Table size="small" sx={{ ...tablaSx, minWidth: { xs: 980, lg: 0 } }}>
               <Columnas anchos={[4, 27, 8, 9, 10, 10, 11, 9, 12]} />
@@ -373,54 +474,14 @@ export default function InformeReposicionMercadoLibre() {
                             {lado.nombre}
                           </Box>
                         </TableCell>
-                        <TableCell align="right">
-                          <Tooltip title={`${unidades(f.unidades)} unidades en ${r?.dias ?? ""} días · ${formatoPesos(f.venta.neto)} sin IVA`} placement="top" arrow>
-                            <Box component="span" sx={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end" }}>
-                              <Box component="span" sx={{ fontWeight: 700 }}>{dec(f.ventaDiaria, 2)}</Box>
-                              <Box component="span" sx={{ fontSize: 10.5, color: tinta.tenue }}>{unidades(f.unidades)} u. en el período</Box>
-                            </Box>
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell align="right">
-                          {f.ultimaVenta ? (
-                            <Tooltip title={`Último día con venta por ${lado.nombre} en el período`} placement="top" arrow>
-                              <Box component="span" sx={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end" }}>
-                                <Box component="span" sx={{ fontWeight: 600 }}>{fechaCorta(f.ultimaVenta).slice(0, 5)}</Box>
-                                <Box component="span" sx={{ fontSize: 10.5, color: diasDesde(f.ultimaVenta) > 7 ? "#b54708" : tinta.tenue }}>
-                                  {hace(diasDesde(f.ultimaVenta))}
-                                </Box>
-                              </Box>
-                            </Tooltip>
-                          ) : (
-                            <Box component="span" sx={{ color: tinta.tenue }}>—</Box>
-                          )}
-                        </TableCell>
-                        <TableCell align="right">
-                          <CeldaStock producto={f} tipo={f.lado} />
-                          {f.lado === "full" && f.stockAl && <Box sx={{ fontSize: 10, color: tinta.tenue }}>al {fechaCorta(f.stockAl)}</Box>}
-                        </TableCell>
+                        <TableCell align="right">{celdaVende(f)}</TableCell>
+                        <TableCell align="right">{celdaUltima(f)}</TableCell>
+                        <TableCell align="right">{celdaStock(f)}</TableCell>
                         <TableCell align="right">
                           <ChipEstado estado={f.estado} dias={f.diasStock} />
                         </TableCell>
-                        <TableCell align="right">
-                          <Tooltip title="Stock en las bodegas de venta 01, 07, 08 y 13 de SAP: de donde se puede reponer." placement="top" arrow>
-                            <Box component="span" sx={{ fontWeight: 600, color: f.stockOtras > 0 ? tinta.primaria : tinta.tenue }}>{unidades(f.stockOtras)}</Box>
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell align="right">
-                          {f.sugerido == null ? (
-                            <Box component="span" sx={{ fontSize: 11.5, color: tinta.tenue }}>ver stock en ML</Box>
-                          ) : (
-                            <Box component="span" sx={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end" }}>
-                              <Box component="span" sx={{ fontWeight: 750, color: tinta.acento }}>{unidades(f.sugerido)} u.</Box>
-                              {f.sugerido > f.stockOtras && (
-                                <Box component="span" sx={{ fontSize: 10.5, color: "#b54708" }}>
-                                  {f.stockOtras > 0 ? `solo hay ${unidades(f.stockOtras)} en bodegas` : "sin stock en bodegas"}
-                                </Box>
-                              )}
-                            </Box>
-                          )}
-                        </TableCell>
+                        <TableCell align="right">{celdaOtras(f)}</TableCell>
+                        <TableCell align="right">{celdaReponer(f)}</TableCell>
                       </TableRow>
                     );
                   })
@@ -428,6 +489,7 @@ export default function InformeReposicionMercadoLibre() {
               </TableBody>
             </Table>
           </TableContainer>
+          )}
 
           {paginas > 1 && (
             <Box sx={{ display: "flex", justifyContent: "center", py: 1.5 }}>

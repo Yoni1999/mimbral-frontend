@@ -345,7 +345,7 @@ export default function PerfilPage() {
             background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
           }}
         />
-        <Box sx={{ px: 3, pb: 2, display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2 }}>
+        <Box sx={{ px: { xs: 2, sm: 3 }, pb: 2, display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2 }}>
           <Box position="relative" sx={{ mt: "-40px" }}>
             <Avatar
               alt={nombreCompleto}
@@ -421,7 +421,7 @@ export default function PerfilPage() {
         <Grid item xs={12} md={7}>
           <SectionCard title="DETALLE" icon={<EditIcon color="action" fontSize="small" />}>
             <Grid container spacing={1.5}>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <CampoFila
                   label="Nombres"
                   value={form.nombres}
@@ -429,7 +429,7 @@ export default function PerfilPage() {
                   placeholder="Nombres"
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <CampoFila
                   label="Apellidos"
                   value={form.apellidos}
@@ -437,7 +437,7 @@ export default function PerfilPage() {
                   placeholder="Apellidos"
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <CampoFila
                   label="Correo"
                   type="email"
@@ -446,7 +446,7 @@ export default function PerfilPage() {
                   placeholder="correo@dominio.cl"
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <CampoFila
                   label="Telefono"
                   value={form.telefono}

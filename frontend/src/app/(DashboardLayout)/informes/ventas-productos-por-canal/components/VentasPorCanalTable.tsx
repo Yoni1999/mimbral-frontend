@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { notifySuccess, notifyError } from "@/components/ui/toast/notify";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 export type Order = "asc" | "desc";
 export type OrderBy = "cantidadVendida" | "margenPorcentaje" | "nombre";
@@ -164,6 +165,7 @@ const VentasPorCanalTable: React.FC<Props> = ({
   onOpenStock,
 }) => {
   const safe = Array.isArray(data) ? data : [];
+  const esCelular = useEsCelular();
 
   const handleCopySku = async (sku: string) => {
     const ok = await copyToClipboard(sku);
@@ -173,6 +175,94 @@ const VentasPorCanalTable: React.FC<Props> = ({
       notifyError("No se pudo copiar el SKU. Prueba manualmente con Ctrl/Cmd + C.");
     }
   };
+
+  // Cifra de un canal con su color de semáforo; si tiene detalle, abre el modal.
+  const cifraCanal = (row: ProductoPorCanal, canalNombre: string, color?: ColorSemaforo) => {
+    const canal = row.porCanal?.find((c) => c.canal === canalNombre);
+    const cantidad = canal?.cantidadVendida || 0;
+    if ((canal?.detalles || []).length > 0) {
+      return (
+        <Button
+          variant="text"
+          onClick={() => onOpenDetalle(`${row.nombre} · ${canalNombre}`, canal!.detalles)}
+          sx={{ p: 0, minWidth: 0, fontSize: "inherit", ...semaforoSx(color) }}
+          title={color ? SEMAFORO[color].etiqueta : undefined}
+        >
+          <Box component="span" sx={{ textDecoration: "underline" }}>{formatNumber(cantidad)}</Box>
+        </Button>
+      );
+    }
+    return (
+      <Box component="span" sx={semaforoSx(color)} title={color ? SEMAFORO[color].etiqueta : undefined}>
+        {formatNumber(cantidad)}
+      </Box>
+    );
+  };
+
+  if (esCelular) {
+    // En celular: total, stock y el canal que más vende a la vista; cada canal en "Ver detalle".
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+        <OrdenMovil
+          opciones={[{ clave: "cantidadVendida", titulo: "Cantidad total" }]}
+          clave={ordenPorActual}
+          direccion={ordenActual}
+          // Igual que el encabezado: la misma columna invierte el orden.
+          onCambiar={(clave) => onSortChange(clave as OrderBy)}
+        />
+        <TarjetasMovil
+          vacio={emptyMessage}
+          filas={safe.map((row) => {
+            const semaforo = semaforoPorCanal(row.porCanal, canales);
+            const lider = canales
+              .map((c) => ({ canal: c, cantidad: Number(row.porCanal?.find((x) => x.canal === c)?.cantidadVendida) || 0 }))
+              .filter((c) => c.cantidad > 0)
+              .sort((a, b) => b.cantidad - a.cantidad)[0];
+            const stockTotal = formatNumber(getStockTotalProducto(row.stock));
+            return {
+              clave: row.sku,
+              titulo: row.nombre,
+              // Tocar el título copia el SKU, igual que en la tabla.
+              meta: row.sku,
+              onAbrir: () => handleCopySku(row.sku),
+              principales: [
+                { titulo: "Cant. total", valor: formatNumber(row.cantidadVendida) },
+                {
+                  titulo: "Stock",
+                  valor:
+                    (row.stock || []).length > 0 ? (
+                      <Button
+                        variant="text"
+                        onClick={() => onOpenStock(`${row.nombre} · Stock por bodega`, row.stock || [])}
+                        sx={{ p: 0, minWidth: 0, fontSize: "inherit", fontWeight: "inherit", textDecoration: "underline" }}
+                      >
+                        {stockTotal}
+                      </Button>
+                    ) : (
+                      stockTotal
+                    ),
+                },
+                {
+                  titulo: "Canal líder",
+                  valor: lider ? (
+                    <Box component="span" sx={{ display: "inline-flex", flexWrap: "wrap", alignItems: "center", gap: 0.5 }}>
+                      {formatChannelLabel(lider.canal)} {cifraCanal(row, lider.canal, semaforo.get(lider.canal))}
+                    </Box>
+                  ) : (
+                    "—"
+                  ),
+                },
+              ],
+              detalle: canales.map((canalNombre) => ({
+                titulo: formatChannelLabel(canalNombre),
+                valor: cifraCanal(row, canalNombre, semaforo.get(canalNombre)),
+              })),
+            };
+          })}
+        />
+      </Box>
+    );
+  }
 
   return (
     <TableContainer

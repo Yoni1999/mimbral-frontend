@@ -117,16 +117,17 @@ export default function FullContraColecta() {
   ];
 
   const columnas: ColumnaInforme<Fila>[] = [
-    { clave: "producto", titulo: "Producto", ancho: 26, valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} /> },
+    { clave: "producto", titulo: "Producto", ancho: 26, movil: "titulo", valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} /> },
     {
       clave: "sugerencia",
       titulo: "Sugerencia",
       ancho: 11,
+      movil: "principal",
       valor: (f) => (f.sugerencia ? SUGERENCIAS[f.sugerencia].texto : ""),
       celda: (f) => (f.sugerencia ? <Box title={SUGERENCIAS[f.sugerencia].ayuda}><Etiqueta {...SUGERENCIAS[f.sugerencia]} /></Box> : "—"),
     },
-    { clave: "full", titulo: "Full", ancho: 13, alinear: "right", valor: (f) => redondo(f.full.venta), excel: "Venta Full sin IVA", celda: (f) => <CeldaLado l={f.full} /> },
-    { clave: "colecta", titulo: "Colecta y otros", ancho: 13, alinear: "right", valor: (f) => redondo(f.colecta.venta), excel: "Venta Colecta sin IVA", celda: (f) => <CeldaLado l={f.colecta} /> },
+    { clave: "full", titulo: "Full", ancho: 13, movil: "principal", alinear: "right", valor: (f) => redondo(f.full.venta), excel: "Venta Full sin IVA", celda: (f) => <CeldaLado l={f.full} /> },
+    { clave: "colecta", titulo: "Colecta y otros", ancho: 13, movil: "principal", alinear: "right", valor: (f) => redondo(f.colecta.venta), excel: "Venta Colecta sin IVA", celda: (f) => <CeldaLado l={f.colecta} /> },
     {
       clave: "stockFull",
       titulo: "Stock Full",

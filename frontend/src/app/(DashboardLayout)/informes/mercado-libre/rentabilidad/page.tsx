@@ -106,6 +106,7 @@ export default function RentabilidadMercadoLibre() {
     { clave: "producto", titulo: "Producto", ancho: 30, movil: "titulo", valor: (f) => f.nombre ?? "", excel: "Producto", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} /> },
     {
       clave: "unidades",
+      movil: "principal",
       titulo: "Unid.",
       ancho: 8,
       alinear: "right",
@@ -131,7 +132,7 @@ export default function RentabilidadMercadoLibre() {
     },
     { clave: "costo", titulo: "Costo", ancho: 11, alinear: "right", valor: (f) => redondo(f.costo), excel: "Costo SAP", celda: (f) => pesos(f.costo) },
     { clave: "margen", titulo: "Margen", ancho: 11, movil: "principal", alinear: "right", valor: (f) => redondo(f.margen), excel: "Margen sin IVA", celda: (f) => <Margen v={f.margen} pct={f.margenPct} /> },
-    { clave: "margenPct", titulo: "Margen %", ancho: 9, movil: "principal", alinear: "right", valor: (f) => redondo(f.margenPct, 1), celda: (f) => porcentaje(f.margenPct) },
+    { clave: "margenPct", titulo: "Margen %", ancho: 9, movil: "oculto", alinear: "right", valor: (f) => redondo(f.margenPct, 1), celda: (f) => porcentaje(f.margenPct) },
     { clave: "margenUnitario", titulo: "Por unidad", ancho: 9, alinear: "right", valor: (f) => redondo(f.margenUnitario), excel: "Margen por unidad", celda: (f) => pesos(f.margenUnitario) },
   ];
 

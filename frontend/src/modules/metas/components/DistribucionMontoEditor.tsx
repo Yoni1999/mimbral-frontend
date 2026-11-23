@@ -28,7 +28,7 @@ export default function DistribucionMontoEditor({ targets, targetAmount, currenc
       <Stack spacing={1.5}>
         {targets.map((t) => (
           <Stack key={t.targetReferenceId} direction="row" spacing={2} alignItems="center">
-            <Typography sx={{ flex: 1 }}>{t.targetName}</Typography>
+            <Typography sx={{ flex: 1, minWidth: 0, wordBreak: "break-word" }}>{t.targetName}</Typography>
             <TextField
               type="number"
               size="small"
@@ -36,7 +36,7 @@ export default function DistribucionMontoEditor({ targets, targetAmount, currenc
               disabled={disabled}
               onChange={(e) => actualizar(t.targetReferenceId, Number(e.target.value) || 0)}
               inputProps={{ min: 0, style: { textAlign: "right" } }}
-              sx={{ width: 200 }}
+              sx={{ width: { xs: 140, sm: 200 }, flexShrink: 0 }}
             />
           </Stack>
         ))}

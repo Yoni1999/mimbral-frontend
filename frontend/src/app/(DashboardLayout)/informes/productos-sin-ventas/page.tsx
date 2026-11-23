@@ -23,6 +23,7 @@ import { notifyInfo } from "@/components/ui/toast/notify";
 
 import HeaderSinVentasDrawer from './components/HeaderSinVentasDrawer';
 import { CeldaOrden, useOrdenTabla } from "@/app/(DashboardLayout)/utilities/ventas/components/ordenTabla";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 // ---- Tipos ----
 type Order = 'asc' | 'desc';
@@ -396,6 +397,8 @@ const ProductosSinVentasPage: React.FC = () => {
         total: (r) => r.lineTotal,
     });
 
+    const esCelular = useEsCelular();
+
     // tabla de ventas por SKU (inline, sin tocar componentes existentes) ----
     const SalesBySkuTable: React.FC<{
         rows: typeof skuSales;
@@ -404,6 +407,47 @@ const ProductosSinVentasPage: React.FC = () => {
         const fmtNumber = (n: number) => Intl.NumberFormat('es-CL').format(n);
         const fmtMoney = (n: number, currency: string) =>
             `${currency} ${Intl.NumberFormat('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n)}`;
+
+        // En celular cada venta es una tarjeta.
+        if (esCelular) {
+            return (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+                    {rows === skuSales && (
+                        <OrdenMovil
+                            opciones={[
+                                { clave: 'fecha', titulo: 'Fecha' },
+                                { clave: 'total', titulo: 'Total línea' },
+                                { clave: 'cantidad', titulo: 'Cantidad' },
+                                { clave: 'precio', titulo: 'Precio' },
+                                { clave: 'cliente', titulo: 'Cliente' },
+                                { clave: 'doc', titulo: 'Doc N°' },
+                                { clave: 'moneda', titulo: 'Moneda' },
+                            ]}
+                            clave={ordenVentasSku.orden?.clave ?? ''}
+                            direccion={ordenVentasSku.orden?.direccion ?? 'desc'}
+                            onCambiar={(clave, direccion) => ordenVentasSku.setOrden({ clave, direccion })}
+                        />
+                    )}
+                    <TarjetasMovil
+                        vacio="Sin ventas para mostrar"
+                        filas={(rows === skuSales ? ordenVentasSku.ordenadas : rows).map((r, idx) => ({
+                            clave: `${r.docNum}-${idx}`,
+                            titulo: r.customer || '—',
+                            meta: `Doc N° ${r.docNum}`,
+                            principales: [
+                                { titulo: 'Fecha', valor: fmtDate(r.docDate || r.createDate) },
+                                { titulo: 'Cantidad', valor: fmtNumber(r.quantity) },
+                                { titulo: 'Total línea', valor: fmtMoney(r.lineTotal, r.currency) },
+                            ],
+                            detalle: [
+                                { titulo: 'Precio', valor: fmtMoney(r.price, r.currency) },
+                                { titulo: 'Moneda', valor: r.currency },
+                            ],
+                        }))}
+                    />
+                </Box>
+            );
+        }
 
         return (
             <Paper variant="outlined" sx={{ width: '100%', overflowX: 'auto' }}>
@@ -463,7 +507,7 @@ const ProductosSinVentasPage: React.FC = () => {
             <Divider sx={{ my: 3 }} />
 
             {/* Barra con conteo + export */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1} mb={2}>
                 <Typography variant="subtitle2">{productosCountText}</Typography>
 
                 {!skuSalesMode && (
@@ -492,6 +536,7 @@ const ProductosSinVentasPage: React.FC = () => {
                     onSortChange={handleSortChange}
                     ordenActual={orden}
                     ordenPorActual={ordenPor}
+                    onOrdenMovil={(campo, o) => setVista((v) => ({ ...v, orden: o, ordenPor: campo }))}
                 />
             )}
 

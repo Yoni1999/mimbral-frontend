@@ -2,6 +2,7 @@
 import { Avatar, Box, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { ChipMargen, formatoPesos, tablaSx, tinta, Panel, Columnas, TextoCelda } from "../../components/estilo";
 import { CeldaOrden, useOrdenTabla } from "../../components/ordenTabla";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "../../components/movil";
 
 interface ProductoRentabilidad {
   Nombre_Producto: string;
@@ -26,8 +27,49 @@ const TopRentabilidadMinima = ({ data }: Props) => {
     rentabilidad: (i) => i.Rentabilidad_Total,
     margen: (i) => i.Margen_Porcentaje,
   });
+  const esCelular = useEsCelular();
   return (
-  <Panel titulo="Top 10 productos menos rentables" descripcion="Los que menos margen dejaron: revisar precio o costo">
+  <Panel titulo="Top 10 productos menos rentables" descripcion="Los que menos margen dejaron: revisar precio o costo" sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+    {esCelular ? (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+        <OrdenMovil
+          opciones={[
+            { clave: "rentabilidad", titulo: "Rentabilidad" },
+            { clave: "margen", titulo: "% Margen" },
+            { clave: "cantidad", titulo: "Cantidad" },
+            { clave: "venta", titulo: "Venta prom." },
+            { clave: "costo", titulo: "Costo prom." },
+            { clave: "producto", titulo: "Producto" },
+          ]}
+          clave={orden.orden?.clave ?? ""}
+          direccion={orden.orden?.direccion ?? "desc"}
+          onCambiar={(clave, direccion) => orden.setOrden({ clave, direccion })}
+        />
+        <TarjetasMovil
+          filas={orden.ordenadas.map((item) => ({
+            clave: item.Codigo_Producto,
+            titulo: item.Nombre_Producto,
+            meta: item.Codigo_Producto,
+            principales: [
+              {
+                titulo: "Rentab.",
+                valor: (
+                  <Box component="span" sx={{ color: item.Rentabilidad_Total < 0 ? "#b42318" : undefined }}>
+                    {formatoPesos(item.Rentabilidad_Total)}
+                  </Box>
+                ),
+              },
+              { titulo: "Margen", valor: <ChipMargen valor={item.Margen_Porcentaje} /> },
+              { titulo: "Cant.", valor: (item.Cantidad_Vendida ?? 0).toLocaleString("es-CL") },
+            ],
+            detalle: [
+              { titulo: "Venta prom.", valor: formatoPesos(item.Precio_Venta_Promedio) },
+              { titulo: "Costo prom.", valor: formatoPesos(item.Costo_Promedio) },
+            ],
+          }))}
+        />
+      </Box>
+    ) : (
     <Box sx={{ maxHeight: 400, overflowY: "auto", overflowX: "hidden", mx: -2.5 }}>
       <Table size="small" stickyHeader sx={tablaSx}>
           <Columnas anchos={[36, 10, 14, 14, 14, 12]} />
@@ -66,6 +108,7 @@ const TopRentabilidadMinima = ({ data }: Props) => {
         </TableBody>
       </Table>
     </Box>
+    )}
   </Panel>
   );
 };

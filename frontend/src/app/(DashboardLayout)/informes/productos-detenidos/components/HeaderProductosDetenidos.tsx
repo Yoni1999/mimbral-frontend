@@ -296,16 +296,16 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
         onClose={() => setOpenDrawer(false)}
         PaperProps={{
           sx: {
-            width: 380,
+            width: { xs: "100%", sm: 380 },
             borderTopLeftRadius: 12,
             borderBottomLeftRadius: 12,
             boxShadow: 6,
-            p: 3,
+            p: { xs: 2, sm: 3 },
             backgroundColor: "#fafafa",
           },
         }}
       >
-        <Box sx={{ width: 360, p: 3 }}>
+        <Box sx={{ width: { xs: "100%", sm: 360 }, p: { xs: 0, sm: 3 } }}>
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6">Filtros de búsqueda</Typography>
             <IconButton onClick={() => setOpenDrawer(false)}>

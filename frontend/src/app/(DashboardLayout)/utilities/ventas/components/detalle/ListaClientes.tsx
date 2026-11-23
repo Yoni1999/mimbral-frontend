@@ -7,6 +7,7 @@ import { BarraParticipacion, ChipMargen, Columnas, Panel, TextoCelda, formatoMon
 import { FiltrosDetalle, descargarExcel, fechaCorta, todasLasFilas, useListaDetalle } from "./comun";
 import { Buscador, Encabezado, FilasCargando, FranjaResumen, Paginador, SinResultados } from "./piezas";
 import PanelCliente from "./PanelCliente";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "../movil";
 
 export interface FilaCliente {
   codigo: string;
@@ -49,6 +50,7 @@ export default function ListaClientes({ filtros, etiquetas }: { filtros: Filtros
   const maxVenta = Math.max(0, ...filas.map((f) => f.venta));
   const [cliente, setCliente] = React.useState<FilaCliente | null>(null);
   const [descargando, setDescargando] = React.useState(false);
+  const esCelular = useEsCelular();
 
   const descargar = async () => {
     setDescargando(true);
@@ -114,11 +116,69 @@ export default function ListaClientes({ filtros, etiquetas }: { filtros: Filtros
             </Button>
           </Box>
         }
+        sx={{ p: { xs: 1.5, sm: 2.5 } }}
       >
+        {esCelular && (
+          <Box sx={{ mb: 1.25 }}>
+            <OrdenMovil
+              opciones={[
+              { clave: "venta", titulo: "Venta" },
+              { clave: "documentos", titulo: "Documentos" },
+              { clave: "productos", titulo: "Productos" },
+              { clave: "unidades", titulo: "Unidades" },
+              { clave: "ticket", titulo: "Ticket" },
+              { clave: "ultima", titulo: "Última compra" },
+              { clave: "notas", titulo: "Notas de crédito" },
+              { clave: "cliente", titulo: "Cliente" },
+              ...(conMargen ? [{ clave: "margen", titulo: "% Margen" }] : []),
+              ]}
+              clave={l.orden.orden}
+              direccion={l.orden.direccion}
+              onCambiar={(orden, direccion) => {
+                l.setPagina(1);
+                l.setOrden({ orden, direccion });
+              }}
+            />
+          </Box>
+        )}
         {l.cargando ? (
           <FilasCargando />
         ) : filas.length === 0 ? (
           <SinResultados buscando={!!l.buscarDemorado} />
+        ) : esCelular ? (
+          <TarjetasMovil
+            filas={filas.map((f) => ({
+              clave: f.codigo,
+              titulo: f.nombre,
+              meta: [f.rut || f.codigo, f.ciudad].filter(Boolean).join(" · "),
+              onAbrir: () => setCliente(f),
+              principales: [
+                { titulo: "Venta", valor: formatoMonto(f.venta) },
+                { titulo: "Docs.", valor: f.documentos.toLocaleString("es-CL") },
+                conMargen
+                  ? { titulo: "Margen", valor: f.venta ? <ChipMargen valor={((f.margen ?? 0) / f.venta) * 100} /> : "—" }
+                  : { titulo: "Ticket", valor: formatoMonto(f.ticket) },
+              ],
+              detalle: [
+                { titulo: "% del total", valor: r?.venta ? formatoPorcentaje((f.venta / r.venta) * 100) : "—" },
+                ...(conMargen ? [{ titulo: "Ticket", valor: formatoMonto(f.ticket) }] : []),
+                { titulo: "Productos", valor: f.productos.toLocaleString("es-CL") },
+                { titulo: "Unidades", valor: Math.round(f.unidades).toLocaleString("es-CL") },
+                { titulo: "Última compra", valor: fechaCorta(f.ultimaCompra) },
+                ...(f.primeraCompra !== f.ultimaCompra ? [{ titulo: "Primera compra", valor: fechaCorta(f.primeraCompra) }] : []),
+                {
+                  titulo: "Notas de crédito",
+                  valor: f.notas ? (
+                    <Box component="span" sx={{ color: "#c4320a" }}>
+                      {f.notas} · {formatoPesos(f.montoNotas)}
+                    </Box>
+                  ) : (
+                    "—"
+                  ),
+                },
+              ],
+            }))}
+          />
         ) : (
           <TableContainer sx={{ mx: -2.5, width: "auto", overflowX: "hidden" }}>
             <Table size="small" sx={tablaSx}>

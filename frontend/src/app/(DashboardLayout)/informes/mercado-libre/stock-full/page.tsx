@@ -101,11 +101,12 @@ export default function StockFullQueCuesta() {
   ];
 
   const columnas: ColumnaInforme<Fila>[] = [
-    { clave: "producto", titulo: "Producto", ancho: 27, valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} secundario={f.tamano ?? undefined} /> },
+    { clave: "producto", titulo: "Producto", ancho: 27, movil: "titulo", valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} secundario={f.tamano ?? undefined} /> },
     {
       clave: "unidades",
       titulo: "Stock Full",
       ancho: 9,
+      movil: "principal",
       alinear: "right",
       valor: (f) => f.unidades,
       celda: (f) => (
@@ -144,11 +145,12 @@ export default function StockFullQueCuesta() {
           </Box>
         ),
     },
-    { clave: "ventas30", titulo: "Vende 30 d", ancho: 8, alinear: "right", valor: (f) => f.ventas30, celda: (f) => entero(f.ventas30) },
+    { clave: "ventas30", titulo: "Vende 30 d", ancho: 8, movil: "principal", alinear: "right", valor: (f) => f.ventas30, celda: (f) => entero(f.ventas30) },
     {
       clave: "cobertura",
       titulo: "Alcanza",
       ancho: 9,
+      movil: "principal",
       alinear: "right",
       valor: (f) => (f.cobertura == null ? (f.ventas30 === 0 ? 99999 : null) : redondo(f.cobertura)),
       excel: "Cobertura (días)",

@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { notifySuccess, notifyError } from '@/components/ui/toast/notify';
+import { OrdenMovil, TarjetasMovil, useEsCelular } from '@/app/(DashboardLayout)/utilities/ventas/components/movil';
 
 // Si ya existen estos helpers, impórtalos como en ventas:
 // import { formatVentas, formatUnidades } from '@/utils/format';
@@ -90,6 +91,7 @@ export const copyToClipboard = async (text: string): Promise<boolean> => {
 
 const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ordenActual, ordenPorActual }) => {
   const [busqueda, setBusqueda] = useState('');
+  const esCelular = useEsCelular();
 
   const filteredData = data.filter((p) =>
     p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -118,12 +120,52 @@ const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ord
           label="Buscar por nombre o SKU"
           variant="outlined"
           size="small"
-          sx={{ width: 280 }}
+          sx={{ width: { xs: '100%', sm: 280 } }}
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
       </Box>
 
+      {esCelular ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+          <OrdenMovil
+            opciones={[
+              { clave: 'margenBruto', titulo: 'Margen bruto' },
+              { clave: 'totalVentas', titulo: 'Total ventas' },
+              { clave: 'cantidadVendida', titulo: 'Cant. vendida' },
+              { clave: 'facturasUnicas', titulo: 'Transacciones' },
+              { clave: 'precioPromedio', titulo: 'Precio prom. venta' },
+            ]}
+            clave={ordenPorActual}
+            direccion={ordenActual}
+            // Igual que el encabezado: otra columna parte ascendente y la misma invierte.
+            onCambiar={(clave) => onSortChange(clave as OrderBy)}
+          />
+          <TarjetasMovil
+            vacio={busqueda ? 'No se encontraron productos con ese filtro.' : 'Cargando datos...'}
+            filas={filteredData.map((row, idx) => ({
+              clave: row.sku + idx,
+              titulo: row.nombre,
+              // Tocar el título copia el SKU, igual que en la tabla.
+              meta: [row.sku, [row.primerNivel, row.categoria].filter(Boolean).join(' › ')].filter(Boolean).join(' · '),
+              onAbrir: () => handleCopySku(row.sku),
+              principales: [
+                { titulo: 'Unid.', valor: row.cantidadVendida.toLocaleString('es-CL') },
+                { titulo: 'Ventas', valor: row.totalVentas.toLocaleString('es-CL') },
+                { titulo: 'Margen', valor: `${row.margenPorcentaje.toFixed(2)}%` },
+              ],
+              detalle: [
+                { titulo: 'Margen bruto', valor: row.margenBruto.toLocaleString('es-CL') },
+                { titulo: 'Transacciones', valor: row.facturasUnicas },
+                { titulo: 'Precio prom. venta', valor: row.precioPromedio.toLocaleString('es-CL') },
+                { titulo: 'Stock actual', valor: row.stockCanal.toLocaleString('es-CL') },
+                { titulo: 'Stock Chorrillos', valor: row.stockChorrillo ?? 'N/A' },
+                { titulo: 'OC (On Order)', valor: row.stockOnOrder ?? 'N/A' },
+              ],
+            }))}
+          />
+        </Box>
+      ) : (
       <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
         <Table stickyHeader>
           <TableHead>
@@ -253,6 +295,7 @@ const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ord
           </TableBody>
         </Table>
       </TableContainer>
+      )}
     </Box>
   );
 };

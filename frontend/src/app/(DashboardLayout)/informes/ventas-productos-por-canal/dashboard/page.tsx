@@ -47,6 +47,7 @@ import { useCargaDatos } from "@/utils/useCargaDatos";
 import { useEstadoVista } from "@/utils/estadoVista";
 import { leerSkusDelTablero } from "../components/listaSkus";
 import { BACKEND_URL } from "@/config";
+import { TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 type ChannelItem = {
   canal: string;
@@ -269,6 +270,7 @@ function SectionCard({
 const DashboardVentasPorCanalPage: React.FC = () => {
   const searchParams = useSearchParams();
   const [stockDetailProduct, setStockDetailProduct] = useState<StockDetailProduct>(null);
+  const esCelular = useEsCelular();
 
   const queryString = useMemo(() => searchParams?.toString() ?? "", [searchParams]);
 
@@ -485,7 +487,7 @@ const DashboardVentasPorCanalPage: React.FC = () => {
   );
 
   return (
-    <Box p={3}>
+    <Box p={{ xs: 1.5, sm: 3 }}>
       <Box mb={2}>
         <Typography variant="h4" fontWeight={800} gutterBottom display="flex" alignItems="center" gap={1}>
           <TrendingUpIcon />
@@ -635,7 +637,7 @@ const DashboardVentasPorCanalPage: React.FC = () => {
             loadingNode={loadingTable}
             minHeight={520}
           >
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1} mb={1.5}>
               <Box display="flex" alignItems="center" gap={1}>
                 <Chip
                   label={selectedChannel ? `Canal activo: ${selectedChannelLabel}` : "Vista general"}
@@ -661,6 +663,32 @@ const DashboardVentasPorCanalPage: React.FC = () => {
                 Ordenado por ventas
               </Typography>
             </Box>
+            {esCelular ? (
+              <TarjetasMovil
+                vacio="Sin datos disponibles"
+                filas={topProducts.map((product) => ({
+                  clave: product.sku,
+                  titulo: product.nombre,
+                  meta: product.sku,
+                  principales: [
+                    { titulo: selectedChannel ? "Ventas canal" : "Ventas", valor: formatUnits(product.displaySales) },
+                    { titulo: "Margen", valor: formatMoney(product.margenBruto) },
+                    {
+                      titulo: "Stock 01+03",
+                      valor: (
+                        <Chip
+                          label={formatUnits(product.stock0103)}
+                          size="small"
+                          clickable
+                          onClick={() => openStockDetail(product)}
+                          sx={{ backgroundColor: alpha("#F59E0B", 0.1), fontWeight: 700 }}
+                        />
+                      ),
+                    },
+                  ],
+                }))}
+              />
+            ) : (
             <TableContainer
               component={Paper}
               sx={{
@@ -736,6 +764,7 @@ const DashboardVentasPorCanalPage: React.FC = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+            )}
           </SectionCard>
         </Grid>
 
@@ -783,7 +812,7 @@ const DashboardVentasPorCanalPage: React.FC = () => {
                   <YAxis
                     type="category"
                     dataKey="nombre"
-                    width={190}
+                    width={esCelular ? 110 : 190}
                     tickLine={false}
                     axisLine={false}
                     tick={{ fill: "#294273", fontSize: 12, fontWeight: 600 }}

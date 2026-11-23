@@ -77,7 +77,12 @@ function Tarjeta({ fila }: { fila: TarjetaMovil }) {
         tabIndex={fila.onAbrir ? 0 : undefined}
         onClick={fila.onAbrir}
         onKeyDown={(e) => fila.onAbrir && e.key === "Enter" && fila.onAbrir()}
-        sx={{ minWidth: 0, cursor: fila.onAbrir ? "pointer" : "default" }}
+        sx={{
+          minWidth: 0,
+          cursor: fila.onAbrir ? "pointer" : "default",
+          // Las celdas de escritorio (TextoCelda) cortan con "…": en la tarjeta el nombre se lee completo.
+          "& .MuiTypography-noWrap": { whiteSpace: "normal", overflow: "visible", textOverflow: "clip" },
+        }}
       >
         <Box sx={{ fontSize: 13.5, fontWeight: 700, color: tinta.primaria, lineHeight: 1.3, wordBreak: "break-word" }}>{fila.titulo}</Box>
         {fila.meta ? <Box sx={{ fontSize: 11.5, color: tinta.secundaria, mt: 0.25, wordBreak: "break-word" }}>{fila.meta}</Box> : null}

@@ -18,6 +18,7 @@ import {
 import { styled } from '@mui/material/styles';
 import { formatUnidades, formatVentas } from '@/utils/format';
 import { notifySuccess, notifyError } from '@/components/ui/toast/notify';
+import { OrdenMovil, TarjetasMovil, useEsCelular } from '@/app/(DashboardLayout)/utilities/ventas/components/movil';
 
 type ProductoVendido = {
   imagen: string;
@@ -104,6 +105,7 @@ const ProductosVendidos = ({
   ordenPorActual,
 }: Props) => {
   const [busqueda, setBusqueda] = useState('');
+  const esCelular = useEsCelular();
 
   // safeData evita errores si data viene undefined/null en el primer render
   const safeData = Array.isArray(data) ? data : [];
@@ -134,12 +136,53 @@ const ProductosVendidos = ({
           label="Buscar por nombre o SKU"
           variant="outlined"
           size="small"
-          sx={{ width: 250 }}
+          sx={{ width: { xs: '100%', sm: 250 } }}
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
       </Box>
 
+      {esCelular ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+          <OrdenMovil
+            opciones={[
+              { clave: 'cantidadVendida', titulo: 'Cant. vendida' },
+              { clave: 'totalVentas', titulo: 'Total ventas' },
+              { clave: 'margenPorcentaje', titulo: '% Margen' },
+              { clave: 'margenBruto', titulo: 'Margen bruto' },
+              { clave: 'facturasUnicas', titulo: 'Transacciones' },
+              { clave: 'precioPromedio', titulo: 'Precio prom. venta' },
+            ]}
+            clave={ordenPorActual}
+            direccion={ordenActual}
+            // Igual que el encabezado: otra columna parte ascendente y la misma invierte.
+            onCambiar={(clave) => onSortChange(clave as OrderBy)}
+          />
+          <TarjetasMovil
+            vacio={busqueda ? 'No se encontraron productos con ese filtro.' : 'Cargando datos...'}
+            filas={filteredData.map((row) => ({
+              clave: `${row.sku}-${row.nombre}`,
+              titulo: row.nombre,
+              // Tocar el título copia el SKU, igual que en la tabla.
+              meta: [row.sku, [row.primerNivel, row.categoria].filter(Boolean).join(' › ')].filter(Boolean).join(' · '),
+              onAbrir: () => handleCopySku(row.sku),
+              principales: [
+                { titulo: 'Unid.', valor: formatUnidades(row.cantidadVendida) },
+                { titulo: 'Ventas', valor: formatVentas(row.totalVentas) },
+                { titulo: 'Margen', valor: `${row.margenPorcentaje?.toFixed(2)}%` },
+              ],
+              detalle: [
+                { titulo: 'Margen bruto', valor: formatVentas(row.margenBruto) },
+                { titulo: 'Transacciones', valor: row.facturasUnicas },
+                { titulo: 'Precio prom. venta', valor: formatVentas(row.precioPromedio) },
+                { titulo: 'Stock actual', valor: formatUnidades(row.stockCanal) },
+                { titulo: 'Stock Chorrillos', valor: row.stockChorrillo !== undefined ? formatUnidades(row.stockChorrillo) : 'N/A' },
+                { titulo: 'OC (On Order)', valor: row.stockOnOrder !== undefined ? formatUnidades(row.stockOnOrder) : 'N/A' },
+              ],
+            }))}
+          />
+        </Box>
+      ) : (
       <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
         <Table stickyHeader>
           <TableHead>
@@ -275,6 +318,7 @@ const ProductosVendidos = ({
           </TableBody>
         </Table>
       </TableContainer>
+      )}
     </Box>
   );
 };

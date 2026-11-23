@@ -11,6 +11,7 @@ import { ChipMargen, Columnas, TextoCelda, canalPorClave, cifraSx, formatoPesos,
 import { FiltrosDetalle, consulta, fechaCorta, horaSap } from "./comun";
 import ChipMotivo from "./ChipMotivo";
 import { CeldaOrden, useOrdenTabla } from "../ordenTabla";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "../movil";
 
 interface Linea {
   linea: number;
@@ -69,6 +70,7 @@ export default function PanelDocumento({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const esCelular = useEsCelular();
   const url = documento
     ? `${BACKEND_URL}/api/detalle/documento?${consulta({ vendedorEmpresa: filtros.vendedorEmpresa }, { tipo: documento.tipo, docEntry: String(documento.docEntry) })}`
     : null;
@@ -89,7 +91,7 @@ export default function PanelDocumento({
 
   return (
     <Drawer anchor="right" open={!!documento} onClose={onClose} PaperProps={{ sx: { width: { xs: "100%", md: 720 } } }} sx={{ zIndex: 1500 }}>
-      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2, px: 3, py: 2.25, borderBottom: `1px solid ${tinta.borde}` }}>
+      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2, px: { xs: 2, sm: 3 }, py: 2.25, borderBottom: `1px solid ${tinta.borde}` }}>
         <Box sx={{ minWidth: 0 }}>
           <Typography sx={{ fontSize: 12, fontWeight: 700, color: tinta.tenue, textTransform: "uppercase", letterSpacing: "0.06em" }}>
             {esNota ? "Nota de crédito" : "Documento de venta"}
@@ -108,7 +110,7 @@ export default function PanelDocumento({
         </IconButton>
       </Box>
 
-      <Box sx={{ p: 3, overflowY: "auto" }}>
+      <Box sx={{ p: { xs: 1.5, sm: 3 }, overflowY: "auto" }}>
         {error ? (
           <Typography sx={{ color: tinta.tenue, fontSize: 13 }}>No se pudo cargar el documento.</Typography>
         ) : cargando || !d ? (
@@ -163,6 +165,52 @@ export default function PanelDocumento({
                 </Typography>
               )}
             </Typography>
+            {esCelular ? (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+                <OrdenMovil
+                  opciones={[
+                    { clave: "total", titulo: "Total neto" },
+                    { clave: "cantidad", titulo: "Cantidad" },
+                    { clave: "precio", titulo: "Precio neto" },
+                    ...(conMargen ? [{ clave: "margen", titulo: "% Margen" }] : []),
+                    { clave: "producto", titulo: "Producto" },
+                  ]}
+                  clave={ordenLineas.orden?.clave ?? ""}
+                  direccion={ordenLineas.orden?.direccion ?? "desc"}
+                  onCambiar={(clave, direccion) => ordenLineas.setOrden({ clave, direccion })}
+                />
+                <TarjetasMovil
+                  vacio="El documento no tiene ítems."
+                  filas={ordenLineas.ordenadas.map((l) => {
+                    const canal = l.canal ? canalPorClave(l.canal) : undefined;
+                    return {
+                      clave: String(l.linea),
+                      titulo: (
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          {l.esFlete && <IconTruck size={16} color={tinta.tenue} style={{ flexShrink: 0 }} />}
+                          {l.nombre}
+                        </Box>
+                      ),
+                      meta: `SKU ${l.sku}`,
+                      onAbrir: l.esFlete ? undefined : () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(l.sku)}`),
+                      principales: [
+                        { titulo: "Cant.", valor: Number(l.cantidad).toLocaleString("es-CL", { maximumFractionDigits: 2 }) },
+                        { titulo: "Total neto", valor: formatoPesos(l.total) },
+                        conMargen
+                          ? { titulo: "Margen", valor: l.total ? <ChipMargen valor={((Number(l.margen) || 0) / l.total) * 100} /> : "—" }
+                          : { titulo: "Precio neto", valor: formatoPesos(l.precio) },
+                      ],
+                      detalle: [
+                        ...(conMargen ? [{ titulo: "Precio neto", valor: formatoPesos(l.precio) }] : []),
+                        { titulo: "Bodega", valor: l.bodega },
+                        ...(canal ? [{ titulo: "Canal", valor: canal.nombre }] : []),
+                        ...(l.vendedor ? [{ titulo: "Vendedor", valor: l.vendedor }] : []),
+                      ],
+                    };
+                  })}
+                />
+              </Box>
+            ) : (
             <Box sx={{ mx: -3 }}>
               <Table size="small" sx={tablaSx}>
                 <Columnas anchos={conMargen ? [44, 12, 15, 17, 12] : [52, 14, 16, 18]} />
@@ -211,6 +259,7 @@ export default function PanelDocumento({
                 </TableBody>
               </Table>
             </Box>
+            )}
             <Typography sx={{ fontSize: 11.5, color: tinta.tenue, mt: 1.5 }}>
               Montos netos (sin IVA). Pulsa un ítem para ver su análisis de producto.
             </Typography>

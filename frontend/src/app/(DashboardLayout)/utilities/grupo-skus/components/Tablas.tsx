@@ -19,6 +19,7 @@ import {
   tinta,
 } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
 import { Buscador, Encabezado, FilasCargando } from "@/app/(DashboardLayout)/utilities/ventas/components/detalle/piezas";
+import { OrdenMovil, TarjetasMovil, useEsCelular, type CifraTarjeta } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 import { InventarioProducto, MesProducto, ProductoGrupo, RespuestaInventario, fechaCorta, nombreMes } from "../tipos";
 
 const SIN_IMAGEN = "https://res.cloudinary.com/dhzahos7u/image/upload/v1748960388/producto_sin_imagen_vqaps4.jpg";
@@ -45,7 +46,7 @@ function useOrden<T>(filas: T[], valor: (fila: T, columna: string) => number | s
       return (typeof x === "string" ? x.localeCompare(String(y)) : Number(x) - Number(y)) * signo;
     });
   }, [filas, buscar, orden, valor, texto]);
-  return { orden, ordenarPor, buscar, setBuscar, visibles };
+  return { orden, ordenarPor, setOrden, buscar, setBuscar, visibles };
 }
 
 function Foto({ src }: { src?: string | null }) {
@@ -79,6 +80,36 @@ const irAProducto = (router: ReturnType<typeof useRouter>, sku: string) => route
 
 const contenedorSx = { mx: -2.5, width: "auto", overflowX: "hidden" } as const;
 
+/** Selector de orden para celular, sobre el mismo estado que los encabezados. */
+function OrdenCelular({ t, opciones }: { t: { orden: Orden; setOrden: (o: Orden) => void }; opciones: { clave: string; titulo: string }[] }) {
+  return (
+    <OrdenMovil
+      opciones={opciones}
+      clave={t.orden.orden}
+      direccion={t.orden.direccion}
+      onCambiar={(clave, direccion) => t.setOrden({ orden: clave, direccion })}
+    />
+  );
+}
+
+/** Lo que una tarjeta de celular toma del producto: título, SKU y enlace a su análisis. */
+const tarjetaProducto = (router: ReturnType<typeof useRouter>, p: { sku: string; nombre?: string | null; existe?: boolean }) => ({
+  clave: p.sku,
+  titulo: p.existe === false ? "No existe en el catálogo" : p.nombre || p.sku,
+  meta: `SKU ${p.sku}`,
+  onAbrir: p.existe ? () => irAProducto(router, p.sku) : undefined,
+});
+
+/** Las dos columnas con más valor de una fila (canales o meses), para las cifras fijas de la tarjeta. */
+const mayores = (columnas: { titulo: string; valor: number }[], fmt: (v: number) => string): CifraTarjeta[] =>
+  columnas
+    .filter((c) => c.valor)
+    .sort((a, b) => b.valor - a.valor)
+    .slice(0, 2)
+    .map((c) => ({ titulo: c.titulo, valor: fmt(c.valor) }));
+
+const columnaMovilSx = { display: "flex", flexDirection: "column", gap: 1.25 } as const;
+
 // ── 1) Productos ────────────────────────────────────────────────────────────
 
 const valorProducto = (p: ProductoGrupo, c: string) =>
@@ -91,6 +122,7 @@ export function TablaProductos({ productos, cargando, conComparacion }: { produc
   const maxVenta = Math.max(0, ...productos.map((p) => p.venta));
 
   const anchos = conMargen ? [30, 11, 21, 9, 9, 9, 11] : [36, 12, 24, 10, 8, 10];
+  const esCelular = useEsCelular();
 
   return (
     <Panel
@@ -100,6 +132,74 @@ export function TablaProductos({ productos, cargando, conComparacion }: { produc
     >
       {cargando ? (
         <FilasCargando />
+      ) : esCelular ? (
+        <Box sx={columnaMovilSx}>
+          <OrdenCelular
+            t={t}
+            opciones={[
+              { clave: "venta", titulo: "Venta" },
+              { clave: "unidades", titulo: "Unidades" },
+              ...(conMargen ? [{ clave: "margenPorcentaje", titulo: "% Margen" }] : []),
+              { clave: "documentos", titulo: "Ventas" },
+              { clave: "clientes", titulo: "Clientes" },
+              { clave: "ncMonto", titulo: "Notas de crédito" },
+              { clave: "nombre", titulo: "Producto" },
+            ]}
+          />
+          <TarjetasMovil
+            vacio="Ningún producto coincide con la búsqueda."
+            filas={t.visibles.map((p) => ({
+              ...tarjetaProducto(router, p),
+              principales: [
+                {
+                  titulo: "Unidades",
+                  valor: (
+                    <>
+                      {unidades(p.unidades)}
+                      {conComparacion && (
+                        <Box sx={{ mt: 0.25 }}>
+                          <ChipVariacion valor={p.variacionUnidades} />
+                        </Box>
+                      )}
+                    </>
+                  ),
+                },
+                {
+                  titulo: "Venta",
+                  valor: (
+                    <>
+                      {formatoMonto(p.venta)}
+                      {conComparacion && (
+                        <Box sx={{ mt: 0.25 }}>
+                          <ChipVariacion valor={p.variacionVenta} />
+                        </Box>
+                      )}
+                    </>
+                  ),
+                },
+                conMargen
+                  ? { titulo: "% Margen", valor: p.venta ? <ChipMargen valor={p.margenPorcentaje} /> : "—" }
+                  : { titulo: "Ventas", valor: p.documentos.toLocaleString("es-CL") },
+              ],
+              detalle: [
+                { titulo: "Venta exacta", valor: formatoPesos(p.venta) },
+                { titulo: "% del grupo", valor: formatoPorcentaje(p.participacion) },
+                ...(conMargen ? [{ titulo: "Ventas", valor: p.documentos.toLocaleString("es-CL") }] : []),
+                { titulo: "Clientes", valor: p.clientes.toLocaleString("es-CL") },
+                {
+                  titulo: "Notas de crédito",
+                  valor: p.ncMonto ? (
+                    <Box component="span" sx={{ color: estado.mal.color }}>
+                      {formatoMonto(p.ncMonto)} · {p.ncDocumentos} NC · {unidades(p.ncUnidades)} u
+                    </Box>
+                  ) : (
+                    "—"
+                  ),
+                },
+              ],
+            }))}
+          />
+        </Box>
       ) : (
         <TableContainer sx={contenedorSx}>
           <Table size="small" sx={tablaSx}>
@@ -174,11 +274,43 @@ export function TablaCanales({ productos, cargando, ver }: { productos: Producto
   const t = useOrden(productos, valor, { orden: "total", direccion: "desc" }, textoProducto);
   const fmt = (v: number) => (ver === "venta" ? formatoMonto(v) : unidades(v));
   const totales = CANALES.map((c) => productos.reduce((s, p) => s + (p.canales.find((x) => x.canal === c.clave)?.[ver] ?? 0), 0));
+  const esCelular = useEsCelular();
+  // Tarjeta de celular: el total y los dos canales que más pesan; todos los canales en el detalle.
+  const cifrasCanales = (porCanal: number[], total: number) => {
+    const columnas = CANALES.map((c, i) => ({ titulo: c.nombre, valor: porCanal[i] }));
+    return {
+      principales: [{ titulo: "Total", valor: fmt(total) }, ...mayores(columnas, fmt)],
+      detalle: columnas.map((c) => ({ titulo: c.titulo, valor: c.valor ? fmt(c.valor) : "—" })),
+    };
+  };
 
   return (
     <Panel titulo={ver === "venta" ? "Venta por canal" : "Unidades por canal"} descripcion="Cada SKU repartido en los canales de venta." accion={<Buscador valor={t.buscar} onCambiar={t.setBuscar} placeholder="Buscar SKU o nombre" />}>
       {cargando ? (
         <FilasCargando />
+      ) : esCelular ? (
+        <Box sx={columnaMovilSx}>
+          <OrdenCelular
+            t={t}
+            opciones={[
+              { clave: "total", titulo: "Total" },
+              ...CANALES.map((c) => ({ clave: c.clave, titulo: c.nombre })),
+              { clave: "nombre", titulo: "Producto" },
+            ]}
+          />
+          <TarjetasMovil
+            filas={[
+              { clave: "__total", titulo: "Total del grupo", ...cifrasCanales(totales, totales.reduce((s, v) => s + v, 0)) },
+              ...t.visibles.map((p) => ({
+                ...tarjetaProducto(router, p),
+                ...cifrasCanales(
+                  CANALES.map((c) => p.canales.find((x) => x.canal === c.clave)?.[ver] ?? 0),
+                  p[ver]
+                ),
+              })),
+            ]}
+          />
+        </Box>
       ) : (
         <TableContainer sx={contenedorSx}>
           <Table size="small" sx={tablaSx}>
@@ -261,6 +393,7 @@ export function TablaMensual({
   const fmt = (v: number) => (ver === "venta" ? formatoMonto(v) : unidades(v));
   // Con muchos meses la tabla se desplaza a lo ancho, con el producto fijo.
   const anchoMes = 96;
+  const esCelular = useEsCelular();
 
   return (
     <Panel titulo={ver === "venta" ? "Venta por mes" : "Unidades por mes"} descripcion="Cómo se movió cada SKU mes a mes dentro del período." accion={<Buscador valor={t.buscar} onCambiar={t.setBuscar} placeholder="Buscar SKU o nombre" />}>
@@ -268,6 +401,29 @@ export function TablaMensual({
         <FilasCargando />
       ) : !meses.length ? (
         <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 6, textAlign: "center" }}>Sin ventas en el período.</Typography>
+      ) : esCelular ? (
+        // En celular: el total y los dos meses más altos; cada mes en el detalle.
+        <Box sx={columnaMovilSx}>
+          <OrdenCelular
+            t={t}
+            opciones={[
+              { clave: "total", titulo: "Total" },
+              ...[...meses].reverse().map((m) => ({ clave: m, titulo: nombreMes(m) })),
+              { clave: "nombre", titulo: "Producto" },
+            ]}
+          />
+          <TarjetasMovil
+            vacio="Ningún producto coincide con la búsqueda."
+            filas={t.visibles.map((p) => {
+              const columnas = meses.map((m) => ({ titulo: nombreMes(m), valor: porSku.get(p.sku)?.[m] ?? 0 }));
+              return {
+                ...tarjetaProducto(router, p),
+                principales: [{ titulo: "Total", valor: fmt(p[ver]) }, ...mayores(columnas, fmt)],
+                detalle: columnas.map((c) => ({ titulo: c.titulo, valor: c.valor ? fmt(c.valor) : "—" })),
+              };
+            })}
+          />
+        </Box>
       ) : (
         <TableContainer sx={{ mx: -2.5, width: "auto", overflowX: "auto" }}>
           <Table size="small" sx={{ ...tablaSx, minWidth: 300 + (meses.length + 1) * anchoMes }}>
@@ -357,6 +513,7 @@ export function TablaInventario({
       .filter((b) => i.bodegas[b]?.stock)
       .map((b) => `${b}: ${unidades(i.bodegas[b].stock)}`)
       .join(" · ");
+  const esCelular = useEsCelular();
 
   return (
     <Panel
@@ -370,6 +527,48 @@ export function TablaInventario({
         </Typography>
       ) : cargando ? (
         <FilasCargando />
+      ) : esCelular ? (
+        <Box sx={columnaMovilSx}>
+          <OrdenCelular
+            t={t}
+            opciones={[
+              { clave: "stockVenta", titulo: "Stock venta" },
+              { clave: "disponible", titulo: "Disponible" },
+              { clave: "coberturaDias", titulo: "Cobertura" },
+              { clave: "comprometido", titulo: "Comprometido" },
+              { clave: "unidades30", titulo: "Vendido 30 d" },
+              { clave: "pendienteOc", titulo: "En OC" },
+              { clave: "ultimaOc", titulo: "Última OC" },
+              { clave: "nombre", titulo: "Producto" },
+            ]}
+          />
+          <TarjetasMovil
+            vacio="Ningún producto coincide con la búsqueda."
+            filas={t.visibles.map((i) => ({
+              ...tarjetaProducto(router, i),
+              principales: [
+                { titulo: "Stock venta", valor: unidades(i.stockVenta) },
+                {
+                  titulo: "Disponible",
+                  valor: <Box component="span" sx={{ color: i.disponible < 0 ? estado.mal.color : undefined }}>{unidades(i.disponible)}</Box>,
+                },
+                { titulo: "Cobertura", valor: <ChipCobertura dias={i.coberturaDias} stock={i.stockVenta} /> },
+              ],
+              detalle: [
+                { titulo: "Por bodega", valor: bodegasConStock(i) || "Sin stock" },
+                { titulo: "Comprometido", valor: unidades(i.comprometido) },
+                { titulo: "Vendido 30 d", valor: unidades(i.unidades30) },
+                { titulo: "Vendido 90 d", valor: unidades(i.unidades90) },
+                { titulo: "En OC", valor: i.pendienteOc ? unidades(i.pendienteOc) : "—" },
+                ...(i.proximaEntrega ? [{ titulo: "Próxima entrega", valor: fechaCorta(i.proximaEntrega) }] : []),
+                {
+                  titulo: "Última OC",
+                  valor: i.ultimaOc ? `${i.ultimaOc.proveedorNombre} · ${fechaCorta(i.ultimaOc.fecha)} · ${unidades(i.ultimaOc.cantidad)} u` : "Sin OC",
+                },
+              ],
+            }))}
+          />
+        </Box>
       ) : (
         <TableContainer sx={contenedorSx}>
           <Table size="small" sx={tablaSx}>

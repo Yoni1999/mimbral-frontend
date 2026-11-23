@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from "react";
 import { Avatar, Box, Table, TableBody, TableCell, TableHead, TableRow, TableSortLabel, Typography } from "@mui/material";
 import { BarraParticipacion, ChipMargen, formatoMonto, tablaSx, tinta, Panel, Columnas, TextoCelda } from "../../components/estilo";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "../../components/movil";
 
 interface Vendedor {
   Nombre: string;
@@ -32,6 +33,7 @@ const iniciales = (nombre: string) =>
 const TopVendedoresChart: React.FC<Props> = ({ data }) => {
   const [order, setOrder] = useState<Order>("desc");
   const [orderBy, setOrderBy] = useState<OrderBy>("TotalVentas");
+  const esCelular = useEsCelular();
 
   const handleSort = (key: OrderBy) => {
     if (orderBy === key) {
@@ -65,7 +67,53 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
   );
 
   return (
-    <Panel titulo="Top 10 vendedores" descripcion="Ordenable por cualquier columna">
+    <Panel titulo="Top 10 vendedores" descripcion="Ordenable por cualquier columna" sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+      {esCelular ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+          <OrdenMovil
+            opciones={[
+              { clave: "TotalVentas", titulo: "Ventas" },
+              { clave: "UnidadesVendidas", titulo: "Unidades" },
+              { clave: "MargenPorcentaje", titulo: "% Margen" },
+              { clave: "MargenBruto", titulo: "Margen bruto" },
+              { clave: "Items", titulo: "Ítems" },
+              { clave: "Nombre", titulo: "Vendedor" },
+            ]}
+            clave={orderBy}
+            direccion={order}
+            onCambiar={(clave, direccion) => {
+              setOrderBy(clave as OrderBy);
+              setOrder(direccion);
+            }}
+          />
+          <TarjetasMovil
+            filas={sortedData.map((vendedor) => ({
+              clave: vendedor.Nombre,
+              titulo: (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Avatar
+                    src={vendedor.Imagen || undefined}
+                    alt={vendedor.Nombre}
+                    sx={{ width: 26, height: 26, fontSize: 11, fontWeight: 700, bgcolor: "#eff4ff", color: tinta.acento, flexShrink: 0 }}
+                  >
+                    {iniciales(vendedor.Nombre || "")}
+                  </Avatar>
+                  {vendedor.Nombre}
+                </Box>
+              ),
+              principales: [
+                { titulo: "Ventas", valor: vendedor.TotalVentas ? formatoMonto(vendedor.TotalVentas) : "—" },
+                { titulo: "Unid.", valor: (vendedor.UnidadesVendidas ?? 0).toLocaleString("es-CL") },
+                { titulo: "Margen", valor: <ChipMargen valor={vendedor.MargenPorcentaje} /> },
+              ],
+              detalle: [
+                { titulo: "Margen bruto", valor: formatoMonto(vendedor.MargenBruto) },
+                { titulo: "Ítems", valor: (vendedor.Items ?? 0).toLocaleString("es-CL") },
+              ],
+            }))}
+          />
+        </Box>
+      ) : (
       <Box sx={{ maxHeight: 360, overflowY: "auto", overflowX: "hidden", mx: -2.5 }}>
         <Table size="small" stickyHeader sx={tablaSx}>
           <Columnas anchos={[30, 18, 13, 10, 15, 14]} />
@@ -111,6 +159,7 @@ const TopVendedoresChart: React.FC<Props> = ({ data }) => {
           </TableBody>
         </Table>
       </Box>
+      )}
     </Panel>
   );
 };

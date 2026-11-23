@@ -213,6 +213,7 @@ export function TablaCategoriasFal({ filas, cargando, onEntrar, nombreExcel }: {
       clave: "nombre",
       titulo: "Categoría",
       ancho: 22,
+      movil: "titulo",
       valor: (f) => f.nombre,
       celda: (f) => (
         <Box sx={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
@@ -232,14 +233,14 @@ export function TablaCategoriasFal({ filas, cargando, onEntrar, nombreExcel }: {
         </Box>
       ),
     },
-    { clave: "venta", titulo: "Venta", ancho: 9, alinear: "right", valor: (f) => n(f.actual.venta.neto), excel: "Venta neta", celda: (f) => <MontoCorto par={f.actual.venta} fuerte /> },
+    { clave: "venta", titulo: "Venta", ancho: 9, movil: "principal", alinear: "right", valor: (f) => n(f.actual.venta.neto), excel: "Venta neta", celda: (f) => <MontoCorto par={f.actual.venta} fuerte /> },
     { clave: "ventaComp", titulo: "Comparación", ancho: 9, alinear: "right", valor: (f) => n(f.comparacion.venta.neto), excel: "Venta neta comparación", celda: (f) => <MontoCorto par={f.comparacion.venta} color={tinta.secundaria} /> },
-    { clave: "crec", titulo: "Crecimiento", ancho: 8, alinear: "right", valor: (f) => (f.nueva ? 9999 : pct(f.variacion.venta)), excel: "Crecimiento %", celda: (f) => <Crecimiento valor={f.variacion.venta} nueva={f.nueva} /> },
+    { clave: "crec", titulo: "Crecimiento", ancho: 8, movil: "principal", alinear: "right", valor: (f) => (f.nueva ? 9999 : pct(f.variacion.venta)), excel: "Crecimiento %", celda: (f) => <Crecimiento valor={f.variacion.venta} nueva={f.nueva} /> },
     { clave: "part", titulo: "Particip.", ancho: 6, alinear: "right", valor: (f) => (f.participacion.actual == null ? null : f.participacion.actual * 100), excel: "Participación %", celda: (f) => (f.participacion.actual == null ? "—" : formatoPorcentaje(f.participacion.actual * 100)) },
     { clave: "unid", titulo: "Unidades", ancho: 6, alinear: "right", valor: (f) => f.actual.unidades, celda: (f) => <Box sx={cifraSx}>{unidades(f.actual.unidades)}</Box> },
     { clave: "com", titulo: "Comisión", ancho: 7, alinear: "right", valor: (f) => parte(f.actual.comision, f.actual.venta), excel: "Comisión % de la venta", celda: (f) => <CeldaParte costo={f.actual.comision} venta={f.actual.venta} /> },
     { clave: "desp", titulo: "Despacho", ancho: 7, alinear: "right", valor: (f) => parte(f.actual.envio, f.actual.venta), excel: "Despacho % de la venta", celda: (f) => <CeldaParte costo={f.actual.envio} venta={f.actual.venta} /> },
-    { clave: "margenPct", titulo: "Margen %", ancho: 10, alinear: "right", valor: (f) => (f.actual.margenPct == null ? null : f.actual.margenPct * 100), excel: "Margen %", celda: (f) => <MargenCelda actual={f.actual.margenPct} puntos={f.variacion.margenPuntos} anterior={f.comparacion.margenPct} /> },
+    { clave: "margenPct", titulo: "Margen %", ancho: 10, movil: "principal", alinear: "right", valor: (f) => (f.actual.margenPct == null ? null : f.actual.margenPct * 100), excel: "Margen %", celda: (f) => <MargenCelda actual={f.actual.margenPct} puntos={f.variacion.margenPuntos} anterior={f.comparacion.margenPct} /> },
     { clave: "tipos", titulo: "Full · Normal", ancho: 8, celda: (f) => <BarraTiposFal porTipo={f.actual.porTipo} /> },
   ];
   return (
@@ -279,6 +280,7 @@ export function TablaProductosFal({ filas, cargando, nombreExcel, orden = "venta
       clave: "sku",
       titulo: "Producto",
       ancho: 26,
+      movil: "titulo",
       valor: (f) => f.sku,
       celda: (f) => (
         <ConMiniatura imagen={f.imagen} titulo={f.nombre || f.sku}>
@@ -289,8 +291,8 @@ export function TablaProductosFal({ filas, cargando, nombreExcel, orden = "venta
         </ConMiniatura>
       ),
     },
-    { clave: "venta", titulo: "Venta", ancho: 9, alinear: "right", valor: (f) => n(f.actual.venta.neto), excel: "Venta neta", celda: (f) => <MontoCorto par={f.actual.venta} fuerte /> },
-    { clave: "crec", titulo: "Crecimiento", ancho: 8, alinear: "right", valor: (f) => (f.nuevo ? 9999 : f.sinVentas ? -100 : pct(f.variacion.venta)), excel: "Crecimiento %", celda: (f) => <Crecimiento valor={f.variacion.venta} nueva={f.nuevo} sinVentas={f.sinVentas} /> },
+    { clave: "venta", titulo: "Venta", ancho: 9, movil: "principal", alinear: "right", valor: (f) => n(f.actual.venta.neto), excel: "Venta neta", celda: (f) => <MontoCorto par={f.actual.venta} fuerte /> },
+    { clave: "crec", titulo: "Crecimiento", ancho: 8, movil: "principal", alinear: "right", valor: (f) => (f.nuevo ? 9999 : f.sinVentas ? -100 : pct(f.variacion.venta)), excel: "Crecimiento %", celda: (f) => <Crecimiento valor={f.variacion.venta} nueva={f.nuevo} sinVentas={f.sinVentas} /> },
     { clave: "dif", titulo: "Diferencia", ancho: 8, alinear: "right", valor: (f) => n(f.diferencia.neto), excel: "Diferencia neta", celda: (f) => <MontoCorto par={f.diferencia} color={n(f.diferencia.neto) < 0 ? "#b42318" : "#067647"} /> },
     { clave: "unid", titulo: "Unidades", ancho: 6, alinear: "right", valor: (f) => f.actual.unidades, celda: (f) => <Box sx={cifraSx}>{unidades(f.actual.unidades)}</Box> },
     { clave: "com", titulo: "Comisión", ancho: 7, alinear: "right", valor: (f) => (f.comisionPct == null ? null : f.comisionPct * 100), excel: "Comisión %", celda: (f) => (f.comisionPct == null ? <Tooltip title="Categoría sin comisión en la planilla: se estima con 15 %" arrow><Box component="span" sx={{ color: "#b54708" }}>15 % est.</Box></Tooltip> : formatoPorcentaje(f.comisionPct * 100)) },
@@ -310,7 +312,7 @@ export function TablaProductosFal({ filas, cargando, nombreExcel, orden = "venta
           "—"
         ),
     },
-    { clave: "margenPct", titulo: "Margen %", ancho: 10, alinear: "right", valor: (f) => (f.actual.margenPct == null ? null : f.actual.margenPct * 100), excel: "Margen %", celda: (f) => <MargenCelda actual={f.actual.margenPct} puntos={f.variacion.margenPuntos} anterior={f.comparacion.margenPct} /> },
+    { clave: "margenPct", titulo: "Margen %", ancho: 10, movil: "principal", alinear: "right", valor: (f) => (f.actual.margenPct == null ? null : f.actual.margenPct * 100), excel: "Margen %", celda: (f) => <MargenCelda actual={f.actual.margenPct} puntos={f.variacion.margenPuntos} anterior={f.comparacion.margenPct} /> },
     { clave: "tipos", titulo: "Full · Normal", ancho: 7, celda: (f) => <BarraTiposFal porTipo={n(f.actual.venta.neto) > 0 ? f.actual.porTipo : f.comparacion.porTipo} /> },
   ];
   return (

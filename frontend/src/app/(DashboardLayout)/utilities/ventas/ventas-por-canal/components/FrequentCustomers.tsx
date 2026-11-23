@@ -8,6 +8,7 @@ import { useCargaDatos } from "@/utils/useCargaDatos";
 import { formatearRUTDesdeSAP } from "@/utils/formatearRUTDesdeSAP";
 import { BACKEND_URL } from "@/config";
 import { BarraParticipacion, Panel, estado, formatoMonto, tablaSx, tinta, Columnas, TextoCelda } from "../../components/estilo";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "../../components/movil";
 
 type Order = "asc" | "desc";
 type OrderBy = "cardname" | "cantidad_compras" | "total_comprado" | "ticket_promedio" | "ultima_compra" | "linea_credito" | "balance";
@@ -40,6 +41,7 @@ const iniciales = (nombre: string) =>
 const ClientesFrecuentesTable: React.FC<ClientesFrecuentesTableProps> = ({ filters }) => {
   const [order, setOrder] = useState<Order>("desc");
   const [orderBy, setOrderBy] = useState<OrderBy>("total_comprado");
+  const esCelular = useEsCelular();
 
   // La clave es la URL: aunque la página pase un objeto `filters` nuevo en
   // cada render, solo se pide de nuevo cuando cambian los valores.
@@ -106,13 +108,77 @@ const ClientesFrecuentesTable: React.FC<ClientesFrecuentesTableProps> = ({ filte
   );
 
   return (
-    <Panel titulo="Clientes frecuentes" descripcion="Los 10 clientes que más compraron en el período">
+    <Panel titulo="Clientes frecuentes" descripcion="Los 10 clientes que más compraron en el período" sx={{ p: { xs: 1.5, sm: 2.5 } }}>
       {cargando ? (
         Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} height={52} />)
       ) : sortedData.length === 0 ? (
         <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 6, textAlign: "center" }}>
           No hay clientes frecuentes en el período seleccionado.
         </Typography>
+      ) : esCelular ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+          <OrdenMovil
+            opciones={[
+              { clave: "total_comprado", titulo: "Total comprado" },
+              { clave: "cantidad_compras", titulo: "Compras" },
+              { clave: "ticket_promedio", titulo: "Ticket promedio" },
+              { clave: "ultima_compra", titulo: "Última compra" },
+              { clave: "linea_credito", titulo: "Línea de crédito" },
+              { clave: "balance", titulo: "Pendiente de pago" },
+              { clave: "cardname", titulo: "Cliente" },
+            ]}
+            clave={orderBy}
+            direccion={order}
+            onCambiar={(clave, direccion) => {
+              setOrderBy(clave as OrderBy);
+              setOrder(direccion);
+            }}
+          />
+          <TarjetasMovil
+            filas={sortedData.map((cliente) => {
+              const excedente =
+                cliente.balance && cliente.linea_credito && cliente.balance > cliente.linea_credito
+                  ? cliente.balance - cliente.linea_credito
+                  : 0;
+              const fecha = cliente.ultima_compra ? new Date(cliente.ultima_compra) : null;
+              return {
+                clave: cliente.cardcode,
+                titulo: cliente.cardname,
+                meta: `${formatearRUTDesdeSAP(cliente.cardcode)}${cliente.ciudad ? ` · ${cliente.ciudad}` : ""}`,
+                principales: [
+                  { titulo: "Total", valor: formatoMonto(cliente.total_comprado) },
+                  { titulo: "Compras", valor: (cliente.cantidad_compras ?? 0).toLocaleString("es-CL") },
+                  {
+                    titulo: "Pendiente",
+                    valor: (
+                      <Box component="span" sx={{ color: excedente > 0 ? estado.mal.color : undefined }}>
+                        {formatoMonto(cliente.balance)}
+                      </Box>
+                    ),
+                  },
+                ],
+                detalle: [
+                  { titulo: "Ticket promedio", valor: formatoMonto(cliente.ticket_promedio) },
+                  { titulo: "Última compra", valor: fecha && !isNaN(fecha.getTime()) ? fecha.toLocaleDateString("es-CL") : "—" },
+                  { titulo: "Línea de crédito", valor: cliente.linea_credito ? formatoMonto(cliente.linea_credito) : "Sin crédito" },
+                  ...(excedente > 0
+                    ? [
+                        {
+                          titulo: "Excede la línea en",
+                          valor: (
+                            <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, color: estado.mal.color }}>
+                              <IconAlertTriangle size={13} />
+                              {formatoMonto(excedente)}
+                            </Box>
+                          ),
+                        },
+                      ]
+                    : []),
+                ],
+              };
+            })}
+          />
+        </Box>
       ) : (
         <Box sx={{ overflowY: "auto", overflowX: "hidden", mx: -2.5, maxHeight: 520 }}>
           <Table size="small" stickyHeader sx={tablaSx}>

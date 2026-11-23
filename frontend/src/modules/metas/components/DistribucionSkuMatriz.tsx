@@ -1,5 +1,5 @@
 "use client";
-import { Alert, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import { Alert, Box, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import type { GoalItem, GoalTarget, GoalTargetItem } from "../types";
 
 interface Props {
@@ -23,6 +23,8 @@ export default function DistribucionSkuMatriz({ items, targets, targetItems, onC
   }
 
   return (
+    // Con varios responsables la matriz es ancha: se desplaza de lado en vez de romper la página.
+    <Box sx={{ overflowX: "auto" }}>
     <Table size="small">
       <TableHead>
         <TableRow>
@@ -73,5 +75,6 @@ export default function DistribucionSkuMatriz({ items, targets, targetItems, onC
         </caption>
       ) : null}
     </Table>
+    </Box>
   );
 }

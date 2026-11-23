@@ -95,12 +95,13 @@ export default function DevolucionesYCancelaciones() {
   ];
 
   const columnas: ColumnaInforme<Fila>[] = [
-    { clave: "producto", titulo: "Producto", ancho: 30, valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} /> },
+    { clave: "producto", titulo: "Producto", ancho: 30, movil: "titulo", valor: (f) => f.nombre ?? "", celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} /> },
     { clave: "vendidas", titulo: "Vendidas", ancho: 9, alinear: "right", valor: (f) => f.vendidas, celda: (f) => entero(f.vendidas) },
     {
       clave: "devueltas",
       titulo: "Con NC",
       ancho: 12,
+      movil: "principal",
       alinear: "right",
       valor: (f) => f.devueltas,
       excel: "Unidades con NC",
@@ -152,12 +153,13 @@ export default function DevolucionesYCancelaciones() {
       clave: "tasa",
       titulo: "Tasa",
       ancho: 9,
+      movil: "principal",
       alinear: "right",
       valor: (f) => redondo(f.tasaPct, 1),
       excel: "Tasa %",
       celda: (f) => <Box component="span" sx={{ fontWeight: 700, color: (f.tasaPct ?? 0) > 10 ? "#b42318" : tinta.secundaria }}>{porcentaje(f.tasaPct)}</Box>,
     },
-    { clave: "monto", titulo: "Monto total", ancho: 10, alinear: "right", valor: (f) => redondo(f.montoNc + f.montoCancelado), excel: "NC + cancelado sin IVA", celda: (f) => pesos(f.montoNc + f.montoCancelado) },
+    { clave: "monto", titulo: "Monto total", ancho: 10, movil: "principal", alinear: "right", valor: (f) => redondo(f.montoNc + f.montoCancelado), excel: "NC + cancelado sin IVA", celda: (f) => pesos(f.montoNc + f.montoCancelado) },
   ];
 
   return (

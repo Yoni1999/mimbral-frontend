@@ -8,6 +8,7 @@ import {
 import { CheckCircle, Warning, Cancel } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import { OrdenMovil, TarjetasMovil, useEsCelular } from '@/app/(DashboardLayout)/utilities/ventas/components/movil';
 
 type ProductoEstancado = {
   SKU: string;
@@ -56,6 +57,7 @@ const ProductosEstancadosTable = ({
   const [sortBy, setSortBy] = useState<SortKey>('DiasSinVenta');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [searchTerm, setSearchTerm] = useState('');
+  const esCelular = useEsCelular();
 
   const handleSort = (key: SortKey) => {
     if (sortBy === key) {
@@ -133,10 +135,11 @@ const ProductosEstancadosTable = ({
         <Typography variant="h6" fontWeight={600}>
           Productos Estancados
         </Typography>
-        <Box display="flex" gap={2} alignItems="center">
+        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" sx={{ width: { xs: '100%', sm: 'auto' } }}>
           <TextField
             size="small"
             variant="outlined"
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
             label="Buscar SKU o nombre"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -147,6 +150,67 @@ const ProductosEstancadosTable = ({
         </Box>
       </Box>
 
+      {esCelular ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+          <OrdenMovil
+            opciones={[
+              { clave: 'DiasSinVenta', titulo: 'Días sin venta' },
+              { clave: 'Stock', titulo: 'Stock' },
+              { clave: 'UltimaVenta', titulo: 'Última venta' },
+              { clave: 'UltimaFechaCompra', titulo: 'Última compra' },
+              { clave: 'CostoPromedioUlt3Compras', titulo: 'Costo prom.' },
+              { clave: 'MargenPorcentaje', titulo: etiquetaMargen },
+              { clave: 'Producto', titulo: 'Producto' },
+              { clave: 'PrimerNivel', titulo: 'Primer nivel' },
+              { clave: 'Categoria', titulo: 'Categoría' },
+            ]}
+            clave={sortBy}
+            direccion={sortDirection}
+            onCambiar={(clave, direccion) => {
+              setSortBy(clave as SortKey);
+              setSortDirection(direccion);
+            }}
+          />
+          <TarjetasMovil
+            vacio="No se encontraron productos con ese criterio de búsqueda."
+            filas={sortedData.map((row, idx) => ({
+              clave: `${row.SKU}-${idx}`,
+              titulo: row.Producto,
+              meta: [row.SKU, [row.PrimerNivel, row.Categoria].filter(Boolean).join(' › ')].filter(Boolean).join(' · '),
+              principales: [
+                {
+                  titulo: 'Días sin venta',
+                  valor: (
+                    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, '& svg': { fontSize: 16 } }}>
+                      {renderAlertaIcon(row.DiasSinVenta)}
+                      {row.DiasSinVenta}
+                    </Box>
+                  ),
+                },
+                { titulo: 'Stock', valor: row.Stock },
+                { titulo: etiquetaMargen, valor: row.MargenPorcentaje === null || row.MargenPorcentaje === undefined ? '—' : `${row.MargenPorcentaje}%` },
+              ],
+              detalle: [
+                {
+                  titulo: 'Última venta',
+                  valor: isFechaValida(row.UltimaVenta)
+                    ? new Date(row.UltimaVenta!).toLocaleDateString('es-CL', { timeZone: 'UTC' })
+                    : <em style={{ color: '#888' }}>Sin ventas</em>,
+                },
+                {
+                  titulo: 'Última compra',
+                  valor: isFechaValida(row.UltimaFechaCompra)
+                    ? new Date(row.UltimaFechaCompra!).toLocaleDateString('es-CL', { timeZone: 'UTC' })
+                    : '—',
+                },
+                { titulo: 'Costo prom.', valor: row.CostoPromedioUlt3Compras },
+                { titulo: 'Primer nivel', valor: row.PrimerNivel || '—' },
+                { titulo: 'Categoría', valor: row.Categoria || '—' },
+              ],
+            }))}
+          />
+        </Box>
+      ) : (
       <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
         <Table size="small">
           <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
@@ -209,6 +273,7 @@ const ProductosEstancadosTable = ({
           </TableBody>
         </Table>
       </TableContainer>
+      )}
     </Box>
   );
 };
