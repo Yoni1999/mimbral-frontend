@@ -12,6 +12,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
+import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
+import { HojaFiltros } from "@/app/(DashboardLayout)/utilities/ventas/components/HojaFiltros";
 
 // Interfaces moved out for clarity
 interface FiltroVentas {
@@ -79,6 +81,8 @@ const aCategorias = (data: any): Categoria[] =>
 
 const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters, multiCanal }) => {
   const [open, setOpen] = useState(false);
+  // En celular los filtros van en una hoja inferior con "Aplicar" fijo al pie.
+  const esCelular = useEsCelular();
   // Inicializa tipoEnvio a 'todas' por defecto cuando el canal es Meli o si no hay un filtro actual
   const [filters, setFilters] = useState<FiltroVentas>(() => {
     const initialFilters = currentFilters || { periodo: "7D" };
@@ -274,66 +278,8 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
     });
   };
 
-  return (
-    <Box mb={2}>
-      <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
-        <Box display="flex" gap={1} flexWrap="wrap">
-          {filters.canal && canalChips()}
-          {filters.tipoEnvio && (
-            // Mostrar chip solo si canal seleccionado contiene Meli
-            ((Array.isArray(filters.canal) ? filters.canal : [filters.canal]).includes("Meli")) && (
-              <Chip
-                label={`Envío Meli: ${tiposEnvioMeli.find(t => t.value === filters.tipoEnvio)?.label}`} // CAMBIO 8: Usar 'tipoEnvio'
-                onDelete={() => handleChipDelete("tipoEnvio")} // CAMBIO 9: Usar 'tipoEnvio'
-              />
-            )
-          )}
-          {filters.periodo && filters.periodo !== "RANGO" && (
-            <Chip
-                label={`Período: ${periodos.find(p => p.value === filters.periodo)?.label}`}
-                onDelete={() => handleChipDelete("periodo")}
-            />
-          )}
-          {filters.proveedor && (
-            <Chip
-                label={`Proveedor: ${proveedores.find(p => p.CardCode === filters.proveedor)?.CardName || filters.proveedor}`}
-                onDelete={() => handleChipDelete("proveedor")}
-            />
-          )}
-          {filters.primerNivel && (
-            <Chip
-                label={`Primer Nivel: ${primerNiveles.find(pn => pn.codigo === filters.primerNivel)?.nombre || filters.primerNivel}`}
-                onDelete={() => handleChipDelete("primerNivel")}
-            />
-          )}
-          {filters.categoria && (
-            <Chip
-                label={`Categoría: ${categorias.find(c => c.codigo === filters.categoria)?.nombre || filters.categoria}`}
-                onDelete={() => handleChipDelete("categoria")}
-            />
-          )}
-          {filters.subcategoria && (
-            <Chip
-                label={`Subcategoría: ${subcategorias.find(sc => sc.codigo === filters.subcategoria)?.nombre || filters.subcategoria}`}
-                onDelete={() => handleChipDelete("subcategoria")}
-            />
-          )}
-          {filters.periodo === "RANGO" && filters.fechaInicio && filters.fechaFin && (
-            <Chip label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`} onDelete={() => handleChipDelete("fechaInicio")} />
-          )}
-        </Box>
-        <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setOpen(true)}>Filtros</Button>
-      </Box>
-
-      <Drawer anchor="right" open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { width: { xs: "100%", sm: 360 }, p: 3 } }}>
-        <Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h6">Filtros de ventas</Typography>
-            <IconButton onClick={() => setOpen(false)}><CloseIcon /></IconButton>
-          </Box>
-
-          <Divider sx={{ my: 2 }} />
-
+  // Campos del formulario; los botones van dentro solo en el panel de escritorio.
+  const campos = (conBotones: boolean) => (
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <FormControl fullWidth size="small">
@@ -481,13 +427,90 @@ const HeaderVentasProductosDrawer: React.FC<Props> = ({ onFilterChange, currentF
               </Grid>
             )}
 
-            <Grid item xs={12} display="flex" justifyContent="space-between">
-              <Button variant="outlined" onClick={handleClear}>Limpiar</Button>
-              <Button variant="contained" onClick={handleApply}>Aplicar</Button>
-            </Grid>
+            {conBotones && (
+              <Grid item xs={12} display="flex" justifyContent="space-between">
+                <Button variant="outlined" onClick={handleClear}>Limpiar</Button>
+                <Button variant="contained" onClick={handleApply}>Aplicar</Button>
+              </Grid>
+            )}
           </Grid>
+  );
+
+  return (
+    <Box mb={2}>
+      <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+        <Box display="flex" gap={1} flexWrap="wrap" sx={{ maxWidth: "100%", "& .MuiChip-root": { maxWidth: "100%" } }}>
+          {filters.canal && canalChips()}
+          {filters.tipoEnvio && (
+            // Mostrar chip solo si canal seleccionado contiene Meli
+            ((Array.isArray(filters.canal) ? filters.canal : [filters.canal]).includes("Meli")) && (
+              <Chip
+                label={`Envío Meli: ${tiposEnvioMeli.find(t => t.value === filters.tipoEnvio)?.label}`} // CAMBIO 8: Usar 'tipoEnvio'
+                onDelete={() => handleChipDelete("tipoEnvio")} // CAMBIO 9: Usar 'tipoEnvio'
+              />
+            )
+          )}
+          {filters.periodo && filters.periodo !== "RANGO" && (
+            <Chip
+                label={`Período: ${periodos.find(p => p.value === filters.periodo)?.label}`}
+                onDelete={() => handleChipDelete("periodo")}
+            />
+          )}
+          {filters.proveedor && (
+            <Chip
+                label={`Proveedor: ${proveedores.find(p => p.CardCode === filters.proveedor)?.CardName || filters.proveedor}`}
+                onDelete={() => handleChipDelete("proveedor")}
+            />
+          )}
+          {filters.primerNivel && (
+            <Chip
+                label={`Primer Nivel: ${primerNiveles.find(pn => pn.codigo === filters.primerNivel)?.nombre || filters.primerNivel}`}
+                onDelete={() => handleChipDelete("primerNivel")}
+            />
+          )}
+          {filters.categoria && (
+            <Chip
+                label={`Categoría: ${categorias.find(c => c.codigo === filters.categoria)?.nombre || filters.categoria}`}
+                onDelete={() => handleChipDelete("categoria")}
+            />
+          )}
+          {filters.subcategoria && (
+            <Chip
+                label={`Subcategoría: ${subcategorias.find(sc => sc.codigo === filters.subcategoria)?.nombre || filters.subcategoria}`}
+                onDelete={() => handleChipDelete("subcategoria")}
+            />
+          )}
+          {filters.periodo === "RANGO" && filters.fechaInicio && filters.fechaFin && (
+            <Chip label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`} onDelete={() => handleChipDelete("fechaInicio")} />
+          )}
+        </Box>
+        <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setOpen(true)}>Filtros</Button>
+      </Box>
+
+      {esCelular ? (
+        <HojaFiltros
+          abierta={open}
+          onCerrar={() => setOpen(false)}
+          titulo="Filtros de ventas"
+          onAplicar={handleApply}
+          onLimpiar={handleClear}
+        >
+          {campos(false)}
+        </HojaFiltros>
+      ) : (
+      <Drawer anchor="right" open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { width: { xs: "100%", sm: 360 }, p: 3 } }}>
+        <Box>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">Filtros de ventas</Typography>
+            <IconButton onClick={() => setOpen(false)}><CloseIcon /></IconButton>
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+
+          {campos(true)}
         </Box>
       </Drawer>
+      )}
     </Box>
   );
 };

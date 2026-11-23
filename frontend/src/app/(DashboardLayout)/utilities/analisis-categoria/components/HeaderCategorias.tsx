@@ -15,6 +15,8 @@ import {
   tinta,
   filaControlesSx,
 } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
+import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
+import { EtiquetaHoja, HojaFiltros, pildorasMovilSx } from "@/app/(DashboardLayout)/utilities/ventas/components/HojaFiltros";
 import { Arbol, Paso } from "../niveles";
 import SelectorCategoria from "./SelectorCategoria";
 
@@ -51,6 +53,7 @@ interface Props {
 const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, cargandoOpciones, familias, cargandoFamilias }) => {
   const [filtrosAnchor, setFiltrosAnchor] = React.useState<HTMLElement | null>(null);
   const { ruta } = filtros;
+  const esCelular = useEsCelular();
   const actual = ruta[ruta.length - 1];
   const rango = filtros.temporada || etiquetaRango(filtros.fechaInicio, filtros.fechaFin);
 
@@ -116,7 +119,7 @@ const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, carg
           </Box>
         </Box>
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ flex: 1, minWidth: 0, ...pildorasMovilSx }}>
           <RangosRapidos
             fechaInicio={filtros.fechaInicio}
             fechaFin={filtros.fechaFin}
@@ -167,6 +170,22 @@ const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, carg
         </Stack>
       </Stack>
 
+      {esCelular ? (
+        // Elegir una temporada la aplica y cierra la hoja.
+        <HojaFiltros abierta={!!filtrosAnchor} onCerrar={() => setFiltrosAnchor(null)} descripcion="Una temporada fija el período de la vista.">
+          <EtiquetaHoja>Temporada</EtiquetaHoja>
+          <FormControl fullWidth size="small">
+            <Select value={filtros.temporada} displayEmpty inputProps={{ "aria-label": "Temporada" }} onChange={(e) => elegirTemporada(e.target.value)} sx={controlSx}>
+              <MenuItem value="">Sin temporada</MenuItem>
+              {Object.keys(TEMPORADAS).map((t) => (
+                <MenuItem key={t} value={t}>
+                  {t}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </HojaFiltros>
+      ) : (
       <Popover
         open={!!filtrosAnchor}
         anchorEl={filtrosAnchor}
@@ -205,6 +224,7 @@ const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, carg
           </Select>
         </FormControl>
       </Popover>
+      )}
     </Box>
   );
 };

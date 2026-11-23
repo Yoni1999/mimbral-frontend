@@ -13,6 +13,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
+import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
+import { HojaFiltros } from "@/app/(DashboardLayout)/utilities/ventas/components/HojaFiltros";
 
 // --- INTERFACES (Moved out from within the component for clarity) ---
 interface FiltroProductos {
@@ -49,6 +51,8 @@ const aCategorias = (data: any): Categoria[] =>
 
 const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters }) => {
   const [openDrawer, setOpenDrawer] = useState(false);
+  // En celular los filtros van en una hoja inferior con "Aplicar" fijo al pie.
+  const esCelular = useEsCelular();
   // Parte de los filtros vigentes (al volver a la vista muestra lo consultado);
   // sin ellos, "1M" y sin almacenes como siempre.
   const [filters, setFilters] = useState<FiltroProductos>(() => ({ periodo: "1M", almacenes: [], ...currentFilters }));
@@ -192,7 +196,14 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
   const handleChipDelete = (key: keyof FiltroProductos | "fechaRango") => {
     let updated: FiltroProductos = { ...filters };
 
-    if (key === "periodo" || key === "primerNivel" || key === "categoria" || key === "subcategoria" || key === "proveedor") { // Use undefined for optional fields
+    if (key === "periodo") {
+      // Quitar el período vuelve al de siempre (1M) y borra el rango.
+      updated.periodo = "1M";
+      updated.fechaInicio = undefined;
+      updated.fechaFin = undefined;
+    } else if (key === "primerNivel" || key === "categoria" || key === "subcategoria" || key === "proveedor") {
+      // Antes este caso no hacía nada y el chip no se podía quitar.
+      updated[key] = undefined;
     } else if (key === "almacenes") {
       updated.almacenes = []; // Clear the array for almacenes
     } else if (key === "fechaRango") { // Special case for date range chip
@@ -244,77 +255,8 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
     p.CardName.toLowerCase().includes(proveedorSearchInput.toLowerCase())
   );
 
-  return (
-    <Box mb={2}>
-      {/* Chips + Button */}
-      <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
-        <Box display="flex" gap={1} flexWrap="wrap">
-          {filters.periodo && (
-            <Chip label={`Período: ${periodos.find(p => p.value === filters.periodo)?.label}`} onDelete={() => handleChipDelete("periodo")} />
-          )}
-          {filters.proveedor && (
-            <Chip
-              label={`Proveedor: ${allProveedores.find(p => p.CardCode === filters.proveedor)?.CardName || filters.proveedor}`}
-              onDelete={() => handleChipDelete("proveedor")}
-            />
-          )}
-          {filters.primerNivel && (
-            <Chip label={`Primer Nivel: ${primerNiveles.find(p => p.codigo === filters.primerNivel)?.nombre}`} onDelete={() => handleChipDelete("primerNivel")} />
-          )}
-          {filters.categoria && (
-            <Chip label={`Categoría: ${categorias.find(p => p.codigo === filters.categoria)?.nombre}`} onDelete={() => handleChipDelete("categoria")} />
-          )}
-          {filters.subcategoria && (
-            <Chip label={`Subcategoría: ${subcategorias.find(p => p.codigo === filters.subcategoria)?.nombre}`} onDelete={() => handleChipDelete("subcategoria")} />
-          )}
-          {filters.almacenes && filters.almacenes.length > 0 && (
-            // Render a chip for each selected almacen
-            filters.almacenes.map(almacenCode => {
-              const almacen = almacenesDisponibles.find(a => a.value === almacenCode);
-              return (
-                <Chip
-                  key={almacenCode}
-                  label={`Almacén: ${almacen?.label || almacenCode}`}
-                  onDelete={() => handleAlmacenChipDelete(almacenCode)}
-                />
-              );
-            })
-          )}
-          {filters.periodo === "RANGO" && filters.fechaInicio && filters.fechaFin && (
-            <Chip label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`} onDelete={() => handleChipDelete("fechaRango")} />
-          )}
-        </Box>
-        <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setOpenDrawer(true)}>
-          Filtros
-        </Button>
-      </Box>
-
-      {/* Side Drawer */}
-      <Drawer
-        anchor="right"
-        open={openDrawer}
-        onClose={() => setOpenDrawer(false)}
-        PaperProps={{
-          sx: {
-            width: { xs: "100%", sm: 380 },
-            borderTopLeftRadius: 12,
-            borderBottomLeftRadius: 12,
-            boxShadow: 6,
-            p: { xs: 2, sm: 3 },
-            backgroundColor: "#fafafa",
-          },
-        }}
-      >
-        <Box sx={{ width: { xs: "100%", sm: 360 }, p: { xs: 0, sm: 3 } }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h6">Filtros de búsqueda</Typography>
-            <IconButton onClick={() => setOpenDrawer(false)}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          <Divider sx={{ my: 2 }} />
-
+  // Campos del formulario; los botones van dentro solo en el panel de escritorio.
+  const campos = (conBotones: boolean) => (
           <Grid container spacing={2}>
             {/* Period */}
             <Grid item xs={12}>
@@ -520,13 +462,101 @@ const HeaderProductosDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
             )}
 
             {/* Buttons */}
-            <Grid item xs={12} display="flex" justifyContent="space-between">
-              <Button variant="outlined" onClick={handleClear}>Limpiar</Button>
-              <Button variant="contained" onClick={handleApply}>Aplicar</Button>
-            </Grid>
+            {conBotones && (
+              <Grid item xs={12} display="flex" justifyContent="space-between">
+                <Button variant="outlined" onClick={handleClear}>Limpiar</Button>
+                <Button variant="contained" onClick={handleApply}>Aplicar</Button>
+              </Grid>
+            )}
           </Grid>
+  );
+
+  return (
+    <Box mb={2}>
+      {/* Chips + Button */}
+      <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+        <Box display="flex" gap={1} flexWrap="wrap" sx={{ maxWidth: "100%", "& .MuiChip-root": { maxWidth: "100%" } }}>
+          {filters.periodo && (
+            <Chip label={`Período: ${periodos.find(p => p.value === filters.periodo)?.label}`} onDelete={() => handleChipDelete("periodo")} />
+          )}
+          {filters.proveedor && (
+            <Chip
+              label={`Proveedor: ${allProveedores.find(p => p.CardCode === filters.proveedor)?.CardName || filters.proveedor}`}
+              onDelete={() => handleChipDelete("proveedor")}
+            />
+          )}
+          {filters.primerNivel && (
+            <Chip label={`Primer Nivel: ${primerNiveles.find(p => p.codigo === filters.primerNivel)?.nombre}`} onDelete={() => handleChipDelete("primerNivel")} />
+          )}
+          {filters.categoria && (
+            <Chip label={`Categoría: ${categorias.find(p => p.codigo === filters.categoria)?.nombre}`} onDelete={() => handleChipDelete("categoria")} />
+          )}
+          {filters.subcategoria && (
+            <Chip label={`Subcategoría: ${subcategorias.find(p => p.codigo === filters.subcategoria)?.nombre}`} onDelete={() => handleChipDelete("subcategoria")} />
+          )}
+          {filters.almacenes && filters.almacenes.length > 0 && (
+            // Render a chip for each selected almacen
+            filters.almacenes.map(almacenCode => {
+              const almacen = almacenesDisponibles.find(a => a.value === almacenCode);
+              return (
+                <Chip
+                  key={almacenCode}
+                  label={`Almacén: ${almacen?.label || almacenCode}`}
+                  onDelete={() => handleAlmacenChipDelete(almacenCode)}
+                />
+              );
+            })
+          )}
+          {filters.periodo === "RANGO" && filters.fechaInicio && filters.fechaFin && (
+            <Chip label={`Rango: ${filters.fechaInicio} - ${filters.fechaFin}`} onDelete={() => handleChipDelete("fechaRango")} />
+          )}
+        </Box>
+        <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setOpenDrawer(true)}>
+          Filtros
+        </Button>
+      </Box>
+
+      {/* Side Drawer */}
+      {esCelular ? (
+        <HojaFiltros
+          abierta={openDrawer}
+          onCerrar={() => setOpenDrawer(false)}
+          titulo="Filtros de búsqueda"
+          onAplicar={handleApply}
+          onLimpiar={handleClear}
+        >
+          {campos(false)}
+        </HojaFiltros>
+      ) : (
+      <Drawer
+        anchor="right"
+        open={openDrawer}
+        onClose={() => setOpenDrawer(false)}
+        PaperProps={{
+          sx: {
+            width: { xs: "100%", sm: 380 },
+            borderTopLeftRadius: 12,
+            borderBottomLeftRadius: 12,
+            boxShadow: 6,
+            p: { xs: 2, sm: 3 },
+            backgroundColor: "#fafafa",
+          },
+        }}
+      >
+        <Box sx={{ width: { xs: "100%", sm: 360 }, p: { xs: 0, sm: 3 } }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">Filtros de búsqueda</Typography>
+            <IconButton onClick={() => setOpenDrawer(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+
+          {campos(true)}
         </Box>
       </Drawer>
+      )}
     </Box>
   );
 };

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Button,
@@ -24,6 +25,8 @@ import type { Goal, GoalPeriod } from "@/modules/metas/types";
 import { notifyError, notifySuccess } from "@/components/ui/toast/notify";
 import { useEstadoVista } from "@/utils/estadoVista";
 import { campoDe } from "@/modules/metas/campoVista";
+import TarjetasPaginadas from "@/modules/metas/components/TarjetasPaginadas";
+import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 const TIPOS_RESPONSABLE = [{ value: "", label: "Todos" }, { value: "SELLER", label: "Vendedor" }, { value: "SALES_CHANNEL", label: "Canal de venta" }];
 const TIPOS_META = [{ value: "", label: "Todas" }, { value: "SALES_AMOUNT", label: "Monto de venta" }, { value: "SKU_QUANTITY", label: "Cantidad SKU" }];
@@ -50,6 +53,8 @@ export default function ListadoMetasPage() {
   const setSortModel = campoDe(setVista, "sortModel");
   const [borrador, setBorrador] = useState(filtrosAplicados);
   const [accion, setAccion] = useState<{ tipo: "cancel" | "delete"; meta: Goal } | null>(null);
+  const esCelular = useEsCelular();
+  const router = useRouter();
 
   useEffect(() => {
     listarPeriodos({ pageSize: 100 }).then(({ items }) => setPeriodos(items)).catch(() => notifyError("No se pudieron cargar los periodos"));
@@ -204,6 +209,50 @@ export default function ListadoMetasPage() {
               </Grid>
             </Grid>
 
+            {esCelular ? (
+              <TarjetasPaginadas
+                cargando={loading}
+                total={total}
+                paginationModel={paginationModel}
+                onPaginationModelChange={setPaginationModel}
+                vacio="Sin metas para los filtros elegidos."
+                filas={metas.map((m) => ({
+                  clave: m.id,
+                  titulo: m.name,
+                  meta: `${m.periodName ?? "—"} · ${m.targetNames || "—"}`,
+                  onAbrir: () => router.push(`/metas/${m.id}`),
+                  principales: [
+                    { titulo: "Tipo", valor: m.goalType === "SALES_AMOUNT" ? "Monto" : "SKU" },
+                    {
+                      titulo: "Objetivo",
+                      valor: m.goalType === "SALES_AMOUNT"
+                        ? new Intl.NumberFormat("es-CL", { style: "currency", currency: m.currencyCode || "CLP", maximumFractionDigits: 0 }).format(m.targetAmount || 0)
+                        : "—",
+                    },
+                    { titulo: "Estado", valor: <EstadoChip estado={m.status} /> },
+                  ],
+                  detalle: [
+                    { titulo: "Responsable", valor: m.targetType === "SELLER" ? "Vendedor" : m.targetType === "SALES_CHANNEL" ? "Canal" : "—" },
+                    { titulo: "Modo", valor: { INDIVIDUAL: "Individual", SHARED: "Compartido", DISTRIBUTED: "Distribuido" }[m.assignmentMode] },
+                    { titulo: "Creado por", valor: m.createdByUserName || m.createdByUserId },
+                    {
+                      titulo: "Acciones",
+                      valor: (
+                        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                          {m.status === "ACTIVE" && (
+                            <>
+                              <IconButton aria-label="Editar" component={Link} href={`/metas/${m.id}/editar`}><IconPencil size={18} /></IconButton>
+                              <IconButton aria-label="Cancelar meta" onClick={() => setAccion({ tipo: "cancel", meta: m })}><IconBan size={18} /></IconButton>
+                            </>
+                          )}
+                          <IconButton aria-label="Eliminar" color="error" onClick={() => setAccion({ tipo: "delete", meta: m })}><IconTrash size={18} /></IconButton>
+                        </Stack>
+                      ),
+                    },
+                  ],
+                }))}
+              />
+            ) : (
             <Box sx={{ height: 560 }}>
               <DataGrid
                 rows={metas}
@@ -219,6 +268,7 @@ export default function ListadoMetasPage() {
                 disableRowSelectionOnClick
               />
             </Box>
+            )}
           </Box>
         </BlankCard>
       </Box>

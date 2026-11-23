@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Box, Button, Dialog, IconButton, InputAdornment, Skeleton, TextField, Typography } from "@mui/material";
-import { IconCategory, IconCheck, IconChevronDown, IconChevronRight, IconSearch, IconX } from "@tabler/icons-react";
+import { IconCategory, IconCheck, IconChevronDown, IconChevronLeft, IconChevronRight, IconSearch, IconX } from "@tabler/icons-react";
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
@@ -116,7 +116,24 @@ function Fila({
   );
 }
 
-function Columna({ titulo, children, vacio }: { titulo: string; children?: React.ReactNode; vacio?: string }) {
+/** Celular (bajo 600 px): misma consulta que theme.breakpoints.down("sm"). */
+const CELULAR = "@media (max-width: 599.95px)";
+
+function Columna({
+  titulo,
+  children,
+  vacio,
+  enCelular = true,
+  onVolver,
+}: {
+  titulo: string;
+  children?: React.ReactNode;
+  vacio?: string;
+  /** En celular las columnas no caben lado a lado: se ve una a la vez (la del nivel que se está eligiendo). */
+  enCelular?: boolean;
+  /** En celular, volver a la columna anterior. */
+  onVolver?: () => void;
+}) {
   return (
     <Box
       sx={{
@@ -126,11 +143,19 @@ function Columna({ titulo, children, vacio }: { titulo: string; children?: React
         flexDirection: "column",
         borderRight: `1px solid ${tinta.borde}`,
         "&:last-of-type": { borderRight: 0 },
+        [CELULAR]: { display: enCelular ? "flex" : "none", borderRight: 0, "& button[aria-pressed]": { minHeight: 42 } },
       }}
     >
-      <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: tinta.tenue, textTransform: "uppercase", letterSpacing: "0.06em", px: 2, pt: 1.5, pb: 0.75 }}>
-        {titulo}
-      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 2, pt: 1.5, pb: 0.75, [CELULAR]: { px: 1.5 } }}>
+        {onVolver && (
+          <IconButton aria-label="Volver al nivel anterior" onClick={onVolver} size="small" sx={{ display: { xs: "inline-flex", sm: "none" }, ml: -0.5 }}>
+            <IconChevronLeft size={18} />
+          </IconButton>
+        )}
+        <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: tinta.tenue, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          {titulo}
+        </Typography>
+      </Box>
       <Box sx={{ flex: 1, overflowY: "auto", px: 1, pb: 1 }}>
         {children ?? (
           <Box sx={{ height: "100%", display: "grid", placeItems: "center", px: 2 }}>
@@ -216,6 +241,9 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
     []
   );
 
+  // Columna que se ve en celular: la del nivel que toca elegir.
+  const verEnCelular: 1 | 2 | 3 = !n1 && !n2 ? 1 : n2 && !enFamilias ? 3 : 2;
+
   const paso = (o: Opcion): Paso => ({ nivel: o.nivel, codigo: o.codigo, nombre: o.nombre });
 
   // Búsqueda: un resultado de categoría trae su primer nivel; uno de
@@ -254,6 +282,8 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
           minWidth: { xs: 0, sm: 240 },
           maxWidth: { xs: "100%", sm: 340 },
           flexGrow: { xs: 1, sm: 0 },
+          // En celular va en su propia línea y los botones (fecha, filtros, limpiar) debajo.
+          flexBasis: { xs: "100%", sm: "auto" },
           px: 1.25,
           border: `1px solid ${abierto ? tinta.acento : tinta.borde}`,
           color: tinta.primaria,
@@ -274,7 +304,7 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
         onClose={() => setAbierto(false)}
         fullWidth
         maxWidth="lg"
-        PaperProps={{ sx: { borderRadius: "16px", overflow: "hidden" } }}
+        PaperProps={{ sx: { borderRadius: "16px", overflow: "hidden", [CELULAR]: { m: 1.5, width: "calc(100% - 24px)", maxHeight: "calc(100% - 24px)" } } }}
         // Enter elige lo marcado (o el primer resultado de la búsqueda).
         onKeyDown={(e) => {
           if (e.key !== "Enter" || (e.target as HTMLElement).tagName === "BUTTON") return;
@@ -288,7 +318,9 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
           <Box>
             <Typography sx={{ fontSize: 17, fontWeight: 750, color: tinta.primaria }}>Elegir qué analizar</Typography>
             <Typography sx={{ fontSize: 12.5, color: tinta.secundaria }}>
-              De lo general a lo particular. Doble clic o Enter para seleccionar.
+              De lo general a lo particular.{" "}
+              <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>Doble clic o Enter para seleccionar.</Box>
+              <Box component="span" sx={{ display: { xs: "inline", sm: "none" } }}>Toca para entrar y luego «Seleccionar».</Box>
             </Typography>
           </Box>
           <IconButton aria-label="Cerrar" onClick={() => setAbierto(false)} size="small">
@@ -325,7 +357,7 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
                   }}
                 >
                   {ARBOLES[a].etiqueta}
-                  <Box component="span" sx={{ ml: 0.75, fontSize: 11.5, fontWeight: 500, color: tinta.tenue }}>
+                  <Box component="span" sx={{ ml: 0.75, fontSize: 11.5, fontWeight: 500, color: tinta.tenue, display: { xs: "none", sm: "inline" } }}>
                     {a === "familias" ? "Familia › Subfamilia" : "Primer nivel › Categoría › Subcategoría"}
                   </Box>
                 </Box>
@@ -404,6 +436,7 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
           <Box sx={{ display: "flex", height: { xs: 420, md: 520 } }}>
             <Columna
               titulo={niveles[1]!.etiqueta}
+              enCelular={verEnCelular === 1}
               vacio={enFamilias ? "Las familias todavía no están disponibles." : "Sin categorías disponibles."}
             >
               {cargando
@@ -426,6 +459,8 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
 
             <Columna
               titulo={niveles[2]!.etiqueta}
+              enCelular={verEnCelular === 2}
+              onVolver={() => setBorrador([])}
               vacio={enFamilias ? "Elige una familia para ver sus subfamilias." : "Elige un primer nivel para ver sus categorías."}
             >
               {n1 ? (
@@ -455,7 +490,12 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
             </Columna>
 
             {!enFamilias && (
-            <Columna titulo="Subcategoría" vacio="Elige una categoría para ver sus subcategorías.">
+            <Columna
+              titulo="Subcategoría"
+              enCelular={verEnCelular === 3}
+              onVolver={() => setBorrador(n1 ? [n1] : [])}
+              vacio="Elige una categoría para ver sus subcategorías."
+            >
               {n2 ? (
                 cargandoSub ? (
                   Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} height={34} sx={{ mx: 1 }} />)
@@ -499,6 +539,7 @@ export default function SelectorCategoria({ arbol, ruta, catalogos, cargando: ca
             py: 1.5,
             borderTop: `1px solid ${tinta.borde}`,
             bgcolor: tinta.fondoSuave,
+            [CELULAR]: { flexDirection: "column", alignItems: "stretch", gap: 1, px: 2, "& .MuiButton-root": { flex: 1, height: 42 } },
           }}
         >
           {/* La ruta elegida: cada nivel se puede pulsar para quedarse en él. */}

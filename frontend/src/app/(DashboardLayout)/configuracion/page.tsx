@@ -150,7 +150,7 @@ export default function ConfiguracionPage() {
       : "correcta");
 
   return (
-    <Box p={{ xs: 2, md: 4 }}>
+    <Box px={{ xs: 0, sm: 2, md: 4 }} py={{ xs: 2, md: 4 }}>
       <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2} mb={1}>
         <Box>
           <Typography variant="h4" fontWeight="bold">
@@ -196,12 +196,17 @@ export default function ConfiguracionPage() {
             const p = porProcedimiento[proc.codigo.toLowerCase()];
             return {
               clave: proc.codigo,
-              titulo: proc.nombre,
+              // El estado va junto al nombre: en la tercera columna el chip quedaba cortado ("Sin regi…").
+              titulo: (
+                <Box component="span" sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+                  <span>{proc.nombre}</span>
+                  <ChipEstado p={p} />
+                </Box>
+              ),
               meta: <span style={{ fontFamily: "monospace" }}>{proc.codigo}</span>,
               principales: [
                 { titulo: "Última ejecución", valor: p ? fechaHora(p.fin ?? p.inicio) : "—" },
                 { titulo: "Origen", valor: p ? ORIGEN[p.origen] ?? p.origen : "—" },
-                { titulo: "Estado", valor: <ChipEstado p={p} /> },
               ],
               // El tooltip del error no se puede pasar el dedo: el detalle lo muestra.
               detalle: p?.estado === "error" ? [{ titulo: "Error", valor: p.error || "Error sin detalle" }] : undefined,

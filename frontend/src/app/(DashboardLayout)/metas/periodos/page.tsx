@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Button,
@@ -24,6 +25,8 @@ import type { GoalPeriod, PeriodStatus } from "@/modules/metas/types";
 import { notifyError, notifySuccess } from "@/components/ui/toast/notify";
 import { useEstadoVista } from "@/utils/estadoVista";
 import { campoDe } from "@/modules/metas/campoVista";
+import TarjetasPaginadas from "@/modules/metas/components/TarjetasPaginadas";
+import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 const ESTADOS: { value: PeriodStatus | ""; label: string }[] = [
   { value: "", label: "Todos" },
@@ -50,6 +53,8 @@ export default function PeriodosPage() {
   const setSortModel = campoDe(setVista, "sortModel");
   const [borrador, setBorrador] = useState(filtrosAplicados);
   const [accion, setAccion] = useState<{ tipo: "close" | "cancel" | "delete"; periodo: GoalPeriod } | null>(null);
+  const esCelular = useEsCelular();
+  const router = useRouter();
 
   async function cargar() {
     setLoading(true);
@@ -186,6 +191,48 @@ export default function PeriodosPage() {
               </Grid>
             </Grid>
 
+            {esCelular ? (
+              <TarjetasPaginadas
+                cargando={loading}
+                total={total}
+                paginationModel={paginationModel}
+                onPaginationModelChange={setPaginationModel}
+                vacio="Sin periodos para los filtros elegidos."
+                filas={periodos.map((periodo) => ({
+                  clave: periodo.id,
+                  titulo: periodo.name,
+                  meta: `${dayjs(periodo.startDate).format("DD-MM-YYYY")} al ${dayjs(periodo.endDate).format("DD-MM-YYYY")}`,
+                  onAbrir: () => router.push(`/metas/periodos/${periodo.id}`),
+                  principales: [
+                    { titulo: "Estado", valor: <EstadoChip estado={periodo.status} /> },
+                    { titulo: "Metas", valor: periodo.goalCount ?? 0 },
+                  ],
+                  detalle: [
+                    { titulo: "Creado por", valor: periodo.createdByUserName || periodo.createdByUserId },
+                    { titulo: "Fecha creación", valor: dayjs(periodo.createdAt).format("DD-MM-YYYY HH:mm") },
+                    {
+                      titulo: "Acciones",
+                      valor: (
+                        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                          {(periodo.status === "DRAFT" || periodo.status === "ACTIVE") && (
+                            <IconButton aria-label="Editar" component={Link} href={`/metas/periodos/${periodo.id}/editar`}><IconPencil size={18} /></IconButton>
+                          )}
+                          {periodo.status === "ACTIVE" && (
+                            <IconButton aria-label="Cerrar periodo" onClick={() => setAccion({ tipo: "close", periodo })}><IconLock size={18} /></IconButton>
+                          )}
+                          {periodo.status !== "CLOSED" && periodo.status !== "CANCELLED" && (
+                            <IconButton aria-label="Cancelar periodo" onClick={() => setAccion({ tipo: "cancel", periodo })}><IconBan size={18} /></IconButton>
+                          )}
+                          {(periodo.goalCount ?? 0) === 0 && (
+                            <IconButton aria-label="Eliminar" color="error" onClick={() => setAccion({ tipo: "delete", periodo })}><IconTrash size={18} /></IconButton>
+                          )}
+                        </Stack>
+                      ),
+                    },
+                  ],
+                }))}
+              />
+            ) : (
             <Box sx={{ height: 520 }}>
               <DataGrid
                 rows={periodos}
@@ -201,6 +248,7 @@ export default function PeriodosPage() {
                 disableRowSelectionOnClick
               />
             </Box>
+            )}
           </Box>
         </BlankCard>
       </Box>

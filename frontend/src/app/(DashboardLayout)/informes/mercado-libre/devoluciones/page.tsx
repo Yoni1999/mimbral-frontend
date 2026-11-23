@@ -172,11 +172,12 @@ export default function DevolucionesYCancelaciones() {
           onRango={(r) => setFiltros((f) => ({ ...f, ...r }))}
           enEstadoInicial={filtros.ver === "todos" && etiquetaRango(filtros.fechaInicio, filtros.fechaFin) === "Últimos 30 días"}
           onLimpiar={() => setFiltros(inicial())}
+          filtrosActivos={filtros.ver !== "todos" ? [{ etiqueta: VER.find((v) => v.valor === filtros.ver)?.texto ?? "", onQuitar: () => setFiltros((f) => ({ ...f, ver: "todos" as Ver })) }] : []}
         >
           <Pildoras etiqueta="Mostrar" opciones={VER} valor={filtros.ver} onCambiar={(v) => setFiltros((f) => ({ ...f, ver: v }))} />
         </HeaderMl>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
           {tarjetas.map((t) => (
             <MetricCard key={t.title} {...t} cargando={datos.cargando} />
           ))}

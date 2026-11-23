@@ -11,6 +11,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
+import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
+import { HojaFiltros } from "@/app/(DashboardLayout)/utilities/ventas/components/HojaFiltros";
 
 export interface FiltroSinVentas {
     sku?: string;           // filtro exclusivo por SKU
@@ -38,6 +40,8 @@ const aCategorias = (data: any): Categoria[] =>
 
 const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters }) => {
     const [open, setOpen] = useState(false);
+    // En celular los filtros van en una hoja inferior con "Aplicar" fijo al pie.
+    const esCelular = useEsCelular();
     const [filters, setFilters] = useState<FiltroSinVentas>(() => currentFilters || { minStock: 0 });
 
     const [primerNiveles, setPrimerNiveles] = useState<Categoria[]>([]);
@@ -147,7 +151,7 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
 
     // Chips resumen
     const chips = (
-        <Box display="flex" gap={1} flexWrap="wrap">
+        <Box display="flex" gap={1} flexWrap="wrap" sx={{ maxWidth: "100%", "& .MuiChip-root": { maxWidth: "100%" } }}>
             {skuMode && (
                 <Chip
                     color="primary"
@@ -206,22 +210,8 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
         </Box>
     );
 
-    return (
-        <Box mb={2}>
-            <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
-                {chips}
-                <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setOpen(true)}>Filtros</Button>
-            </Box>
-
-            <Drawer anchor="right" open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { width: { xs: '100%', sm: 360 }, p: { xs: 2, sm: 3 } } }}>
-                <Box>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography variant="h6">Filtros</Typography>
-                        <IconButton onClick={() => setOpen(false)}><CloseIcon /></IconButton>
-                    </Box>
-
-                    <Divider sx={{ my: 2 }} />
-
+    // Campos del formulario; los botones van dentro solo en el panel de escritorio.
+    const campos = (conBotones: boolean) => (
                     <Grid container spacing={2}>
 
                         {/* filtro por SKU */}
@@ -322,13 +312,46 @@ const HeaderSinVentasDrawer: React.FC<Props> = ({ onFilterChange, currentFilters
                             </Grid>
                         )}
 
-                        <Grid item xs={12} display="flex" justifyContent="space-between">
-                            <Button variant="outlined" onClick={handleClear}>Limpiar</Button>
-                            <Button variant="contained" onClick={handleApply}>Aplicar</Button>
-                        </Grid>
+                        {conBotones && (
+                            <Grid item xs={12} display="flex" justifyContent="space-between">
+                                <Button variant="outlined" onClick={handleClear}>Limpiar</Button>
+                                <Button variant="contained" onClick={handleApply}>Aplicar</Button>
+                            </Grid>
+                        )}
                     </Grid>
+    );
+
+    return (
+        <Box mb={2}>
+            <Box mt={1} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+                {chips}
+                <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setOpen(true)}>Filtros</Button>
+            </Box>
+
+            {esCelular ? (
+                <HojaFiltros
+                    abierta={open}
+                    onCerrar={() => setOpen(false)}
+                    titulo="Filtros"
+                    onAplicar={handleApply}
+                    onLimpiar={handleClear}
+                >
+                    {campos(false)}
+                </HojaFiltros>
+            ) : (
+            <Drawer anchor="right" open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { width: { xs: '100%', sm: 360 }, p: { xs: 2, sm: 3 } } }}>
+                <Box>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Typography variant="h6">Filtros</Typography>
+                        <IconButton onClick={() => setOpen(false)}><CloseIcon /></IconButton>
+                    </Box>
+
+                    <Divider sx={{ my: 2 }} />
+
+                    {campos(true)}
                 </Box>
             </Drawer>
+            )}
         </Box>
     );
 };

@@ -13,7 +13,8 @@ import { IconAlertTriangle, IconInfoCircle } from "@tabler/icons-react";
 import { BACKEND_URL } from "@/config";
 import { useEstadoVista } from "@/utils/estadoVista";
 import DateRangeFilter from "../../../ventas/components/DateRangeFilter";
-import { ChipVariacion, cifraSx, estado, formatoMonto, formatoPorcentaje, tarjetaSx, tinta } from "../../../ventas/components/estilo";
+import { ChipVariacion, Pildoras, cifraSx, estado, formatoMonto, formatoPorcentaje, tarjetaSx, tinta } from "../../../ventas/components/estilo";
+import { FilaDeslizable } from "../../../ventas/mercado-libre/components/PanelFiltrosMovil";
 import { Par } from "../../../ventas/mercado-libre/components/comun";
 
 export type { Par };
@@ -288,6 +289,10 @@ export function SelectorPeriodo({ filtros, setFiltros, contexto }: { filtros: Fi
     );
   };
   const etiquetaComparar = comparar === "anio" ? "año anterior" : comparar === "anterior" ? "período anterior" : "elegido a mano";
+  // En celular el selector de fechas no muestra su lista de rangos: van como píldoras bajo cada campo.
+  const CORTO_COMPARAR: Record<string, string> = { anio: "Año anterior", anterior: "Período anterior", mes: "Mes anterior" };
+  const compararMarcado =
+    comparar === "personalizado" ? opciones.find((o) => o.clave === "mes" && o.rango.desde === comparacion.desde && o.rango.hasta === comparacion.hasta)?.clave ?? "" : comparar;
 
   return (
     <Box sx={{ ...tarjetaSx, p: 2, mb: 2 }}>
@@ -303,6 +308,19 @@ export function SelectorPeriodo({ filtros, setFiltros, contexto }: { filtros: Fi
             max={fin}
             rangos={rapidos.map((p) => ({ label: p.label, range: [aFecha(p.rango.desde), aFecha(p.rango.hasta)] as const }))}
           />
+          <Box sx={{ display: { xs: "block", sm: "none" }, mt: 1 }}>
+            <FilaDeslizable>
+              <Pildoras
+                etiqueta="Período rápido"
+                opciones={rapidos.map((p) => ({ valor: p.label, texto: p.label }))}
+                valor={filtros.rapido || ""}
+                onCambiar={(label) => {
+                  const p = rapidos.find((x) => x.label === label);
+                  if (p) elegirPeriodo({ start: p.rango.desde, end: p.rango.hasta });
+                }}
+              />
+            </FilaDeslizable>
+          </Box>
         </Box>
         <Box sx={{ width: { xs: "100%", sm: 250 } }}>
           <Typography sx={{ fontSize: 12, fontWeight: 600, color: tinta.secundaria, mb: 0.5 }}>Comparar con · {etiquetaComparar}</Typography>
@@ -317,6 +335,19 @@ export function SelectorPeriodo({ filtros, setFiltros, contexto }: { filtros: Fi
             tituloRangos="COMPARAR CON"
             rangos={opciones.map((o) => ({ label: o.label, range: [aFecha(o.rango.desde), aFecha(o.rango.hasta)] as const }))}
           />
+          <Box sx={{ display: { xs: "block", sm: "none" }, mt: 1 }}>
+            <FilaDeslizable>
+              <Pildoras
+                etiqueta="Comparar con"
+                opciones={opciones.map((o) => ({ valor: o.clave as string, texto: CORTO_COMPARAR[o.clave] ?? o.label }))}
+                valor={compararMarcado}
+                onCambiar={(clave) => {
+                  const o = opciones.find((x) => x.clave === clave);
+                  if (o) elegirComparacion({ start: o.rango.desde, end: o.rango.hasta });
+                }}
+              />
+            </FilaDeslizable>
+          </Box>
         </Box>
         <Typography sx={{ fontSize: 12.5, color: tinta.secundaria, pb: 0.75, flex: 1, minWidth: 200 }}>
           <b>{n} {n === 1 ? "día" : "días"}</b>
@@ -385,13 +416,14 @@ export function MargenCelda({ actual, puntos, anterior }: { actual: number | nul
   // Un cambio que se redondea a 0,0 se muestra como "sin cambio", no como subida o baja.
   const cambioVisible = cambio == null ? null : Math.abs(cambio) < 0.05 ? 0 : cambio;
   return (
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.75 }}>
+    // En celular (tarjeta, columna angosta) el cambio en pp baja bajo el % en vez de partir el número.
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: { xs: "flex-start", sm: "flex-end" }, flexWrap: { xs: "wrap", sm: "nowrap" }, gap: 0.75 }}>
       <Tooltip
         arrow
         placement="top"
         title={`Margen del período: ${formatoPorcentaje(actual * 100)} de la venta neta. Es estimado: venta − comisión − envío − costo promedio de SAP de hoy.`}
       >
-        <Box component="span" sx={{ fontWeight: 700, color: tono, ...cifraSx }}>{formatoPorcentaje(actual * 100)}</Box>
+        <Box component="span" sx={{ fontWeight: 700, color: tono, whiteSpace: "nowrap", ...cifraSx }}>{formatoPorcentaje(actual * 100)}</Box>
       </Tooltip>
       {cambioVisible != null && (
         <Tooltip

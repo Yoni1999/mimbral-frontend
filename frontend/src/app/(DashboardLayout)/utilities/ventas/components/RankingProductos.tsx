@@ -155,7 +155,16 @@ const RankingProductos: React.FC<Props> = ({ parametros, claveVista, comparacion
           : `${total.toLocaleString("es-CL")} productos con venta en el período${fuenteComparacion ? ` · variación de la venta ${fuenteComparacion.texto}` : ""}`
       }
       accion={
-        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap justifyContent="flex-end">
+        <Stack
+          direction="row"
+          spacing={1.5}
+          alignItems="center"
+          flexWrap="wrap"
+          useFlexGap
+          justifyContent={{ xs: "flex-start", sm: "flex-end" }}
+          // En celular, alineadas a la izquierda bajo el título (el alto táctil lo da Pildoras).
+          sx={{ "@media (max-width: 599.95px)": { rowGap: 1 } }}
+        >
           <Pildoras etiqueta="Orden" opciones={ORDENES} valor={orden} onCambiar={(o) => setVista((v) => ({ ...v, orden: o }))} />
           <Pildoras etiqueta="Medir por" opciones={MEDIDAS} valor={medida} onCambiar={(m) => setVista((v) => ({ ...v, medida: m }))} />
           <Pildoras etiqueta="Cantidad" opciones={CANTIDADES} valor={cantidad} onCambiar={(c) => setVista((v) => ({ ...v, cantidad: c }))} />

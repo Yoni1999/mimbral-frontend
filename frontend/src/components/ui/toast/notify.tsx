@@ -26,7 +26,9 @@ function notify(tone: ToastTone, title: string, options: NotifyOptions = {}) {
     (t) => (
       <CountdownToast t={t} title={title} description={options.description} durationMs={durationMs} tone={tone} />
     ),
-    { id: options.id, duration: Infinity }
+    // Sin id propio, el id sale del contenido: el mismo aviso disparado dos
+    // veces seguidas (doble efecto en desarrollo, dos componentes) se muestra una vez.
+    { id: options.id ?? `${tone}:${title}:${options.description ?? ""}`, duration: Infinity }
   );
 }
 

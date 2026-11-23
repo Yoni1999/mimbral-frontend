@@ -11,6 +11,7 @@ import { Pildoras, cifraSx, tinta } from "@/app/(DashboardLayout)/utilities/vent
 import TablaInforme, { CeldaProducto, ColumnaInforme, EncabezadoInforme, Filtro } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/TablaInforme";
 import { urlMl } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/comun";
 import { entero, fecha, pesos, porcentaje, redondo } from "../comun";
+import { FiltrosAdaptables } from "@/app/(DashboardLayout)/utilities/ventas/mercado-libre/components/PanelFiltrosMovil";
 
 interface Fila {
   sku: string;
@@ -190,25 +191,32 @@ export default function PrecioYCompetencia() {
           titulo="Precio y competencia"
           descripcion="Publicaciones activas de ML (la más vendida de cada producto): margen al precio de hoy, precio mínimo para el margen objetivo y el precio más bajo de la competencia en los últimos 30 días. Fuente: cálculo de márgenes del PIM y monitor de competencia."
         >
-          <Filtro etiqueta="Margen objetivo">
-            <Pildoras
-              etiqueta="Margen objetivo"
-              opciones={[
-                { valor: "10", texto: "10 %" },
-                { valor: "15", texto: "15 %" },
-                { valor: "20", texto: "20 %" },
-                { valor: "25", texto: "25 %" },
-              ]}
-              valor={filtros.objetivo}
-              onCambiar={(v) => setFiltros((x) => ({ ...x, objetivo: v }))}
-            />
-          </Filtro>
-          <Filtro etiqueta="Mostrar">
-            <Pildoras etiqueta="Mostrar" opciones={VER} valor={filtros.ver} onCambiar={(v) => setFiltros((x) => ({ ...x, ver: v }))} />
-          </Filtro>
+          <FiltrosAdaptables
+            activos={[
+              ...(filtros.objetivo !== "15" ? [{ etiqueta: `Objetivo ${filtros.objetivo} %`, onQuitar: () => setFiltros((x) => ({ ...x, objetivo: "15" as const })) }] : []),
+              ...(filtros.ver !== "todos" ? [{ etiqueta: VER.find((v) => v.valor === filtros.ver)?.texto ?? "", onQuitar: () => setFiltros((x) => ({ ...x, ver: "todos" as Ver })) }] : []),
+            ]}
+          >
+            <Filtro etiqueta="Margen objetivo">
+              <Pildoras
+                etiqueta="Margen objetivo"
+                opciones={[
+                  { valor: "10", texto: "10 %" },
+                  { valor: "15", texto: "15 %" },
+                  { valor: "20", texto: "20 %" },
+                  { valor: "25", texto: "25 %" },
+                ]}
+                valor={filtros.objetivo}
+                onCambiar={(v) => setFiltros((x) => ({ ...x, objetivo: v }))}
+              />
+            </Filtro>
+            <Filtro etiqueta="Mostrar">
+              <Pildoras etiqueta="Mostrar" opciones={VER} valor={filtros.ver} onCambiar={(v) => setFiltros((x) => ({ ...x, ver: v }))} />
+            </Filtro>
+          </FiltrosAdaptables>
         </EncabezadoInforme>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
           {tarjetas.map((t) => (
             <MetricCard key={t.title} {...t} cargando={datos.cargando} />
           ))}

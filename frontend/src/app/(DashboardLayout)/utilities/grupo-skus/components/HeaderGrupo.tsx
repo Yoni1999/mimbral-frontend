@@ -6,6 +6,8 @@ import { IconDownload, IconListDetails } from "@tabler/icons-react";
 import DateRangeFilter, { DateRangeValue } from "@/app/(DashboardLayout)/utilities/ventas/components/DateRangeFilter";
 import RangosRapidos, { TEMPORADAS, etiquetaRango, FechasDelRango } from "@/app/(DashboardLayout)/utilities/ventas/components/RangosRapidos";
 import FrescuraDatos from "@/app/(DashboardLayout)/utilities/ventas/components/FrescuraDatos";
+import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
+import { EtiquetaHoja, FiltrosActivosMovil, HojaFiltros, pildorasMovilSx } from "@/app/(DashboardLayout)/utilities/ventas/components/HojaFiltros";
 import {
   BotonLimpiar,
   CANALES,
@@ -55,6 +57,7 @@ const HeaderGrupo: React.FC<Props> = ({ filtros, setFiltros, rangoPorDefecto, on
   const [filtrosAnchor, setFiltrosAnchor] = React.useState<HTMLElement | null>(null);
   const rango = filtros.temporada || etiquetaRango(filtros.fechaInicio, filtros.fechaFin);
   const canal = CANALES.find((c) => c.clave === filtros.canal);
+  const esCelular = useEsCelular();
   const cambiar = (cambios: Partial<FiltrosGrupo>) => setFiltros((prev) => ({ ...prev, ...cambios }));
 
   const handleDateChange = (range: DateRangeValue | null) =>
@@ -72,6 +75,20 @@ const HeaderGrupo: React.FC<Props> = ({ filtros, setFiltros, rangoPorDefecto, on
     !filtros.canal && !filtros.temporada && !filtros.modoComparacion && filtros.fechaInicio === porDefecto.fechaInicio && filtros.fechaFin === porDefecto.fechaFin;
   const filtrosActivos = !!filtros.temporada || !!filtros.modoComparacion;
 
+  const selectorCanal = (
+    <FormControl size="small" sx={{ minWidth: 160 }}>
+      <Select value={filtros.canal} displayEmpty inputProps={{ "aria-label": "Canal" }} onChange={(e) => cambiar({ canal: e.target.value })} sx={controlSx}>
+        <MenuItem value="">Todos los canales</MenuItem>
+        {CANALES.map((c) => (
+          <MenuItem key={c.clave} value={c.clave}>
+            <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: c.color, mr: 1, display: "inline-block" }} />
+            {c.nombre}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
+
   const selectores = (
     <>
       <Button
@@ -83,17 +100,7 @@ const HeaderGrupo: React.FC<Props> = ({ filtros, setFiltros, rangoPorDefecto, on
         {filtros.skus.length ? `${filtros.skus.length} SKUs` : "Elegir SKUs"}
       </Button>
 
-      <FormControl size="small" sx={{ minWidth: 160 }}>
-        <Select value={filtros.canal} displayEmpty inputProps={{ "aria-label": "Canal" }} onChange={(e) => cambiar({ canal: e.target.value })} sx={controlSx}>
-          <MenuItem value="">Todos los canales</MenuItem>
-          {CANALES.map((c) => (
-            <MenuItem key={c.clave} value={c.clave}>
-              <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: c.color, mr: 1, display: "inline-block" }} />
-              {c.nombre}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      {selectorCanal}
     </>
   );
 
@@ -113,7 +120,7 @@ const HeaderGrupo: React.FC<Props> = ({ filtros, setFiltros, rangoPorDefecto, on
           </Typography>
         </Box>
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ flex: 1, minWidth: 0, ...pildorasMovilSx }}>
           <RangosRapidos
             fechaInicio={filtros.fechaInicio}
             fechaFin={filtros.fechaFin}
@@ -164,8 +171,44 @@ const HeaderGrupo: React.FC<Props> = ({ filtros, setFiltros, rangoPorDefecto, on
 
           <BotonLimpiar onClick={limpiar} disabled={enEstadoInicial} />
         </Stack>
+
+        {/* En celular el canal queda dentro de la hoja: aquí se ve como chip. */}
+        <FiltrosActivosMovil
+          activos={canal ? [{ etiqueta: `Canal: ${canal.nombre}`, onQuitar: () => cambiar({ canal: "" }) }] : []}
+        />
       </Stack>
 
+      {esCelular ? (
+        // Cada cambio se aplica al instante; "Listo" cierra.
+        <HojaFiltros abierta={!!filtrosAnchor} onCerrar={() => setFiltrosAnchor(null)} descripcion="Acotan todas las pestañas de la vista.">
+          <EtiquetaHoja>Canal</EtiquetaHoja>
+          {selectorCanal}
+          <EtiquetaHoja>Temporada</EtiquetaHoja>
+          <FormControl fullWidth size="small">
+            <Select value={filtros.temporada} displayEmpty inputProps={{ "aria-label": "Temporada" }} onChange={(e) => elegirTemporada(e.target.value)} sx={controlSx}>
+              <MenuItem value="">Sin temporada</MenuItem>
+              {Object.keys(TEMPORADAS).map((t) => (
+                <MenuItem key={t} value={t}>
+                  {t}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <EtiquetaHoja>Comparar con</EtiquetaHoja>
+          <FormControl fullWidth size="small">
+            <Select
+              value={filtros.modoComparacion}
+              displayEmpty
+              inputProps={{ "aria-label": "Comparar con" }}
+              onChange={(e) => cambiar({ modoComparacion: e.target.value as FiltrosGrupo["modoComparacion"] })}
+              sx={controlSx}
+            >
+              <MenuItem value="">Período anterior</MenuItem>
+              <MenuItem value="MismoPeriodoAnoAnterior">Mismo período año anterior</MenuItem>
+            </Select>
+          </FormControl>
+        </HojaFiltros>
+      ) : (
       <Popover
         open={!!filtrosAnchor}
         anchorEl={filtrosAnchor}
@@ -211,6 +254,7 @@ const HeaderGrupo: React.FC<Props> = ({ filtros, setFiltros, rangoPorDefecto, on
           </Box>
         </Stack>
       </Popover>
+      )}
     </Box>
   );
 };

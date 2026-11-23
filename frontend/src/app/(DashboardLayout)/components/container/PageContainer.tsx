@@ -1,4 +1,5 @@
 // import { Helmet } from 'react-helmet';
+import { Box } from '@mui/material';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 
 type Props = {
@@ -9,12 +10,14 @@ type Props = {
 
 const PageContainer = ({ title, description, children }: Props) => (
   <HelmetProvider>
-    <div
-      style={{
+    <Box
+      sx={{
         width: "100%",
-        maxWidth: "100%", 
+        maxWidth: "100%",
         margin: "0 auto",
-        padding: "0 20px",
+        // En celular el layout ya deja 12 px por lado: sumar otros 20 dejaba
+        // el contenido angosto y con gris a los costados (p. ej. Galaxy A55).
+        px: { xs: 0, sm: "20px" },
         overflowX: "hidden",
         boxSizing: "border-box",
         // Transparente: este wrapper lo comparten 5 pantallas (inicio,
@@ -29,7 +32,7 @@ const PageContainer = ({ title, description, children }: Props) => (
         <meta name="description" content={description} />
       </Helmet>
       {children}
-    </div>
+    </Box>
   </HelmetProvider>
 );
 

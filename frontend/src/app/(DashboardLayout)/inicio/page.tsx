@@ -117,6 +117,9 @@ function useResumenInicio() {
   const vendedorTop = (Array.isArray(vendedores.datos) ? [...vendedores.datos] : [])
     .sort((a, b) => (b.TotalVentas ?? 0) - (a.TotalVentas ?? 0))
     .find((v) => !CUENTAS_DE_CANAL.has(Number(v.SlpCode)));
+  // /api/goals/summary responde con sobre {ok, data} (ver metas.client): se
+  // lee `data`, y si algún día llega suelto, el objeto tal cual.
+  const resumenMetas = metas.datos?.data ?? metas.datos ?? {};
   const sinDato = "—";
   const notaSinNc = "Venta facturada: no descuenta las notas de crédito.";
 
@@ -151,9 +154,9 @@ function useResumenInicio() {
     },
     "Administrador de Metas": {
       cargando: metas.cargando,
-      value: metas.error ? sinDato : `${formatUnidades(metas.datos.activeGoals ?? 0)} activas`,
-      description: metas.datos.activePeriod?.name
-        ? `Período activo: ${metas.datos.activePeriod.name}`
+      value: metas.error ? sinDato : `${formatUnidades(resumenMetas.activeGoals ?? 0)} activas`,
+      description: resumenMetas.activePeriod?.name
+        ? `Período activo: ${resumenMetas.activePeriod.name}`
         : "Periodos, objetivos y cumplimiento por vendedor y canal",
     },
     "Ventas por Vendedor": {
