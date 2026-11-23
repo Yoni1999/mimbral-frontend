@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Header from "@/app/(DashboardLayout)/layout/header/Header";
 import Sidebar from "@/app/(DashboardLayout)/layout/sidebar/Sidebar";
 import FloatingHelpAgent from "@/components/agent/FloatingHelpAgent";
+import { BarraMovilProvider } from "@/app/(DashboardLayout)/layout/header/BarraMovil";
 
 const MainWrapper = styled("div")(() => ({
   display: "flex",
@@ -39,6 +40,8 @@ export default function RootLayout({ children }: Props) {
   useEffect(() => setMontado(true), []);
 
   return (
+    // BarraMovilProvider: las vistas fijan el título y subtítulo de la barra de celular (ver BarraMovil.tsx).
+    <BarraMovilProvider>
     <MainWrapper className="mainwrapper">
       <Sidebar />
 
@@ -57,5 +60,6 @@ export default function RootLayout({ children }: Props) {
 
       <FloatingHelpAgent />
     </MainWrapper>
+    </BarraMovilProvider>
   );
 }

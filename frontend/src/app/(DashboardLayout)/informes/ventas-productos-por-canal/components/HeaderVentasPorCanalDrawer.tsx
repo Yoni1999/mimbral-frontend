@@ -33,6 +33,8 @@ import { HojaFiltros } from "@/app/(DashboardLayout)/utilities/ventas/components
 import DateRangeFilter, { DateRangeValue } from "../../../utilities/ventas/components/DateRangeFilter";
 import SubmitOnEnter from "../../../components/SubmitOnEnter";
 import { MAX_SKUS, ResultadoLista, descargarPlantillaSkus, skusDeExcel, skusDeTexto } from "./listaSkus";
+import { useBarraMovil } from "@/app/(DashboardLayout)/layout/header/BarraMovil";
+import { etiquetaPeriodoCodigo } from "@/app/(DashboardLayout)/utilities/ventas/components/PeriodoMovil";
 
 export interface FiltrosPorCanal {
   periodo?: "1d" | "7d" | "14d" | "1m" | "3m" | "6m" | "RANGO";
@@ -143,6 +145,8 @@ const HeaderVentasPorCanalDrawer: React.FC<Props> = ({
   // En celular los filtros van en una hoja inferior con "Aplicar" fijo al pie
   // (el Popover no cabía: el pie quedaba cortado y sin scroll).
   const esCelular = useEsCelular();
+  // Celular: el período del informe consultado en la barra de arriba.
+  useBarraMovil({ subtitulo: etiquetaPeriodoCodigo(currentFilters?.periodo ?? "7d", currentFilters?.fechaInicio, currentFilters?.fechaFin) || undefined });
   const [filters, setFilters] = useState<FiltrosPorCanal>(
     currentFilters || { periodo: "7d" }
   );

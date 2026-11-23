@@ -9,6 +9,7 @@ import { Box, Button, Drawer, IconButton, Typography } from "@mui/material";
 import { IconAdjustmentsHorizontal, IconX } from "@tabler/icons-react";
 import { ChipFiltro, tinta } from "../../components/estilo";
 import { useEsCelular } from "../../components/movil";
+import { BotonFiltrosBarra } from "../../components/PeriodoMovil";
 
 export interface FiltroActivo {
   etiqueta: string;
@@ -47,17 +48,23 @@ const cuerpoSx = (rotular: boolean) =>
 export function BotonFiltrosMovil({
   activos = [],
   rotularGrupos = true,
+  soloIcono = false,
   children,
 }: {
   activos?: FiltroActivo[];
   /** Escribe el nombre de cada grupo de píldoras sin etiqueta propia sobre él. */
   rotularGrupos?: boolean;
+  /** Botón cuadrado de la barra de período (PeriodoMovil): ícono con punto azul si hay filtros puestos. */
+  soloIcono?: boolean;
   children: React.ReactNode;
 }) {
   const [abierto, setAbierto] = React.useState(false);
   const cerrar = () => setAbierto(false);
   return (
     <>
+      {soloIcono ? (
+        <BotonFiltrosBarra activos={activos.length > 0} onClick={() => setAbierto(true)} />
+      ) : (
       <Button
         variant="outlined"
         onClick={() => setAbierto(true)}
@@ -77,6 +84,7 @@ export function BotonFiltrosMovil({
       >
         Filtros{activos.length ? ` · ${activos.length}` : ""}
       </Button>
+      )}
       <Drawer
         anchor="bottom"
         open={abierto}

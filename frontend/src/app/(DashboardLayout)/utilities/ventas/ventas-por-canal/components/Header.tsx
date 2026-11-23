@@ -7,6 +7,9 @@ import RangosRapidos, { etiquetaRango, rangoInicial, FechasDelRango } from "../.
 import FrescuraDatos from "../../components/FrescuraDatos";
 import { BotonLimpiar, CANALES, ChipFiltro, controlSx, tarjetaSx, tinta, filaControlesSx, IconoFiltros } from "../../components/estilo";
 import { FiltrosActivosMovil, HojaFiltros, pildorasMovilSx } from "../../components/HojaFiltros";
+import PeriodoMovil, { FiltrosPuestosMovil } from "../../components/PeriodoMovil";
+import { useEsCelular } from "../../components/movil";
+import { useBarraMovil } from "@/app/(DashboardLayout)/layout/header/BarraMovil";
 
 export interface Filters {
   canal: string;
@@ -36,6 +39,10 @@ const HeaderFilters = ({ filters, onFilterChange, vendedor, onQuitarVendedor }: 
 
   const rango = etiquetaRango(filters.fechaInicio, filters.fechaFin);
   const enEstadoInicial = !filters.canal && !vendedor && rango === "Ayer";
+  const esCelular = useEsCelular();
+
+  // Celular: el nombre de la vista y el período · canal van en la barra de arriba.
+  useBarraMovil({ titulo: "Ventas por canal", subtitulo: `${rango} · ${canal ? canal.nombre : "Todos los canales"}` });
 
   // Selectores de la fila; en celular van dentro del panel de filtros (ver SoloMovil).
   const selectores = (
@@ -59,6 +66,41 @@ const HeaderFilters = ({ filters, onFilterChange, vendedor, onQuitarVendedor }: 
       </FormControl>
     </>
   );
+
+  // Celular: sin tarjeta de título. Barra de período pegada arriba y, debajo,
+  // canal y vendedor como chips; el canal se elige en la hoja de filtros.
+  if (esCelular) {
+    return (
+      <>
+        <PeriodoMovil
+          fechaInicio={filters.fechaInicio}
+          fechaFin={filters.fechaFin}
+          onElegir={(fechaInicio, fechaFin) => onFilterChange({ ...filters, fechaInicio, fechaFin })}
+          calendario={
+            <DateRangeFilter
+              value={filters.fechaInicio && filters.fechaFin ? { start: filters.fechaInicio, end: filters.fechaFin } : null}
+              onChange={handleDateChange}
+              label="Rango de fecha"
+              soloIcono
+            />
+          }
+          onFiltros={() => setHojaAbierta(true)}
+          filtrosActivos={!!filters.canal}
+        />
+        <FiltrosPuestosMovil
+          activos={[
+            ...(canal ? [{ etiqueta: `Canal: ${canal.nombre}`, onQuitar: () => onFilterChange({ ...filters, canal: "" }) }] : []),
+            ...(vendedor && onQuitarVendedor ? [{ etiqueta: `Vendedor: ${vendedor.nombre}`, onQuitar: onQuitarVendedor }] : []),
+          ]}
+          onLimpiar={handleClearFilters}
+        />
+        {/* El canal se aplica al elegirlo; "Listo" solo cierra. */}
+        <HojaFiltros abierta={hojaAbierta} onCerrar={() => setHojaAbierta(false)} descripcion="Acotan todas las tarjetas y tablas de la vista.">
+          {selectores}
+        </HojaFiltros>
+      </>
+    );
+  }
 
   return (
     <Box sx={{ ...tarjetaSx, position: "relative", mb: 2, px: { xs: 1.5, md: 2 }, py: 1.25 }}>

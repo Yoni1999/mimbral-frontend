@@ -5,7 +5,7 @@ import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
 import { ChipMargen, Columnas, Panel, TextoCelda, canalPorClave, formatoMonto, formatoPesos, tablaSx, tinta } from "../estilo";
 import { ENDPOINT, FiltrosDetalle, fechaCorta, horaSap, useListaDetalle } from "./comun";
 import { Buscador, Encabezado, FilasCargando, FranjaResumen, Paginador, SinResultados } from "./piezas";
-import { OrdenMovil, TarjetasMovil, useEsCelular } from "../movil";
+import { BarraListaMovil, TarjetasMovil, useEsCelular } from "../movil";
 
 export interface FilaVenta {
   docEntry: number;
@@ -74,13 +74,16 @@ export default function ListaVentas({
       <Panel
         titulo="Documentos de venta"
         descripcion="Pulsa un documento para ver sus ítems."
-        accion={<Buscador valor={l.buscar} onCambiar={l.setBuscar} placeholder="Buscar folio, cliente, RUT o vendedor" />}
+        // En celular el buscador va en la barra de la lista.
+        accion={esCelular ? undefined : <Buscador valor={l.buscar} onCambiar={l.setBuscar} placeholder="Buscar folio, cliente, RUT o vendedor" />}
         sx={{ p: { xs: 1.5, sm: 2.5 } }}
       >
         {esCelular && (
           <Box sx={{ mb: 1.25 }}>
-            <OrdenMovil
-              opciones={[
+            <BarraListaMovil
+              buscar={{ valor: l.buscar, onCambiar: l.setBuscar, placeholder: "Buscar folio, cliente, RUT o vendedor" }}
+              orden={{
+              opciones: [
               { clave: "fecha", titulo: "Fecha" },
               { clave: "monto", titulo: "Monto" },
               { clave: "unidades", titulo: "Unidades" },
@@ -89,12 +92,13 @@ export default function ListaVentas({
               { clave: "vendedor", titulo: "Vendedor" },
               { clave: "canal", titulo: "Canal" },
               ...(conMargen ? [{ clave: "margen", titulo: "Margen" }] : []),
-              ]}
-              clave={l.orden.orden}
-              direccion={l.orden.direccion}
-              onCambiar={(orden, direccion) => {
+              ],
+              clave: l.orden.orden,
+              direccion: l.orden.direccion,
+              onCambiar: (orden, direccion) => {
                 l.setPagina(1);
                 l.setOrden({ orden, direccion });
+              },
               }}
             />
           </Box>
@@ -110,12 +114,14 @@ export default function ListaVentas({
               titulo: f.cliente,
               meta: `Folio ${f.folio ?? "—"} · N° ${f.docNum} · ${f.clienteCodigo}`,
               onAbrir: () => onAbrir(f.docEntry),
+              accionLabel: "Ver documento",
               principales: [
                 { titulo: "Monto", valor: formatoMonto(f.monto) },
-                { titulo: "Fecha", valor: fechaCorta(f.fecha) },
+                // La fecha se entiende sola: va sin su nombre delante.
+                { titulo: "Fecha", valor: fechaCorta(f.fecha), prefijo: false },
                 conMargen
-                  ? { titulo: "Margen", valor: f.monto ? <ChipMargen valor={((f.margen ?? 0) / f.monto) * 100} /> : "—" }
-                  : { titulo: "Unid.", valor: Math.round(f.unidades).toLocaleString("es-CL") },
+                  ? { titulo: "% Margen", valor: "—", chip: f.monto ? ((f.margen ?? 0) / f.monto) * 100 : null }
+                  : { titulo: "Unidades", valor: Math.round(f.unidades).toLocaleString("es-CL"), unidad: "un." },
               ],
               detalle: [
                 { titulo: "Hora", valor: horaSap(f.hora) },

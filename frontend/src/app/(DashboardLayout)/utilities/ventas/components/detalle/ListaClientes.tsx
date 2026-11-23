@@ -7,7 +7,7 @@ import { BarraParticipacion, ChipMargen, Columnas, Panel, TextoCelda, formatoMon
 import { FiltrosDetalle, descargarExcel, fechaCorta, todasLasFilas, useListaDetalle } from "./comun";
 import { Buscador, Encabezado, FilasCargando, FranjaResumen, Paginador, SinResultados } from "./piezas";
 import PanelCliente from "./PanelCliente";
-import { OrdenMovil, TarjetasMovil, useEsCelular } from "../movil";
+import { BarraListaMovil, TarjetasMovil, useEsCelular } from "../movil";
 
 export interface FilaCliente {
   codigo: string;
@@ -102,7 +102,8 @@ export default function ListaClientes({ filtros, etiquetas }: { filtros: Filtros
       <Panel
         titulo="Clientes"
         descripcion="Pulsa un cliente para ver qué compró, sus documentos y sus notas de crédito."
-        accion={
+        // En celular el buscador y el Excel van en la barra de la lista.
+        accion={esCelular ? undefined : (
           <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
             <Buscador valor={l.buscar} onCambiar={l.setBuscar} placeholder="Buscar cliente, código o RUT" />
             <Button
@@ -115,13 +116,17 @@ export default function ListaClientes({ filtros, etiquetas }: { filtros: Filtros
               {descargando ? "Preparando…" : "Excel"}
             </Button>
           </Box>
-        }
+        )}
         sx={{ p: { xs: 1.5, sm: 2.5 } }}
       >
         {esCelular && (
           <Box sx={{ mb: 1.25 }}>
-            <OrdenMovil
-              opciones={[
+            <BarraListaMovil
+              buscar={{ valor: l.buscar, onCambiar: l.setBuscar, placeholder: "Buscar cliente, código o RUT" }}
+              onExportar={r?.clientes ? descargar : undefined}
+              exportando={descargando}
+              orden={{
+              opciones: [
               { clave: "venta", titulo: "Venta" },
               { clave: "documentos", titulo: "Documentos" },
               { clave: "productos", titulo: "Productos" },
@@ -131,12 +136,13 @@ export default function ListaClientes({ filtros, etiquetas }: { filtros: Filtros
               { clave: "notas", titulo: "Notas de crédito" },
               { clave: "cliente", titulo: "Cliente" },
               ...(conMargen ? [{ clave: "margen", titulo: "% Margen" }] : []),
-              ]}
-              clave={l.orden.orden}
-              direccion={l.orden.direccion}
-              onCambiar={(orden, direccion) => {
+              ],
+              clave: l.orden.orden,
+              direccion: l.orden.direccion,
+              onCambiar: (orden, direccion) => {
                 l.setPagina(1);
                 l.setOrden({ orden, direccion });
+              },
               }}
             />
           </Box>
@@ -152,11 +158,12 @@ export default function ListaClientes({ filtros, etiquetas }: { filtros: Filtros
               titulo: f.nombre,
               meta: [f.rut || f.codigo, f.ciudad].filter(Boolean).join(" · "),
               onAbrir: () => setCliente(f),
+              accionLabel: "Ver cliente",
               principales: [
                 { titulo: "Venta", valor: formatoMonto(f.venta) },
-                { titulo: "Docs.", valor: f.documentos.toLocaleString("es-CL") },
+                { titulo: "Documentos", valor: f.documentos.toLocaleString("es-CL"), unidad: "docs." },
                 conMargen
-                  ? { titulo: "Margen", valor: f.venta ? <ChipMargen valor={((f.margen ?? 0) / f.venta) * 100} /> : "—" }
+                  ? { titulo: "% Margen", valor: "—", chip: f.venta ? ((f.margen ?? 0) / f.venta) * 100 : null }
                   : { titulo: "Ticket", valor: formatoMonto(f.ticket) },
               ],
               detalle: [

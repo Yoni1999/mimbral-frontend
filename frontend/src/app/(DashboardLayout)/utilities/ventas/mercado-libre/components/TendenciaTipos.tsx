@@ -4,7 +4,9 @@ import React from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Box, Skeleton, Typography } from "@mui/material";
 import { EncabezadoPanel, cifraSx, formatoMonto, formatoPesos, tarjetaSx, tinta } from "../../components/estilo";
-import { LeyendaTipos, ResumenMl, TIPOS_ENVIO, n } from "./comun";
+import { LeyendaTipos, ResumenMl, TIPOS_ENVIO, n, variacion } from "./comun";
+import { useEsCelular } from "../../components/movil";
+import TendenciaMovil from "../../components/TendenciaMovil";
 
 type Punto = { date: string } & Record<string, number | string>;
 
@@ -38,7 +40,17 @@ function TooltipDia({ active, payload, label }: any) {
 }
 
 /** Venta neta por día de Full, Colecta y Flex (y otros, si hubo). */
-export default function TendenciaTipos({ tendencia, cargando }: { tendencia: ResumenMl["tendencia"]; cargando: boolean }) {
+export default function TendenciaTipos({
+  tendencia,
+  cargando,
+  resumen,
+}: {
+  tendencia: ResumenMl["tendencia"];
+  cargando: boolean;
+  /** Totales del período y del anterior: dan la variación de cada tipo en celular. */
+  resumen?: Pick<ResumenMl, "actual" | "anterior"> | null;
+}) {
+  const esCelular = useEsCelular();
   const porDia = new Map<string, Punto>();
   for (const t of tendencia) {
     const p = porDia.get(t.fecha) ?? ({ date: t.fecha } as Punto);
@@ -48,11 +60,22 @@ export default function TendenciaTipos({ tendencia, cargando }: { tendencia: Res
   const puntos = [...porDia.values()].sort((a, b) => String(a.date).localeCompare(String(b.date)));
   const tipos = TIPOS_ENVIO.filter((t) => tendencia.some((x) => x.tipo === t.clave && n(x.venta.neto) !== 0));
   puntos.forEach((p) => tipos.forEach((t) => (p[t.clave] = n(p[t.clave]))));
+  // En celular: un tipo destacado a la vez, elegido con chips (ver TendenciaMovil).
+  const movil = esCelular && !cargando && puntos.length > 1;
+  const variaciones = Object.fromEntries(
+    tipos.map((t) => [t.clave, resumen ? variacion(n(resumen.actual?.[t.clave]?.venta.neto), n(resumen.anterior?.[t.clave]?.venta.neto)) : null])
+  );
 
   return (
-    <Box sx={{ ...tarjetaSx, p: 2.5, height: "100%", display: "flex", flexDirection: "column" }}>
-      <EncabezadoPanel titulo="Tendencia diaria por tipo de envío" descripcion="Venta neta por día, sin IVA" accion={!cargando && tipos.length > 0 ? <LeyendaTipos tipos={tipos} /> : undefined} />
-      {cargando ? (
+    <Box sx={{ ...tarjetaSx, p: { xs: 2, sm: 2.5 }, height: "100%", display: "flex", flexDirection: "column" }}>
+      <EncabezadoPanel
+        titulo={esCelular ? "Tendencia diaria" : "Tendencia diaria por tipo de envío"}
+        descripcion="Venta neta por día, sin IVA"
+        accion={!movil && !cargando && tipos.length > 0 ? <LeyendaTipos tipos={tipos} /> : undefined}
+      />
+      {movil ? (
+        <TendenciaMovil series={tipos} puntos={puntos} variaciones={variaciones} notaVariacion={() => "vs período anterior"} />
+      ) : cargando ? (
         <Skeleton variant="rounded" height={300} />
       ) : puntos.length === 0 ? (
         <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 8, textAlign: "center" }}>Sin ventas en el período seleccionado.</Typography>

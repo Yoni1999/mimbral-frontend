@@ -19,7 +19,7 @@ import {
   tinta,
 } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
 import { Buscador, Encabezado, FilasCargando } from "@/app/(DashboardLayout)/utilities/ventas/components/detalle/piezas";
-import { OrdenMovil, TarjetasMovil, useEsCelular, type CifraTarjeta } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
+import { BarraListaMovil, TarjetasMovil, useEsCelular, type CifraTarjeta } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 import { InventarioProducto, MesProducto, ProductoGrupo, RespuestaInventario, fechaCorta, nombreMes } from "../tipos";
 
 const SIN_IMAGEN = "https://res.cloudinary.com/dhzahos7u/image/upload/v1748960388/producto_sin_imagen_vqaps4.jpg";
@@ -80,25 +80,42 @@ const irAProducto = (router: ReturnType<typeof useRouter>, sku: string) => route
 
 const contenedorSx = { mx: -2.5, width: "auto", overflowX: "hidden" } as const;
 
-/** Selector de orden para celular, sobre el mismo estado que los encabezados. */
-function OrdenCelular({ t, opciones }: { t: { orden: Orden; setOrden: (o: Orden) => void }; opciones: { clave: string; titulo: string }[] }) {
+/**
+ * Barra de la lista en celular: buscador, orden y la línea "Orden: …", sobre
+ * el mismo estado que los encabezados (en escritorio el buscador va en el panel).
+ */
+function OrdenCelular({
+  t,
+  opciones,
+}: {
+  t: { orden: Orden; setOrden: (o: Orden) => void; buscar: string; setBuscar: (v: string) => void };
+  opciones: { clave: string; titulo: string }[];
+}) {
   return (
-    <OrdenMovil
-      opciones={opciones}
-      clave={t.orden.orden}
-      direccion={t.orden.direccion}
-      onCambiar={(clave, direccion) => t.setOrden({ orden: clave, direccion })}
+    <BarraListaMovil
+      buscar={{ valor: t.buscar, onCambiar: t.setBuscar, placeholder: "Buscar SKU o nombre" }}
+      orden={{
+        opciones,
+        clave: t.orden.orden,
+        direccion: t.orden.direccion,
+        onCambiar: (clave, direccion) => t.setOrden({ orden: clave, direccion }),
+      }}
     />
   );
 }
 
-/** Lo que una tarjeta de celular toma del producto: título, SKU y enlace a su análisis. */
-const tarjetaProducto = (router: ReturnType<typeof useRouter>, p: { sku: string; nombre?: string | null; existe?: boolean }) => ({
+/** Lo que una fila de celular toma del producto: foto, nombre, SKU y enlace a su análisis. */
+const tarjetaProducto = (router: ReturnType<typeof useRouter>, p: { sku: string; nombre?: string | null; imagen?: string | null; existe?: boolean }) => ({
   clave: p.sku,
   titulo: p.existe === false ? "No existe en el catálogo" : p.nombre || p.sku,
   meta: `SKU ${p.sku}`,
+  imagen: p.imagen ?? null,
   onAbrir: p.existe ? () => irAProducto(router, p.sku) : undefined,
 });
+
+/** Posición (#1, #2…) solo al ordenar de mayor a menor por una cifra y sin búsqueda. */
+const rangoDe = (t: { orden: Orden; buscar: string }, i: number) =>
+  t.orden.direccion === "desc" && t.orden.orden !== "nombre" && !t.buscar.trim() ? i + 1 : undefined;
 
 /** Las dos columnas con más valor de una fila (canales o meses), para las cifras fijas de la tarjeta. */
 const mayores = (columnas: { titulo: string; valor: number }[], fmt: (v: number) => string): CifraTarjeta[] =>
@@ -128,7 +145,7 @@ export function TablaProductos({ productos, cargando, conComparacion }: { produc
     <Panel
       titulo="Productos del grupo"
       descripcion="Cada SKU en el período. Pulsa uno para ver su análisis individual."
-      accion={<Buscador valor={t.buscar} onCambiar={t.setBuscar} placeholder="Buscar SKU o nombre" />}
+      accion={esCelular ? undefined : <Buscador valor={t.buscar} onCambiar={t.setBuscar} placeholder="Buscar SKU o nombre" />}
     >
       {cargando ? (
         <FilasCargando />
@@ -148,40 +165,24 @@ export function TablaProductos({ productos, cargando, conComparacion }: { produc
           />
           <TarjetasMovil
             vacio="Ningún producto coincide con la búsqueda."
-            filas={t.visibles.map((p) => ({
+            filas={t.visibles.map((p, i) => ({
               ...tarjetaProducto(router, p),
+              rango: rangoDe(t, i),
               principales: [
-                {
-                  titulo: "Unidades",
-                  valor: (
-                    <>
-                      {unidades(p.unidades)}
-                      {conComparacion && (
-                        <Box sx={{ mt: 0.25 }}>
-                          <ChipVariacion valor={p.variacionUnidades} />
-                        </Box>
-                      )}
-                    </>
-                  ),
-                },
-                {
-                  titulo: "Venta",
-                  valor: (
-                    <>
-                      {formatoMonto(p.venta)}
-                      {conComparacion && (
-                        <Box sx={{ mt: 0.25 }}>
-                          <ChipVariacion valor={p.variacionVenta} />
-                        </Box>
-                      )}
-                    </>
-                  ),
-                },
+                { titulo: "Unidades", valor: unidades(p.unidades), unidad: "un." },
+                { titulo: "Venta", valor: formatoMonto(p.venta) },
                 conMargen
-                  ? { titulo: "% Margen", valor: p.venta ? <ChipMargen valor={p.margenPorcentaje} /> : "—" }
+                  ? { titulo: "% Margen", valor: p.venta ? formatoPorcentaje(p.margenPorcentaje) : "—", chip: p.venta ? Number(p.margenPorcentaje) || 0 : null }
                   : { titulo: "Ventas", valor: p.documentos.toLocaleString("es-CL") },
               ],
+              // Las variaciones contra el período anterior van en la hoja: en la fila no caben.
               detalle: [
+                ...(conComparacion
+                  ? [
+                      { titulo: "Var. unidades", valor: <ChipVariacion valor={p.variacionUnidades} /> },
+                      { titulo: "Var. venta", valor: <ChipVariacion valor={p.variacionVenta} /> },
+                    ]
+                  : []),
                 { titulo: "Venta exacta", valor: formatoPesos(p.venta) },
                 { titulo: "% del grupo", valor: formatoPorcentaje(p.participacion) },
                 ...(conMargen ? [{ titulo: "Ventas", valor: p.documentos.toLocaleString("es-CL") }] : []),
@@ -285,7 +286,7 @@ export function TablaCanales({ productos, cargando, ver }: { productos: Producto
   };
 
   return (
-    <Panel titulo={ver === "venta" ? "Venta por canal" : "Unidades por canal"} descripcion="Cada SKU repartido en los canales de venta." accion={<Buscador valor={t.buscar} onCambiar={t.setBuscar} placeholder="Buscar SKU o nombre" />}>
+    <Panel titulo={ver === "venta" ? "Venta por canal" : "Unidades por canal"} descripcion="Cada SKU repartido en los canales de venta." accion={esCelular ? undefined : <Buscador valor={t.buscar} onCambiar={t.setBuscar} placeholder="Buscar SKU o nombre" />}>
       {cargando ? (
         <FilasCargando />
       ) : esCelular ? (
@@ -301,8 +302,9 @@ export function TablaCanales({ productos, cargando, ver }: { productos: Producto
           <TarjetasMovil
             filas={[
               { clave: "__total", titulo: "Total del grupo", ...cifrasCanales(totales, totales.reduce((s, v) => s + v, 0)) },
-              ...t.visibles.map((p) => ({
+              ...t.visibles.map((p, i) => ({
                 ...tarjetaProducto(router, p),
+                rango: rangoDe(t, i),
                 ...cifrasCanales(
                   CANALES.map((c) => p.canales.find((x) => x.canal === c.clave)?.[ver] ?? 0),
                   p[ver]
@@ -396,7 +398,7 @@ export function TablaMensual({
   const esCelular = useEsCelular();
 
   return (
-    <Panel titulo={ver === "venta" ? "Venta por mes" : "Unidades por mes"} descripcion="Cómo se movió cada SKU mes a mes dentro del período." accion={<Buscador valor={t.buscar} onCambiar={t.setBuscar} placeholder="Buscar SKU o nombre" />}>
+    <Panel titulo={ver === "venta" ? "Venta por mes" : "Unidades por mes"} descripcion="Cómo se movió cada SKU mes a mes dentro del período." accion={esCelular ? undefined : <Buscador valor={t.buscar} onCambiar={t.setBuscar} placeholder="Buscar SKU o nombre" />}>
       {cargando ? (
         <FilasCargando />
       ) : !meses.length ? (
@@ -414,10 +416,11 @@ export function TablaMensual({
           />
           <TarjetasMovil
             vacio="Ningún producto coincide con la búsqueda."
-            filas={t.visibles.map((p) => {
+            filas={t.visibles.map((p, i) => {
               const columnas = meses.map((m) => ({ titulo: nombreMes(m), valor: porSku.get(p.sku)?.[m] ?? 0 }));
               return {
                 ...tarjetaProducto(router, p),
+                rango: rangoDe(t, i),
                 principales: [{ titulo: "Total", valor: fmt(p[ver]) }, ...mayores(columnas, fmt)],
                 detalle: columnas.map((c) => ({ titulo: c.titulo, valor: c.valor ? fmt(c.valor) : "—" })),
               };
@@ -519,7 +522,7 @@ export function TablaInventario({
     <Panel
       titulo="Inventario y abastecimiento"
       descripcion={`Stock de venta: bodegas ${(inventario?.bodegasVenta ?? []).join(", ")}. Cobertura = stock de venta ÷ venta diaria de los últimos 30 días (todos los canales).`}
-      accion={<Buscador valor={t.buscar} onCambiar={t.setBuscar} placeholder="Buscar SKU o nombre" />}
+      accion={esCelular ? undefined : <Buscador valor={t.buscar} onCambiar={t.setBuscar} placeholder="Buscar SKU o nombre" />}
     >
       {error ? (
         <Typography sx={{ color: tinta.secundaria, fontSize: 13, py: 4, textAlign: "center" }}>
@@ -547,7 +550,7 @@ export function TablaInventario({
             filas={t.visibles.map((i) => ({
               ...tarjetaProducto(router, i),
               principales: [
-                { titulo: "Stock venta", valor: unidades(i.stockVenta) },
+                { titulo: "Stock venta", valor: unidades(i.stockVenta), unidad: "un." },
                 {
                   titulo: "Disponible",
                   valor: <Box component="span" sx={{ color: i.disponible < 0 ? estado.mal.color : undefined }}>{unidades(i.disponible)}</Box>,

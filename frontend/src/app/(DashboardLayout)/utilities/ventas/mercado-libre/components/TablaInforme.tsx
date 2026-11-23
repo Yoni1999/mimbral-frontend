@@ -4,9 +4,9 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { Box, Button, InputAdornment, Pagination, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, TextField, Tooltip, Typography } from "@mui/material";
 import { IconDownload, IconSearch } from "@tabler/icons-react";
-import { Columnas, TextoCelda, controlSx, tablaSx, tarjetaSx, tinta } from "../../components/estilo";
+import { Columnas, TextoCelda, controlSx, formatoMonto, formatoPesos, formatoPorcentaje, tablaSx, tarjetaSx, tinta } from "../../components/estilo";
 import { descargarExcel } from "../../components/detalle/comun";
-import { OrdenMovil, TarjetasMovil, useEsCelular } from "../../components/movil";
+import { BarraListaMovil, TarjetasMovil, useEsCelular, type CifraTarjeta, type TarjetaMovil, type UmbralesChip } from "../../components/movil";
 
 /** Una columna de un informe de Mercado Libre. */
 export interface ColumnaInforme<F> {
@@ -23,12 +23,29 @@ export interface ColumnaInforme<F> {
   excel?: string;
   ordenable?: boolean;
   /**
-   * Lugar en la tarjeta de celular: "titulo" (arriba), "principal" (una de
-   * las tres cifras fijas), "detalle" (en "Ver detalle") u "oculto". Sin
+   * Lugar en la fila de celular: "titulo" (arriba), "principal" (en la línea
+   * de cifras), "chip" (etiqueta de color al final de la línea; `valor` es el
+   * porcentaje), "detalle" (solo en la hoja que sube al tocar) u "oculto". Sin
    * indicarlo: la primera columna es el título, las tres siguientes son las
-   * cifras fijas y el resto va al detalle.
+   * cifras de la línea y el resto va al detalle.
    */
-  movil?: "titulo" | "principal" | "detalle" | "oculto";
+  movil?: "titulo" | "principal" | "chip" | "detalle" | "oculto";
+  /**
+   * Formato de la cifra en celular a partir de `valor` (siempre chileno):
+   * "monto" $2,4 M · "pesos" $2.400.000 · "porcentaje" 33,3% · "numero" 1.234.
+   * Sin él se usa la celda de escritorio.
+   */
+  formatoMovil?: "monto" | "pesos" | "porcentaje" | "numero";
+  /** Sufijo en la línea de la fila de celular (p. ej. "un."). */
+  unidadMovil?: string;
+  /** Texto chico delante de la cifra en la fila de celular (ver `CifraTarjeta.prefijo`); false lo quita. */
+  prefijoMovil?: string | false;
+  /**
+   * Solo en la columna "titulo": arma la fila de celular con texto plano
+   * (nombre, línea chica, foto y el destino del botón de la hoja) en vez de
+   * dibujar la celda de escritorio. Sin él, una CeldaProducto se reconoce sola.
+   */
+  movilFila?: (f: F) => Pick<TarjetaMovil, "titulo"> & Partial<Pick<TarjetaMovil, "meta" | "imagen" | "onAbrir" | "accionLabel">>;
 }
 
 /** Reparte las columnas en título, cifras fijas y detalle para la tarjeta de celular. */
@@ -38,8 +55,38 @@ function columnasMovil<F>(columnas: ColumnaInforme<F>[]) {
   return {
     titulo: columnas.filter((c, i) => lugar(c, i) === "titulo"),
     principales: columnas.filter((c, i) => lugar(c, i) === "principal").slice(0, 3),
+    chip: columnas.find((c, i) => lugar(c, i) === "chip"),
     detalle: columnas.filter((c, i) => lugar(c, i) === "detalle"),
   };
+}
+
+const FORMATOS = {
+  monto: formatoMonto,
+  pesos: formatoPesos,
+  porcentaje: (v: number) => formatoPorcentaje(v),
+  numero: (v: number) => v.toLocaleString("es-CL"),
+} as const;
+
+/** Contenido de una columna en la fila de celular: con `formatoMovil`, el número en formato chileno; si no, la celda. */
+function contenidoMovil<F>(c: ColumnaInforme<F>, f: F): React.ReactNode {
+  if (c.formatoMovil) {
+    const v = c.valor?.(f);
+    if (v == null || v === "") return "—";
+    return typeof v === "number" ? FORMATOS[c.formatoMovil](v) : v;
+  }
+  return c.celda ? c.celda(f) : (c.valor?.(f) ?? "—");
+}
+
+/**
+ * Si la celda del título es una CeldaProducto, la fila de celular toma de
+ * ella la foto, el nombre, el SKU y el destino (la ficha), en vez de dibujar
+ * la celda de escritorio.
+ */
+function productoDeCelda(nodo: React.ReactNode) {
+  if (React.isValidElement(nodo) && nodo.type === CeldaProducto) {
+    return nodo.props as { sku: string; nombre: string | null; secundario?: string; imagen?: string | null };
+  }
+  return null;
 }
 
 interface Props<F> {
@@ -60,6 +107,8 @@ interface Props<F> {
   porPagina?: number;
   /** Ancho mínimo en celular (la tabla se desplaza de lado). */
   anchoMinimo?: number;
+  /** Cortes de color de la etiqueta de margen en celular, si el informe usa otros que ChipMargen. */
+  umbralesMovil?: UmbralesChip;
 }
 
 /**
@@ -79,12 +128,14 @@ export default function TablaInforme<F>({
   extraExcel = [],
   porPagina = 50,
   anchoMinimo = 900,
+  umbralesMovil,
 }: Props<F>) {
   const [buscar, setBuscar] = React.useState("");
   const [orden, setOrden] = React.useState(ordenInicial);
   const [pagina, setPagina] = React.useState(1);
   const [descargando, setDescargando] = React.useState(false);
   const esCelular = useEsCelular();
+  const router = useRouter();
   React.useEffect(() => setPagina(1), [filas, buscar, orden]);
 
   const q = buscar.trim().toLowerCase();
@@ -102,6 +153,8 @@ export default function TablaInforme<F>({
       return orden.direccion === "asc" ? r : -r;
     });
   const paginas = Math.max(1, Math.ceil(ordenadas.length / porPagina));
+  // En celular la posición (#1, #2…) solo se muestra al ordenar de mayor a menor por una cifra y sin búsqueda.
+  const conRango = orden.direccion === "desc" && !q && ordenadas.length > 0 && typeof col?.valor?.(ordenadas[0]) === "number";
   const visibles = ordenadas.slice((pagina - 1) * porPagina, pagina * porPagina);
 
   const exportar = async () => {
@@ -124,7 +177,9 @@ export default function TablaInforme<F>({
   };
 
   return (
-    <Box sx={{ ...tarjetaSx, pt: 2, pb: 1 }}>
+    // En celular las filas ya son tarjetas: la lista va sin marco propio.
+    <Box sx={esCelular ? { pb: 1 } : { ...tarjetaSx, pt: 2, pb: 1 }}>
+      {!esCelular && (
       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5, px: 2.5, mb: 1.5 }}>
         <TextField
           size="small"
@@ -156,29 +211,66 @@ export default function TablaInforme<F>({
           {descargando ? "Generando…" : "Excel"}
         </Button>
       </Box>
+      )}
 
       {esCelular ? (
-        <Box sx={{ px: 1.5, pb: 1, display: "flex", flexDirection: "column", gap: 1.25 }}>
-          <OrdenMovil
-            opciones={columnas.filter((c) => c.ordenable !== false && c.valor).map((c) => ({ clave: c.clave, titulo: c.titulo }))}
-            clave={orden.clave}
-            direccion={orden.direccion}
-            onCambiar={(clave, direccion) => setOrden({ clave, direccion })}
+        <Box sx={{ pb: 1, display: "flex", flexDirection: "column", gap: 1 }}>
+          <BarraListaMovil
+            buscar={{ valor: buscar, onCambiar: setBuscar, placeholder: "Buscar SKU o producto" }}
+            orden={{
+              opciones: columnas.filter((c) => c.ordenable !== false && c.valor).map((c) => ({ clave: c.clave, titulo: c.titulo })),
+              clave: orden.clave,
+              direccion: orden.direccion,
+              onCambiar: (clave, direccion) => setOrden({ clave, direccion }),
+            }}
+            onExportar={cargando || ordenadas.length === 0 ? undefined : exportar}
+            exportando={descargando}
+            chips={
+              <Typography component="span" sx={{ fontSize: 12, color: tinta.tenue }}>
+                {cargando ? "Cargando…" : `${ordenadas.length.toLocaleString("es-CL")} filas`}
+              </Typography>
+            }
           />
           <TarjetasMovil
             cargando={cargando}
+            umbrales={umbralesMovil}
             vacio={q ? "Ningún producto coincide con la búsqueda." : vacio}
-            filas={(() => {
+            filas={visibles.map((f, i): TarjetaMovil => {
               const m = columnasMovil(columnas);
-              const contenido = (c: ColumnaInforme<F>, f: F) => (c.celda ? c.celda(f) : (c.valor?.(f) ?? "—"));
-              return visibles.map((f) => ({
+              const cifra = (c: ColumnaInforme<F>): CifraTarjeta => ({ titulo: c.titulo, valor: contenidoMovil(c, f), unidad: c.unidadMovil, prefijo: c.prefijoMovil });
+              const celdasTitulo = m.titulo.map((c) => (c.celda ? c.celda(f) : (c.valor?.(f) ?? "—")));
+              const propia = m.titulo.length === 1 ? m.titulo[0].movilFila?.(f) : undefined;
+              const producto = !propia && celdasTitulo.length === 1 ? productoDeCelda(celdasTitulo[0]) : null;
+              const pct = m.chip?.valor?.(f);
+              const base = {
                 clave: clave(f),
-                titulo: m.titulo.length ? m.titulo.map((c) => <React.Fragment key={c.clave}>{contenido(c, f)}</React.Fragment>) : clave(f),
-                principales: m.principales.map((c) => ({ titulo: c.titulo, valor: contenido(c, f) })),
-                detalle: m.detalle.map((c) => ({ titulo: c.titulo, valor: contenido(c, f) })),
-              }));
-            })()}
+                principales: [
+                  ...m.principales.map(cifra),
+                  ...(m.chip ? [{ ...cifra(m.chip), chip: typeof pct === "number" ? pct : null }] : []),
+                ],
+                detalle: m.detalle.map(cifra),
+              };
+              if (propia) {
+                return { ...base, ...propia, rango: conRango && propia.imagen !== undefined ? (pagina - 1) * porPagina + i + 1 : undefined };
+              }
+              if (producto) {
+                return {
+                  ...base,
+                  titulo: producto.nombre ?? "Sin nombre en SAP",
+                  meta: [producto.sku, producto.secundario].filter(Boolean).join(" · "),
+                  imagen: producto.imagen ?? null,
+                  // Posición según el orden elegido, contando las páginas anteriores.
+                  rango: conRango ? (pagina - 1) * porPagina + i + 1 : undefined,
+                  onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(producto.sku)}`),
+                };
+              }
+              return {
+                ...base,
+                titulo: celdasTitulo.length ? celdasTitulo.map((n, j) => <React.Fragment key={m.titulo[j].clave}>{n}</React.Fragment>) : clave(f),
+              };
+            })}
           />
+          {nota ? <Typography sx={{ fontSize: 11.5, color: tinta.tenue, px: 0.5 }}>{nota}</Typography> : null}
         </Box>
       ) : (
       <TableContainer sx={{ overflowX: { xs: "auto", lg: "hidden" } }}>

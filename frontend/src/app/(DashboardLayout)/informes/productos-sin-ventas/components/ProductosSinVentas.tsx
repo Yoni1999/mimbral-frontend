@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 
 import React, { useMemo, useState } from 'react';
 import {
@@ -9,7 +10,7 @@ import { styled } from '@mui/material/styles';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { ProductoSinVentas } from '../page';
 import { notifySuccess, notifyError } from '@/components/ui/toast/notify';
-import { OrdenMovil, TarjetasMovil, useEsCelular } from '@/app/(DashboardLayout)/utilities/ventas/components/movil';
+import { BarraListaMovil, TarjetasMovil, useEsCelular } from '@/app/(DashboardLayout)/utilities/ventas/components/movil';
 
 // Mantener estilos y estructura de tabla como en ProductosMenosRentablesTable
 const PlaceholderImg = 'https://res.cloudinary.com/dhzahos7u/image/upload/v1748960388/producto_sin_imagen_vqaps4.jpg';
@@ -74,6 +75,7 @@ export const copyToClipboard = async (text: string): Promise<boolean> => {
 
 const ProductosSinVentasTable: React.FC<Props> = ({ data, onSortChange, ordenActual, ordenPorActual, onOrdenMovil }) => {
   const esCelular = useEsCelular();
+  const router = useRouter();
   const [busqueda, setBusqueda] = useState('');
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [skuOpen, setSkuOpen] = useState<string>('');
@@ -139,16 +141,18 @@ const ProductosSinVentasTable: React.FC<Props> = ({ data, onSortChange, ordenAct
       </Box> */}
 
       {esCelular ? (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {onOrdenMovil && (
-            <OrdenMovil
-              opciones={[
-                { clave: 'stockTotal', titulo: 'Stock total' },
-                { clave: 'createDate', titulo: 'Fecha creación' },
-              ]}
-              clave={ordenPorActual}
-              direccion={ordenActual}
-              onCambiar={(clave, direccion) => onOrdenMovil(clave as OrderBy, direccion)}
+            <BarraListaMovil
+              orden={{
+                opciones: [
+                  { clave: 'stockTotal', titulo: 'Stock total' },
+                  { clave: 'createDate', titulo: 'Fecha creación' },
+                ],
+                clave: ordenPorActual,
+                direccion: ordenActual,
+                onCambiar: (clave, direccion) => onOrdenMovil(clave as OrderBy, direccion),
+              }}
             />
           )}
           <TarjetasMovil
@@ -156,24 +160,26 @@ const ProductosSinVentasTable: React.FC<Props> = ({ data, onSortChange, ordenAct
             filas={filteredData.map((row, idx) => ({
               clave: `${row.itemCode}-${idx}`,
               titulo: row.nombre,
-              // Tocar el título copia el SKU, igual que en la tabla.
               meta: [
                 row.itemCode,
                 [row.primerNivel, row.categoria, row.subcategoria].filter(Boolean).join(' › '),
               ].filter(Boolean).join(' · '),
-              onAbrir: () => handleCopySku(row.itemCode),
+              imagen: row.imagen?.startsWith('http') ? row.imagen : null,
+              // La hoja abre la ficha del producto y, aparte, copia el SKU como al tocar el nombre en la tabla.
+              onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(row.itemCode)}`),
+              accionSecundaria: { label: 'Copiar SKU', onClick: () => handleCopySku(row.itemCode) },
               principales: [
-                { titulo: 'Stock total', valor: (row.stockTotal ?? 0).toLocaleString('es-CL') },
-                { titulo: 'Creación', valor: row.createDate ? new Date(row.createDate).toLocaleDateString() : '-' },
-                { titulo: 'Última OC', valor: row.ocDocNum ? `#${row.ocDocNum}` : '—' },
+                { titulo: 'Stock total', valor: (row.stockTotal ?? 0).toLocaleString('es-CL'), unidad: 'un.' },
+                { titulo: 'Creación', valor: row.createDate ? new Date(row.createDate).toLocaleDateString('es-CL') : '-', prefijo: 'creado' },
+                { titulo: 'Última OC', valor: row.ocDocNum ? `#${row.ocDocNum}` : '—', prefijo: 'OC' },
               ],
               detalle: [
-                ...Object.entries(row.warehouses || {}).map(([wh, qty]) => ({ titulo: `Almacén ${wh}`, valor: String(qty) })),
+                ...Object.entries(row.warehouses || {}).map(([wh, qty]) => ({ titulo: `Almacén ${wh}`, valor: Number(qty).toLocaleString('es-CL') })),
                 ...(row.ocDocNum
                   ? [
-                      { titulo: 'Fecha OC', valor: row.ocFecha ? new Date(row.ocFecha).toLocaleDateString() : '—' },
+                      { titulo: 'Fecha OC', valor: row.ocFecha ? new Date(row.ocFecha).toLocaleDateString('es-CL') : '—' },
                       { titulo: 'Proveedor OC', valor: row.ocProveedor ?? 'N/A' },
-                      { titulo: 'Cantidad OC', valor: row.ocCantidad ?? 'N/A' },
+                      { titulo: 'Cantidad OC', valor: row.ocCantidad != null ? Number(row.ocCantidad).toLocaleString('es-CL') : 'N/A' },
                       { titulo: 'OC creada por', valor: row.ocCreadoPor ?? 'N/A' },
                     ]
                   : []),

@@ -4,6 +4,8 @@ import React from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Box, Skeleton, Typography } from "@mui/material";
 import { CANALES, EncabezadoPanel, cifraSx, formatoMonto, formatoPesos, tarjetaSx, tinta } from "./estilo";
+import { useEsCelular } from "./movil";
+import TendenciaMovil from "./TendenciaMovil";
 
 export type Punto = { date: string; orden: number } & Record<string, number | string>;
 
@@ -58,12 +60,17 @@ export const totalesPorCanal = (puntos: Punto[]) =>
  *  el monto de cada canal, porque un punto no forma una línea. */
 export default function TendenciaCanales({ datos: data, cargando }: { datos: Punto[]; cargando: boolean }) {
   const unSoloDia = data.length === 1;
+  const esCelular = useEsCelular();
+  // En celular: un canal destacado a la vez, elegido con chips (ver TendenciaMovil).
+  const movil = esCelular && !cargando && data.length > 1;
 
   return (
-    <Box sx={{ ...tarjetaSx, p: 2.5, height: "100%", display: "flex", flexDirection: "column" }}>
-      <EncabezadoPanel titulo="Tendencia diaria por canal" descripcion="Venta neta por día, sin IVA" />
+    <Box sx={{ ...tarjetaSx, p: { xs: 2, sm: 2.5 }, height: "100%", display: "flex", flexDirection: "column" }}>
+      <EncabezadoPanel titulo={esCelular ? "Tendencia diaria" : "Tendencia diaria por canal"} descripcion="Venta neta por día, sin IVA" />
 
-      {!cargando && !unSoloDia && (
+      {movil && <TendenciaMovil series={CANALES} puntos={data} />}
+
+      {!movil && !cargando && !unSoloDia && (
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 1 }}>
           {CANALES.map((c) => (
             <Box key={c.clave} sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: 12.5, color: tinta.secundaria }}>
@@ -74,7 +81,7 @@ export default function TendenciaCanales({ datos: data, cargando }: { datos: Pun
         </Box>
       )}
 
-      {cargando ? (
+      {movil ? null : cargando ? (
         <Skeleton variant="rounded" height={300} />
       ) : data.length === 0 ? (
         <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 8, textAlign: "center" }}>

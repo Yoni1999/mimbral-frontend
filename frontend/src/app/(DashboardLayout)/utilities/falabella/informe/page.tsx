@@ -81,10 +81,11 @@ export default function InformeFalabella() {
     clave: nombre,
     titulo: nombre,
     onAbrir: () => router.push(enlace),
+    accionLabel: "Ver productos",
     principales: [
+      { titulo: "Unidades", valor: unidades(b?.unidades), unidad: "un." },
       { titulo: "Venta", valor: formatoMonto(b?.venta.neto) },
-      { titulo: "Unid.", valor: unidades(b?.unidades) },
-      { titulo: "Margen %", valor: porcentaje(b?.margenPct) },
+      { titulo: "Margen %", valor: porcentaje(b?.margenPct), chip: b?.margenPct == null ? null : b.margenPct * 100 },
     ],
     detalle: [
       { titulo: "Comisión", valor: porcentaje(parte(b, "comision")) },
@@ -172,9 +173,9 @@ export default function InformeFalabella() {
                       clave: m.mes,
                       titulo: <Box component="span" sx={{ textTransform: "capitalize" }}>{nombreMes(m.mes)}</Box>,
                       principales: [
+                        { titulo: "Unidades", valor: unidades(m.unidades), unidad: "un." },
                         { titulo: "Venta", valor: formatoMonto(m.venta.neto) },
-                        { titulo: "Unid.", valor: unidades(m.unidades) },
-                        { titulo: "Margen %", valor: porcentaje(m.margenPct) },
+                        { titulo: "Margen %", valor: porcentaje(m.margenPct), chip: m.margenPct == null ? null : m.margenPct * 100 },
                       ],
                       detalle: [
                         { titulo: "Comisión", valor: formatoMonto(m.comision.neto) },

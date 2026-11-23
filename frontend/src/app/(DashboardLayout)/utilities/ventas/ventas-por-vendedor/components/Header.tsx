@@ -9,6 +9,8 @@ import RangosRapidos, { etiquetaRango, rangoInicial, FechasDelRango } from "../.
 import FrescuraDatos from "../../components/FrescuraDatos";
 import { useEsCelular } from "../../components/movil";
 import { EtiquetaHoja, FiltrosActivosMovil, HojaFiltros, pildorasMovilSx } from "../../components/HojaFiltros";
+import PeriodoMovil, { FiltrosPuestosMovil } from "../../components/PeriodoMovil";
+import { useBarraMovil } from "@/app/(DashboardLayout)/layout/header/BarraMovil";
 import { BotonLimpiar, ChipFiltro, canalPorClave, controlSx, etiquetaControlSx, tarjetaSx, tinta, filaControlesSx, IconoFiltros, SoloMovil } from "../../components/estilo";
 
 export interface Filters {
@@ -95,6 +97,12 @@ const HeaderVendedor: React.FC<Props> = ({ filtros, setFiltros }) => {
   const rango = etiquetaRango(filtros.fechaInicio, filtros.fechaFin);
   const enEstadoInicial = !filtros.canal && !filtros.vendedorEmpresa && !filtros.modoComparacion && rango === "Ayer";
 
+  // Celular: el vendedor (o el nombre de la vista) y el período · canal van en la barra de arriba.
+  useBarraMovil({
+    titulo: vendedor ? vendedor.nombre : "Ventas por vendedor",
+    subtitulo: `${rango} · ${vendedor ? vendedor.cargo || nombreCanal(vendedor.canal) : filtros.canal ? nombreCanal(filtros.canal) : "Todos los vendedores"}`,
+  });
+
   // Selectores de la fila; en celular van dentro del panel de filtros (ver SoloMovil).
   const selectores = (
     <>
@@ -154,6 +162,64 @@ const HeaderVendedor: React.FC<Props> = ({ filtros, setFiltros }) => {
       />
     </>
   );
+
+  // Hoja de filtros de celular (la abre el botón de la barra de período).
+  const hojaMovil = (
+    // Cada cambio se aplica al instante; "Listo" cierra.
+    <HojaFiltros abierta={!!filtrosAnchor} onCerrar={() => setFiltrosAnchor(null)} descripcion="Canal, vendedor y contra qué período se calculan las variaciones.">
+      <EtiquetaHoja>Canal y vendedor</EtiquetaHoja>
+      {selectores}
+      <EtiquetaHoja>Comparar con</EtiquetaHoja>
+      <FormControl fullWidth size="small">
+        <Select
+          value={filtros.modoComparacion}
+          displayEmpty
+          inputProps={{ "aria-label": "Comparar con" }}
+          onChange={(e) => cambiar({ modoComparacion: e.target.value })}
+          sx={controlSx}
+        >
+          {COMPARACIONES.map((c) => (
+            <MenuItem key={c.valor} value={c.valor}>
+              {c.etiqueta}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </HojaFiltros>
+  );
+
+  // Celular: sin tarjeta de título. Barra de período pegada arriba y, debajo,
+  // canal, vendedor y comparación como chips.
+  if (esCelular) {
+    return (
+      <>
+        <PeriodoMovil
+          fechaInicio={filtros.fechaInicio}
+          fechaFin={filtros.fechaFin}
+          onElegir={(fechaInicio, fechaFin) => cambiar({ fechaInicio, fechaFin })}
+          calendario={
+            <DateRangeFilter
+              value={filtros.fechaInicio && filtros.fechaFin ? { start: filtros.fechaInicio, end: filtros.fechaFin } : null}
+              onChange={handleDateChange}
+              label="Rango de fecha"
+              soloIcono
+            />
+          }
+          onFiltros={(e) => setFiltrosAnchor(e.currentTarget)}
+          filtrosActivos={!!filtros.canal || !!filtros.vendedorEmpresa || !!filtros.modoComparacion}
+        />
+        <FiltrosPuestosMovil
+          activos={[
+            ...(filtros.canal ? [{ etiqueta: `Canal: ${nombreCanal(filtros.canal)}`, onQuitar: () => cambiar({ canal: "" }) }] : []),
+            ...(vendedor ? [{ etiqueta: `Vendedor: ${vendedor.nombre}`, onQuitar: () => cambiar({ vendedorEmpresa: "" }) }] : []),
+            ...(filtros.modoComparacion ? [{ etiqueta: "vs año anterior", onQuitar: () => cambiar({ modoComparacion: "" }) }] : []),
+          ]}
+          onLimpiar={limpiar}
+        />
+        {hojaMovil}
+      </>
+    );
+  }
 
   return (
     <Box sx={{ ...tarjetaSx, position: "relative", mb: 2, px: { xs: 1.5, md: 2 }, py: 1.25 }}>
@@ -233,29 +299,6 @@ const HeaderVendedor: React.FC<Props> = ({ filtros, setFiltros }) => {
         />
       </Stack>
 
-      {esCelular ? (
-        // Cada cambio se aplica al instante; "Listo" cierra.
-        <HojaFiltros abierta={!!filtrosAnchor} onCerrar={() => setFiltrosAnchor(null)} descripcion="Canal, vendedor y contra qué período se calculan las variaciones.">
-          <EtiquetaHoja>Canal y vendedor</EtiquetaHoja>
-          {selectores}
-          <EtiquetaHoja>Comparar con</EtiquetaHoja>
-          <FormControl fullWidth size="small">
-            <Select
-              value={filtros.modoComparacion}
-              displayEmpty
-              inputProps={{ "aria-label": "Comparar con" }}
-              onChange={(e) => cambiar({ modoComparacion: e.target.value })}
-              sx={controlSx}
-            >
-              {COMPARACIONES.map((c) => (
-                <MenuItem key={c.valor} value={c.valor}>
-                  {c.etiqueta}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </HojaFiltros>
-      ) : (
       <Popover
         open={!!filtrosAnchor}
         anchorEl={filtrosAnchor}
@@ -300,7 +343,6 @@ const HeaderVendedor: React.FC<Props> = ({ filtros, setFiltros }) => {
           </Select>
         </FormControl>
       </Popover>
-      )}
     </Box>
   );
 };

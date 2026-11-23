@@ -100,14 +100,16 @@ export default function PanelVendedores({ query }: { query: string }) {
             onCambiar={(clave, direccion) => setVista({ orden: clave as Orden, direccion })}
           />
           <TarjetasMovil
-            filas={filas.map((v) => ({
+            filas={filas.map((v, i) => ({
               clave: String(v.codigo),
               titulo: v.nombre,
               meta: `Código ${v.codigo}`,
+              // Posición solo cuando la lista va de mayor a menor por una cifra.
+              rango: vista.direccion === "desc" && vista.orden !== "nombre" ? i + 1 : undefined,
               principales: [
+                { titulo: "Unidades", valor: v.unidades.toLocaleString("es-CL", { maximumFractionDigits: 2 }), unidad: "un." },
                 { titulo: "Venta", valor: formatoMonto(v.venta) },
-                { titulo: "Unidades", valor: v.unidades.toLocaleString("es-CL", { maximumFractionDigits: 2 }) },
-                { titulo: "% Margen", valor: <ChipMargen valor={v.margenPorcentaje} /> },
+                { titulo: "% Margen", valor: formatoPorcentaje(v.margenPorcentaje), chip: v.margenPorcentaje },
               ],
               detalle: [
                 { titulo: "Margen $", valor: formatoMonto(v.margen) },

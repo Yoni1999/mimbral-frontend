@@ -18,10 +18,12 @@ import {
   ListItemButton,
   ListItemText,
   TextField,            // <-- agregado para input manual
-  DialogActions         // <-- agregado para botones del modal
+  DialogActions,        // <-- agregado para botones del modal
+  IconButton,
 } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import ProductosVendidosTable from "./components/ProductosVendidos";
 import HeaderVentasProductosDrawer from "./components/HeaderVentasProductosDrawer";
 import { apiJson } from "@/utils/apiClient";
@@ -419,12 +421,13 @@ const InformeVentaPage = () => {
 
   return (
     <Box p={1}>
-      <Typography variant="h4" fontWeight="bold" gutterBottom display="flex" alignItems="center">
+      {/* En celular el nombre del informe ya está en la barra de arriba. */}
+      <Typography variant="h4" fontWeight="bold" gutterBottom alignItems="center" sx={{ display: { xs: "none", sm: "flex" } }}>
         <TrendingUpIcon sx={{ mr: 1 }} />
         Informe de Venta de productos
       </Typography>
 
-      <Typography variant="body1" color="text.secondary" gutterBottom>
+      <Typography variant="body1" color="text.secondary" gutterBottom sx={{ display: { xs: "none", sm: "block" } }}>
         Revisa el detalle de productos vendidos por período, canal, proveedor y más.
       </Typography>
 
@@ -434,7 +437,7 @@ const InformeVentaPage = () => {
         multiCanal={true}   // <-- habilita multi-selección de canales en el header
       />
 
-      <Divider sx={{ my: 2 }} />
+      <Divider sx={{ my: 2, display: { xs: "none", sm: "block" } }} />
 
       <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1} mb={2}>
         <Typography variant="subtitle2">
@@ -450,7 +453,8 @@ const InformeVentaPage = () => {
         </Typography>
 
         <Box>
-          <Button
+          <IconButton aria-label="Exportar" onClick={handleOpenExportMenu} sx={{ display: { xs: "inline-flex", sm: "none" }, width: 38, height: 38, borderRadius: "10px", border: "1px solid #e2e8f0", color: "#0f172a" }}><FileDownloadOutlinedIcon fontSize="small" /></IconButton>
+<Button sx={{ display: { xs: "none", sm: "inline-flex" } }}
             variant="contained"
             onClick={handleOpenExportMenu}
             endIcon={<MoreVertIcon />}

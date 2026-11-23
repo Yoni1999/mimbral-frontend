@@ -3,7 +3,7 @@
 import React from "react";
 import { Box, Dialog, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { IconX } from "@tabler/icons-react";
-import { Columnas, cifraSx, formatoPesos, formatoPorcentaje, tablaSx, tinta } from "../../components/estilo";
+import { Columnas, cifraSx, formatoMonto, formatoPesos, formatoPorcentaje, tablaSx, tinta } from "../../components/estilo";
 import { ResumenMl, TIPOS_ENVIO, Totales, n, unidades } from "./comun";
 import { TarjetasMovil, useEsCelular } from "../../components/movil";
 
@@ -164,8 +164,22 @@ export default function DesgloseMl({ vista, resumen, total, etiquetaPeriodo, onC
       return {
         clave: c.clave,
         titulo: nombre,
-        principales: fijas.map((r) => ({ titulo: r.texto === "Queda después de ML" ? "Queda" : r.texto === "Venta con producto" ? "Venta" : r.texto, valor: montoMovil(r, c.t) })),
-        detalle: cascada.filter((r) => !fijas.includes(r)).map((r) => ({ titulo: `${r.op.signo ? `${r.op.signo} ` : ""}${r.texto}`, valor: montoMovil(r, c.t) })),
+        // En la línea de la fila, montos cortos; el margen va además como etiqueta (% de la venta).
+        principales: [
+          ...fijas.map((r) => {
+            const v = r.valor(c.t);
+            return { titulo: r.texto === "Queda después de ML" ? "Queda" : r.texto === "Venta con producto" ? "Venta" : r.texto, valor: v == null ? "—" : formatoMonto(v) };
+          }),
+          ...(() => {
+            const m = principal("Margen")?.valor(c.t);
+            const venta = n(c.t?.venta.neto);
+            return m != null && venta > 0 ? [{ titulo: "Margen %", valor: formatoPorcentaje((m / venta) * 100), chip: (m / venta) * 100 }] : [];
+          })(),
+        ],
+        detalle: [
+          ...fijas.map((r) => ({ titulo: `${r.op.signo ? `${r.op.signo} ` : ""}${r.texto}`, valor: montoMovil(r, c.t) })),
+          ...cascada.filter((r) => !fijas.includes(r)).map((r) => ({ titulo: `${r.op.signo ? `${r.op.signo} ` : ""}${r.texto}`, valor: montoMovil(r, c.t) })),
+        ],
       };
     }
     const ultimas = conteos.slice(-3);

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { BarraParticipacion, ChipMargen, Columnas, Panel, Pildoras, TextoCelda, estado, formatoMonto, formatoPesos, formatoPorcentaje, tablaSx, tinta } from "../estilo";
 import { ENDPOINT, FiltrosDetalle, useListaDetalle } from "./comun";
 import { Buscador, Encabezado, FilasCargando, FranjaResumen, Paginador, SinResultados } from "./piezas";
-import { OrdenMovil, TarjetasMovil, useEsCelular } from "../movil";
+import { BarraListaMovil, TarjetasMovil, useEsCelular } from "../movil";
 
 export interface FilaProducto {
   sku: string;
@@ -82,15 +82,18 @@ export default function ListaProductos({ filtros, enfoque = "venta" }: { filtros
                 }}
               />
             )}
-            <Buscador valor={l.buscar} onCambiar={l.setBuscar} placeholder="Buscar SKU o nombre" />
+            {/* En celular el buscador va en la barra de la lista. */}
+            {!esCelular && <Buscador valor={l.buscar} onCambiar={l.setBuscar} placeholder="Buscar SKU o nombre" />}
           </Box>
         }
         sx={{ p: { xs: 1.5, sm: 2.5 } }}
       >
         {esCelular && (
           <Box sx={{ mb: 1.25 }}>
-            <OrdenMovil
-              opciones={[
+            <BarraListaMovil
+              buscar={{ valor: l.buscar, onCambiar: l.setBuscar, placeholder: "Buscar SKU o nombre" }}
+              orden={{
+              opciones: [
               { clave: "venta", titulo: "Venta" },
               { clave: "unidades", titulo: "Unidades" },
               ...(conMargen
@@ -101,12 +104,13 @@ export default function ListaProductos({ filtros, enfoque = "venta" }: { filtros
                 : []),
               { clave: "documentos", titulo: "Documentos" },
               { clave: "nombre", titulo: "Producto" },
-              ]}
-              clave={l.orden.orden}
-              direccion={l.orden.direccion}
-              onCambiar={(orden, direccion) => {
+              ],
+              clave: l.orden.orden,
+              direccion: l.orden.direccion,
+              onCambiar: (orden, direccion) => {
                 l.setPagina(1);
                 l.setOrden({ orden, direccion });
+              },
               }}
             />
           </Box>
@@ -117,17 +121,20 @@ export default function ListaProductos({ filtros, enfoque = "venta" }: { filtros
           <SinResultados buscando={!!l.buscarDemorado} />
         ) : esCelular ? (
           <TarjetasMovil
-            filas={filas.map((f) => ({
+            filas={filas.map((f, i) => ({
               clave: f.sku,
               titulo: f.nombre,
-              meta: `SKU ${f.sku}`,
+              meta: f.sku,
+              imagen: f.imagen || null,
+              // Posición al ordenar de mayor a menor por una cifra, contando las páginas anteriores.
+              rango: l.orden.direccion === "desc" && l.orden.orden !== "nombre" && !l.buscarDemorado ? (l.pagina - 1) * l.tamano + i + 1 : undefined,
               onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(f.sku)}`),
               principales: [
-                { titulo: "Unid.", valor: Number(f.unidades).toLocaleString("es-CL", { maximumFractionDigits: 2 }) },
+                { titulo: "Unidades", valor: Number(f.unidades).toLocaleString("es-CL", { maximumFractionDigits: 2 }), unidad: "un." },
                 { titulo: "Venta", valor: formatoMonto(f.venta) },
                 conMargen
-                  ? { titulo: "Margen", valor: <ChipMargen valor={f.margenPorcentaje} /> }
-                  : { titulo: "Docs.", valor: f.documentos.toLocaleString("es-CL") },
+                  ? { titulo: "% Margen", valor: "", chip: f.margenPorcentaje ?? null }
+                  : { titulo: "Documentos", valor: f.documentos.toLocaleString("es-CL"), unidad: "docs." },
               ],
               detalle: [
                 { titulo: "% del total", valor: totalVenta ? formatoPorcentaje((f.venta / totalVenta) * 100) : "—" },

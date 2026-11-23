@@ -135,7 +135,7 @@ const ClientesFrecuentesTable: React.FC<ClientesFrecuentesTableProps> = ({ filte
             }}
           />
           <TarjetasMovil
-            filas={sortedData.map((cliente) => {
+            filas={sortedData.map((cliente, i) => {
               const excedente =
                 cliente.balance && cliente.linea_credito && cliente.balance > cliente.linea_credito
                   ? cliente.balance - cliente.linea_credito
@@ -145,9 +145,12 @@ const ClientesFrecuentesTable: React.FC<ClientesFrecuentesTableProps> = ({ filte
                 clave: cliente.cardcode,
                 titulo: cliente.cardname,
                 meta: `${formatearRUTDesdeSAP(cliente.cardcode)}${cliente.ciudad ? ` · ${cliente.ciudad}` : ""}`,
+                // Logo del cliente (o recuadro gris) y su posición al ordenar de mayor a menor por una cifra.
+                imagen: cliente.imagen || null,
+                rango: order === "desc" && orderBy !== "cardname" && orderBy !== "ultima_compra" ? i + 1 : undefined,
                 principales: [
                   { titulo: "Total", valor: formatoMonto(cliente.total_comprado) },
-                  { titulo: "Compras", valor: (cliente.cantidad_compras ?? 0).toLocaleString("es-CL") },
+                  { titulo: "Compras", valor: (cliente.cantidad_compras ?? 0).toLocaleString("es-CL"), unidad: "compras" },
                   {
                     titulo: "Pendiente",
                     valor: (

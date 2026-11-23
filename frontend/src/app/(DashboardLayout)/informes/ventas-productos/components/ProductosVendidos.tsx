@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 
 import React, { useState } from 'react';
 import {
@@ -18,7 +19,8 @@ import {
 import { styled } from '@mui/material/styles';
 import { formatUnidades, formatVentas } from '@/utils/format';
 import { notifySuccess, notifyError } from '@/components/ui/toast/notify';
-import { OrdenMovil, TarjetasMovil, useEsCelular } from '@/app/(DashboardLayout)/utilities/ventas/components/movil';
+import { BarraListaMovil, TarjetasMovil, useEsCelular } from '@/app/(DashboardLayout)/utilities/ventas/components/movil';
+import { formatoMonto, formatoPorcentaje } from '@/app/(DashboardLayout)/utilities/ventas/components/estilo';
 
 type ProductoVendido = {
   imagen: string;
@@ -106,6 +108,7 @@ const ProductosVendidos = ({
 }: Props) => {
   const [busqueda, setBusqueda] = useState('');
   const esCelular = useEsCelular();
+  const router = useRouter();
 
   // safeData evita errores si data viene undefined/null en el primer render
   const safeData = Array.isArray(data) ? data : [];
@@ -126,11 +129,13 @@ const ProductosVendidos = ({
   /////////////
 
   return (
-    <Box mt={3}>
-      <Typography variant="h6" fontWeight={600} mb={1}>
+    <Box sx={{ mt: { xs: 1, sm: 3 } }}>
+      {/* En celular el nombre ya está en la barra de arriba. */}
+      <Typography variant="h6" fontWeight={600} mb={1} sx={{ display: { xs: "none", sm: "block" } }}>
         Productos Vendidos
       </Typography>
 
+      {!esCelular && (
       <Box mb={2}>
         <TextField
           label="Buscar por nombre o SKU"
@@ -141,40 +146,50 @@ const ProductosVendidos = ({
           onChange={(e) => setBusqueda(e.target.value)}
         />
       </Box>
+      )}
 
       {esCelular ? (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-          <OrdenMovil
-            opciones={[
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <BarraListaMovil
+            buscar={{ valor: busqueda, onCambiar: setBusqueda, placeholder: 'Buscar por nombre o SKU' }}
+            orden={{
+            opciones: [
               { clave: 'cantidadVendida', titulo: 'Cant. vendida' },
               { clave: 'totalVentas', titulo: 'Total ventas' },
               { clave: 'margenPorcentaje', titulo: '% Margen' },
               { clave: 'margenBruto', titulo: 'Margen bruto' },
               { clave: 'facturasUnicas', titulo: 'Transacciones' },
               { clave: 'precioPromedio', titulo: 'Precio prom. venta' },
-            ]}
-            clave={ordenPorActual}
-            direccion={ordenActual}
+            ],
+            clave: ordenPorActual,
+            direccion: ordenActual,
             // Igual que el encabezado: otra columna parte ascendente y la misma invierte.
-            onCambiar={(clave) => onSortChange(clave as OrderBy)}
+            onCambiar: (clave, direccion) => {
+              if (clave !== ordenPorActual || direccion !== ordenActual) onSortChange(clave as OrderBy);
+            },
+            }}
           />
           <TarjetasMovil
             vacio={busqueda ? 'No se encontraron productos con ese filtro.' : 'Cargando datos...'}
-            filas={filteredData.map((row) => ({
+            filas={filteredData.map((row, i) => ({
               clave: `${row.sku}-${row.nombre}`,
               titulo: row.nombre,
-              // Tocar el título copia el SKU, igual que en la tabla.
               meta: [row.sku, [row.primerNivel, row.categoria].filter(Boolean).join(' › ')].filter(Boolean).join(' · '),
-              onAbrir: () => handleCopySku(row.sku),
+              imagen: row.imagen?.startsWith('http') ? row.imagen : null,
+              // Posición en el ranking solo al ordenar de mayor a menor y sin búsqueda.
+              rango: ordenActual === 'desc' && !busqueda ? i + 1 : undefined,
+              // La hoja abre la ficha del producto y, aparte, copia el SKU como al tocar el nombre en la tabla.
+              onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(row.sku)}`),
+              accionSecundaria: { label: 'Copiar SKU', onClick: () => handleCopySku(row.sku) },
               principales: [
-                { titulo: 'Unid.', valor: formatUnidades(row.cantidadVendida) },
-                { titulo: 'Ventas', valor: formatVentas(row.totalVentas) },
-                { titulo: 'Margen', valor: `${row.margenPorcentaje?.toFixed(2)}%` },
+                { titulo: 'Unidades', valor: formatUnidades(row.cantidadVendida), unidad: 'un.' },
+                { titulo: 'Venta', valor: formatoMonto(row.totalVentas) },
+                { titulo: 'Margen', valor: formatoPorcentaje(row.margenPorcentaje), chip: row.margenPorcentaje ?? null },
               ],
               detalle: [
-                { titulo: 'Margen bruto', valor: formatVentas(row.margenBruto) },
-                { titulo: 'Transacciones', valor: row.facturasUnicas },
-                { titulo: 'Precio prom. venta', valor: formatVentas(row.precioPromedio) },
+                { titulo: 'Margen bruto', valor: formatoMonto(row.margenBruto) },
+                { titulo: 'Transacciones', valor: (row.facturasUnicas ?? 0).toLocaleString('es-CL') },
+                { titulo: 'Precio prom. venta', valor: formatoMonto(row.precioPromedio) },
                 { titulo: 'Stock actual', valor: formatUnidades(row.stockCanal) },
                 { titulo: 'Stock Chorrillos', valor: row.stockChorrillo !== undefined ? formatUnidades(row.stockChorrillo) : 'N/A' },
                 { titulo: 'OC (On Order)', valor: row.stockOnOrder !== undefined ? formatUnidades(row.stockOnOrder) : 'N/A' },

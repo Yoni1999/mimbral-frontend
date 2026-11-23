@@ -5,7 +5,7 @@ import { Box, Pagination, Skeleton, Table, TableBody, TableCell, TableContainer,
 import { apiJson } from "@/utils/apiClient";
 import { useCargaDatos } from "@/utils/useCargaDatos";
 import { BACKEND_URL } from "@/config";
-import { BarraParticipacion, ChipMargen, Panel, formatoPesos, tablaSx, tinta, Columnas, TextoCelda } from "../../components/estilo";
+import { BarraParticipacion, ChipMargen, Panel, formatoMonto, formatoPesos, tablaSx, tinta, Columnas, TextoCelda } from "../../components/estilo";
 import { CeldaOrden, useOrdenTabla } from "../../components/ordenTabla";
 import { OrdenMovil, TarjetasMovil, useEsCelular } from "../../components/movil";
 
@@ -135,17 +135,21 @@ const ProductosVendidos: React.FC<Props> = ({ filters }) => {
                 onCambiar={(clave, direccion) => orden.setOrden({ clave, direccion })}
               />
               <TarjetasMovil
-                filas={orden.ordenadas.map((row) => ({
+                filas={orden.ordenadas.map((row, i) => ({
                   clave: row.sku,
                   titulo: row.nombre,
                   meta: [row.sku, [row.primerNivel, row.categoria].filter(Boolean).join(" › ")].filter(Boolean).join(" · "),
+                  imagen: row.imagen || null,
+                  // Posición al ordenar de mayor a menor por una cifra, contando las páginas anteriores.
+                  rango:
+                    orden.orden?.direccion !== "asc" && orden.orden?.clave !== "producto" && orden.orden?.clave !== "categoria" ? offset + i + 1 : undefined,
                   principales: [
-                    { titulo: "Unid.", valor: (cifra(row.cantidadVendida) ?? 0).toLocaleString("es-CL") },
-                    { titulo: "Ventas", valor: formatoPesos(row.totalVentas) },
-                    { titulo: "Margen", valor: <ChipMargen valor={row.margenPorcentaje} /> },
+                    { titulo: "Unidades", valor: (cifra(row.cantidadVendida) ?? 0).toLocaleString("es-CL"), unidad: "un." },
+                    { titulo: "Venta", valor: formatoMonto(row.totalVentas) },
+                    { titulo: "% Margen", valor: "", chip: row.margenPorcentaje ?? null },
                   ],
                   detalle: [
-                    { titulo: "Margen bruto", valor: formatoPesos(cifra(row.margenBruto) ?? 0) },
+                    { titulo: "Margen bruto", valor: formatoMonto(cifra(row.margenBruto) ?? 0) },
                     { titulo: "Precio prom.", valor: formatoPesos(cifra(row.precioPromedio) ?? 0) },
                     { titulo: "Stock", valor: cifra(row.stockCanal) != null ? cifra(row.stockCanal)!.toLocaleString("es-CL") : "—" },
                   ],

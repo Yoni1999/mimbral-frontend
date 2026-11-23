@@ -171,7 +171,8 @@ const ProductosDetenidosPage = () => {
         onChange={(p) => setVista((v) => ({ ...v, pestana: p }))}
         tabContents={[
           <React.Fragment key="tab-activos">
-            <Typography variant="h4" fontWeight="bold" gutterBottom display="flex" alignItems="center">
+            {/* En celular el nombre del informe ya está en la barra de arriba. */}
+            <Typography variant="h4" fontWeight="bold" gutterBottom alignItems="center" sx={{ display: { xs: "none", sm: "flex" } }}>
               <TrendingDown sx={{ mr: 1 }} />
               Informe de Productos Detenidos Activos para compras
             </Typography>

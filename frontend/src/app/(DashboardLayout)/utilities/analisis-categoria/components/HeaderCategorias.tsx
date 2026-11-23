@@ -17,6 +17,8 @@ import {
 } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
 import { useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 import { EtiquetaHoja, HojaFiltros, pildorasMovilSx } from "@/app/(DashboardLayout)/utilities/ventas/components/HojaFiltros";
+import PeriodoMovil, { FiltrosPuestosMovil } from "@/app/(DashboardLayout)/utilities/ventas/components/PeriodoMovil";
+import { useBarraMovil } from "@/app/(DashboardLayout)/layout/header/BarraMovil";
 import { Arbol, Paso } from "../niveles";
 import SelectorCategoria from "./SelectorCategoria";
 
@@ -73,6 +75,12 @@ const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, carg
   const enEstadoInicial = filtros.arbol === "categorias" && ruta.length === 0 && !filtros.temporada && rango === "Ayer";
   const raiz = filtros.arbol === "familias" ? "Todas las familias" : "Todas las categorías";
 
+  // Celular: el nivel en que estás y el período · árbol van en la barra de arriba.
+  useBarraMovil({
+    titulo: actual ? actual.nombre || actual.codigo : raiz,
+    subtitulo: `${rango} · ${filtros.arbol === "familias" ? "Familias" : "Categorías"}`,
+  });
+
   const miga = (texto: string, indice: number, activa: boolean) => (
     <Box
       component={activa ? "span" : "button"}
@@ -94,6 +102,80 @@ const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, carg
       {texto}
     </Box>
   );
+
+  // Hoja de filtros de celular (la abre el botón de la barra de período).
+  const hojaMovil = (
+    // Elegir una temporada la aplica y cierra la hoja.
+    <HojaFiltros abierta={!!filtrosAnchor} onCerrar={() => setFiltrosAnchor(null)} descripcion="Una temporada fija el período de la vista.">
+      <EtiquetaHoja>Temporada</EtiquetaHoja>
+      <FormControl fullWidth size="small">
+        <Select value={filtros.temporada} displayEmpty inputProps={{ "aria-label": "Temporada" }} onChange={(e) => elegirTemporada(e.target.value)} sx={controlSx}>
+          <MenuItem value="">Sin temporada</MenuItem>
+          {Object.keys(TEMPORADAS).map((t) => (
+            <MenuItem key={t} value={t}>
+              {t}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </HojaFiltros>
+  );
+
+  const selectorCategoria = (
+    <SelectorCategoria
+      arbol={filtros.arbol}
+      ruta={ruta}
+      catalogos={{ categorias: opciones, familias }}
+      cargando={{ categorias: cargandoOpciones, familias: cargandoFamilias }}
+      onElegir={(arbol, nueva) => cambiar({ arbol, ruta: nueva })}
+    />
+  );
+
+  // Celular: sin tarjeta de título. Barra de período pegada arriba (la
+  // temporada va en la hoja de filtros) y, debajo, el buscador de categoría a
+  // todo el ancho con las migas para subir de nivel.
+  if (esCelular) {
+    return (
+      <>
+        <PeriodoMovil
+          fechaInicio={filtros.fechaInicio}
+          fechaFin={filtros.fechaFin}
+          inactivo={!!filtros.temporada}
+          onElegir={(fechaInicio, fechaFin) => cambiar({ temporada: "", fechaInicio, fechaFin })}
+          calendario={
+            <DateRangeFilter
+              value={filtros.fechaInicio && filtros.fechaFin ? { start: filtros.fechaInicio, end: filtros.fechaFin } : null}
+              onChange={handleDateChange}
+              label="Rango de fecha"
+              soloIcono
+            />
+          }
+          onFiltros={(e) => setFiltrosAnchor(e.currentTarget)}
+          filtrosActivos={!!filtros.temporada}
+        />
+        <FiltrosPuestosMovil
+          activos={filtros.temporada ? [{ etiqueta: `Temporada: ${filtros.temporada}`, onQuitar: () => elegirTemporada("") }] : []}
+          onLimpiar={limpiar}
+        />
+        {/* Grilla y no flex en columna: el botón trae flexBasis 100 % (pensado para la fila) y en columna lo aplastaba. */}
+        <Box sx={{ display: "grid", gap: 0.75, mb: 1.5, "& > button": { height: 40 } }}>
+          {selectorCategoria}
+          {ruta.length > 0 && (
+            <Box component="nav" aria-label="Nivel" sx={{ display: "flex", alignItems: "center", gap: 0.25, flexWrap: "wrap", minWidth: 0, px: 0.5 }}>
+              {miga(raiz, 0, false)}
+              {ruta.map((p, i) => (
+                <React.Fragment key={`${p.nivel}-${p.codigo}`}>
+                  <IconChevronRight size={12} color={tinta.tenue} />
+                  {miga(p.nombre || p.codigo, i + 1, i === ruta.length - 1)}
+                </React.Fragment>
+              ))}
+            </Box>
+          )}
+        </Box>
+        {hojaMovil}
+      </>
+    );
+  }
 
   return (
     <Box sx={{ ...tarjetaSx, position: "relative", mb: 2, px: { xs: 1.5, md: 2 }, py: 1.25 }}>
@@ -170,22 +252,6 @@ const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, carg
         </Stack>
       </Stack>
 
-      {esCelular ? (
-        // Elegir una temporada la aplica y cierra la hoja.
-        <HojaFiltros abierta={!!filtrosAnchor} onCerrar={() => setFiltrosAnchor(null)} descripcion="Una temporada fija el período de la vista.">
-          <EtiquetaHoja>Temporada</EtiquetaHoja>
-          <FormControl fullWidth size="small">
-            <Select value={filtros.temporada} displayEmpty inputProps={{ "aria-label": "Temporada" }} onChange={(e) => elegirTemporada(e.target.value)} sx={controlSx}>
-              <MenuItem value="">Sin temporada</MenuItem>
-              {Object.keys(TEMPORADAS).map((t) => (
-                <MenuItem key={t} value={t}>
-                  {t}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </HojaFiltros>
-      ) : (
       <Popover
         open={!!filtrosAnchor}
         anchorEl={filtrosAnchor}
@@ -224,7 +290,6 @@ const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, carg
           </Select>
         </FormControl>
       </Popover>
-      )}
     </Box>
   );
 };

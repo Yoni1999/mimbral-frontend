@@ -103,26 +103,33 @@ const SugerenciasPage = () => {
                   .map((sug) => ({
                     clave: String(sug.ID),
                     titulo: sug.SUGERENCIA,
-                    meta: `#${sug.ID} · ${sug.DEPARTAMENTO ?? "—"} · ${new Date(sug.FECHA_REGISTRO).toLocaleDateString()}`,
+                    meta: `#${sug.ID} · ${sug.DEPARTAMENTO ?? "—"} · ${new Date(sug.FECHA_REGISTRO).toLocaleDateString("es-CL")}`,
+                    // Los controles no deben abrir la hoja al tocarlos: cortan el clic (también el del menú, que sube por el árbol de React).
                     principales: [
                       {
                         titulo: "Estado",
+                        prefijo: false,
                         valor: (
-                          <Select value={sug.ESTADO} onChange={(e) => handleEstadoChange(sug.ID, e.target.value)} size="small" sx={{ width: "100%" }}>
-                            {estados.map((estado) => (
-                              <MenuItem key={estado} value={estado}>
-                                {estado}
-                              </MenuItem>
-                            ))}
-                          </Select>
+                          <Box component="span" onClick={(e) => e.stopPropagation()} sx={{ display: "inline-block" }}>
+                            <Select value={sug.ESTADO} onChange={(e) => handleEstadoChange(sug.ID, e.target.value)} size="small" sx={{ minWidth: 150 }}>
+                              {estados.map((estado) => (
+                                <MenuItem key={estado} value={estado}>
+                                  {estado}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </Box>
                         ),
                       },
                       {
                         titulo: "Eliminar",
+                        prefijo: false,
                         valor: (
-                          <IconButton color="error" aria-label="Eliminar sugerencia" onClick={() => eliminarSugerencia(sug.ID)}>
-                            <DeleteIcon />
-                          </IconButton>
+                          <Box component="span" onClick={(e) => e.stopPropagation()} sx={{ display: "inline-block" }}>
+                            <IconButton color="error" aria-label="Eliminar sugerencia" onClick={() => eliminarSugerencia(sug.ID)}>
+                              <DeleteIcon />
+                            </IconButton>
+                          </Box>
                         ),
                       },
                     ],

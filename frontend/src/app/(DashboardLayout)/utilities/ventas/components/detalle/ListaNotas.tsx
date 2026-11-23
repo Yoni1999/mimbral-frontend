@@ -8,7 +8,7 @@ import { ENDPOINT, FiltrosDetalle, fechaCorta, horaSap, useListaDetalle } from "
 import { Buscador, Encabezado, FilasCargando, Paginador, SinResultados } from "./piezas";
 import ChipMotivo, { MOTIVOS_NC, motivoNc } from "./ChipMotivo";
 import { Canal } from "./ListaVentas";
-import { OrdenMovil, TarjetasMovil, useEsCelular } from "../movil";
+import { BarraListaMovil, TarjetasMovil, useEsCelular } from "../movil";
 
 export interface FilaNota {
   docEntry: number;
@@ -112,25 +112,29 @@ export default function ListaNotas({ filtros, onAbrir }: { filtros: FiltrosDetal
         <Panel
           titulo={motivo === null ? "Notas de crédito" : `Notas de crédito · ${motivoNc(motivo).texto}`}
           descripcion={motivo === null ? "Pulsa una nota para ver los ítems devueltos. Pulsa un motivo para filtrar." : "Pulsa el motivo de nuevo para ver todas."}
-          accion={<Buscador valor={l.buscar} onCambiar={l.setBuscar} placeholder="Buscar folio, cliente, vendedor o folio corregido" />}
+          // En celular el buscador va en la barra de la lista.
+          accion={esCelular ? undefined : <Buscador valor={l.buscar} onCambiar={l.setBuscar} placeholder="Buscar folio, cliente, vendedor o folio corregido" />}
           sx={{ p: { xs: 1.5, sm: 2.5 } }}
         >
           {esCelular && (
             <Box sx={{ mb: 1.25 }}>
-              <OrdenMovil
-                opciones={[
+              <BarraListaMovil
+                buscar={{ valor: l.buscar, onCambiar: l.setBuscar, placeholder: "Buscar folio, cliente o vendedor" }}
+                orden={{
+                opciones: [
                 { clave: "fecha", titulo: "Fecha" },
                 { clave: "monto", titulo: "Monto" },
                 { clave: "folio", titulo: "Folio" },
                 { clave: "cliente", titulo: "Cliente" },
                 { clave: "vendedor", titulo: "Vendedor" },
                 { clave: "motivo", titulo: "Motivo" },
-                ]}
-                clave={l.orden.orden}
-                direccion={l.orden.direccion}
-                onCambiar={(orden, direccion) => {
+                ],
+                clave: l.orden.orden,
+                direccion: l.orden.direccion,
+                onCambiar: (orden, direccion) => {
                   l.setPagina(1);
                   l.setOrden({ orden, direccion });
+                },
                 }}
               />
             </Box>
@@ -144,20 +148,18 @@ export default function ListaNotas({ filtros, onAbrir }: { filtros: FiltrosDetal
               filas={filas.map((f) => ({
                 clave: String(f.docEntry),
                 titulo: f.cliente,
-                // En escritorio el comentario sale al pasar el mouse; aquí va bajo el folio.
-                meta: (
-                  <>
-                    Folio {f.folio ?? "—"} · N° {f.docNum} · {f.clienteCodigo}
-                    {f.comentario && <Box sx={{ mt: 0.25, fontStyle: "italic" }}>{f.comentario}</Box>}
-                  </>
-                ),
+                meta: `Folio ${f.folio ?? "—"} · N° ${f.docNum} · ${f.clienteCodigo}`,
                 onAbrir: () => onAbrir(f.docEntry),
+                accionLabel: "Ver nota de crédito",
                 principales: [
                   { titulo: "Monto", valor: formatoMonto(f.monto) },
-                  { titulo: "Fecha", valor: fechaCorta(f.fecha) },
-                  { titulo: "Motivo", valor: <ChipMotivo codigo={f.motivoCodigo} /> },
+                  // La fecha y el motivo se entienden solos: van sin su nombre delante.
+                  { titulo: "Fecha", valor: fechaCorta(f.fecha), prefijo: false },
+                  { titulo: "Motivo", valor: <ChipMotivo codigo={f.motivoCodigo} />, prefijo: false },
                 ],
                 detalle: [
+                  // En escritorio el comentario sale al pasar el mouse; aquí va en la hoja.
+                  ...(f.comentario ? [{ titulo: "Comentario", valor: f.comentario }] : []),
                   { titulo: "Hora", valor: horaSap(f.hora) },
                   { titulo: "Vendedor", valor: f.vendedor },
                   { titulo: "Canal", valor: <Canal clave={f.canal} /> },

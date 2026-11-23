@@ -8,7 +8,8 @@ import {
 import { CheckCircle, Warning, Cancel } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { OrdenMovil, TarjetasMovil, useEsCelular } from '@/app/(DashboardLayout)/utilities/ventas/components/movil';
+import { BarraListaMovil, TarjetasMovil, useEsCelular } from '@/app/(DashboardLayout)/utilities/ventas/components/movil';
+import { formatoPesos, formatoPorcentaje } from '@/app/(DashboardLayout)/utilities/ventas/components/estilo';
 
 type ProductoEstancado = {
   SKU: string;
@@ -135,6 +136,8 @@ const ProductosEstancadosTable = ({
         <Typography variant="h6" fontWeight={600}>
           Productos Estancados
         </Typography>
+        {/* En celular el buscador y la descarga van en la barra de la lista. */}
+        {!esCelular && (
         <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" sx={{ width: { xs: '100%', sm: 'auto' } }}>
           <TextField
             size="small"
@@ -148,12 +151,16 @@ const ProductosEstancadosTable = ({
             Exportar a Excel
           </Button>
         </Box>
+        )}
       </Box>
 
       {esCelular ? (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-          <OrdenMovil
-            opciones={[
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <BarraListaMovil
+            buscar={{ valor: searchTerm, onCambiar: setSearchTerm, placeholder: 'Buscar SKU o nombre' }}
+            onExportar={exportToExcel}
+            orden={{
+            opciones: [
               { clave: 'DiasSinVenta', titulo: 'Días sin venta' },
               { clave: 'Stock', titulo: 'Stock' },
               { clave: 'UltimaVenta', titulo: 'Última venta' },
@@ -163,12 +170,13 @@ const ProductosEstancadosTable = ({
               { clave: 'Producto', titulo: 'Producto' },
               { clave: 'PrimerNivel', titulo: 'Primer nivel' },
               { clave: 'Categoria', titulo: 'Categoría' },
-            ]}
-            clave={sortBy}
-            direccion={sortDirection}
-            onCambiar={(clave, direccion) => {
+            ],
+            clave: sortBy,
+            direccion: sortDirection,
+            onCambiar: (clave, direccion) => {
               setSortBy(clave as SortKey);
               setSortDirection(direccion);
+            },
             }}
           />
           <TarjetasMovil
@@ -177,18 +185,24 @@ const ProductosEstancadosTable = ({
               clave: `${row.SKU}-${idx}`,
               titulo: row.Producto,
               meta: [row.SKU, [row.PrimerNivel, row.Categoria].filter(Boolean).join(' › ')].filter(Boolean).join(' · '),
+              imagen: row.Imagen || null,
               principales: [
                 {
                   titulo: 'Días sin venta',
                   valor: (
                     <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, '& svg': { fontSize: 16 } }}>
                       {renderAlertaIcon(row.DiasSinVenta)}
-                      {row.DiasSinVenta}
+                      {(row.DiasSinVenta ?? 0).toLocaleString('es-CL')}
                     </Box>
                   ),
+                  unidad: 'días',
                 },
-                { titulo: 'Stock', valor: row.Stock },
-                { titulo: etiquetaMargen, valor: row.MargenPorcentaje === null || row.MargenPorcentaje === undefined ? '—' : `${row.MargenPorcentaje}%` },
+                { titulo: 'Stock', valor: (row.Stock ?? 0).toLocaleString('es-CL'), unidad: 'un.' },
+                {
+                  titulo: etiquetaMargen,
+                  valor: row.MargenPorcentaje === null || row.MargenPorcentaje === undefined ? '—' : formatoPorcentaje(row.MargenPorcentaje),
+                  chip: row.MargenPorcentaje ?? null,
+                },
               ],
               detalle: [
                 {
@@ -203,7 +217,7 @@ const ProductosEstancadosTable = ({
                     ? new Date(row.UltimaFechaCompra!).toLocaleDateString('es-CL', { timeZone: 'UTC' })
                     : '—',
                 },
-                { titulo: 'Costo prom.', valor: row.CostoPromedioUlt3Compras },
+                { titulo: 'Costo prom.', valor: formatoPesos(row.CostoPromedioUlt3Compras) },
                 { titulo: 'Primer nivel', valor: row.PrimerNivel || '—' },
                 { titulo: 'Categoría', valor: row.Categoria || '—' },
               ],

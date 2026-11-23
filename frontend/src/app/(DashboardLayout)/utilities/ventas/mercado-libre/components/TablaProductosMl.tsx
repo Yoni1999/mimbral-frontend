@@ -4,7 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { Box, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
 import { ConMiniatura } from "./TablaInforme";
-import { Columnas, TextoCelda, cifraSx, formatoPorcentaje, formatoPesos, tablaSx, tinta } from "../../components/estilo";
+import { Columnas, TextoCelda, cifraSx, formatoMonto, formatoPorcentaje, formatoPesos, tablaSx, tinta } from "../../components/estilo";
 import { CeldaStock } from "./StockBodegas";
 import PublicacionesMl, { estadoPublicacion } from "./PublicacionesMl";
 import { BarraTipos, Monto, ProductoMl, TipoEnvio, cobros, n, unidades } from "./comun";
@@ -55,10 +55,10 @@ export default function TablaProductosMl({ filas, cargando, tipo, desde = 0, fil
     );
 
   if (esCelular) {
-    // En celular: una tarjeta por producto con unidades, venta y lo que queda;
-    // publicación, envío, cobro de ML y stock en "Ver detalle".
+    // En celular: una fila por producto (foto con su posición, unidades, venta
+    // y lo que queda); publicación, envío, cobro de ML y stock en la hoja.
     return (
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, px: 1.5, pb: 1 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, px: 1.5, pb: 1 }}>
         {onOrdenar && (
           <OrdenMovil
             opciones={[
@@ -86,15 +86,19 @@ export default function TablaProductosMl({ filas, cargando, tipo, desde = 0, fil
             const pctCobra = n(p.venta.neto) ? (n(cobra.neto) / n(p.venta.neto)) * 100 : null;
             return {
               clave: p.sku,
-              titulo: `${desde + i + 1}. ${p.nombre ?? "Sin nombre en SAP"}`,
+              titulo: p.nombre ?? "Sin nombre en SAP",
+              imagen: p.imagen ?? null,
+              rango: desde + i + 1,
               meta: [p.sku, p.rutaCategoria.length ? p.rutaCategoria.map((c) => c.nombre).join(" › ") : "Sin categoría ML"].join(" · "),
               onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(p.sku)}`),
               principales: [
-                { titulo: "Unid.", valor: unidades(p.unidades) },
-                { titulo: "Venta", valor: <Monto par={p.venta} /> },
-                { titulo: "Queda", valor: <Monto par={p.queda} /> },
+                { titulo: "Unidades", valor: unidades(p.unidades), unidad: "un." },
+                { titulo: "Venta", valor: p.venta.neto == null ? "—" : formatoMonto(p.venta.neto) },
+                { titulo: "Queda", valor: p.queda.neto == null ? "—" : formatoMonto(p.queda.neto) },
               ],
               detalle: [
+                { titulo: "Venta con IVA", valor: p.venta.conIva == null ? "—" : formatoPesos(p.venta.conIva) },
+                { titulo: "Queda con IVA", valor: p.queda.conIva == null ? "—" : formatoPesos(p.queda.conIva) },
                 { titulo: "Publicación", valor: <PublicacionesMl publicaciones={p.publicaciones} /> },
                 ...(p.participacion != null ? [{ titulo: "Del total", valor: formatoPorcentaje(p.participacion * 100) }] : []),
                 { titulo: "Envío", valor: <Box sx={{ minWidth: 120 }}><BarraTipos porTipo={p.porTipo} /></Box> },

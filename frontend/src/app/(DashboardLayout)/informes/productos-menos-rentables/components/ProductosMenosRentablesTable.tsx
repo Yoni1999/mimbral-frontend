@@ -1,6 +1,7 @@
 // informes/productos-menos-rentables/components/ProductosMenosRentablesTable.tsx
 'use client';
 
+import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import {
   Box, Typography, TextField, TableContainer, Paper, Table, TableHead, TableRow,
@@ -8,7 +9,8 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { notifySuccess, notifyError } from '@/components/ui/toast/notify';
-import { OrdenMovil, TarjetasMovil, useEsCelular } from '@/app/(DashboardLayout)/utilities/ventas/components/movil';
+import { BarraListaMovil, TarjetasMovil, useEsCelular } from '@/app/(DashboardLayout)/utilities/ventas/components/movil';
+import { formatoMonto, formatoPorcentaje } from '@/app/(DashboardLayout)/utilities/ventas/components/estilo';
 
 // Si ya existen estos helpers, impórtalos como en ventas:
 // import { formatVentas, formatUnidades } from '@/utils/format';
@@ -92,6 +94,7 @@ export const copyToClipboard = async (text: string): Promise<boolean> => {
 const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ordenActual, ordenPorActual }) => {
   const [busqueda, setBusqueda] = useState('');
   const esCelular = useEsCelular();
+  const router = useRouter();
 
   const filteredData = data.filter((p) =>
     p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -115,6 +118,7 @@ const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ord
         Productos menos rentables
       </Typography>
 
+      {!esCelular && (
       <Box mb={2}>
         <TextField
           label="Buscar por nombre o SKU"
@@ -125,42 +129,52 @@ const ProductosMenosRentablesTable: React.FC<Props> = ({ data, onSortChange, ord
           onChange={(e) => setBusqueda(e.target.value)}
         />
       </Box>
+      )}
 
       {esCelular ? (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-          <OrdenMovil
-            opciones={[
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <BarraListaMovil
+            buscar={{ valor: busqueda, onCambiar: setBusqueda, placeholder: 'Buscar por nombre o SKU' }}
+            orden={{
+            opciones: [
               { clave: 'margenBruto', titulo: 'Margen bruto' },
               { clave: 'totalVentas', titulo: 'Total ventas' },
               { clave: 'cantidadVendida', titulo: 'Cant. vendida' },
               { clave: 'facturasUnicas', titulo: 'Transacciones' },
               { clave: 'precioPromedio', titulo: 'Precio prom. venta' },
-            ]}
-            clave={ordenPorActual}
-            direccion={ordenActual}
+            ],
+            clave: ordenPorActual,
+            direccion: ordenActual,
             // Igual que el encabezado: otra columna parte ascendente y la misma invierte.
-            onCambiar={(clave) => onSortChange(clave as OrderBy)}
+            onCambiar: (clave, direccion) => {
+              if (clave !== ordenPorActual || direccion !== ordenActual) onSortChange(clave as OrderBy);
+            },
+            }}
           />
           <TarjetasMovil
             vacio={busqueda ? 'No se encontraron productos con ese filtro.' : 'Cargando datos...'}
             filas={filteredData.map((row, idx) => ({
               clave: row.sku + idx,
               titulo: row.nombre,
-              // Tocar el título copia el SKU, igual que en la tabla.
               meta: [row.sku, [row.primerNivel, row.categoria].filter(Boolean).join(' › ')].filter(Boolean).join(' · '),
-              onAbrir: () => handleCopySku(row.sku),
+              imagen: row.imagen?.startsWith('http') ? row.imagen : null,
+              // La lista ya es un ranking (de menos a más rentable): sin búsqueda se numera.
+              rango: busqueda ? undefined : idx + 1,
+              // La hoja abre la ficha del producto y, aparte, copia el SKU como al tocar el nombre en la tabla.
+              onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(row.sku)}`),
+              accionSecundaria: { label: 'Copiar SKU', onClick: () => handleCopySku(row.sku) },
               principales: [
-                { titulo: 'Unid.', valor: row.cantidadVendida.toLocaleString('es-CL') },
-                { titulo: 'Ventas', valor: row.totalVentas.toLocaleString('es-CL') },
-                { titulo: 'Margen', valor: `${row.margenPorcentaje.toFixed(2)}%` },
+                { titulo: 'Unidades', valor: row.cantidadVendida.toLocaleString('es-CL'), unidad: 'un.' },
+                { titulo: 'Venta', valor: formatoMonto(row.totalVentas) },
+                { titulo: 'Margen', valor: formatoPorcentaje(row.margenPorcentaje), chip: row.margenPorcentaje },
               ],
               detalle: [
-                { titulo: 'Margen bruto', valor: row.margenBruto.toLocaleString('es-CL') },
-                { titulo: 'Transacciones', valor: row.facturasUnicas },
-                { titulo: 'Precio prom. venta', valor: row.precioPromedio.toLocaleString('es-CL') },
+                { titulo: 'Margen bruto', valor: formatoMonto(row.margenBruto) },
+                { titulo: 'Transacciones', valor: (row.facturasUnicas ?? 0).toLocaleString('es-CL') },
+                { titulo: 'Precio prom. venta', valor: formatoMonto(row.precioPromedio) },
                 { titulo: 'Stock actual', valor: row.stockCanal.toLocaleString('es-CL') },
-                { titulo: 'Stock Chorrillos', valor: row.stockChorrillo ?? 'N/A' },
-                { titulo: 'OC (On Order)', valor: row.stockOnOrder ?? 'N/A' },
+                { titulo: 'Stock Chorrillos', valor: row.stockChorrillo != null ? row.stockChorrillo.toLocaleString('es-CL') : 'N/A' },
+                { titulo: 'OC (On Order)', valor: row.stockOnOrder != null ? row.stockOnOrder.toLocaleString('es-CL') : 'N/A' },
               ],
             }))}
           />
