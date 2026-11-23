@@ -166,7 +166,7 @@ const HeaderProducto: React.FC<Props> = ({ filtros, setFiltros, selectorAbierto,
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
         PaperProps={{
-          sx: { mt: 1, p: 2.5, width: 320, borderRadius: "14px", border: `1px solid ${tinta.borde}`, boxShadow: "0 20px 50px rgba(15, 23, 42, 0.16)" },
+          sx: { mt: 1, p: 2.5, width: 320, maxWidth: "calc(100vw - 24px)", borderRadius: "14px", border: `1px solid ${tinta.borde}`, boxShadow: "0 20px 50px rgba(15, 23, 42, 0.16)" },
         }}
       >
         <Typography sx={{ fontSize: 15, fontWeight: 700, color: tinta.primaria }}>Filtros</Typography>

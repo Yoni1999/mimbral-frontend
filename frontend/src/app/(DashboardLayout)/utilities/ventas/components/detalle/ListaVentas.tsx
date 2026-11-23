@@ -5,6 +5,7 @@ import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
 import { ChipMargen, Columnas, Panel, TextoCelda, canalPorClave, formatoMonto, formatoPesos, tablaSx, tinta } from "../estilo";
 import { ENDPOINT, FiltrosDetalle, fechaCorta, horaSap, useListaDetalle } from "./comun";
 import { Buscador, Encabezado, FilasCargando, FranjaResumen, Paginador, SinResultados } from "./piezas";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "../movil";
 
 export interface FilaVenta {
   docEntry: number;
@@ -56,6 +57,7 @@ export default function ListaVentas({
   const r = l.resumen;
   const filas = l.datos?.filas ?? [];
   const conMargen = r?.margen !== undefined;
+  const esCelular = useEsCelular();
 
   return (
     <>
@@ -73,11 +75,57 @@ export default function ListaVentas({
         titulo="Documentos de venta"
         descripcion="Pulsa un documento para ver sus ítems."
         accion={<Buscador valor={l.buscar} onCambiar={l.setBuscar} placeholder="Buscar folio, cliente, RUT o vendedor" />}
+        sx={{ p: { xs: 1.5, sm: 2.5 } }}
       >
+        {esCelular && (
+          <Box sx={{ mb: 1.25 }}>
+            <OrdenMovil
+              opciones={[
+              { clave: "fecha", titulo: "Fecha" },
+              { clave: "monto", titulo: "Monto" },
+              { clave: "unidades", titulo: "Unidades" },
+              { clave: "folio", titulo: "Folio" },
+              { clave: "cliente", titulo: "Cliente" },
+              { clave: "vendedor", titulo: "Vendedor" },
+              { clave: "canal", titulo: "Canal" },
+              ...(conMargen ? [{ clave: "margen", titulo: "Margen" }] : []),
+              ]}
+              clave={l.orden.orden}
+              direccion={l.orden.direccion}
+              onCambiar={(orden, direccion) => {
+                l.setPagina(1);
+                l.setOrden({ orden, direccion });
+              }}
+            />
+          </Box>
+        )}
         {l.cargando ? (
           <FilasCargando />
         ) : filas.length === 0 ? (
           <SinResultados buscando={!!l.buscarDemorado} />
+        ) : esCelular ? (
+          <TarjetasMovil
+            filas={filas.map((f) => ({
+              clave: String(f.docEntry),
+              titulo: f.cliente,
+              meta: `Folio ${f.folio ?? "—"} · N° ${f.docNum} · ${f.clienteCodigo}`,
+              onAbrir: () => onAbrir(f.docEntry),
+              principales: [
+                { titulo: "Monto", valor: formatoMonto(f.monto) },
+                { titulo: "Fecha", valor: fechaCorta(f.fecha) },
+                conMargen
+                  ? { titulo: "Margen", valor: f.monto ? <ChipMargen valor={((f.margen ?? 0) / f.monto) * 100} /> : "—" }
+                  : { titulo: "Unid.", valor: Math.round(f.unidades).toLocaleString("es-CL") },
+              ],
+              detalle: [
+                { titulo: "Hora", valor: horaSap(f.hora) },
+                { titulo: "Vendedor", valor: f.variosVendedores ? `${f.vendedor} y otros` : f.vendedor },
+                { titulo: "Canal", valor: <Canal clave={f.canal} /> },
+                ...(conMargen ? [{ titulo: "Unidades", valor: Math.round(f.unidades).toLocaleString("es-CL") }] : []),
+                { titulo: "Monto exacto", valor: formatoPesos(f.monto) },
+              ],
+            }))}
+          />
         ) : (
           <TableContainer sx={{ mx: -2.5, width: "auto", overflowX: "hidden" }}>
             <Table size="small" sx={tablaSx}>

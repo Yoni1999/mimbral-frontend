@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from "react";
 import { Avatar, Box, Table, TableBody, TableCell, TableHead, TableRow, TableSortLabel, Typography } from "@mui/material";
 import { BarraParticipacion, ChipMargen, formatoMonto, tablaSx, tinta, Panel, Columnas, TextoCelda } from "../../components/estilo";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "../../components/movil";
 
 interface Categoria {
   Categoria: string;
@@ -22,6 +23,7 @@ type Order = "asc" | "desc";
 const CategoriasTableChart: React.FC<Props> = ({ data, height = 360 }) => {
   const [orderBy, setOrderBy] = useState<OrderBy>("MargenAbsoluto");
   const [order, setOrder] = useState<Order>("desc");
+  const esCelular = useEsCelular();
 
   const handleSort = (key: OrderBy) => {
     if (orderBy === key) {
@@ -66,7 +68,41 @@ const CategoriasTableChart: React.FC<Props> = ({ data, height = 360 }) => {
   );
 
   return (
-    <Panel titulo="Top 10 categorías por margen bruto" descripcion="Categorías con mejor margen en el período">
+    <Panel titulo="Top 10 categorías por margen bruto" descripcion="Categorías con mejor margen en el período" sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+      {esCelular ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+          <OrdenMovil
+            opciones={[
+              { clave: "MargenAbsoluto", titulo: "Margen bruto" },
+              { clave: "TotalVentas", titulo: "Ventas" },
+              { clave: "MargenPorcentaje", titulo: "% Margen" },
+              { clave: "Categoria", titulo: "Categoría" },
+            ]}
+            clave={orderBy}
+            direccion={order}
+            onCambiar={(clave, direccion) => {
+              setOrderBy(clave as OrderBy);
+              setOrder(direccion);
+            }}
+          />
+          <TarjetasMovil
+            filas={sortedData.map((item) => ({
+              clave: item.Categoria,
+              titulo: (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Avatar src={item.U_Imagen} alt={item.Categoria} variant="rounded" sx={{ width: 26, height: 26, bgcolor: "#f1f5f9", flexShrink: 0 }} />
+                  {item.Categoria}
+                </Box>
+              ),
+              principales: [
+                { titulo: "Margen $", valor: formatoMonto(item.MargenAbsoluto) },
+                { titulo: "Ventas", valor: formatoMonto(item.TotalVentas) },
+                { titulo: "Margen", valor: <ChipMargen valor={item.MargenPorcentaje} /> },
+              ],
+            }))}
+          />
+        </Box>
+      ) : (
       <Box sx={{ maxHeight: height, overflowY: "auto", overflowX: "hidden", mx: -2.5 }}>
         <Table size="small" stickyHeader sx={tablaSx}>
           <Columnas anchos={[40, 22, 20, 18]} />
@@ -110,6 +146,7 @@ const CategoriasTableChart: React.FC<Props> = ({ data, height = 360 }) => {
           </TableBody>
         </Table>
       </Box>
+      )}
     </Panel>
   );
 };

@@ -53,13 +53,13 @@ const ORIGEN: Record<Motivo["origen"], { texto: string; color: string }> = {
 const tasa = (v: number | null) => (v == null ? "—" : formatoPorcentaje(v * 100));
 
 const COLUMNAS: ColumnaInforme<Fila>[] = [
-  { clave: "sku", titulo: "Producto", ancho: 30, valor: (f) => f.sku, celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} secundario={f.categoria ?? undefined} /> },
+  { clave: "sku", titulo: "Producto", ancho: 30, movil: "titulo", valor: (f) => f.sku, celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} secundario={f.categoria ?? undefined} /> },
   { clave: "unid", titulo: "Unidades pedidas", ancho: 9, alinear: "right", valor: (f) => f.unidades, celda: (f) => <Box sx={cifraSx}>{unidades(f.unidades)}</Box> },
   { clave: "canc", titulo: "Canceladas", ancho: 8, alinear: "right", valor: (f) => f.canceladas, celda: (f) => <Box sx={cifraSx}>{unidades(f.canceladas)}</Box> },
   { clave: "tasaC", titulo: "% cancelación", ancho: 9, alinear: "right", valor: (f) => (f.tasaCancelacion == null ? null : f.tasaCancelacion * 100), celda: (f) => tasa(f.tasaCancelacion) },
-  { clave: "dev", titulo: "Devueltas", ancho: 8, alinear: "right", valor: (f) => f.devueltas, celda: (f) => <Box sx={cifraSx}>{unidades(f.devueltas)}</Box> },
-  { clave: "tasaD", titulo: "% devolución", ancho: 9, alinear: "right", valor: (f) => (f.tasaDevolucion == null ? null : f.tasaDevolucion * 100), celda: (f) => tasa(f.tasaDevolucion) },
-  { clave: "perdido", titulo: "Venta perdida", ancho: 10, alinear: "right", valor: (f) => n(f.perdido.neto), excel: "Venta perdida neta", celda: (f) => <MontoCorto par={f.perdido} fuerte color="#b42318" /> },
+  { clave: "dev", titulo: "Devueltas", ancho: 8, movil: "principal", alinear: "right", valor: (f) => f.devueltas, celda: (f) => <Box sx={cifraSx}>{unidades(f.devueltas)}</Box> },
+  { clave: "tasaD", titulo: "% devolución", ancho: 9, movil: "principal", alinear: "right", valor: (f) => (f.tasaDevolucion == null ? null : f.tasaDevolucion * 100), celda: (f) => tasa(f.tasaDevolucion) },
+  { clave: "perdido", titulo: "Venta perdida", ancho: 10, movil: "principal", alinear: "right", valor: (f) => n(f.perdido.neto), excel: "Venta perdida neta", celda: (f) => <MontoCorto par={f.perdido} fuerte color="#b42318" /> },
   { clave: "motivo", titulo: "Motivo principal", ancho: 17, valor: (f) => f.motivoPrincipal, celda: (f) => f.motivoPrincipal ?? (f.devueltas ? "Devolución" : "—") },
 ];
 

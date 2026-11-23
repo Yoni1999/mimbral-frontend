@@ -128,8 +128,10 @@ export default function SelectorProducto({ producto, onElegir, abierto, setAbier
           display: "flex",
           alignItems: "center",
           gap: 1,
-          minWidth: 240,
-          maxWidth: 320,
+          // En celular ocupa lo que quede de la fila (o una línea entera) en vez de 240 px fijos.
+          minWidth: { xs: 0, sm: 240 },
+          maxWidth: { xs: "100%", sm: 320 },
+          flexGrow: { xs: 1, sm: 0 },
           px: 1.25,
           border: `1px solid ${abierto ? tinta.acento : tinta.borde}`,
           color: tinta.primaria,

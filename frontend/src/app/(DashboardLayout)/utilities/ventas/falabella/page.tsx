@@ -20,6 +20,7 @@ import { Aviso, n, unidades } from "../../categorias/mercado-libre/components/co
 import { BarraTiposFal, ComparativoFal, FiltroTipo, OPCIONES_TIPO, ProductosFal, TIPOS_FAL, pesos, rutaProductos, urlFal } from "../../falabella/components/comun";
 import { DesgloseFal, ResumenFal, TendenciaFal, VistaDesgloseFal } from "../../falabella/components/ventas";
 import { CeldaOrden, useOrdenTabla } from "../components/ordenTabla";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "../components/movil";
 
 const DESCRIPCION_TIPO = { full: "Despacha Falabella desde su bodega", normal: "Despacho desde nuestra bodega" } as const;
 const porcentaje = (v: number | null | undefined) => (v == null ? "—" : formatoPorcentaje(v * 100));
@@ -29,6 +30,7 @@ const porcentaje = (v: number | null | undefined) => (v == null ? "—" : format
  *  tendencia por Full y despacho normal, categorías y productos más vendidos. */
 export default function VentasFalabella() {
   const router = useRouter();
+  const esCelular = useEsCelular();
   const [vista, setVista] = useEstadoVista<RangoMl & { tipo: FiltroTipo }>("ventas-falabella", () => ({ tipo: "todos", ...rangoInicial() }), {
     serializar: conPeriodoRapido,
     restaurar: (g) => {
@@ -213,6 +215,51 @@ export default function VentasFalabella() {
               <Box sx={{ mb: 1.5 }}>
                 <Pildoras<FiltroTipo> etiqueta="Tipo de envío" opciones={OPCIONES_TIPO} valor={vista.tipo} onCambiar={(tipo) => setVista((v) => ({ ...v, tipo }))} />
               </Box>
+              {esCelular ? (
+                // En celular, una tarjeta por producto: venta, unidades y margen; el resto en "Ver detalle".
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+                  <OrdenMovil
+                    opciones={[
+                      { clave: "venta", titulo: "Venta" },
+                      { clave: "unidades", titulo: "Unid." },
+                      { clave: "margen", titulo: "Margen %" },
+                      { clave: "comision", titulo: "Comisión" },
+                      { clave: "despacho", titulo: "Despacho/u" },
+                      { clave: "producto", titulo: "Producto" },
+                    ]}
+                    clave={ordenProductos.orden?.clave ?? ""}
+                    direccion={ordenProductos.orden?.direccion ?? "desc"}
+                    onCambiar={(clave, direccion) => clave && ordenProductos.setOrden({ clave, direccion })}
+                  />
+                  <TarjetasMovil
+                    cargando={productos.cargando}
+                    vacio="Sin ventas en el período."
+                    filas={ordenProductos.ordenadas.map((f, i) => ({
+                      clave: f.sku,
+                      titulo: `${i + 1}. ${f.nombre ?? f.sku}`,
+                      meta: f.sku,
+                      onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(f.sku)}`),
+                      principales: [
+                        { titulo: "Venta", valor: formatoMonto(f.actual.venta.neto) },
+                        { titulo: "Unid.", valor: unidades(f.actual.unidades) },
+                        {
+                          titulo: "Margen %",
+                          valor: (
+                            <Box component="span" sx={{ color: f.actual.margenPct == null ? tinta.tenue : f.actual.margenPct < 0 ? "#b42318" : f.actual.margenPct < 0.1 ? "#b54708" : "#067647" }}>
+                              {porcentaje(f.actual.margenPct)}
+                            </Box>
+                          ),
+                        },
+                      ],
+                      detalle: [
+                        { titulo: "Comisión", valor: porcentaje(f.comisionPct) },
+                        { titulo: "Despacho/u", valor: f.actual.unidades ? pesos(n(f.actual.envio.neto) / f.actual.unidades) : "—" },
+                        { titulo: "Full · Normal", valor: <Box sx={{ minWidth: 100 }}><BarraTiposFal porTipo={f.actual.porTipo} /></Box> },
+                      ],
+                    }))}
+                  />
+                </Box>
+              ) : (
               <Box sx={{ overflowX: "auto" }}>
                 <Table size="small" sx={{ minWidth: 620 }}>
                   <TableHead>
@@ -278,6 +325,7 @@ export default function VentasFalabella() {
                   </TableBody>
                 </Table>
               </Box>
+              )}
             </Panel>
           </Grid>
         </Grid>

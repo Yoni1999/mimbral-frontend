@@ -178,6 +178,7 @@ const HeaderCategorias: React.FC<Props> = ({ filtros, setFiltros, opciones, carg
             mt: 1,
             p: 2.5,
             width: 320,
+            maxWidth: "calc(100vw - 24px)",
             borderRadius: "14px",
             border: `1px solid ${tinta.borde}`,
             boxShadow: "0 20px 50px rgba(15, 23, 42, 0.16)",

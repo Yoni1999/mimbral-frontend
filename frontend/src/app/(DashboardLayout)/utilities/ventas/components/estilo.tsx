@@ -197,7 +197,8 @@ export function EncabezadoPanel({
   accion?: React.ReactNode;
 }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2, mb: 2 }}>
+    // En celular la acción (buscador, exportar) baja bajo el título y ocupa el ancho.
+    <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "stretch", sm: "flex-start" }, justifyContent: "space-between", gap: { xs: 1.25, sm: 2 }, mb: 2 }}>
       <Box>
         <Typography sx={{ fontSize: 15, fontWeight: 700, color: tinta.primaria }}>{titulo}</Typography>
         {descripcion && (

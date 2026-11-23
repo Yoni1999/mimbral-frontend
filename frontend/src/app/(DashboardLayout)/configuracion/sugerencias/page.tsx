@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
 import { notifySuccess, notifyError } from "@/components/ui/toast/notify";
+import { TarjetasMovil, useEsCelular } from "../../utilities/ventas/components/movil";
 
 const API_URL = `${BACKEND_URL}/api/sugerencias`;
 
@@ -30,6 +31,7 @@ const SugerenciasPage = () => {
   const [loading, setLoading] = useState(true);
   const [pagina, setPagina] = useState(0);
   const sugerenciasPorPagina = 8;
+  const esCelular = useEsCelular();
 
   useEffect(() => {
     const fetchSugerencias = async () => {
@@ -80,18 +82,53 @@ const SugerenciasPage = () => {
   };
 
   return (
-    <Box p={4}>
+    <Box p={{ xs: 2, sm: 4 }}>
       <Typography variant="h4" fontWeight="bold" gutterBottom>
         Gestión de Sugerencias
       </Typography>
 
-      <Paper sx={{ mt: 3, overflowX: "auto" }}>
+      {/* En celular las tarjetas van sin el papel de fondo de la tabla. */}
+      <Paper sx={{ mt: 3, overflowX: "auto", ...(esCelular ? { bgcolor: "transparent", boxShadow: "none" } : {}) }}>
         {loading ? (
           <Box p={4} display="flex" justifyContent="center">
             <CircularProgress />
           </Box>
         ) : (
           <>
+            {esCelular ? (
+              <TarjetasMovil
+                vacio="No hay sugerencias."
+                filas={sugerencias
+                  .slice(pagina * sugerenciasPorPagina, (pagina + 1) * sugerenciasPorPagina)
+                  .map((sug) => ({
+                    clave: String(sug.ID),
+                    titulo: sug.SUGERENCIA,
+                    meta: `#${sug.ID} · ${sug.DEPARTAMENTO ?? "—"} · ${new Date(sug.FECHA_REGISTRO).toLocaleDateString()}`,
+                    principales: [
+                      {
+                        titulo: "Estado",
+                        valor: (
+                          <Select value={sug.ESTADO} onChange={(e) => handleEstadoChange(sug.ID, e.target.value)} size="small" sx={{ width: "100%" }}>
+                            {estados.map((estado) => (
+                              <MenuItem key={estado} value={estado}>
+                                {estado}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        ),
+                      },
+                      {
+                        titulo: "Eliminar",
+                        valor: (
+                          <IconButton color="error" aria-label="Eliminar sugerencia" onClick={() => eliminarSugerencia(sug.ID)}>
+                            <DeleteIcon />
+                          </IconButton>
+                        ),
+                      },
+                    ],
+                  }))}
+              />
+            ) : (
             <Table>
               <TableHead>
                 <TableRow>
@@ -144,6 +181,7 @@ const SugerenciasPage = () => {
                   ))}
               </TableBody>
             </Table>
+            )}
 
             <TablePagination
               component="div"

@@ -34,6 +34,7 @@ import {
 } from "../../components/estilo";
 import type { Filters } from "./Header";
 import { consultaVendedor } from "./consulta";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "../../components/movil";
 
 interface Categoria {
   codigo: string;
@@ -58,6 +59,7 @@ const CategoriasVendidas: React.FC<{ filtros: Filters }> = ({ filtros }) => {
   );
   const { searchTerm, sortDirection } = vista;
   const sortBy: Orden = vista.sortBy || "ventas";
+  const esCelular = useEsCelular();
 
   const url = `${BACKEND_URL}/api/pv/ventascategoria?${consultaVendedor(filtros)}`;
   const { datos, cargando } = useCargaDatos<Categoria[]>(
@@ -119,9 +121,10 @@ const CategoriasVendidas: React.FC<{ filtros: Filters }> = ({ filtros }) => {
               </InputAdornment>
             ),
           }}
-          sx={{ width: 200, "& .MuiOutlinedInput-root": controlSx }}
+          sx={{ width: { xs: "100%", sm: 200 }, "& .MuiOutlinedInput-root": controlSx }}
         />
       }
+      sx={{ p: { xs: 1.5, sm: 2.5 } }}
     >
       {cargando ? (
         Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} height={44} />)
@@ -129,6 +132,47 @@ const CategoriasVendidas: React.FC<{ filtros: Filters }> = ({ filtros }) => {
         <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 6, textAlign: "center" }}>
           {datos.length === 0 ? "Sin ventas en el período." : "Ninguna categoría coincide con la búsqueda."}
         </Typography>
+      ) : esCelular ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+          <OrdenMovil
+            opciones={[
+              { clave: "ventas", titulo: "Ventas" },
+              { clave: "unidades", titulo: "Unidades" },
+              { clave: "margen", titulo: "% Margen" },
+              { clave: "nombre", titulo: "Categoría" },
+            ]}
+            clave={sortBy}
+            direccion={sortDirection}
+            onCambiar={(clave, direccion) => setVista((v) => ({ ...v, sortBy: clave as Orden, sortDirection: direccion }))}
+          />
+          <TarjetasMovil
+            filas={filas.map((c) => ({
+              clave: c.codigo,
+              titulo: c.nombre,
+              principales: [
+                {
+                  titulo: "Ventas",
+                  valor: (
+                    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                      {formatoMonto(c.ventas)}
+                      <ChipVariacion valor={c.cambioVentas} />
+                    </Box>
+                  ),
+                },
+                {
+                  titulo: "Unid.",
+                  valor: (
+                    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                      {c.unidades.toLocaleString("es-CL")}
+                      <ChipVariacion valor={c.cambioUnidades} />
+                    </Box>
+                  ),
+                },
+                { titulo: "Margen", valor: <ChipMargen valor={c.margenPorcentaje} /> },
+              ],
+            }))}
+          />
+        </Box>
       ) : (
         <TableContainer sx={{ maxHeight: 520, mx: -2.5, width: "auto", overflowX: "hidden" }}>
           <Table size="small" stickyHeader sx={tablaSx}>

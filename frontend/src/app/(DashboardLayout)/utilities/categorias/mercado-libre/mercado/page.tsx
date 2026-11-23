@@ -71,6 +71,7 @@ const COLUMNAS: ColumnaInforme<Publicacion>[] = [
     clave: "titulo",
     titulo: "Publicación",
     ancho: 30,
+    movil: "titulo",
     valor: (f) => f.titulo,
     excel: "Título",
     celda: (f) => (
@@ -111,6 +112,7 @@ const COLUMNAS: ColumnaInforme<Publicacion>[] = [
     clave: "precio",
     titulo: "Precio",
     ancho: 8,
+    movil: "principal",
     alinear: "right",
     valor: (f) => f.precioOferta ?? f.precio,
     excel: "Precio vigente",
@@ -128,13 +130,14 @@ const COLUMNAS: ColumnaInforme<Publicacion>[] = [
     clave: "stock",
     titulo: "Stock",
     ancho: 7,
+    movil: "principal",
     alinear: "right",
     valor: (f) => f.stock,
     excel: "Stock publicado en ML",
     celda: (f) => (f.stock == null ? "—" : <Box sx={{ ...cifraSx, color: f.stock <= 0 ? "#b42318" : tinta.primaria, fontWeight: f.stock <= 0 ? 700 : 500 }}>{unidades(f.stock)}</Box>),
   },
   { clave: "un30", titulo: "Unidades 30 días", ancho: 10, alinear: "right", valor: (f) => f.unidades30, excel: "Unidades vendidas en 30 días (producto)", celda: (f) => <Box sx={cifraSx}>{unidades(f.unidades30)}</Box> },
-  { clave: "venta30", titulo: "Venta 30 días", ancho: 10, alinear: "right", valor: (f) => n(f.venta30?.neto), excel: "Venta neta 30 días (producto)", celda: (f) => <MontoCorto par={f.venta30} fuerte /> },
+  { clave: "venta30", titulo: "Venta 30 días", ancho: 10, movil: "principal", alinear: "right", valor: (f) => n(f.venta30?.neto), excel: "Venta neta 30 días (producto)", celda: (f) => <MontoCorto par={f.venta30} fuerte /> },
 ];
 
 /**

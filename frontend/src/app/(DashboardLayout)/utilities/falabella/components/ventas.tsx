@@ -10,6 +10,7 @@ import { Columnas, EncabezadoPanel, cifraSx, formatoMonto, formatoPesos, formato
 import { Par } from "../../ventas/mercado-libre/components/comun";
 import { n, unidades } from "../../categorias/mercado-libre/components/comun";
 import { BloqueFal, ContextoFal, LeyendaTiposFal, TIPOS_FAL, TipoFal } from "./comun";
+import { TarjetasMovil, useEsCelular } from "../../ventas/components/movil";
 
 export interface ResumenFal extends ContextoFal {
   cifras: { actual: Record<"total" | TipoFal, BloqueFal>; anterior: Record<"total" | TipoFal, BloqueFal> };
@@ -91,6 +92,14 @@ export function TendenciaFal({ tendencia, cargando }: { tendencia: ResumenFal["t
 
 export type VistaDesgloseFal = "dinero" | "unidades";
 
+interface OpcionesFila {
+  signo?: string;
+  fuerte?: boolean;
+  ayuda?: string;
+  sinPct?: boolean;
+  soloPct?: boolean;
+}
+
 /**
  * Detalle de las tarjetas de Ventas → Falabella.
  *  · dinero: de la venta al margen, paso a paso (venta − comisión − despacho =
@@ -106,9 +115,10 @@ export function DesgloseFal({ vista, resumen, etiquetaPeriodo, onCerrar }: { vis
     ...tipos.map((x) => ({ clave: x.clave, nombre: x.nombre, color: x.color, t: resumen.cifras.actual[x.clave] })),
   ];
   const anchos = [28, ...columnas.map(() => 72 / columnas.length)];
+  const esCelular = useEsCelular();
 
   /** Una fila de la cascada: el monto y su % de la venta. */
-  const fila = (texto: string, valor: (t: BloqueFal) => number | null, { signo = "", fuerte = false, ayuda = "", sinPct = false, soloPct = false } = {}) => (
+  const fila = (texto: string, valor: (t: BloqueFal) => number | null, { signo = "", fuerte = false, ayuda = "", sinPct = false, soloPct = false }: OpcionesFila = {}) => (
     <TableRow sx={fuerte ? { "& .MuiTableCell-body": { bgcolor: tinta.fondoSuave, fontWeight: 750 } } : undefined}>
       <TableCell sx={{ fontWeight: fuerte ? 750 : 600 }} title={ayuda}>
         {signo && <Box component="span" sx={{ color: tinta.tenue, mr: 0.5 }}>{signo}</Box>}
@@ -145,6 +155,55 @@ export function DesgloseFal({ vista, resumen, etiquetaPeriodo, onCerrar }: { vis
     { texto: "Unidades devueltas", v: (t) => t?.devueltas },
   ];
 
+  // Pasos de la cascada (vista dinero), los mismos en la tabla y en las tarjetas de celular.
+  const cascada: { texto: string; corto: string; valor: (t: BloqueFal) => number | null; op: OpcionesFila }[] = [
+    { texto: "Venta", corto: "Venta", valor: (t) => n(t?.venta.neto), op: { sinPct: true, ayuda: "Precio de lista de las unidades vendidas, sin canceladas ni devueltas." } },
+    { texto: "Comisión de Falabella", corto: "Comisión", valor: (t) => n(t?.comision.neto), op: { signo: "−", ayuda: "Precio de lista × comisión de la categoría." } },
+    {
+      texto: "Despacho",
+      corto: "Despacho",
+      valor: (t) => n(t?.envio.neto),
+      op: { signo: "−", ayuda: "Cofinanciamiento logístico: tarifa por el peso del paquete, el precio y la nota del vendedor del mes. Full paga 10 % menos." },
+    },
+    { texto: "Queda después de Falabella", corto: "Queda", valor: queda, op: { signo: "=", fuerte: true } },
+    { texto: "Costo de los productos", corto: "Costo", valor: (t) => (t?.costo == null ? null : n(t.costo)), op: { signo: "−", ayuda: "Costo promedio de SAP × unidades." } },
+    {
+      texto: "Margen %",
+      corto: "Margen %",
+      valor: (t) => (t?.margenPct == null ? null : t.margenPct * 100),
+      op: { signo: "=", fuerte: true, soloPct: true, ayuda: "Lo que queda después de Falabella menos el costo, sobre la venta con costo." },
+    },
+  ];
+  /** Valor de un paso para la tarjeta de celular: el monto con su % de la venta. */
+  const valorMovil = (r: (typeof cascada)[number], t: BloqueFal) => {
+    const v = r.valor(t);
+    const venta = n(t?.venta.neto);
+    if (v == null) return "—";
+    if (r.op.soloPct) return formatoPorcentaje(v);
+    return `${formatoPesos(v)}${!r.op.sinPct && venta > 0 ? ` (${formatoPorcentaje((v / venta) * 100)})` : ""}`;
+  };
+  // En celular, una tarjeta por columna (total y cada tipo de envío).
+  const fijasDinero = ["Venta", "Queda después de Falabella", "Margen %"];
+  const fijasUnidades = ["Unidades vendidas", "Productos distintos", "Órdenes"];
+  const cortoUnidades: Record<string, string> = { "Unidades vendidas": "Unidades", "Productos distintos": "Productos" };
+  const tarjetas = columnas.map((c) => ({
+    clave: c.clave,
+    titulo: (
+      <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+        {c.color && <Box component="span" sx={{ width: 8, height: 8, borderRadius: "2px", bgcolor: c.color }} />}
+        {c.nombre}
+      </Box>
+    ),
+    principales:
+      vista === "dinero"
+        ? cascada.filter((r) => fijasDinero.includes(r.texto)).map((r) => ({ titulo: r.corto, valor: valorMovil(r, c.t) }))
+        : filasUnidades.filter((r) => fijasUnidades.includes(r.texto)).map((r) => ({ titulo: cortoUnidades[r.texto] ?? r.texto, valor: r.v(c.t) == null ? "—" : unidades(r.v(c.t)) })),
+    detalle:
+      vista === "dinero"
+        ? cascada.filter((r) => !fijasDinero.includes(r.texto)).map((r) => ({ titulo: `${r.op.signo ? `${r.op.signo} ` : ""}${r.texto}`, valor: valorMovil(r, c.t) }))
+        : filasUnidades.filter((r) => !fijasUnidades.includes(r.texto)).map((r) => ({ titulo: r.texto, valor: r.v(c.t) == null ? "—" : unidades(r.v(c.t)) })),
+  }));
+
   return (
     <Dialog open onClose={onCerrar} fullWidth maxWidth="md" PaperProps={{ sx: { borderRadius: "16px" } }}>
       <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2, px: 2.5, pt: 2.25, pb: 1 }}>
@@ -160,7 +219,10 @@ export function DesgloseFal({ vista, resumen, etiquetaPeriodo, onCerrar }: { vis
         </IconButton>
       </Box>
 
-      <Box sx={{ px: 2.5, pb: 2.5 }}>
+      <Box sx={{ px: { xs: 1.5, sm: 2.5 }, pb: 2.5 }}>
+        {esCelular ? (
+          <TarjetasMovil filas={tarjetas} />
+        ) : (
         <TableContainer sx={{ border: `1px solid ${tinta.borde}`, borderRadius: "12px", overflowX: "auto" }}>
           <Table size="small" sx={{ ...tablaSx, minWidth: 520, "& .MuiTableCell-body": { ...tablaSx["& .MuiTableCell-body"], ...cifraSx } }}>
             <Columnas anchos={anchos} />
@@ -179,14 +241,7 @@ export function DesgloseFal({ vista, resumen, etiquetaPeriodo, onCerrar }: { vis
             </TableHead>
             <TableBody>
               {vista === "dinero" ? (
-                <>
-                  {fila("Venta", (t) => n(t?.venta.neto), { sinPct: true, ayuda: "Precio de lista de las unidades vendidas, sin canceladas ni devueltas." })}
-                  {fila("Comisión de Falabella", (t) => n(t?.comision.neto), { signo: "−", ayuda: "Precio de lista × comisión de la categoría." })}
-                  {fila("Despacho", (t) => n(t?.envio.neto), { signo: "−", ayuda: "Cofinanciamiento logístico: tarifa por el peso del paquete, el precio y la nota del vendedor del mes. Full paga 10 % menos." })}
-                  {fila("Queda después de Falabella", queda, { signo: "=", fuerte: true })}
-                  {fila("Costo de los productos", (t) => (t?.costo == null ? null : n(t.costo)), { signo: "−", ayuda: "Costo promedio de SAP × unidades." })}
-                  {fila("Margen %", (t) => (t?.margenPct == null ? null : t.margenPct * 100), { signo: "=", fuerte: true, soloPct: true, ayuda: "Lo que queda después de Falabella menos el costo, sobre la venta con costo." })}
-                </>
+                cascada.map((r) => <React.Fragment key={r.texto}>{fila(r.texto, r.valor, r.op)}</React.Fragment>)
               ) : (
                 filasUnidades.map((r) => (
                   <TableRow key={r.texto}>
@@ -202,6 +257,7 @@ export function DesgloseFal({ vista, resumen, etiquetaPeriodo, onCerrar }: { vis
             </TableBody>
           </Table>
         </TableContainer>
+        )}
 
         <Typography component="div" sx={{ fontSize: 11.5, color: tinta.tenue, mt: 1.25, lineHeight: 1.5 }}>
           {vista === "dinero" ? (

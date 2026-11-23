@@ -50,11 +50,11 @@ const ESTADOS: Record<Estado, { texto: string; color: string; fondo: string; ord
 type Vista = "todos" | "reponer" | "sobra";
 
 const COLUMNAS: ColumnaInforme<Fila>[] = [
-  { clave: "sku", titulo: "Producto", ancho: 28, valor: (f) => f.sku, celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} secundario={f.categoria ?? undefined} /> },
+  { clave: "sku", titulo: "Producto", ancho: 28, movil: "titulo", valor: (f) => f.sku, celda: (f) => <CeldaProducto sku={f.sku} nombre={f.nombre} imagen={f.imagen} secundario={f.categoria ?? undefined} /> },
   { clave: "estado", titulo: "Estado", ancho: 11, valor: (f) => ESTADOS[f.estado].orden, excel: "Estado", celda: (f) => <Etiqueta {...ESTADOS[f.estado]} /> },
-  { clave: "full", titulo: "Stock Full", ancho: 8, alinear: "right", valor: (f) => f.stockFull, celda: (f) => <Box sx={{ ...cifraSx, fontWeight: 700 }}>{unidades(f.stockFull)}</Box> },
-  { clave: "venta", titulo: "Venta Full 30 días", ancho: 10, alinear: "right", valor: (f) => f.ventaFull30, celda: (f) => <Box sx={cifraSx}>{unidades(f.ventaFull30)}</Box> },
-  { clave: "dias", titulo: "Alcanza", ancho: 8, alinear: "right", valor: (f) => (f.stockFull <= 0 ? 0 : f.diasStock ?? 99999), excel: "Días de stock", celda: (f) => (f.stockFull <= 0 ? "0 días" : f.diasStock == null ? "—" : `${Math.round(f.diasStock)} días`) },
+  { clave: "full", titulo: "Stock Full", ancho: 8, movil: "principal", alinear: "right", valor: (f) => f.stockFull, celda: (f) => <Box sx={{ ...cifraSx, fontWeight: 700 }}>{unidades(f.stockFull)}</Box> },
+  { clave: "venta", titulo: "Venta Full 30 días", ancho: 10, movil: "principal", alinear: "right", valor: (f) => f.ventaFull30, celda: (f) => <Box sx={cifraSx}>{unidades(f.ventaFull30)}</Box> },
+  { clave: "dias", titulo: "Alcanza", ancho: 8, movil: "principal", alinear: "right", valor: (f) => (f.stockFull <= 0 ? 0 : f.diasStock ?? 99999), excel: "Días de stock", celda: (f) => (f.stockFull <= 0 ? "0 días" : f.diasStock == null ? "—" : `${Math.round(f.diasStock)} días`) },
   { clave: "bodegas", titulo: "Bodegas 01 y 03", ancho: 9, alinear: "right", valor: (f) => f.stockBodegas, celda: (f) => <Box sx={cifraSx}>{unidades(f.stockBodegas)}</Box> },
   {
     clave: "reponer",

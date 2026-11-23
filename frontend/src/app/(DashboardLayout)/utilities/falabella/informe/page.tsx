@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Box, Grid, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { IconCash, IconPackages, IconPercentage, IconReceipt, IconShoppingCart, IconTruckDelivery } from "@tabler/icons-react";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
@@ -13,6 +14,7 @@ import { Panel, Pildoras, cifraSx, formatoMonto, formatoPorcentaje, tinta } from
 import { SelectorPeriodo, mensajeError, n, nombreMes, parametrosPeriodo, pct, pp, unidades } from "../../categorias/mercado-libre/components/comun";
 import { AvisosFal, BarraTiposFal, BloqueFal, ComparativoFal, EvolucionFal, FiltroTipo, LeyendaTiposFal, OPCIONES_TIPO, TablaCategoriasFal, pesos, rutaProductos, urlFal, usePeriodoFal, useTipoFal } from "../components/comun";
 import { CeldaOrden, useOrdenTabla } from "@/app/(DashboardLayout)/utilities/ventas/components/ordenTabla";
+import { OrdenMovil, TarjetasMovil, TarjetaMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 type Paso = { id: string; nombre: string };
 
@@ -23,6 +25,8 @@ const parte = (b: BloqueFal | undefined, campo: "comision" | "envio") => (b && n
 /** Falabella: venta, costos y margen por categoría, un período contra otro, con Full y despacho normal. */
 export default function InformeFalabella() {
   const [periodo, setPeriodo] = usePeriodoFal();
+  const router = useRouter();
+  const esCelular = useEsCelular();
   const [filtro, setFiltro] = useTipoFal();
   const [nav, setNav] = useEstadoVista<{ ruta: Paso[] }>("falabella:informe", () => ({ ruta: [] }));
   const ruta = nav.ruta;
@@ -72,6 +76,22 @@ export default function InformeFalabella() {
     </TableRow>
   );
 
+  /** Tarjeta de celular de un tipo de envío (misma información que su fila). */
+  const tarjetaTipo = (nombre: string, b: BloqueFal | undefined, enlace: string): TarjetaMovil => ({
+    clave: nombre,
+    titulo: nombre,
+    onAbrir: () => router.push(enlace),
+    principales: [
+      { titulo: "Venta", valor: formatoMonto(b?.venta.neto) },
+      { titulo: "Unid.", valor: unidades(b?.unidades) },
+      { titulo: "Margen %", valor: porcentaje(b?.margenPct) },
+    ],
+    detalle: [
+      { titulo: "Comisión", valor: porcentaje(parte(b, "comision")) },
+      { titulo: "Despacho/u", valor: b?.unidades ? pesos(n(b.envio.neto) / b.unidades) : "—" },
+    ],
+  });
+
   const miga = (texto: string, indice: number, activa: boolean) => (
     <Box
       key={indice}
@@ -106,6 +126,12 @@ export default function InformeFalabella() {
         <Grid container spacing={2}>
           <Grid item xs={12} lg={5}>
             <Panel titulo="Por tipo de envío" descripcion="Full = bodega de Falabella · Normal = despacho desde nuestra bodega">
+              {esCelular ? (
+                <TarjetasMovil
+                  cargando={full.cargando || normal.cargando}
+                  filas={[tarjetaTipo("Full", full.datos?.total.actual, "/utilities/falabella/productos"), tarjetaTipo("Normal", normal.datos?.total.actual, "/utilities/falabella/productos")]}
+                />
+              ) : (
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -119,10 +145,46 @@ export default function InformeFalabella() {
                   {filaTipo("Normal", normal.datos?.total.actual, "/utilities/falabella/productos")}
                 </TableBody>
               </Table>
+              )}
             </Panel>
           </Grid>
           <Grid item xs={12} lg={7}>
             <Panel titulo="Evolución mensual" descripcion="Venta sin IVA, costos y margen estimado (% de la venta) de todo Falabella">
+              {esCelular ? (
+                // En celular, una tarjeta por mes.
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+                  <OrdenMovil
+                    opciones={[
+                      { clave: "mes", titulo: "Mes" },
+                      { clave: "venta", titulo: "Venta" },
+                      { clave: "unidades", titulo: "Unid." },
+                      { clave: "comision", titulo: "Comisión" },
+                      { clave: "despacho", titulo: "Despacho" },
+                      { clave: "margen", titulo: "Margen %" },
+                    ]}
+                    clave={ordenMeses.orden?.clave ?? ""}
+                    direccion={ordenMeses.orden?.direccion ?? "desc"}
+                    onCambiar={(clave, direccion) => clave && ordenMeses.setOrden({ clave, direccion })}
+                  />
+                  <TarjetasMovil
+                    cargando={evolucion.cargando}
+                    filas={ordenMeses.ordenadas.map((m) => ({
+                      clave: m.mes,
+                      titulo: <Box component="span" sx={{ textTransform: "capitalize" }}>{nombreMes(m.mes)}</Box>,
+                      principales: [
+                        { titulo: "Venta", valor: formatoMonto(m.venta.neto) },
+                        { titulo: "Unid.", valor: unidades(m.unidades) },
+                        { titulo: "Margen %", valor: porcentaje(m.margenPct) },
+                      ],
+                      detalle: [
+                        { titulo: "Comisión", valor: formatoMonto(m.comision.neto) },
+                        { titulo: "Despacho", valor: formatoMonto(m.envio.neto) },
+                        { titulo: "Full · Normal", valor: <Box sx={{ minWidth: 100 }}><BarraTiposFal porTipo={m.porTipo} /></Box> },
+                      ],
+                    }))}
+                  />
+                </Box>
+              ) : (
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -161,6 +223,7 @@ export default function InformeFalabella() {
                   ))}
                 </TableBody>
               </Table>
+              )}
             </Panel>
           </Grid>
         </Grid>

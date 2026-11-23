@@ -8,6 +8,7 @@ import { BACKEND_URL } from "@/config";
 import MetricCard from "@/app/(DashboardLayout)/utilities/ventas/components/MetricCard";
 import { BarraParticipacion, Columnas, Panel, estado, formatoPesos, tablaSx, tinta } from "@/app/(DashboardLayout)/utilities/ventas/components/estilo";
 import { CeldaOrden, useOrdenTabla } from "../../ventas/components/ordenTabla";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 const n = (v: unknown) => Number(v) || 0;
 const unidades = (v: number, decimales = 0) => v.toLocaleString("es-CL", { maximumFractionDigits: decimales });
@@ -41,6 +42,7 @@ export default function PanelInventario({ sku }: { sku: string }) {
   const costo = n(r?.costos?.UltimoCosto);
   const costoAnterior = n(r?.costos?.CostoAnterior);
   const ultima = estadoUltimaVenta(r?.ultimaVenta?.FechaUltimaVenta);
+  const esCelular = useEsCelular();
 
   const tarjetas = [
     // Stock de venta: bodegas 01, 03, 05, 07, 08 y 13 (el back deja fuera 04,
@@ -104,6 +106,36 @@ export default function PanelInventario({ sku }: { sku: string }) {
           Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} height={44} />)
         ) : filas.length === 0 ? (
           <Typography sx={{ color: tinta.tenue, fontSize: 13, py: 4, textAlign: "center" }}>Sin stock en ninguna bodega.</Typography>
+        ) : esCelular ? (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+            <OrdenMovil
+              opciones={[
+                { clave: "stock", titulo: "Stock" },
+                { clave: "disponible", titulo: "Disponible" },
+                { clave: "oc", titulo: "En OC" },
+                { clave: "comprometido", titulo: "Comprometido" },
+                { clave: "bodega", titulo: "Bodega" },
+              ]}
+              clave={ordenBodegas.orden?.clave ?? ""}
+              direccion={ordenBodegas.orden?.direccion ?? "desc"}
+              onCambiar={(clave, direccion) => ordenBodegas.setOrden({ clave, direccion })}
+            />
+            <TarjetasMovil
+              filas={[...ordenBodegas.ordenadas.map((b) => ({ ...b, titulo: `Bodega ${b.codigo}` })), { codigo: "__total", titulo: "Total", ...total }].map((b) => ({
+                clave: b.codigo,
+                titulo: b.titulo,
+                principales: [
+                  { titulo: "Stock", valor: unidades(b.stock) },
+                  {
+                    titulo: "Disponible",
+                    valor: <Box component="span" sx={{ color: b.disponible < 0 ? estado.mal.color : undefined }}>{unidades(b.disponible)}</Box>,
+                  },
+                  { titulo: "En OC", valor: unidades(b.oc) },
+                ],
+                detalle: [{ titulo: "Comprometido", valor: unidades(b.comprometido) }],
+              }))}
+            />
+          </Box>
         ) : (
           <TableContainer sx={{ mx: -2.5, width: "auto", overflowX: "hidden" }}>
             <Table size="small" sx={tablaSx}>

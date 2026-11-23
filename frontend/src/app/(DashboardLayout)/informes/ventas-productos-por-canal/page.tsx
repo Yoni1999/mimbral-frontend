@@ -44,6 +44,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import LaunchIcon from "@mui/icons-material/Launch";
 import HeaderVentasPorCanalDrawer, { FiltrosPorCanal } from "./components/HeaderVentasPorCanalDrawer";
+import { TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 import VentasPorCanalTable, {
   ProductoPorCanal,
   Order,
@@ -137,6 +138,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
   // filters y appliedFilters siempre cambian juntos (handleAppliedFiltersChange).
   const filters = appliedFilters ?? SIN_FILTROS;
   const setPage = (p: number) => setVista((v) => ({ ...v, page: p }));
+  const esCelular = useEsCelular();
   const pageSize = defaultPageSize;
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -442,7 +444,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
 
       <Divider sx={{ my: 2 }} />
 
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1} mb={2}>
         <Typography variant="subtitle2">
           {!hasAppliedFilters ? (
             "Sin filtros aplicados"
@@ -576,7 +578,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
       )}
 
       {/* ===== Modal Detalle de venta ===== */}
-      <Dialog open={detalleOpen} onClose={() => setDetalleOpen(false)} maxWidth="md" fullWidth>
+      <Dialog open={detalleOpen} onClose={() => setDetalleOpen(false)} maxWidth="md" fullWidth fullScreen={esCelular}>
         <DialogTitle>Detalle de venta · {detalleTitulo}</DialogTitle>
         <DialogContent>
           <TextField
@@ -586,6 +588,23 @@ const InformeVentasPorCanalPage: React.FC = () => {
             value={detalleSearch}
             onChange={(e) => setDetalleSearch(e.target.value)}
           />
+          {esCelular ? (
+            <Box sx={{ mt: 2 }}>
+              <TarjetasMovil
+                vacio="Sin resultados"
+                filas={detalleFiltrado.map((d) => ({
+                  clave: `${d.folioNum}-${d.vendedor}-${d.fecha}`,
+                  titulo: d.vendedor,
+                  meta: `Folio ${d.folioNum} · ${new Date(d.fecha).toLocaleDateString("es-CL")}`,
+                  principales: [
+                    { titulo: "Cantidad", valor: formatNumber(d.cantidad) },
+                    { titulo: "Venta", valor: money(d.venta) },
+                    { titulo: "Margen", valor: money(d.margenBrutoLinea) },
+                  ],
+                }))}
+              />
+            </Box>
+          ) : (
           <TableContainer component={Paper} sx={{ mt: 2 }}>
             <Table>
               <TableHead>
@@ -626,6 +645,7 @@ const InformeVentasPorCanalPage: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDetalleOpen(false)} startIcon={<CloseIcon />}>

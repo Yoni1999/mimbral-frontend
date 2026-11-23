@@ -10,6 +10,7 @@ import { notifyError, notifySuccess } from "@/components/ui/toast/notify";
 import { tarjetaSx, tinta } from "../../utilities/ventas/components/estilo";
 import { Etiqueta } from "../../utilities/ventas/mercado-libre/components/TablaInforme";
 import { Aviso, nombreMes } from "../../utilities/categorias/mercado-libre/components/comun";
+import { TarjetasMovil, useEsCelular } from "../../utilities/ventas/components/movil";
 
 interface Mes {
   mes: string;
@@ -49,6 +50,7 @@ export default function NotaFalabella() {
   const [datos, setDatos] = useState<Respuesta | null>(null);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState<string | null>(null);
+  const esCelular = useEsCelular();
 
   const cargar = useCallback(async () => {
     try {
@@ -76,6 +78,36 @@ export default function NotaFalabella() {
     }
   };
 
+  // El selector y el botón se usan igual en la tabla y en las tarjetas del celular.
+  const selectorNota = (m: Mes, ancho = false) => (
+    <Select
+      size="small"
+      displayEmpty
+      disabled={guardando === m.mes}
+      value={m.cargada ?? ""}
+      onChange={(e) => e.target.value !== "" && guardar(m.mes, Number(e.target.value))}
+      sx={ancho ? { width: "100%", fontSize: 13 } : { minWidth: 150, fontSize: 13 }}
+    >
+      <MenuItem value="" disabled>
+        Sin cargar
+      </MenuItem>
+      {(datos?.notasValidas ?? [5, 4, 3, 2])
+        .slice()
+        .sort((a, b) => b - a)
+        .map((nota) => (
+          <MenuItem key={nota} value={nota}>
+            {nota} estrellas
+          </MenuItem>
+        ))}
+    </Select>
+  );
+  const botonQuitar = (m: Mes) =>
+    m.cargada != null ? (
+      <Button size="small" disabled={guardando === m.mes} onClick={() => guardar(m.mes, null)} sx={{ textTransform: "none", fontSize: 12.5 }}>
+        Quitar
+      </Button>
+    ) : null;
+
   const celda = { fontSize: 13, py: 1.25, borderColor: tinta.borde } as const;
   const cabecera = { ...celda, fontSize: 11, fontWeight: 700, color: tinta.secundaria, textTransform: "uppercase", letterSpacing: 0.3 } as const;
 
@@ -91,6 +123,45 @@ export default function NotaFalabella() {
             Un mes sin nota cargada se calcula con {datos?.porDefecto ?? 5} estrellas. Falabella no entrega la nota por sus sistemas: se ve en Seller Center y en la columna «Opscore» del reporte de transacciones. Al guardar, los informes se recalculan de inmediato.
           </Aviso>
         </Box>
+        {esCelular ? (
+          // En celular cada mes es una tarjeta: nota usada y el selector para cargarla.
+          <TarjetasMovil
+            cargando={cargando}
+            vacio="No hay meses para mostrar."
+            filas={(datos?.meses ?? []).map((m) => ({
+              clave: m.mes,
+              titulo: <Box component="span" sx={{ textTransform: "capitalize" }}>{nombreMes(m.mes)}</Box>,
+              meta: (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                  <Etiqueta {...ORIGEN[m.origen]} />
+                  {m.actualizadoEn ? <span>{m.actualizadoEn.slice(0, 10).split("-").reverse().join("/")}</span> : null}
+                </Box>
+              ),
+              principales: [
+                {
+                  titulo: "Nota usada",
+                  valor: (
+                    <>
+                      <Estrellas nota={m.nota} />
+                      {m.origen === "factura" ? (
+                        <Box sx={{ fontSize: 11.5, fontWeight: 400, color: tinta.secundaria }}>ajustada por {m.ajuste.toLocaleString("es-CL")} según lo que facturó Falabella</Box>
+                      ) : null}
+                    </>
+                  ),
+                },
+                {
+                  titulo: "Cargar nota",
+                  valor: (
+                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 }}>
+                      {selectorNota(m, true)}
+                      {botonQuitar(m)}
+                    </Box>
+                  ),
+                },
+              ],
+            }))}
+          />
+        ) : (
         <Box sx={{ ...tarjetaSx, p: 0, overflow: "hidden" }}>
           {cargando ? (
             <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}>
@@ -122,33 +193,10 @@ export default function NotaFalabella() {
                       {m.actualizadoEn ? <Box sx={{ fontSize: 11, color: tinta.tenue, mt: 0.25 }}>{m.actualizadoEn.slice(0, 10).split("-").reverse().join("/")}</Box> : null}
                     </TableCell>
                     <TableCell sx={celda}>
-                      <Select
-                        size="small"
-                        displayEmpty
-                        disabled={guardando === m.mes}
-                        value={m.cargada ?? ""}
-                        onChange={(e) => e.target.value !== "" && guardar(m.mes, Number(e.target.value))}
-                        sx={{ minWidth: 150, fontSize: 13 }}
-                      >
-                        <MenuItem value="" disabled>
-                          Sin cargar
-                        </MenuItem>
-                        {(datos?.notasValidas ?? [5, 4, 3, 2])
-                          .slice()
-                          .sort((a, b) => b - a)
-                          .map((nota) => (
-                            <MenuItem key={nota} value={nota}>
-                              {nota} estrellas
-                            </MenuItem>
-                          ))}
-                      </Select>
+                      {selectorNota(m)}
                     </TableCell>
                     <TableCell sx={celda} align="right">
-                      {m.cargada != null ? (
-                        <Button size="small" disabled={guardando === m.mes} onClick={() => guardar(m.mes, null)} sx={{ textTransform: "none", fontSize: 12.5 }}>
-                          Quitar
-                        </Button>
-                      ) : null}
+                      {botonQuitar(m)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -156,6 +204,7 @@ export default function NotaFalabella() {
             </Table>
           )}
         </Box>
+        )}
       </Box>
     </PageContainer>
   );

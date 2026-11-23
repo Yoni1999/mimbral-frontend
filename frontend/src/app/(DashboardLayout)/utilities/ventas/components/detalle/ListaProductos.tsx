@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { BarraParticipacion, ChipMargen, Columnas, Panel, Pildoras, TextoCelda, estado, formatoMonto, formatoPesos, formatoPorcentaje, tablaSx, tinta } from "../estilo";
 import { ENDPOINT, FiltrosDetalle, useListaDetalle } from "./comun";
 import { Buscador, Encabezado, FilasCargando, FranjaResumen, Paginador, SinResultados } from "./piezas";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "../movil";
 
 export interface FilaProducto {
   sku: string;
@@ -33,6 +34,7 @@ const SIN_IMAGEN = "https://res.cloudinary.com/dhzahos7u/image/upload/v174896038
  *  margen y permite ver primero los que pierden. */
 export default function ListaProductos({ filtros, enfoque = "venta" }: { filtros: FiltrosDetalle; enfoque?: "venta" | "margen" }) {
   const router = useRouter();
+  const esCelular = useEsCelular();
   const l = useListaDetalle<FilaProducto, ResumenProductos>(ENDPOINT.productos, filtros, {
     orden: enfoque === "margen" ? "margen" : "venta",
     direccion: "desc",
@@ -83,11 +85,68 @@ export default function ListaProductos({ filtros, enfoque = "venta" }: { filtros
             <Buscador valor={l.buscar} onCambiar={l.setBuscar} placeholder="Buscar SKU o nombre" />
           </Box>
         }
+        sx={{ p: { xs: 1.5, sm: 2.5 } }}
       >
+        {esCelular && (
+          <Box sx={{ mb: 1.25 }}>
+            <OrdenMovil
+              opciones={[
+              { clave: "venta", titulo: "Venta" },
+              { clave: "unidades", titulo: "Unidades" },
+              ...(conMargen
+                ? [
+                    { clave: "margen", titulo: "Margen" },
+                    { clave: "margenPorcentaje", titulo: "% Margen" },
+                  ]
+                : []),
+              { clave: "documentos", titulo: "Documentos" },
+              { clave: "nombre", titulo: "Producto" },
+              ]}
+              clave={l.orden.orden}
+              direccion={l.orden.direccion}
+              onCambiar={(orden, direccion) => {
+                l.setPagina(1);
+                l.setOrden({ orden, direccion });
+              }}
+            />
+          </Box>
+        )}
         {l.cargando ? (
           <FilasCargando />
         ) : filas.length === 0 ? (
           <SinResultados buscando={!!l.buscarDemorado} />
+        ) : esCelular ? (
+          <TarjetasMovil
+            filas={filas.map((f) => ({
+              clave: f.sku,
+              titulo: f.nombre,
+              meta: `SKU ${f.sku}`,
+              onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(f.sku)}`),
+              principales: [
+                { titulo: "Unid.", valor: Number(f.unidades).toLocaleString("es-CL", { maximumFractionDigits: 2 }) },
+                { titulo: "Venta", valor: formatoMonto(f.venta) },
+                conMargen
+                  ? { titulo: "Margen", valor: <ChipMargen valor={f.margenPorcentaje} /> }
+                  : { titulo: "Docs.", valor: f.documentos.toLocaleString("es-CL") },
+              ],
+              detalle: [
+                { titulo: "% del total", valor: totalVenta ? formatoPorcentaje((f.venta / totalVenta) * 100) : "—" },
+                ...(conMargen
+                  ? [
+                      {
+                        titulo: "Margen $",
+                        valor: (
+                          <Box component="span" sx={{ color: (f.margen ?? 0) < 0 ? estado.mal.color : undefined }}>
+                            {formatoMonto(f.margen)}
+                          </Box>
+                        ),
+                      },
+                      { titulo: "Documentos", valor: f.documentos.toLocaleString("es-CL") },
+                    ]
+                  : []),
+              ],
+            }))}
+          />
         ) : (
           <TableContainer sx={{ mx: -2.5, width: "auto", overflowX: "hidden" }}>
             <Table size="small" sx={tablaSx}>

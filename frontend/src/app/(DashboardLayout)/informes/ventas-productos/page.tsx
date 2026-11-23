@@ -436,7 +436,7 @@ const InformeVentaPage = () => {
 
       <Divider sx={{ my: 2 }} />
 
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1} mb={2}>
         <Typography variant="subtitle2">
           {total === 0 ? (
             "Sin productos para mostrar"

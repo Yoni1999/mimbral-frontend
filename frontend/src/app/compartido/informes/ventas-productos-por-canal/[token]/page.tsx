@@ -31,6 +31,7 @@ import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { apiJson } from "@/utils/apiClient";
 import { BACKEND_URL } from "@/config";
+import { TarjetasMovil, useEsCelular } from "@/app/(DashboardLayout)/utilities/ventas/components/movil";
 
 type ShareFilters = Record<string, string | null>;
 
@@ -119,6 +120,7 @@ export default function SharedVentasPorCanalPage() {
   const [share, setShare] = useState<ShareResponse | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<string>("");
   const [stockDetailProduct, setStockDetailProduct] = useState<ProductItem | null>(null);
+  const esCelular = useEsCelular();
 
   useEffect(() => {
     const load = async () => {
@@ -222,7 +224,7 @@ export default function SharedVentasPorCanalPage() {
   );
 
   return (
-    <Box p={3}>
+    <Box p={{ xs: 1.5, sm: 3 }}>
       <Box mb={2}>
         <Typography variant="h4" fontWeight={800} gutterBottom display="flex" alignItems="center" gap={1}>
           <TrendingUpIcon />
@@ -390,7 +392,7 @@ export default function SharedVentasPorCanalPage() {
             <Grid item xs={12} md={7}>
               <Card sx={{ borderRadius: 3, height: "100%", minHeight: 520 }}>
                 <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1} mb={1.5}>
                     <Box display="flex" alignItems="center" gap={1}>
                       <Chip label={selectedChannel ? `Canal activo: ${selectedChannel}` : "Vista general"} size="small" />
                       <Chip label="Top 8" size="small" variant="outlined" />
@@ -399,6 +401,24 @@ export default function SharedVentasPorCanalPage() {
                       Ordenado por ventas
                     </Typography>
                   </Box>
+                  {esCelular ? (
+                    <TarjetasMovil
+                      vacio="Sin datos disponibles"
+                      filas={topProducts.map((product) => ({
+                        clave: product.sku,
+                        titulo: product.nombre,
+                        meta: product.sku,
+                        principales: [
+                          { titulo: selectedChannel ? "Ventas canal" : "Ventas", valor: formatUnits(product.displaySales) },
+                          { titulo: "Margen", valor: formatMoney(product.margenBruto) },
+                          {
+                            titulo: "Stock 01+03",
+                            valor: <Chip label={formatUnits(product.stock0103)} size="small" clickable onClick={() => setStockDetailProduct(product)} />,
+                          },
+                        ],
+                      }))}
+                    />
+                  ) : (
                   <TableContainer component={Paper} sx={{ boxShadow: "none", maxHeight: 420, border: "1px solid #e8eef8", borderRadius: 3 }}>
                     <Table stickyHeader size="small">
                       <TableHead>
@@ -445,6 +465,7 @@ export default function SharedVentasPorCanalPage() {
                       </TableBody>
                     </Table>
                   </TableContainer>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -473,7 +494,7 @@ export default function SharedVentasPorCanalPage() {
                         <YAxis
                           type="category"
                           dataKey="nombre"
-                          width={190}
+                          width={esCelular ? 110 : 190}
                           tickLine={false}
                           axisLine={false}
                           tick={{ fontSize: 12, fontWeight: 600 }}
