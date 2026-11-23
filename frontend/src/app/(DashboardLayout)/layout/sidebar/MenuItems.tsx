@@ -25,6 +25,7 @@ import {
   IconShoppingBag,
   IconTrophy,
   IconTags,
+  IconCreditCard,
   IconPackageImport,
   IconCash,
   IconClockDollar,
@@ -153,6 +154,7 @@ export const MODULOS: Modulo[] = [
           { titulo: "Ventas de productos", href: "/informes/ventas-productos", icon: IconChartBar },
           { titulo: "Ventas de productos por canal y marca", href: "/informes/ventas-productos-por-canal", icon: IconChartDonut },
           { titulo: "Marcas en Mercado Libre y Falabella", href: "/informes/marcas", icon: IconTags },
+          { titulo: "Ventas por canal y medio de pago", href: "/informes/pagos", icon: IconCreditCard },
           {
             titulo: "Mercado Libre",
             href: "/informes/mercado-libre",
