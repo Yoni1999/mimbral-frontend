@@ -6,6 +6,7 @@ import { Box, Button, InputAdornment, Pagination, Skeleton, Table, TableBody, Ta
 import { IconDownload, IconSearch } from "@tabler/icons-react";
 import { Columnas, TextoCelda, controlSx, tablaSx, tarjetaSx, tinta } from "../../components/estilo";
 import { descargarExcel } from "../../components/detalle/comun";
+import { OrdenMovil, TarjetasMovil, useEsCelular } from "../../components/movil";
 
 /** Una columna de un informe de Mercado Libre. */
 export interface ColumnaInforme<F> {
@@ -21,6 +22,24 @@ export interface ColumnaInforme<F> {
   /** Nombre de la columna en el Excel (por defecto, el título). Sin `valor` no va al Excel. */
   excel?: string;
   ordenable?: boolean;
+  /**
+   * Lugar en la tarjeta de celular: "titulo" (arriba), "principal" (una de
+   * las tres cifras fijas), "detalle" (en "Ver detalle") u "oculto". Sin
+   * indicarlo: la primera columna es el título, las tres siguientes son las
+   * cifras fijas y el resto va al detalle.
+   */
+  movil?: "titulo" | "principal" | "detalle" | "oculto";
+}
+
+/** Reparte las columnas en título, cifras fijas y detalle para la tarjeta de celular. */
+function columnasMovil<F>(columnas: ColumnaInforme<F>[]) {
+  const explicito = columnas.some((c) => c.movil);
+  const lugar = (c: ColumnaInforme<F>, i: number) => c.movil ?? (explicito ? "detalle" : i === 0 ? "titulo" : i <= 3 ? "principal" : "detalle");
+  return {
+    titulo: columnas.filter((c, i) => lugar(c, i) === "titulo"),
+    principales: columnas.filter((c, i) => lugar(c, i) === "principal").slice(0, 3),
+    detalle: columnas.filter((c, i) => lugar(c, i) === "detalle"),
+  };
 }
 
 interface Props<F> {
@@ -65,6 +84,7 @@ export default function TablaInforme<F>({
   const [orden, setOrden] = React.useState(ordenInicial);
   const [pagina, setPagina] = React.useState(1);
   const [descargando, setDescargando] = React.useState(false);
+  const esCelular = useEsCelular();
   React.useEffect(() => setPagina(1), [filas, buscar, orden]);
 
   const q = buscar.trim().toLowerCase();
@@ -137,6 +157,30 @@ export default function TablaInforme<F>({
         </Button>
       </Box>
 
+      {esCelular ? (
+        <Box sx={{ px: 1.5, pb: 1, display: "flex", flexDirection: "column", gap: 1.25 }}>
+          <OrdenMovil
+            opciones={columnas.filter((c) => c.ordenable !== false && c.valor).map((c) => ({ clave: c.clave, titulo: c.titulo }))}
+            clave={orden.clave}
+            direccion={orden.direccion}
+            onCambiar={(clave, direccion) => setOrden({ clave, direccion })}
+          />
+          <TarjetasMovil
+            cargando={cargando}
+            vacio={q ? "Ningún producto coincide con la búsqueda." : vacio}
+            filas={(() => {
+              const m = columnasMovil(columnas);
+              const contenido = (c: ColumnaInforme<F>, f: F) => (c.celda ? c.celda(f) : (c.valor?.(f) ?? "—"));
+              return visibles.map((f) => ({
+                clave: clave(f),
+                titulo: m.titulo.length ? m.titulo.map((c) => <React.Fragment key={c.clave}>{contenido(c, f)}</React.Fragment>) : clave(f),
+                principales: m.principales.map((c) => ({ titulo: c.titulo, valor: contenido(c, f) })),
+                detalle: m.detalle.map((c) => ({ titulo: c.titulo, valor: contenido(c, f) })),
+              }));
+            })()}
+          />
+        </Box>
+      ) : (
       <TableContainer sx={{ overflowX: { xs: "auto", lg: "hidden" } }}>
         <Table size="small" sx={{ ...tablaSx, minWidth: { xs: anchoMinimo, lg: 0 } }}>
           <Columnas anchos={columnas.map((c) => c.ancho)} />
@@ -190,6 +234,7 @@ export default function TablaInforme<F>({
           </TableBody>
         </Table>
       </TableContainer>
+      )}
 
       {paginas > 1 && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 1.5 }}>

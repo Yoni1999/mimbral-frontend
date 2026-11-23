@@ -10,6 +10,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { useRouter } from 'next/navigation';
 import { BarraParticipacion, ChipMargen, EncabezadoPanel, formatoPesos, tablaSx, tarjetaSx, tinta, Columnas, TextoCelda } from '../../components/estilo';
+import { OrdenMovil, TarjetasMovil, useEsCelular } from '../../components/movil';
 
 type ProductoVendido = {
   imagen: string;
@@ -47,6 +48,7 @@ const ProductosVendidos = ({ data }: Props) => {
   const [order, setOrder] = useState<Order>('desc');
   const [orderBy, setOrderBy] = useState<OrderBy>('cantidadVendida');
   const router = useRouter();
+  const esCelular = useEsCelular();
 
   const handleSort = (campo: OrderBy) => {
     const isDesc = orderBy === campo && order === 'desc';
@@ -105,7 +107,7 @@ const ProductosVendidos = ({ data }: Props) => {
   );
 
   return (
-    <Box sx={{ ...tarjetaSx, p: 2.5 }}>
+    <Box sx={{ ...tarjetaSx, p: { xs: 1.5, sm: 2.5 } }}>
       <EncabezadoPanel
         titulo="Top 50 productos más vendidos"
         descripcion={`${filteredData.length} productos${busqueda ? ' con ese criterio' : ''}`}
@@ -123,7 +125,7 @@ const ProductosVendidos = ({ data }: Props) => {
                   </InputAdornment>
                 ),
               }}
-              sx={{ width: 260, '& .MuiOutlinedInput-root': { borderRadius: '10px', height: 36, fontSize: 13.5 } }}
+              sx={{ width: { xs: '100%', sm: 260 }, '& .MuiOutlinedInput-root': { borderRadius: '10px', height: 36, fontSize: 13.5 } }}
             />
             <Button
               variant="outlined"
@@ -137,6 +139,46 @@ const ProductosVendidos = ({ data }: Props) => {
         }
       />
 
+      {esCelular ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+          <OrdenMovil
+            opciones={[
+              { clave: 'cantidadVendida', titulo: 'Cant. vendida' },
+              { clave: 'totalVentas', titulo: 'Total ventas' },
+              { clave: 'margenPorcentaje', titulo: '% Margen' },
+              { clave: 'margenBruto', titulo: 'Margen bruto' },
+              { clave: 'precioPromedio', titulo: 'Precio prom.' },
+              { clave: 'stock', titulo: 'Stock' },
+              { clave: 'nombre', titulo: 'Producto' },
+            ]}
+            clave={orderBy}
+            direccion={order}
+            onCambiar={(clave, direccion) => {
+              setOrderBy(clave as OrderBy);
+              setOrder(direccion);
+            }}
+          />
+          <TarjetasMovil
+            vacio="Ningún producto coincide con la búsqueda."
+            filas={sortedData.map((row) => ({
+              clave: row.sku,
+              titulo: row.nombre,
+              meta: [row.sku, [row.primerNivel, row.categoria].filter(Boolean).join(' › ')].filter(Boolean).join(' · '),
+              onAbrir: () => router.push(`/utilities/analisis-producto1.1?itemCode=${encodeURIComponent(row.sku)}`),
+              principales: [
+                { titulo: 'Unid.', valor: (row.cantidadVendida ?? 0).toLocaleString('es-CL') },
+                { titulo: 'Ventas', valor: formatoPesos(row.totalVentas) },
+                { titulo: 'Margen', valor: <ChipMargen valor={row.margenPorcentaje} /> },
+              ],
+              detalle: [
+                { titulo: 'Margen bruto', valor: formatoPesos(row.margenBruto) },
+                { titulo: 'Precio prom.', valor: formatoPesos(row.precioPromedio) },
+                { titulo: 'Stock', valor: (row.stock ?? 0).toLocaleString('es-CL') },
+              ],
+            }))}
+          />
+        </Box>
+      ) : (
       <TableContainer sx={{ maxHeight: 560, mx: -2.5, width: 'auto', overflowX: 'hidden' }}>
         <Table size="small" stickyHeader sx={tablaSx}>
           <Columnas anchos={[26, 16, 9, 13, 9, 11, 9, 7]} />
@@ -196,8 +238,9 @@ const ProductosVendidos = ({ data }: Props) => {
           </TableBody>
         </Table>
       </TableContainer>
+      )}
 
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1.5 }}>
+      <Box sx={{ display: 'flex', justifyContent: { xs: 'center', sm: 'flex-end' }, mt: 1.5 }}>
         <Button
           endIcon={<IconArrowRight size={16} />}
           onClick={() => router.push('/informes/ventas-productos')}

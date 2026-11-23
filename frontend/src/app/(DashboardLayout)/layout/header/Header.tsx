@@ -103,8 +103,10 @@ const Header = () => {
             spacing={0.5}
             alignItems="center"
             divider={<Divider orientation="vertical" flexItem />}
-            // En celular, una línea que se desliza de lado si no caben los cinco.
-            sx={{ mr: { xs: 0.5, sm: 2 }, flex: { xs: 1, md: "0 0 auto" }, minWidth: 0, overflowX: "auto", scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" } }}
+            // En celular no se muestran: ocupaban la barra con cifras cortadas
+            // y, si mindicador.cl no responde, solo con "$-". Desde 600 px,
+            // una línea que se desliza de lado si no caben los cinco.
+            sx={{ display: { xs: "none", sm: "flex" }, mr: { xs: 0.5, sm: 2 }, flex: { xs: 1, md: "0 0 auto" }, minWidth: 0, overflowX: "auto", scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" } }}
           >
             {[
               { key: "dolar", label: "USD", color: "success.main" },
