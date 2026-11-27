@@ -82,7 +82,21 @@ const fechaCorta = (f: string) => f.split("-").reverse().join("-");
 const diasDe = (r: RangoMl) => Math.round((Date.parse(r.fechaFin) - Date.parse(r.fechaInicio)) / DIA) + 1;
 const montoMedio = (c: { medios: Medio[] }, id: string) => c.medios.find((m) => m.medio === id)?.monto ?? 0;
 const otrosMedios = (c: { medios: Medio[] }) => c.medios.filter((m) => !COLUMNAS_MEDIO.includes(m.medio)).reduce((s, m) => s + m.monto, 0);
-const nombreCorto = (c: CanalPagos) => c.nombre.replace(" · Cajas de tienda (POS)", "").replace("Retail Pro · ", "").replace(" (tienda web)", "");
+/** El back ya entrega un nombre claro por canal (p. ej. «Tienda Chorrillos · Cajas POS»); el código va aparte, en chico. */
+const nombreCorto = (c: CanalPagos) => c.nombre;
+/** Cabeceras que pasan a una segunda línea en vez de cortarse («Crédito (cuenta corriente)»). */
+const cabeceraEnVariasLineasSx = {
+  "& .MuiTableCell-head": { ...tablaSx["& .MuiTableCell-head"], whiteSpace: "normal", overflow: "visible", textOverflow: "clip", lineHeight: 1.25, verticalAlign: "bottom" },
+} as const;
+/** Nombre del canal con su código debajo, en varias líneas si no cabe. */
+function NombreCanal({ nombre, codigo }: { nombre: string; codigo?: string }) {
+  return (
+    <Box sx={{ minWidth: 0 }}>
+      <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: tinta.primaria, lineHeight: 1.3 }}>{nombre}</Typography>
+      {codigo ? <Typography sx={{ fontSize: 11, color: tinta.tenue }}>{codigo}</Typography> : null}
+    </Box>
+  );
+}
 
 function Tarjetas({ items, cargando }: { items: { titulo: string; valor: React.ReactNode; pie: React.ReactNode }[]; cargando: boolean }) {
   return (
@@ -155,7 +169,7 @@ function SeccionCanal({ c, observaciones }: { c: CanalPagos; observaciones: Obse
   if (c.pagosDivididos > 0) notas.push(`${cantidad(c.pagosDivididos)} ventas se pagaron con más de un medio: hay ${cantidad(c.pagos)} pagos para ${cantidad(c.ventas)} ventas.`);
   if (c.diferenciaRedondeo !== 0) notas.push(`Los pagos suman ${formatoPesos(c.pagosMonto)} y los documentos ${formatoPesos(c.total)} (diferencia de ${formatoPesos(c.diferenciaRedondeo)} por redondeo).`);
   return (
-    <Panel titulo={c.nombre} descripcion={`${cantidad(c.ventas)} ventas · ${formatoPesos(c.total)} · ticket promedio ${formatoPesos(c.ticketPromedio)}`} sx={{ mb: 2 }}>
+    <Panel titulo={c.nombre} descripcion={`Código ${c.canal} · ${cantidad(c.ventas)} ventas · ${formatoPesos(c.total)} · ticket promedio ${formatoPesos(c.ticketPromedio)}`} sx={{ mb: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1.2fr" }, gap: 2, alignItems: "start" }}>
         <Box sx={{ overflowX: "auto" }}>
           <TablaCifras etiqueta="Documento" unidad="Ventas" filas={filasDocs(c.documentos)} total={{ n: c.ventas, monto: c.total }} cargando={false} />
@@ -224,9 +238,11 @@ export default function InformePagos() {
     setDescargando(true);
     try {
       const nombre = new Map(r.medios.map((m) => [m.medio, m.nombre]));
+      const nombreCanal = new Map(r.canales.map((c) => [c.canal, c.nombre]));
       const det: { data: FilaDetalle[] } = await apiJson(urlPagos("detalle", { ...consulta, ...(filtros.canal !== "todos" ? { canal: filtros.canal } : {}) }));
       const resumenFilas = [...visibles, ...(filtros.canal === "todos" ? [{ ...r.total, canal: "TOTAL", nombre: "Total" } as unknown as CanalPagos] : [])].map((c) => ({
         Canal: c.nombre,
+        Código: c.canal === "TOTAL" ? "" : c.canal,
         Ventas: c.ventas,
         Boletas: c.documentos.boleta.ventas,
         "Monto boletas": c.documentos.boleta.monto,
@@ -241,7 +257,8 @@ export default function InformePagos() {
           nombre: "Ventas",
           filas: det.data.map((f) => ({
             Fecha: fechaCorta(f.fecha),
-            Canal: f.canal,
+            Canal: nombreCanal.get(f.canal) ?? f.canal,
+            Código: f.canal,
             Pedido: f.pedido,
             Folio: f.folio ?? "",
             Documento: NOMBRE_DOC[f.documento],
@@ -311,7 +328,8 @@ export default function InformePagos() {
         {filtros.canal === "todos" && (
           <Panel titulo="Resumen por canal" descripcion="Ventas, documentos y monto por medio de pago de cada canal" sx={{ mb: 2 }}>
             <Box sx={{ overflowX: "auto" }}>
-              <Table size="small" sx={{ ...tablaSx, minWidth: 1100 }}>
+              <Table size="small" sx={{ ...tablaSx, ...cabeceraEnVariasLineasSx, minWidth: 1100 }}>
+                <Columnas anchos={[17, 6, 6, 6, 8, 8, 8, 8, 9, 6, 8, 10]} />
                 <TableHead>
                   <TableRow>
                     <TableCell>Canal</TableCell>
@@ -337,7 +355,9 @@ export default function InformePagos() {
                   ) : (
                     [...r.canales.map((c) => ({ clave: c.canal, nombre: nombreCorto(c), c })), { clave: "TOTAL", nombre: "Total", c: r.total }].map(({ clave, nombre, c }) => (
                       <TableRow key={clave} hover={clave !== "TOTAL"} onClick={clave !== "TOTAL" ? () => setFiltros((f) => ({ ...f, canal: clave })) : undefined} sx={clave === "TOTAL" ? { "& td": { fontWeight: 750, borderTop: `1.5px solid ${tinta.secundaria}` } } : { cursor: "pointer" }}>
-                        <TableCell>{nombre}</TableCell>
+                        <TableCell>
+                          <NombreCanal nombre={nombre} codigo={clave !== "TOTAL" ? clave : undefined} />
+                        </TableCell>
                         <TableCell align="right" sx={cifraSx}>{cantidad(c.ventas)}</TableCell>
                         <TableCell align="right" sx={cifraSx}>{cantidad(c.documentos.boleta.ventas)}</TableCell>
                         <TableCell align="right" sx={cifraSx}>{cantidad(c.documentos.factura.ventas)}</TableCell>
